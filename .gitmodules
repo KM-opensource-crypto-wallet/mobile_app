@@ -1,3 +1,3 @@
 [submodule "dok-wallet-blockchain-networks"]
 	path = dok-wallet-blockchain-networks
-	url = https://github.com/dokwallet/dokwallet_blockchain.git
+	url = https://github.com/KM-opensource-crypto-wallet/blockchains.git
