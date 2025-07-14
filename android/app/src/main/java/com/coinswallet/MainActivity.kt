@@ -2,6 +2,7 @@ package com.coinswallet
 import expo.modules.ReactActivityDelegateWrapper
 
 import android.os.Bundle
+import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
@@ -24,6 +25,7 @@ public class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     RNBootSplash.init(this, R.style.BootTheme) // ⬅️ initialize the splash screen
     super.onCreate(null) // or super.onCreate(null) with react-native-screens
+        loadReactNative(this)
     (application as MainApplication).addActivityToStack(this::class.java)
   }
 

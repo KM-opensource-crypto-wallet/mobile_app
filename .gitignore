@@ -30,10 +30,11 @@ build/
 local.properties
 keystore.properties
 *.iml
-*.hprof
+*.hprof µ≥
 .cxx/
 *.keystore
 !debug.keystore
+.kotlin/
 
 android/app/coinswallet.keystore
 android/app/upload_certificate.pem
