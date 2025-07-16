@@ -1,5 +1,13 @@
-require_relative '../node_modules/react-native/scripts/react_native_pods'
+require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
+# Resolve react_native_pods.rb with node to allow for hoisting
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
+
 platform :ios, '16.0'
+prepare_react_native_project!
 
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
@@ -9,7 +17,7 @@ end
 
 
 abstract_target 'coinswalletCommonPod' do
-  # use_expo_modules! # This line is commented out as per the user's request.
+  use_expo_modules!
 
   config = use_native_modules!
 
@@ -36,7 +44,7 @@ abstract_target 'coinswalletCommonPod' do
     target 'kimlwallet' do
     end
 
- 
+
   post_install do |installer|
       # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
     react_native_post_install(

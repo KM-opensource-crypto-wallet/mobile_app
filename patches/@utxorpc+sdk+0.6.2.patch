@@ -1,0 +1,13 @@
+diff --git a/node_modules/@utxorpc/sdk/package.json b/node_modules/@utxorpc/sdk/package.json
+index 2e7b01a..9c2d1f5 100644
+--- a/node_modules/@utxorpc/sdk/package.json
++++ b/node_modules/@utxorpc/sdk/package.json
+@@ -70,7 +70,7 @@
+     "src"
+   ],
+   "react-native": {
+-    "./lib/node/index.js": "./lib/browser/index.js",
++    "./lib/node/index.js": "./lib/browser/index.mjs",
+     "fs": "react-native-level-fs",
+     "_stream_transform": "readable-stream/transform",
+     "_stream_readable": "readable-stream/readable",

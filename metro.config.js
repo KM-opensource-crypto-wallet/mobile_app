@@ -17,7 +17,7 @@ const config = {
   resolver: {
     assetExts: assetExts.filter(ext => ext !== 'svg'),
     sourceExts: [...sourceExts, 'svg'],
-    extraNodeModules: require('node-libs-react-native'),
+    // extraNodeModules: require('node-libs-react-native'),
   },
 };
 

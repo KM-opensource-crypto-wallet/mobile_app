@@ -32,7 +32,7 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "761780EC2CA45674006654EE"
+               BlueprintIdentifier = "00E356ED1AD99517003FC87E"
                BuildableName = "coinswalletTests.xctest"
                BlueprintName = "coinswalletTests"
                ReferencedContainer = "container:coinswallet.xcodeproj">

@@ -2,7 +2,12 @@
  * @format
  */
 
-import 'node-libs-react-native/globals';
+import './shim';
+
+// if(typeof require('stream/web') === 'undefined') {
+//   console.log('is undefined')
+// }
+// import 'node-libs-react-native/globals';
 import 'text-encoding-polyfill';
 import 'react-native-get-random-values';
 import 'react-native-url-polyfill/auto';

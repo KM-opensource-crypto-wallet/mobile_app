@@ -3,13 +3,13 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "android": "cd android && ./gradlew installDokwalletDebug",
+    "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint . --fix --quiet",
     "start": "react-native start",
     "test": "jest",
     "git:update": "git submodule update --init --recursive --remote",
-    "postinstall": "rn-nodeify --install fs,stream,events,assert,dns --hack --yarn && patch-package && sh script.sh"
+    "postinstall": "rn-nodeify --install fs,stream,events,assert,tls,net,dns,dgram,path,zlib,http,https,os --hack --yarn && patch-package && sh script.sh"
   },
   "engines": {
     "node": ">=18"
@@ -65,6 +65,7 @@
     "@ton/core": "^0.56.3",
     "@ton/crypto": "^3.2.0",
     "@ton/ton": "^13.11.1",
+    "@tradle/react-native-http": "^2.0.0",
     "@ungap/structured-clone": "^1.2.0",
     "@walletconnect/react-native-compat": "^2.17.3",
     "@xchainjs/xchain-client": "^1.0.7",
@@ -84,6 +85,7 @@
     "bip39": "^3.1.0",
     "bitcoincashjs": "^0.1.14",
     "bitcoinjs-lib": "git+https://github.com/dokwallet/bitcoinjs-lib.git#cashv6",
+    "browserify-zlib": "~0.1.4",
     "bs58": "^5.0.0",
     "buffer": "^6.0.3",
     "country-list": "^2.3.0",
@@ -94,14 +96,15 @@
     "ethers": "^6.8.0",
     "ethers-decode-error": "^2.1.3",
     "events": "^1.1.1",
-    "expo": "^53.0.19",
-    "expo-crypto": "^14.0.0",
-    "expo-modules-core": "^2.4.2",
-    "expo-random": "^14.0.1",
+    "expo": "^52.0.47",
+    "expo-crypto": "^13.0.2",
+    "expo-random": "^13.6.0",
     "fast-text-encoding": "^1.0.6",
     "filecoin.js": "^0.0.5-alpha",
     "formik": "^2.2.9",
     "got": "^11.8.6",
+    "http2": "^3.3.7",
+    "https-browserify": "~0.0.0",
     "levelup": "^5.1.1",
     "moralis": "^2.23.1",
     "nanoid": "^5.0.5",
@@ -115,7 +118,7 @@
     "react-native": "0.80.1",
     "react-native-animatable": "^1.3.3",
     "react-native-bip39": "^2.3.0",
-    "react-native-bootsplash": "^5.0.2",
+    "react-native-bootsplash": "^6.3.10",
     "react-native-camera": "^4.2.1",
     "react-native-config": "^1.5.1",
     "react-native-country-picker-modal": "^2.0.0",
@@ -135,6 +138,7 @@
     "react-native-keyboard-aware-scroll-view": "^0.9.5",
     "react-native-level-fs": "^3.0.1",
     "react-native-localize": "^3.0.6",
+    "react-native-os": "^1.0.1",
     "react-native-pager-view": "^6.2.1",
     "react-native-paper": "^5.8.0",
     "react-native-permissions": "^3.8.0",
@@ -158,9 +162,11 @@
     "react-native-svg-transformer": "^1.5.0",
     "react-native-swiper": "^1.6.0",
     "react-native-tab-view": "^3.5.2",
+    "react-native-tcp": "^3.2.1",
     "react-native-test-flight": "^1.1.0",
     "react-native-toast-message": "^2.1.6",
     "react-native-toast-notifications": "^3.3.1",
+    "react-native-udp": "^2.1.0",
     "react-native-url-polyfill": "^2.0.0",
     "react-native-vector-icons": "^10.1.0",
     "react-native-view-shot": "^3.6.0",
@@ -176,7 +182,6 @@
     "stellar-hd-wallet": "github:divyangkhatri/stellar-hd-wallet",
     "stopwatch-node": "^1.1.0",
     "stream-browserify": "^1.0.0",
-    "stream-http": "^3.2.0",
     "text-encoding-polyfill": "^0.6.7",
     "tronweb": "^6.0.0",
     "tweetnacl": "^1.0.3",
@@ -230,8 +235,7 @@
     "@xchainjs/xchain-cosmos/axios": "^1.9.0",
     "@xchainjs/xchain-thorchain/axios": "^1.9.0",
     "tronweb/axios": "^1.9.0",
-    "sharp/tar-fs": "^1.9.0",
-    "**/@utxorpc/sdk": "0.6.2"
+    "sharp/tar-fs": "^1.9.0"
   },
   "overrides": {
     "react-native-qrcode-scanner": {
@@ -247,7 +251,15 @@
     "stream": "stream-browserify",
     "fs": "react-native-level-fs",
     "tls": false,
-    "dns": "dns.js"
+    "net": "react-native-tcp",
+    "dns": "dns.js",
+    "dgram": "react-native-udp",
+    "zlib": "browserify-zlib",
+    "stream/web": "./polyfills/web-streams.js",
+    "path": "path-browserify",
+    "http": "@tradle/react-native-http",
+    "https": "https-browserify",
+    "os": "react-native-os"
   },
   "browser": {
     "_stream_transform": "readable-stream/transform",
@@ -258,6 +270,14 @@
     "stream": "stream-browserify",
     "fs": "react-native-level-fs",
     "tls": false,
-    "dns": "dns.js"
+    "net": "react-native-tcp",
+    "dns": "dns.js",
+    "dgram": "react-native-udp",
+    "stream/web": "./polyfills/web-streams.js",
+    "zlib": "browserify-zlib",
+    "path": "path-browserify",
+    "http": "@tradle/react-native-http",
+    "https": "https-browserify",
+    "os": "react-native-os"
   }
 }

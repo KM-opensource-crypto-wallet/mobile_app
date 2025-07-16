@@ -15,6 +15,20 @@ if (typeof __filename === 'undefined') {
 //   }
 // }
 
+
+if (typeof global.ReadableStream === 'undefined') {
+  global.ReadableStream = require('readable-stream/readable')
+}
+
+if (typeof global.TransformStream === 'undefined') {
+  global.TransformStream = require('readable-stream/transform')
+}
+
+if (typeof global['stream/web'] === 'undefined') {
+  global['stream/web'] = require('./polyfills/web-streams')
+}
+
+
 // process.browser = false;
 //
 if (typeof Buffer === 'undefined') {
@@ -33,6 +47,4 @@ if (typeof Buffer === 'undefined') {
 // require('crypto')
 
 // Add tls polyfill for @grpc/grpc-js
-if (typeof global.tls === 'undefined') {
-  global.tls = {};
-}
+

@@ -1,7 +1,15 @@
+//
+//  AppDelegate.swift
+//  coinswallet
+//
+//  Created by Divyang Khatri on 15/07/25.
+//
+
 import UIKit
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
+import RNBootSplash
  
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -9,6 +17,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
  
   var reactNativeDelegate: ReactNativeDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
+  
+  func application(_ application: UIApplication,
+                   open url: URL,
+                   options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+      return RCTLinkingManager.application(application, open: url, options: options)
+  }
+
+  func application(_ application: UIApplication,
+                   continue userActivity: NSUserActivity,
+                   restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
+      return RCTLinkingManager.application(application,
+                                         continue: userActivity,
+                                         restorationHandler: restorationHandler)
+  }
  
   func application(
     _ application: UIApplication,
@@ -45,4 +67,9 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
     Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif
   }
+  
+   override func customize(_ rootView: RCTRootView) {
+     super.customize(rootView)
+     RNBootSplash.initWithStoryboard("LaunchScreen", rootView: rootView) // ⬅️ initialize the splash screen
+   }
 }
