@@ -75,3 +75,42 @@ export const validateWCUrl = (url, qsObj) => {
     return false;
   }
 };
+
+export const getQueryParams = url => {
+  try {
+    // Check if URL has query parameters
+    const queryIndex = url.indexOf('?');
+    if (queryIndex === -1 || queryIndex === url.length - 1) {
+      return {};
+    }
+
+    // Extract query string
+    const queryString = url.substring(queryIndex + 1);
+
+    // Check if query string is empty
+    if (!queryString || queryString.trim() === '') {
+      return {};
+    }
+
+    const params = {};
+
+    // Split by & and parse each pair
+    const pairs = queryString.split('&').filter(pair => pair.length > 0);
+
+    pairs.forEach(pair => {
+      const [key, value] = pair.split('=');
+      const cleanKey = key?.trim();
+
+      if (cleanKey && cleanKey.length > 0) {
+        params[decodeURIComponent(cleanKey)] = value
+          ? decodeURIComponent(value)
+          : '';
+      }
+    });
+
+    return params;
+  } catch (error) {
+    console.error('Error parsing URL:', error);
+    return {};
+  }
+};

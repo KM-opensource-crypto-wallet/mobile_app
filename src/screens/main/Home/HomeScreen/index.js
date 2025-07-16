@@ -72,6 +72,7 @@ import Toast from 'react-native-toast-message';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {createWalletConnection} from 'dok-wallet-blockchain-networks/service/walletconnect';
 import {LOGO_SINGLE, LOGO_SINGLE_DARK} from 'utils/wlData';
+import AddCoins from 'components/AddCoins';
 
 const renderScene = SceneMap({
   coins: Coins,
@@ -96,6 +97,7 @@ const HomeScreen = ({navigation, route}) => {
   const dispatch = useDispatch();
   const [modalVisible, setmodalVisible] = useState(false);
   const [backupModalVisible, setBackupModalVisible] = useState(false);
+  const [addCoinModalVisible, setAddCoinModalVisible] = useState(false);
   // const allCoins = useSelector(getAllCoins);
   const requestedModalVisible = useSelector(selectRequestedModalVisible);
   const transactionModalVisible = useSelector(selectTransactionModalVisible);
@@ -152,19 +154,25 @@ const HomeScreen = ({navigation, route}) => {
 
   useEffect(() => {
     if (paymentData?.address && paymentData?.currency) {
+      setAddCoinModalVisible(false);
       dispatch(searchCoinFromCurrency({currency: paymentData?.currency}))
         .unwrap()
         .then(() => {
           const currentDate = new Date().toISOString();
-          navigation.navigate('SendFunds', {
-            amount: paymentData?.amount,
-            address: paymentData?.address,
-            date: currentDate,
-          });
-          dispatch(setPaymentData(null));
+          setTimeout(() => {
+            navigation.navigate('SendFunds', {
+              ...paymentData,
+              amount: paymentData?.amount,
+              address: paymentData?.address,
+              memo: paymentData?.meta?.memo,
+              date: currentDate,
+            });
+            dispatch(setPaymentData(null));
+          }, 0);
         })
         .catch(err => {
           console.error('Failed to process payment data:', err);
+          setAddCoinModalVisible(true);
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -421,6 +429,10 @@ const HomeScreen = ({navigation, route}) => {
               }}
               bottomSheetRef={ref => (newsBottomSheetRef.current = ref)}
               message={newsMessage}
+            />
+            <AddCoins
+              visible={addCoinModalVisible}
+              hideModal={setAddCoinModalVisible}
             />
           </Portal>
         </Provider>
