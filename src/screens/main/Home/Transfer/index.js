@@ -348,10 +348,15 @@ const Transfer = ({navigation, route}) => {
   const onSuccess = useCallback(async () => {
     setShowConfirmModal(false);
     await delay(300);
-    const tx_hash = await submitTransferData();
+    const {tx_hash, status} = await submitTransferData();
     if (redirect_url && tx_hash) {
-      const link = `${decodeURIComponent(redirect_url)}&tx_hash=${tx_hash}`;
-      Linking.openURL(link);
+      try {
+        const decodedUrl = decodeURIComponent(redirect_url);
+        const link = `${decodedUrl}&tx_hash=${tx_hash}&status=${status}`;
+        await Linking.openURL(link);
+      } catch (error) {
+        console.error('Failed to open redirect URL:', error);
+      }
     }
   }, [redirect_url, submitTransferData]);
 
