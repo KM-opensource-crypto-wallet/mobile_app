@@ -28,10 +28,8 @@ import CopyIcon from 'assets/images/icons/copy.svg';
 import Toast from 'react-native-toast-message';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {validateNumber} from 'dok-wallet-blockchain-networks/helper';
-import {getCountry} from 'react-native-localize';
 import {currencySymbol} from 'data/currency';
 import Loading from 'components/Loading';
-import InAppBrowser from 'react-native-inappbrowser-reborn';
 import {WebViewModal} from './WebViewModal';
 import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {_currentWalletIndexSelector} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
@@ -47,6 +45,7 @@ import {initiateSellCryptoTransfer} from 'dok-wallet-blockchain-networks/redux/s
 import {setCurrentTransferSuccess} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {getSellCryptoRequestDetails} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
 import {setTransferDetails} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
+import {getSelectedCountry} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
 
 const SellCrypto = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -77,6 +76,7 @@ const SellCrypto = ({navigation}) => {
   const allWallets = useSelector(selectAllWallets);
   const currentWalletIndex = useSelector(_currentWalletIndexSelector);
   const sellCryptoRequestDetails = useSelector(getSellCryptoRequestDetails);
+  const selectedCountry = useSelector(getSelectedCountry);
 
   const formikRef = useRef();
 
@@ -222,20 +222,23 @@ const SellCrypto = ({navigation}) => {
         walletAddress: chainDetails?.walletAddress,
         from_device: Platform.OS,
       };
-      const currentCountry = getCountry();
       const fromDevice = Platform.OS;
       if (isDebounce) {
         dispatch(setSellCryptoLoading(true));
         dispatch(
           debounceFetchSellCryptoQuote({
             ...payload,
-            currentCountry,
+            currentCountry: selectedCountry,
             fromDevice,
           }),
         );
       } else {
         dispatch(
-          fetchSellCryptoQuote({...payload, currentCountry, fromDevice}),
+          fetchSellCryptoQuote({
+            ...payload,
+            currentCountry: selectedCountry,
+            fromDevice,
+          }),
         );
       }
     },

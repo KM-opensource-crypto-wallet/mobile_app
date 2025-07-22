@@ -28,6 +28,7 @@ import FiatCurrencyOptionItem from 'components/FiatCurrencyOptionItem';
 import {
   getCryptoProviders,
   getCryptoProvidersLoading,
+  getSelectedCountry,
 } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
 import {
   debounceFetchBuyCryptoQuote,
@@ -48,7 +49,6 @@ import {IS_ANDROID, IS_IOS} from 'utils/dimensions';
 import ModalAddCoins from 'components/ModalAddCoins';
 import PaymentOptionItem from 'components/PaymentOptionItem';
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {getCountry} from 'react-native-localize';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 const currencyPicker = [
@@ -90,6 +90,7 @@ const CryptoProviders = () => {
   const isLoading = useSelector(getCryptoProvidersLoading);
   const dispatch = useDispatch();
   const addMoreCoinsSheet = useRef();
+  const selectedCountry = useSelector(getSelectedCountry);
 
   const formikRef = useRef();
 
@@ -164,15 +165,24 @@ const CryptoProviders = () => {
         walletAddress: chainDetails?.walletAddress,
         from_device: Platform.OS,
       };
-      const currentCountry = getCountry();
       const fromDevice = Platform.OS;
       if (isDebounce) {
         dispatch(setCryptoProviderLoading(true));
         dispatch(
-          debounceFetchBuyCryptoQuote({...payload, currentCountry, fromDevice}),
+          debounceFetchBuyCryptoQuote({
+            ...payload,
+            currentCountry: selectedCountry,
+            fromDevice,
+          }),
         );
       } else {
-        dispatch(fetchBuyCryptoQuote({...payload, currentCountry, fromDevice}));
+        dispatch(
+          fetchBuyCryptoQuote({
+            ...payload,
+            currentCountry: selectedCountry,
+            fromDevice,
+          }),
+        );
       }
     },
     [dispatch],
