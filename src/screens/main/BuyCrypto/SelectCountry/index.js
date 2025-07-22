@@ -20,7 +20,6 @@ import {
   fetchSupportedBuyCryptoCurrency,
   setCountry,
 } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProviderSlice';
-import {getCountry} from 'react-native-localize';
 
 const SelectCountry = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);

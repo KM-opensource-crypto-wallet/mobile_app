@@ -28,6 +28,7 @@ import FiatCurrencyOptionItem from 'components/FiatCurrencyOptionItem';
 import {
   getCryptoProviders,
   getCryptoProvidersLoading,
+  getSelectedCountry,
 } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
 import {
   debounceFetchBuyCryptoQuote,
@@ -44,9 +45,10 @@ import {
   validateNumber,
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
-import {IS_ANDROID} from 'utils/dimensions';
+import {IS_ANDROID, IS_IOS} from 'utils/dimensions';
 import ModalAddCoins from 'components/ModalAddCoins';
-import {getCountry} from 'react-native-localize';
+import PaymentOptionItem from 'components/PaymentOptionItem';
+import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 const currencyPicker = [
@@ -62,6 +64,23 @@ const currencyPicker = [
   },
 ];
 
+const paymentOptions = [
+  {
+    label: 'Apple Pay',
+    value: 'apple_pay',
+    options: {
+      icon: 'apple',
+    },
+  },
+  {
+    label: 'Credit Card',
+    value: 'credit_card',
+    options: {
+      icon: 'credit-card',
+    },
+  },
+];
+
 const CryptoProviders = () => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
@@ -71,6 +90,8 @@ const CryptoProviders = () => {
   const isLoading = useSelector(getCryptoProvidersLoading);
   const dispatch = useDispatch();
   const addMoreCoinsSheet = useRef();
+  const selectedCountry = useSelector(getSelectedCountry);
+
   const formikRef = useRef();
 
   useEffect(() => {
@@ -144,15 +165,24 @@ const CryptoProviders = () => {
         walletAddress: chainDetails?.walletAddress,
         from_device: Platform.OS,
       };
-      const currentCountry = getCountry();
       const fromDevice = Platform.OS;
       if (isDebounce) {
         dispatch(setCryptoProviderLoading(true));
         dispatch(
-          debounceFetchBuyCryptoQuote({...payload, currentCountry, fromDevice}),
+          debounceFetchBuyCryptoQuote({
+            ...payload,
+            currentCountry: selectedCountry,
+            fromDevice,
+          }),
         );
       } else {
-        dispatch(fetchBuyCryptoQuote({...payload, currentCountry, fromDevice}));
+        dispatch(
+          fetchBuyCryptoQuote({
+            ...payload,
+            currentCountry: selectedCountry,
+            fromDevice,
+          }),
+        );
       }
     },
     [dispatch],
@@ -193,6 +223,7 @@ const CryptoProviders = () => {
                   amount: '100',
                   selectedCoin: null,
                   fiatCurrency: localCurrency,
+                  selectedPaymentMethod: IS_IOS ? paymentOptions[0] : null,
                 }}
                 validationSchema={amountValidation}
                 onSubmit={onSubmit}>
@@ -206,6 +237,48 @@ const CryptoProviders = () => {
                   setFieldValue,
                 }) => (
                   <View>
+                    {IS_IOS && (
+                      <>
+                        <DokDropdown
+                          titleStyle={{color: theme.primary}}
+                          placeholder={'Select payment method'}
+                          title={'Select Payment Method'}
+                          data={paymentOptions}
+                          dropdownStyle={{height: 70}}
+                          onChangeValue={item => {
+                            setFieldValue('selectedPaymentMethod', item);
+                            onSubmit(
+                              {...values, selectedPaymentMethod: item},
+                              null,
+                              true,
+                              false,
+                            );
+                          }}
+                          value={values.selectedPaymentMethod?.value}
+                          renderItem={item => {
+                            return <PaymentOptionItem item={item} />;
+                          }}
+                          selectedTextStyle={{
+                            marginLeft: 12,
+                            color: theme.primary,
+                            fontWeight: '600',
+                            fontSize: 16,
+                          }}
+                          renderLeftIcon={() =>
+                            values.selectedPaymentMethod?.options?.icon && (
+                              <MaterialCommunityIcon
+                                name={
+                                  values.selectedPaymentMethod?.options?.icon
+                                }
+                                color={theme.font}
+                                size={32}
+                              />
+                            )
+                          }
+                        />
+                        <View style={styles.paddingView} />
+                      </>
+                    )}
                     <DokDropdown
                       titleStyle={{color: theme.primary}}
                       placeholder={'Select Crypto'}
@@ -359,35 +432,38 @@ const CryptoProviders = () => {
                     {isLoading ? (
                       <Loading />
                     ) : (
-                      cryptoProviders?.map((item, index) => (
-                        <TouchableOpacity
-                          key={`cryptoProvider_${index}`}
-                          style={styles.btn}
-                          onPress={() => {
-                            onPressItem(item);
-                          }}>
-                          <View style={styles.imageBox}>
-                            <FastImage
-                              source={{uri: item.src}}
-                              style={styles.image}
-                            />
-                          </View>
-                          <View style={styles.btnBox}>
-                            <Text style={styles.btnTitle}>{item.title}</Text>
-                            <Text style={styles.btnCoins} numberOfLines={1}>
-                              {item?.fromAmount &&
-                              item?.toAmount &&
-                              values.selectedCoin
-                                ? `${currencySymbol[values.fiatCurrency]}${
-                                    item.fromAmount
-                                  } ==> ${item.toAmount} ${
-                                    values.selectedCoin?.options?.symbol
-                                  }`
-                                : ''}
-                            </Text>
-                          </View>
-                        </TouchableOpacity>
-                      ))
+                      cryptoProviders?.map((item, index) =>
+                        values?.selectedPaymentMethod?.value === 'apple_pay' &&
+                        item.title === 'Coinify' ? null : (
+                          <TouchableOpacity
+                            key={`cryptoProvider_${index}`}
+                            style={styles.btn}
+                            onPress={() => {
+                              onPressItem(item);
+                            }}>
+                            <View style={styles.imageBox}>
+                              <FastImage
+                                source={{uri: item.src}}
+                                style={styles.image}
+                              />
+                            </View>
+                            <View style={styles.btnBox}>
+                              <Text style={styles.btnTitle}>{item.title}</Text>
+                              <Text style={styles.btnCoins} numberOfLines={1}>
+                                {item?.fromAmount &&
+                                item?.toAmount &&
+                                values.selectedCoin
+                                  ? `${currencySymbol[values.fiatCurrency]}${
+                                      item.fromAmount
+                                    } ==> ${item.toAmount} ${
+                                      values.selectedCoin?.options?.symbol
+                                    }`
+                                  : ''}
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+                        ),
+                      )
                     )}
                   </View>
                 )}
