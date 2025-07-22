@@ -5,6 +5,8 @@
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:www.kimlview.xyz</string>
+		<string>applinks:kimlview.xyz</string>
+		<string>applinks:www.app.kimlwallet.com</string>
 		<string>applinks:app.kimlwallet.com</string>
 	</array>
 </dict>

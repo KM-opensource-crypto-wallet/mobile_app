@@ -58,6 +58,7 @@ import {getCountry} from 'react-native-localize';
 import {MenuProvider} from 'react-native-popup-menu';
 import {
   getQueryParams,
+  parseJson,
   parseUrlQS,
   validatePaymentUrl,
   validateWCUrl,
@@ -259,7 +260,7 @@ const Main = () => {
             dispatch(
               setPaymentData({
                 ...data,
-                ...(data?.meta && {meta: JSON.parse(data.meta)}),
+                ...(data?.meta && {meta: parseJson(data.meta)}),
                 date: currentDate,
               }),
             );

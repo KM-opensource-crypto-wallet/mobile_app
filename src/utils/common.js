@@ -10,6 +10,17 @@ export const inAppBrowserOptions = IS_ANDROID
     }
   : {modalEnabled: true};
 
+export const parseBoolean = value => value === 'true' || value === true;
+
+export const parseJson = value => {
+  try {
+    return JSON.parse(value);
+  } catch (e) {
+    console.warn('Failed to parse JSON:', e);
+    return value;
+  }
+};
+
 export async function generateSHA256ForCoins(coins, isEVMChain) {
   const coinData = Array.isArray(coins) ? coins : [];
   if (coinData.length) {

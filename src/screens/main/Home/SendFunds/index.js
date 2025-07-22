@@ -50,6 +50,7 @@ import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/
 import AddressBookPicker from 'components/AddressBookPicker';
 import {getTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSelector';
 import {isBitcoinChain} from 'dok-wallet-blockchain-networks/helper';
+import {parseBoolean} from 'utils/common';
 
 const SendFunds = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
@@ -60,7 +61,7 @@ const SendFunds = ({navigation, route}) => {
   const linkAddress = route?.params?.address;
   const linkAmount = route?.params?.amount;
   const newDate = route?.params?.newDateToString;
-  const fieldDisable = route?.params?.fieldDisable === 'true';
+  const fieldDisable = parseBoolean(route?.params?.fieldDisable);
   const redirect_url = route?.params?.redirect_url;
   const localCurrency = useSelector(getLocalCurrency);
   const currentWallet = useSelector(selectCurrentWallet);
