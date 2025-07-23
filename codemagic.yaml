@@ -59,13 +59,14 @@ workflows:
         script: |
           npm run git:update
           rm -f package-lock.json
+          yarn cache clean
           rm -rf node_modules
           rm -rf $HOME/.yarn
           rm -rf $HOME/.npm
           rm -rf /tmp/yarn-*
           corepack enable
           corepack prepare yarn@3.6.4 --activate
-          yarn install --frozen-lockfile
+          yarn install --immutable
       - name: Set Android SDK location
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/android/local.properties"
