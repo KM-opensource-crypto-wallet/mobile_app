@@ -50,6 +50,7 @@ import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/
 import AddressBookPicker from 'components/AddressBookPicker';
 import {getTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSelector';
 import {isBitcoinChain} from 'dok-wallet-blockchain-networks/helper';
+import {parseBoolean} from 'utils/common';
 
 const SendFunds = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
@@ -60,6 +61,8 @@ const SendFunds = ({navigation, route}) => {
   const linkAddress = route?.params?.address;
   const linkAmount = route?.params?.amount;
   const newDate = route?.params?.newDateToString;
+  const fieldDisable = parseBoolean(route?.params?.fieldDisable);
+  const redirect_url = route?.params?.redirect_url;
   const localCurrency = useSelector(getLocalCurrency);
   const currentWallet = useSelector(selectCurrentWallet);
   const transferData = useSelector(getTransferData);
@@ -105,19 +108,33 @@ const SendFunds = ({navigation, route}) => {
   useEffect(() => {
     const localAddress = qrAddress || linkAddress;
     const localAmount = qrAmount || linkAmount;
+    const localCurrencyAmount = localAmount
+      ? multiplyBNWithFixed(localAmount, currentCoin?.currencyRate, 2)
+      : '';
     if (localAddress) {
       formikRef?.current?.setFieldValue('send', localAddress);
     }
     if (localAmount) {
       formikRef?.current?.setFieldValue('amount', localAmount);
     }
-    if (localAddress || localAmount) {
+    if (localCurrencyAmount) {
+      formikRef?.current?.setFieldValue('currencyAmount', localCurrencyAmount);
+    }
+    if (localAddress || localAmount || localCurrencyAmount) {
       setTimeout(() => {
         formikRef?.current?.setFieldTouched('send', true);
         formikRef?.current?.setFieldTouched('amount', true);
+        formikRef?.current?.setFieldTouched('currencyAmount', true);
       }, 0);
     }
-  }, [linkAddress, linkAmount, newDate, qrAddress, qrAmount]);
+  }, [
+    currentCoin?.currencyRate,
+    linkAddress,
+    linkAmount,
+    newDate,
+    qrAddress,
+    qrAmount,
+  ]);
 
   useEffect(() => {
     if (new BigNumber(availableAmount).gt(new BigNumber(0))) {
@@ -240,6 +257,7 @@ const SendFunds = ({navigation, route}) => {
       dispatch(setExchangeSuccess(false));
       navigation.navigate('Transfer', {
         fromScreen: 'SendFunds',
+        redirect_url,
       });
     } else {
       formikRef?.current?.setFieldError('send', 'address is not valid');
@@ -326,9 +344,13 @@ const SendFunds = ({navigation, route}) => {
                           <Text style={styles.listTitle}>Send to</Text>
                           <View style={styles.rowView}>
                             <TextInput
-                              style={styles.addressInput}
+                              style={[
+                                styles.addressInput,
+                                fieldDisable && {width: '100%'},
+                              ]}
+                              disabled={fieldDisable}
                               label="Enter wallet adress or scan QR"
-                              textColor={theme.font}
+                              textColor={fieldDisable ? theme.gray : theme.font}
                               theme={{
                                 colors: {
                                   onSurfaceVariant: errors ? theme.gray : 'red',
@@ -350,24 +372,28 @@ const SendFunds = ({navigation, route}) => {
                               value={values.send}
                               onSubmitEditing={handleSubmit}
                               right={
-                                <TextInput.Icon
-                                  style={styles.scan}
-                                  icon="qrcode-scan"
-                                  iconColor={theme.backgroundColor}
-                                  size={15}
-                                  onPress={() => {
-                                    navigation.navigate('Scanner', {
-                                      page: 'SendFunds',
-                                    });
-                                  }}
-                                />
+                                !fieldDisable && (
+                                  <TextInput.Icon
+                                    style={styles.scan}
+                                    icon="qrcode-scan"
+                                    iconColor={theme.backgroundColor}
+                                    size={15}
+                                    onPress={() => {
+                                      navigation.navigate('Scanner', {
+                                        page: 'SendFunds',
+                                      });
+                                    }}
+                                  />
+                                )
                               }
                             />
-                            <AddressBookPicker
-                              chain_name={currentCoin?.chain_name}
-                              walletId={currentWallet?.clientId}
-                              onSelectAddress={onSelectAddress}
-                            />
+                            {!fieldDisable && (
+                              <AddressBookPicker
+                                chain_name={currentCoin?.chain_name}
+                                walletId={currentWallet?.clientId}
+                                onSelectAddress={onSelectAddress}
+                              />
+                            )}
                           </View>
                           {errors.send && (
                             <Text style={styles.textConfirm}>
@@ -380,8 +406,9 @@ const SendFunds = ({navigation, route}) => {
                           <View style={styles.inputView}>
                             <TextInput
                               style={styles.input}
+                              disabled={fieldDisable}
                               label="Enter amount of Crypto to send"
-                              textColor={theme.font}
+                              textColor={fieldDisable ? theme.gray : theme.font}
                               theme={{
                                 colors: {
                                   onSurfaceVariant: errors ? theme.gray : 'red',
@@ -415,23 +442,25 @@ const SendFunds = ({navigation, route}) => {
                               keyboardType="decimal-pad"
                               type="number"
                             />
-                            <TouchableOpacity
-                              style={styles.btnMax}
-                              hitSlop={{
-                                top: 12,
-                                left: 12,
-                                right: 12,
-                                bottom: 12,
-                              }}
-                              onPress={() => {
-                                setFieldValue(
-                                  'currencyAmount',
-                                  availableAmountCurrency,
-                                );
-                                setFieldValue('amount', maxAmount + '');
-                              }}>
-                              <Text style={styles.btnText}>Max</Text>
-                            </TouchableOpacity>
+                            {!fieldDisable && (
+                              <TouchableOpacity
+                                style={styles.btnMax}
+                                hitSlop={{
+                                  top: 12,
+                                  left: 12,
+                                  right: 12,
+                                  bottom: 12,
+                                }}
+                                onPress={() => {
+                                  setFieldValue(
+                                    'currencyAmount',
+                                    availableAmountCurrency,
+                                  );
+                                  setFieldValue('amount', maxAmount + '');
+                                }}>
+                                <Text style={styles.btnText}>Max</Text>
+                              </TouchableOpacity>
+                            )}
                           </View>
                           {errors.amount && (
                             <Text style={styles.textConfirm}>
@@ -444,8 +473,9 @@ const SendFunds = ({navigation, route}) => {
                           <View style={styles.inputView}>
                             <TextInput
                               style={styles.input}
+                              disabled={fieldDisable}
                               label={`Enter ${localCurrency} amount of Crypto to send`}
-                              textColor={theme.font}
+                              textColor={fieldDisable ? theme.gray : theme.font}
                               theme={{
                                 colors: {
                                   onSurfaceVariant: !errors?.currencyAmount
@@ -483,23 +513,25 @@ const SendFunds = ({navigation, route}) => {
                               keyboardType="decimal-pad"
                               type="number"
                             />
-                            <TouchableOpacity
-                              style={styles.btnMax}
-                              hitSlop={{
-                                top: 12,
-                                left: 12,
-                                right: 12,
-                                bottom: 12,
-                              }}
-                              onPress={() => {
-                                setFieldValue(
-                                  'currencyAmount',
-                                  availableAmountCurrency,
-                                );
-                                setFieldValue('amount', maxAmount + '');
-                              }}>
-                              <Text style={styles.btnText}>Max</Text>
-                            </TouchableOpacity>
+                            {!fieldDisable && (
+                              <TouchableOpacity
+                                style={styles.btnMax}
+                                hitSlop={{
+                                  top: 12,
+                                  left: 12,
+                                  right: 12,
+                                  bottom: 12,
+                                }}
+                                onPress={() => {
+                                  setFieldValue(
+                                    'currencyAmount',
+                                    availableAmountCurrency,
+                                  );
+                                  setFieldValue('amount', maxAmount + '');
+                                }}>
+                                <Text style={styles.btnText}>Max</Text>
+                              </TouchableOpacity>
+                            )}
                           </View>
                           {errors.amount && (
                             <Text style={styles.textConfirm}>
@@ -512,8 +544,9 @@ const SendFunds = ({navigation, route}) => {
                             <Text style={styles.listTitle}>Memo:</Text>
                             <TextInput
                               style={styles.input}
+                              disabled={fieldDisable}
                               label="Enter Memo or Scan QR"
-                              textColor={theme.font}
+                              textColor={fieldDisable ? theme.gray : theme.font}
                               theme={{
                                 colors: {
                                   onSurfaceVariant: errors ? theme.gray : 'red',

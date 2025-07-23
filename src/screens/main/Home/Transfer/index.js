@@ -13,6 +13,7 @@ import {
   Text,
   TouchableWithoutFeedback,
   Keyboard,
+  Linking,
 } from 'react-native';
 
 import {useDispatch, useSelector} from 'react-redux';
@@ -89,6 +90,7 @@ const Transfer = ({navigation, route}) => {
   const dispatch = useDispatch();
   const currentWallet = useSelector(selectCurrentWallet);
   const fromScreen = route?.params?.fromScreen;
+  const redirect_url = route?.params?.redirect_url;
   const {
     selectedFromAsset,
     selectedFromWallet,
@@ -255,7 +257,7 @@ const Transfer = ({navigation, route}) => {
   }, [transferData?.selectedNFT?.metadata?.image]);
 
   const submitTransferData = useCallback(async () => {
-    await dispatch(
+    return await dispatch(
       sendFunds({
         to: transferData.toAddress,
         memo: transferData.memo,
@@ -307,7 +309,7 @@ const Transfer = ({navigation, route}) => {
         phrase,
         navigation,
       }),
-    );
+    ).unwrap();
   }, [
     dispatch,
     transferData.toAddress,
@@ -346,8 +348,17 @@ const Transfer = ({navigation, route}) => {
   const onSuccess = useCallback(async () => {
     setShowConfirmModal(false);
     await delay(300);
-    await submitTransferData();
-  }, [submitTransferData]);
+    const {tx_hash, status} = await submitTransferData();
+    if (redirect_url && tx_hash) {
+      try {
+        const decodedUrl = decodeURIComponent(redirect_url);
+        const link = `${decodedUrl}&tx_hash=${tx_hash}&status=${status}`;
+        await Linking.openURL(link);
+      } catch (error) {
+        console.error('Failed to open redirect URL:', error);
+      }
+    }
+  }, [redirect_url, submitTransferData]);
 
   const handleSubmitForm = () => {
     setShowConfirmModal(true);

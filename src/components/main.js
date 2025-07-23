@@ -56,7 +56,13 @@ import {
 import {IS_ANDROID, IS_IOS} from 'utils/dimensions';
 import {getCountry} from 'react-native-localize';
 import {MenuProvider} from 'react-native-popup-menu';
-import {parseUrlQS, validatePaymentUrl, validateWCUrl} from 'utils/common';
+import {
+  getQueryParams,
+  parseJson,
+  parseUrlQS,
+  validatePaymentUrl,
+  validateWCUrl,
+} from 'utils/common';
 import {
   setIsUpdateAvailable,
   setIsWalletConnectInitialized,
@@ -156,7 +162,14 @@ const Main = () => {
         dispatch(setWcUri(decodeURIComponent(qsObj?.uri)));
       } else if (validatePaymentUrl(url, qsObj)) {
         const currentDate = new Date().toISOString();
-        dispatch(setPaymentData({...qsObj, date: currentDate}));
+        const data = getQueryParams(url);
+        dispatch(
+          setPaymentData({
+            ...data,
+            ...(data?.meta && {meta: JSON.parse(data.meta)}),
+            date: currentDate,
+          }),
+        );
       }
     } catch (e) {
       console.warn('error in getInitialUrlLink', e);
@@ -242,7 +255,15 @@ const Main = () => {
             dispatch(setWcUri(decodeURIComponent(qsObj?.uri)));
           } else if (validatePaymentUrl(url, qsObj)) {
             const currentDate = new Date().toISOString();
-            dispatch(setPaymentData({...qsObj, date: currentDate}));
+            const data = getQueryParams(url);
+            navigationRef.current?.navigate('Home');
+            dispatch(
+              setPaymentData({
+                ...data,
+                ...(data?.meta && {meta: parseJson(data.meta)}),
+                date: currentDate,
+              }),
+            );
           }
         } catch (e) {
           console.warn('error in getInitialUrlLink', e);
