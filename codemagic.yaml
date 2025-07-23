@@ -58,20 +58,7 @@ workflows:
       - name: Install yarn dependencies
         script: |
           npm run git:update
-          echo "git update complete"
           rm -f package-lock.json
-          echo "packege-lock.json remove"
-          yarn cache clean
-          echo "yarn cache clean"
-          rm -rf node_modules
-          echo "remove node_modules"
-          rm -rf $HOME/.yarn
-          echo "remove home yarn"
-          rm -rf $HOME/.npm
-          echo "remove npm"
-          rm -rf /tmp/yarn-*
-          echo "remove temp yarn"
-          echo "Yarn version: $(yarn --version)"
           yarn install --immutable
       - name: Set Android SDK location
         script: |
