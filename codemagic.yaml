@@ -57,8 +57,9 @@ workflows:
           EOF
       - name: Set Yarn version
         script: |
-            npm install -g yarn@3.6.4
-            yarn --version
+          corepack enable
+          corepack prepare yarn@3.6.4 --activate
+          yarn --version
       - name: Install yarn dependencies
         script: |
           npm run git:update &&  yarn install
@@ -158,7 +159,8 @@ workflows:
           EOF
       - name: Set Yarn version
         script: |
-          npm install -g yarn@3.6.4
+          corepack enable
+          corepack prepare yarn@3.6.4 --activate
           yarn --version
       - name: Install yarn dependencies
         script: |
@@ -255,7 +257,8 @@ workflows:
           EOF
       - name: Set Yarn version
         script: |
-          npm install -g yarn@3.6.4
+          corepack enable
+          corepack prepare yarn@3.6.4 --activate
           yarn --version
       - name: Install yarn dependencies
         script: |
