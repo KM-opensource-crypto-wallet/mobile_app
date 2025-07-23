@@ -50,6 +50,7 @@ import ModalAddCoins from 'components/ModalAddCoins';
 import PaymentOptionItem from 'components/PaymentOptionItem';
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {IS_KIML_WALLET} from 'utils/wlData';
 
 const currencyPicker = [
   {
@@ -185,7 +186,7 @@ const CryptoProviders = () => {
         );
       }
     },
-    [dispatch],
+    [dispatch, selectedCountry],
   );
 
   const onPressAddMoreCoin = useCallback(() => {
@@ -223,7 +224,8 @@ const CryptoProviders = () => {
                   amount: '100',
                   selectedCoin: null,
                   fiatCurrency: localCurrency,
-                  selectedPaymentMethod: IS_IOS ? paymentOptions[0] : null,
+                  selectedPaymentMethod:
+                    IS_IOS && IS_KIML_WALLET ? paymentOptions[0] : null,
                 }}
                 validationSchema={amountValidation}
                 onSubmit={onSubmit}>
@@ -237,7 +239,7 @@ const CryptoProviders = () => {
                   setFieldValue,
                 }) => (
                   <View>
-                    {IS_IOS && (
+                    {IS_IOS && IS_KIML_WALLET && (
                       <>
                         <DokDropdown
                           titleStyle={{color: theme.primary}}
