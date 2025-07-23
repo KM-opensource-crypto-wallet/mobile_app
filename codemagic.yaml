@@ -24,6 +24,7 @@ workflows:
       vars:
         PACKAGE_NAME: "com.coinswallet" # <-- Put your package name here e.g. com.domain.myapp
       node: 20
+
     scripts:
       - name: Generate .env file
         script: |
@@ -54,9 +55,13 @@ workflows:
           DOKWALLET_WALLET_CONNECT_ID=$DOKWALLET_WALLET_CONNECT_ID
           KIMLWALLET_WALLET_CONNECT_ID=$KIMLWALLET_WALLET_CONNECT_ID
           EOF
+      - name: Set Yarn version
+        script: |
+            npm install -g yarn@3.6.4
+            yarn --version
       - name: Install yarn dependencies
         script: |
-          npm run git:update &&  yarn install --immutable --inline-builds
+          npm run git:update &&  yarn install
       - name: Set Android SDK location
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/android/local.properties"
@@ -151,6 +156,10 @@ workflows:
           DOKWALLET_WALLET_CONNECT_ID=$DOKWALLET_WALLET_CONNECT_ID
           KIMLWALLET_WALLET_CONNECT_ID=$KIMLWALLET_WALLET_CONNECT_ID
           EOF
+      - name: Set Yarn version
+        script: |
+          npm install -g yarn@3.6.4
+          yarn --version
       - name: Install yarn dependencies
         script: |
           npm run git:update && yarn install
@@ -244,6 +253,10 @@ workflows:
           DOKWALLET_WALLET_CONNECT_ID=$DOKWALLET_WALLET_CONNECT_ID
           KIMLWALLET_WALLET_CONNECT_ID=$KIMLWALLET_WALLET_CONNECT_ID
           EOF
+      - name: Set Yarn version
+        script: |
+          npm install -g yarn@3.6.4
+          yarn --version
       - name: Install yarn dependencies
         script: |
           npm run git:update && yarn install
