@@ -44,6 +44,7 @@ import SelectCountry from 'screens/main/BuyCrypto/SelectCountry';
 import ReceivePaymentUrl from 'screens/main/ReceivePaymentUrl';
 import Entypo from 'react-native-vector-icons/Entypo';
 import {getCountry} from 'react-native-localize';
+import {IS_DOK_WALLET} from 'utils/wlData';
 
 const Drawer = createDrawerNavigator();
 
@@ -192,7 +193,7 @@ export default function Sidebar({navigation, route}) {
             ),
           })}
         />
-        {IS_IOS ? (
+        {IS_IOS && IS_DOK_WALLET ? (
           <Drawer.Screen
             name="SelectCountry"
             component={SelectCountry}
@@ -225,7 +226,7 @@ export default function Sidebar({navigation, route}) {
               ),
             })}
           />
-        ) : (
+        ) : IS_DOK_WALLET || IS_ANDROID ? (
           <Drawer.Screen
             name="BuyCrypto"
             component={BuyCrypto}
@@ -258,13 +259,48 @@ export default function Sidebar({navigation, route}) {
               ),
             })}
           />
-        )}
-        {!HIDE_SWAP_COUNTRIES.includes(deviceCountry) && (
+        ) : null}
+        {!HIDE_SWAP_COUNTRIES.includes(deviceCountry) &&
+          (IS_ANDROID || IS_DOK_WALLET) && (
+            <Drawer.Screen
+              name="Exchange"
+              component={Exchange}
+              options={({navigation}) => ({
+                unmountOnBlur: true,
+                headerLeft: () => (
+                  <TouchableOpacity
+                    style={{
+                      padding: 11,
+                      paddingLeft: isIpad ? 50 : 11,
+                    }}
+                    onPress={() => navigation.navigate('Home')}>
+                    <BackIcon
+                      width="22"
+                      height="18"
+                      fill={theme.borderActiveColor}
+                    />
+                  </TouchableOpacity>
+                ),
+                headerTitleAlign: 'center',
+                headerTitle: 'Swap',
+                title: 'Swap',
+                drawerIcon: ({focused}) => (
+                  <ConvertIcon
+                    width="25"
+                    height="26"
+                    fill={focused ? theme.background : theme.sidebarIcon}
+                  />
+                ),
+              })}
+            />
+          )}
+        {(IS_ANDROID || IS_DOK_WALLET) && (
           <Drawer.Screen
-            name="Exchange"
-            component={Exchange}
+            name="SelectCountrySellCrypto"
+            component={SelectCountry}
+            initialParams={{isSellCrypto: true}}
             options={({navigation}) => ({
-              unmountOnBlur: true,
+              title: 'Sell Crypto',
               headerLeft: () => (
                 <TouchableOpacity
                   style={{
@@ -280,10 +316,8 @@ export default function Sidebar({navigation, route}) {
                 </TouchableOpacity>
               ),
               headerTitleAlign: 'center',
-              headerTitle: 'Swap',
-              title: 'Swap',
               drawerIcon: ({focused}) => (
-                <ConvertIcon
+                <BuyCryptoIcon
                   width="25"
                   height="26"
                   fill={focused ? theme.background : theme.sidebarIcon}
@@ -292,36 +326,6 @@ export default function Sidebar({navigation, route}) {
             })}
           />
         )}
-        <Drawer.Screen
-          name="SelectCountrySellCrypto"
-          component={SelectCountry}
-          initialParams={{isSellCrypto: true}}
-          options={({navigation}) => ({
-            title: 'Sell Crypto',
-            headerLeft: () => (
-              <TouchableOpacity
-                style={{
-                  padding: 11,
-                  paddingLeft: isIpad ? 50 : 11,
-                }}
-                onPress={() => navigation.navigate('Home')}>
-                <BackIcon
-                  width="22"
-                  height="18"
-                  fill={theme.borderActiveColor}
-                />
-              </TouchableOpacity>
-            ),
-            headerTitleAlign: 'center',
-            drawerIcon: ({focused}) => (
-              <BuyCryptoIcon
-                width="25"
-                height="26"
-                fill={focused ? theme.background : theme.sidebarIcon}
-              />
-            ),
-          })}
-        />
         <Drawer.Screen
           name="Wallets"
           component={Wallets}

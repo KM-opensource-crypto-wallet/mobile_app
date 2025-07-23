@@ -9,6 +9,8 @@ const WLObj = {
 };
 
 export const wlName = WLObj[bundleId];
+export const IS_KIML_WALLET = wlName === 'kimlwallet';
+export const IS_DOK_WALLET = wlName === 'dokwallet';
 
 const WHITE_LABEL_ID_OBJ = {
   dokwallet: '656d95510a58ec43999a0f77',
