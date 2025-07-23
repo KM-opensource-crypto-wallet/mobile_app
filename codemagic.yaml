@@ -57,7 +57,7 @@ workflows:
           EOF
       - name: Install yarn dependencies
         script: |
-          corepack enable && corepack prepare yarn@3.6.4 --activate && yarn --version && npm run git:update && yarn install
+          corepack enable && corepack prepare yarn@3.6.4 --activate && yarn --version && yarn git:update && yarn install
       - name: Set Android SDK location
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/android/local.properties"
@@ -154,7 +154,7 @@ workflows:
           EOF
       - name: Install yarn dependencies
         script: |
-          corepack enable && corepack prepare yarn@3.6.4 --activate && yarn --version && npm run git:update && yarn install
+          corepack enable && corepack prepare yarn@3.6.4 --activate && yarn --version && yarn git:update && yarn install
       - name: Install CocoaPods dependencies
         script: |
          cd ios && pod install
@@ -247,7 +247,7 @@ workflows:
           EOF
       - name: Install yarn dependencies
         script: |
-           corepack enable && corepack prepare yarn@3.6.4 --activate && yarn --version && npm run git:update && yarn install
+           corepack enable && corepack prepare yarn@3.6.4 --activate && yarn --version && yarn git:update && yarn install
       - name: Install CocoaPods dependencies
         script: |
           cd ios && pod install
