@@ -10,7 +10,7 @@ import {
   setCurrentCoin,
   setCurrentWalletCoinsPosition,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import ChainItem from 'components/ChainItem';
 import {currencySymbol} from 'data/currency';
 import KeyboardArrow from 'assets/images/icons/keyboard-arrow-right.svg';

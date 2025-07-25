@@ -18,9 +18,9 @@ import {isFingerprint} from 'dok-wallet-blockchain-networks/redux/settings/setti
 import FingerprintScanner from 'react-native-fingerprint-scanner';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './VerifyLoginScreenStyles';
-import RNScreenshotPrevent from 'react-native-screenshot-prevent';
+
 import {IS_IOS} from 'utils/dimensions';
-import {WL_APP_NAME} from "utils/wlData";
+import {WL_APP_NAME} from 'utils/wlData';
 
 export const VerifyLoginScreen = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -33,14 +33,6 @@ export const VerifyLoginScreen = ({navigation}) => {
   const storePassword = useSelector(getUserPassword);
   const fingerprint = useSelector(isFingerprint);
   const isFinger = useSelector(getFingerprintAuth);
-
-  useEffect(() => {
-    RNScreenshotPrevent.enabled(true);
-
-    return () => {
-      RNScreenshotPrevent.enabled(false);
-    };
-  }, []);
 
   const handleFingerprintAuth = useCallback(async () => {
     if (fingerprint) {

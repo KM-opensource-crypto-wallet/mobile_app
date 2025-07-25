@@ -11,8 +11,6 @@ import {validationSchemaRegistration} from 'utils/validationSchema';
 import {IS_IOS, useFloatingHeight} from 'utils/dimensions';
 import myStyles from './RegistrationScreenStyles';
 import {ThemeContext} from 'theme/ThemeContext';
-import RNScreenshotPrevent from 'react-native-screenshot-prevent';
-import {useIsFocused} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
@@ -24,7 +22,6 @@ export const RegistrationScreen = ({navigation}) => {
   const [hide, setHide] = useState(true);
   const [hideConfirm, setHideConfirm] = useState(true);
   const floatingBtnHeight = useFloatingHeight();
-  const isFocused = useIsFocused();
 
   const handleSubmit = values => {
     dispatch(loadingOn());
@@ -34,17 +31,6 @@ export const RegistrationScreen = ({navigation}) => {
       navigation.replace('ResetWallet', {isFromOnBoarding: true});
     }, 200);
   };
-
-  useEffect(() => {
-    if (isFocused) {
-      RNScreenshotPrevent.enabled(true);
-      if (IS_IOS && !__DEV__) {
-        RNScreenshotPrevent.enableSecureView();
-      }
-    } else {
-      RNScreenshotPrevent.enabled(false);
-    }
-  }, [isFocused]);
 
   return (
     <DokSafeAreaView style={styles.safeAreaView}>

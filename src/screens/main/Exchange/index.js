@@ -28,7 +28,7 @@ import ScurvedIcon from 'assets/images/icons/S-curved.svg';
 import SelectInputExchange from 'components/SelectInputExchange';
 
 import {ThemeContext} from 'theme/ThemeContext';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 
 import DokDropdown from 'components/DokDropdown';
 import {

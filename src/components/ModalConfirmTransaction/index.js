@@ -12,7 +12,6 @@ import {useSelector} from 'react-redux';
 import {ThemeContext} from 'theme/ThemeContext';
 import {isFingerprint} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import FingerprintScanner from 'react-native-fingerprint-scanner';
-import RNScreenshotPrevent from 'react-native-screenshot-prevent';
 import {WL_APP_NAME} from 'utils/wlData';
 
 const WIDTH = Dimensions.get('window').width + 80;
@@ -59,17 +58,6 @@ const ModalConfirmTransaction = ({visible, hideModal, onSuccess}) => {
       }
     }
   }, [fingerprint, onSuccess, visible]);
-
-  useEffect(() => {
-    if (visible) {
-      RNScreenshotPrevent.enabled(true);
-
-      setTimeout(() => {
-        handleFingerprintAuth().then();
-      }, 200);
-    } else {
-    }
-  }, [handleFingerprintAuth, visible]);
 
   const onSubmit = values => {
     const {currentPassword} = values;

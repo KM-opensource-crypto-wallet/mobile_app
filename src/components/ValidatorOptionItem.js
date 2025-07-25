@@ -3,7 +3,7 @@ import {View, StyleSheet, Text, Dimensions} from 'react-native';
 import {ThemeContext} from 'theme/ThemeContext';
 const {width: screenWidth} = Dimensions.get('window');
 const itemWidth = screenWidth / 1.4;
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 
 const ValidatorOptionItem = ({item, currentCoin}) => {
   const {theme} = useContext(ThemeContext);

@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   BackHandler,
 } from 'react-native';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import {getSdkError} from '@walletconnect/utils';
 import {useDispatch, useSelector} from 'react-redux';
 import {getWalletConnect} from 'dok-wallet-blockchain-networks/service/walletconnect';

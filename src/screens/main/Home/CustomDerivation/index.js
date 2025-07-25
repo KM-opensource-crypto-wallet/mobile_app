@@ -28,7 +28,7 @@ import {
   addCustomDeriveAddress,
   deleteDeriveAddressInCurrentCoin,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import DeriveAddressSheet from 'components/DeriveAddressSheet';
 import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
 import Clipboard from '@react-native-clipboard/clipboard';

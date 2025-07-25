@@ -1,6 +1,6 @@
 import React, {useContext} from 'react';
 import {Text, StyleSheet, View, TouchableOpacity} from 'react-native';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import {ThemeContext} from 'theme/ThemeContext';
 const ExchangeProviderItem = ({
   item,

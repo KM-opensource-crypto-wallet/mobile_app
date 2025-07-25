@@ -52,17 +52,22 @@ PODS:
   - hermes-engine (0.74.7):
     - hermes-engine/Pre-built (= 0.74.7)
   - hermes-engine/Pre-built (0.74.7)
-  - libwebp (1.3.2):
-    - libwebp/demux (= 1.3.2)
-    - libwebp/mux (= 1.3.2)
-    - libwebp/sharpyuv (= 1.3.2)
-    - libwebp/webp (= 1.3.2)
-  - libwebp/demux (1.3.2):
+  - libavif/core (0.11.1)
+  - libavif/libdav1d (0.11.1):
+    - libavif/core
+    - libdav1d (>= 0.6.0)
+  - libdav1d (1.2.0)
+  - libwebp (1.5.0):
+    - libwebp/demux (= 1.5.0)
+    - libwebp/mux (= 1.5.0)
+    - libwebp/sharpyuv (= 1.5.0)
+    - libwebp/webp (= 1.5.0)
+  - libwebp/demux (1.5.0):
     - libwebp/webp
-  - libwebp/mux (1.3.2):
+  - libwebp/mux (1.5.0):
     - libwebp/demux
-  - libwebp/sharpyuv (1.3.2)
-  - libwebp/webp (1.3.2):
+  - libwebp/sharpyuv (1.5.0)
+  - libwebp/webp (1.5.0):
     - libwebp/sharpyuv
   - LibXMTP (0.5.4-beta0)
   - Logging (1.0.0)
@@ -1112,8 +1117,30 @@ PODS:
     - React-Core
   - react-native-restart (0.0.27):
     - React-Core
-  - react-native-safe-area-context (5.4.0):
+  - react-native-safe-area-context (5.5.2):
     - React-Core
+  - react-native-screenguard (1.1.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Codegen
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SDWebImage (~> 5.21.0)
+    - Yoga
   - react-native-sensitive-info (5.5.8):
     - React
   - react-native-slider (4.5.6):
@@ -1400,10 +1427,13 @@ PODS:
     - React-Core
   - RNDeviceInfo (10.14.0):
     - React-Core
-  - RNFastImage (8.6.3):
+  - RNFastImage (8.10.0):
+    - libavif/core (~> 0.11.1)
+    - libavif/libdav1d (~> 0.11.1)
     - React-Core
-    - SDWebImage (~> 5.11.1)
-    - SDWebImageWebPCoder (~> 0.8.4)
+    - SDWebImage (>= 5.19.1)
+    - SDWebImageAVIFCoder (~> 0.11.0)
+    - SDWebImageWebPCoder (~> 0.14)
   - RNGestureHandler (2.25.0):
     - DoubleConversion
     - glog
@@ -1561,8 +1591,6 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNScreenshotPrevent (1.1.7):
-    - React
   - RNSha256 (1.4.10):
     - React-Core
   - RNShare (8.2.2):
@@ -1592,12 +1620,15 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - SDWebImage (5.11.1):
-    - SDWebImage/Core (= 5.11.1)
-  - SDWebImage/Core (5.11.1)
-  - SDWebImageWebPCoder (0.8.5):
+  - SDWebImage (5.21.0):
+    - SDWebImage/Core (= 5.21.0)
+  - SDWebImage/Core (5.21.0)
+  - SDWebImageAVIFCoder (0.11.0):
+    - libavif/core (>= 0.11.0)
+    - SDWebImage (~> 5.10)
+  - SDWebImageWebPCoder (0.14.6):
     - libwebp (~> 1.0)
-    - SDWebImage/Core (~> 5.10)
+    - SDWebImage/Core (~> 5.17)
   - secp256k1.swift (0.1.4)
   - SocketRocket (0.7.0)
   - SwiftProtobuf (1.25.2)
@@ -1683,6 +1714,7 @@ DEPENDENCIES:
   - react-native-render-html (from `../node_modules/react-native-render-html`)
   - react-native-restart (from `../node_modules/react-native-restart`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - react-native-screenguard (from `../node_modules/react-native-screenguard`)
   - react-native-sensitive-info (from `../node_modules/react-native-sensitive-info`)
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
   - react-native-view-shot (from `../node_modules/react-native-view-shot`)
@@ -1715,7 +1747,7 @@ DEPENDENCIES:
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
-  - RNFastImage (from `../node_modules/react-native-fast-image`)
+  - "RNFastImage (from `../node_modules/@d11/react-native-fast-image`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNInAppBrowser (from `../node_modules/react-native-inappbrowser-reborn`)
   - RNLocalize (from `../node_modules/react-native-localize`)
@@ -1723,12 +1755,12 @@ DEPENDENCIES:
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
-  - RNScreenshotPrevent (from `../node_modules/react-native-screenshot-prevent`)
   - RNSha256 (from `../node_modules/react-native-sha256`)
   - RNShare (from `../node_modules/react-native-share`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNTestFlight (from `../node_modules/react-native-test-flight`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
+  - SDWebImage (= 5.21.0)
   - TrustWalletCore (= 3.2.9)
   - "XMTPReactNative (from `../node_modules/@xmtp/react-native-sdk/ios`)"
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -1740,12 +1772,15 @@ SPEC REPOS:
     - Connect-Swift
     - GenericJSON
     - GzipSwift
+    - libavif
+    - libdav1d
     - libwebp
     - LibXMTP
     - Logging
     - MessagePacker
     - OpenSSL-Universal
     - SDWebImage
+    - SDWebImageAVIFCoder
     - SDWebImageWebPCoder
     - secp256k1.swift
     - SocketRocket
@@ -1866,6 +1901,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-restart"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-screenguard:
+    :path: "../node_modules/react-native-screenguard"
   react-native-sensitive-info:
     :path: "../node_modules/react-native-sensitive-info"
   react-native-slider:
@@ -1931,7 +1968,7 @@ EXTERNAL SOURCES:
   RNDeviceInfo:
     :path: "../node_modules/react-native-device-info"
   RNFastImage:
-    :path: "../node_modules/react-native-fast-image"
+    :path: "../node_modules/@d11/react-native-fast-image"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNInAppBrowser:
@@ -1946,8 +1983,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
-  RNScreenshotPrevent:
-    :path: "../node_modules/react-native-screenshot-prevent"
   RNSha256:
     :path: "../node_modules/react-native-sha256"
   RNShare:
@@ -1984,7 +2019,9 @@ SPEC CHECKSUMS:
   glog: fdfdfe5479092de0c4bdbebedd9056951f092c4f
   GzipSwift: 893f3e48e597a1a4f62fafcb6514220fcf8287fa
   hermes-engine: 21ea4e6a0b64854652c8c20cb815efdbb3131fdd
-  libwebp: 1786c9f4ff8a279e4dac1e8f385004d5fc253009
+  libavif: 84bbb62fb232c3018d6f1bab79beea87e35de7b7
+  libdav1d: 23581a4d8ec811ff171ed5e2e05cd27bad64c39f
+  libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   LibXMTP: 549e85c40f00957be3e114a823a2887cdcf5817a
   Logging: 9ef4ecb546ad3169398d5a723bc9bea1c46bef26
   MessagePacker: ab2fe250e86ea7aedd1a9ee47a37083edd41fd02
@@ -2028,7 +2065,8 @@ SPEC CHECKSUMS:
   react-native-randombytes: 421f1c7d48c0af8dbcd471b0324393ebf8fe7846
   react-native-render-html: 984dfe2294163d04bf5fe25d7c9f122e60e05ebe
   react-native-restart: 7595693413fe3ca15893702f2c8306c62a708162
-  react-native-safe-area-context: 8870dc3e45c8d241336cd8ee3fa3fc76f3a040ac
+  react-native-safe-area-context: 63c9a6def15e6f6377e59cea51566148a2774d62
+  react-native-screenguard: b956e5ce911d6d0dbf420468ac254ccc085bdf3e
   react-native-sensitive-info: 400c6e3d27945e15c8cddb5b4b92233c85ee06f8
   react-native-slider: 04b00ccd4b9fa0882004ea22f9e753244f1a48dc
   react-native-view-shot: 6b7ed61d77d88580fed10954d45fad0eb2d47688
@@ -2061,7 +2099,7 @@ SPEC CHECKSUMS:
   RNCAsyncStorage: ec53e44dc3e75b44aa2a9f37618a49c3bc080a7a
   RNCClipboard: 4411a880506f11fbcbdc03b5093eb8ffb246d900
   RNDeviceInfo: 59344c19152c4b2b32283005f9737c5c64b42fba
-  RNFastImage: 5c9c9fed9c076e521b3f509fe79e790418a544e8
+  RNFastImage: 033865806ab31d808ba60a49605f1b515d13e1b2
   RNGestureHandler: 29c5c18249e444b9300d66ad567202c2e278b4a6
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
   RNLocalize: 06991b9c31e7a898a9fa6ddb204ce0f53a967248
@@ -2069,14 +2107,14 @@ SPEC CHECKSUMS:
   RNReactNativeHapticFeedback: 7c701396d35a0e8863d8d8f97a7273c5f8509b40
   RNReanimated: b0728bed09875d78b9a3a0ba0e2d1171f63f8b5a
   RNScreens: 177a3fedd12fc8d12af3c23f17e7bbdc9749a2cd
-  RNScreenshotPrevent: 4ce6044ecdb37694f68a0d7cbe81ccdc39c1bca3
   RNSha256: e1bc64e9e50b293d5282bb4caa1b2043931f1c9d
   RNShare: d82e10f6b7677f4b0048c23709bd04098d5aee6c
   RNSVG: d956b40703d2292f808d57c9ee5452c46ac6b4b1
   RNTestFlight: 3419178faa8527ecfe803607fd338a3803f1fb0d
   RNVectorIcons: 845eda5c7819bd29699cafd0fc98c9d4afe28c96
-  SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
-  SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d
+  SDWebImage: f84b0feeb08d2d11e6a9b843cb06d75ebf5b8868
+  SDWebImageAVIFCoder: 00310d246aab3232ce77f1d8f0076f8c4b021d90
+  SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   secp256k1.swift: a7e7a214f6db6ce5db32cc6b2b45e5c4dd633634
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
   SwiftProtobuf: 407a385e97fd206c4fbe880cc84123989167e0d1
@@ -2086,6 +2124,6 @@ SPEC CHECKSUMS:
   XMTPReactNative: 8ed8ccf8851955f62ed2582362bb5f4609ce5052
   Yoga: 9db4b2da1ed5d8e0c94158f9ac379c8b1b529f59
 
-PODFILE CHECKSUM: 26dad5c933ee52873b6e52db817fe0af873a5279
+PODFILE CHECKSUM: 70d35d417a414e58f929fee0458a35c235572d39
 
 COCOAPODS: 1.14.3

@@ -2499,6 +2499,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@d11/react-native-fast-image@npm:^8.10.0":
+  version: 8.10.0
+  resolution: "@d11/react-native-fast-image@npm:8.10.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 17857e3063c164ab0cfd8ff25808737b2949b07d574e9da12a604640911029b090b4bc948465e65c0d818e5f62b3f809f4c1eeb02572586f8495d60f807687ec
+  languageName: node
+  linkType: hard
+
 "@egjs/hammerjs@npm:^2.0.17":
   version: 2.0.17
   resolution: "@egjs/hammerjs@npm:2.0.17"
@@ -11861,6 +11871,7 @@ __metadata:
     "@cosmjs/proto-signing": ^0.32.2
     "@cosmjs/stargate": ^0.32.2
     "@cosmos-client/core": ^0.47.4
+    "@d11/react-native-fast-image": ^8.10.0
     "@ethersproject/shims": ^5.7.0
     "@glif/filecoin-address": ^4.0.0
     "@gorhom/bottom-sheet": ^4
@@ -11964,7 +11975,6 @@ __metadata:
     react-native-draggable-flatlist: 4.0.1
     react-native-element-dropdown: 2.12.4
     react-native-error-boundary: ^1.2.4
-    react-native-fast-image: ^8.6.3
     react-native-fast-pbkdf2: ^0.3.1
     react-native-fingerprint-scanner: "git+https://github.com/hieuvp/react-native-fingerprint-scanner.git#9cecc0db326471c571553ea85f7c016fee2f803d"
     react-native-gesture-handler: ^2.14.1
@@ -11989,9 +11999,9 @@ __metadata:
     react-native-reanimated: 3.16.7
     react-native-render-html: ^6.3.4
     react-native-restart: ^0.0.27
-    react-native-safe-area-context: ^5.1.0
+    react-native-safe-area-context: ^5.5.2
+    react-native-screenguard: ^1.1.0
     react-native-screens: ^3.20.0
-    react-native-screenshot-prevent: 1.1.7
     react-native-sensitive-info: ^5.5.8
     react-native-sha256: ^1.4.9
     react-native-share: ^8.2.2
@@ -22128,16 +22138,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-fast-image@npm:^8.6.3":
-  version: 8.6.3
-  resolution: "react-native-fast-image@npm:8.6.3"
-  peerDependencies:
-    react: ^17 || ^18
-    react-native: ">=0.60.0"
-  checksum: 29289cb6b2eae0983c8922b22e2d9de3be07322bb7991c5def19f95eadefaedb0e308ff0b38cc1d0444e8bd4fe94a7621a99a2d3d9298100bcb60b3144677234
-  languageName: node
-  linkType: hard
-
 "react-native-fast-pbkdf2@npm:^0.3.1":
   version: 0.3.1
   resolution: "react-native-fast-pbkdf2@npm:0.3.1"
@@ -22491,13 +22491,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-safe-area-context@npm:^5.1.0":
-  version: 5.4.0
-  resolution: "react-native-safe-area-context@npm:5.4.0"
+"react-native-safe-area-context@npm:^5.5.2":
+  version: 5.5.2
+  resolution: "react-native-safe-area-context@npm:5.5.2"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 7d7f9a8278048650fd207d436798bd062d6f78d771cb0665b92aef69dba870251339e6812e1d669fd1958345288bd0f9ac98fbfe353c13958d18b58dc946c341
+  checksum: 694e293b474b0738899c6e09da9f001d8087b382b5a40b8b227765c861a8137f0ff0209f1c9d8ae94337bc9c170eb114a9b897a8661b8181f48759a21baeb265
+  languageName: node
+  linkType: hard
+
+"react-native-screenguard@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "react-native-screenguard@npm:1.1.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: fcbd9147a7ab6875f443d48131c44adfee8d914b5f014872a914fdf8a1ef2c623cf3a700e566acc6758d82a16eeb541a5e86b4fd0a2a6cdd33d1c9b36eec2dac
   languageName: node
   linkType: hard
 
@@ -22511,16 +22521,6 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 84d1e4697ab7afccf42111d13b7c7e68d382b136f4f4d9cd8fd077b0984ada3114e8c7459a69159983a538fe35db1cf4296075e72fc8cb45341e0feb5080d3dc
-  languageName: node
-  linkType: hard
-
-"react-native-screenshot-prevent@npm:1.1.7":
-  version: 1.1.7
-  resolution: "react-native-screenshot-prevent@npm:1.1.7"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: d764c7117d648055439032167aebd668a6f0a8dfce21f51206ca84dfc28180822ac9b1349fc07280ae615349753785f38c350a4930022632a5d29686d42f1ddf
   languageName: node
   linkType: hard
 

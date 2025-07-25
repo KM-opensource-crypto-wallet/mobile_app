@@ -1,6 +1,6 @@
 import React, {useCallback, useContext, useMemo, useState} from 'react';
 import {View, StyleSheet, Text, ActivityIndicator} from 'react-native';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import {TouchableOpacity} from '@gorhom/bottom-sheet';
 import {getWalletConnect} from 'dok-wallet-blockchain-networks/service/walletconnect';
 import {getSdkError} from '@walletconnect/utils';

@@ -31,7 +31,6 @@ import {IS_IOS, useFloatingHeight} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './LoginScreenStyles';
 import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import RNScreenshotPrevent from 'react-native-screenshot-prevent';
 import {isNoUpdateAvailable} from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
 import {LOGO, LOGO_DARK, WL_APP_NAME} from 'utils/wlData';
 
@@ -49,14 +48,6 @@ const LoginComponent = ({navigation, onClose, visible}) => {
   const allWallets = useSelector(selectAllWallets);
   const isNoAppUpdate = useSelector(isNoUpdateAvailable);
   const appState = useRef(AppState.currentState);
-
-  useEffect(() => {
-    RNScreenshotPrevent.enabled(true);
-    if (IS_IOS && !__DEV__) {
-      RNScreenshotPrevent.enableSecureView();
-    }
-    return () => {};
-  }, []);
 
   const redirectSuccess = useCallback(() => {
     if (onClose) {

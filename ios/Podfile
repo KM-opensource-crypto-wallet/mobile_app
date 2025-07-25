@@ -20,7 +20,7 @@ abstract_target 'coinswalletCommonPod' do
   use_expo_modules!
 
   config = use_native_modules!
-
+  pod 'SDWebImage', '5.21.0'
   permissions_path = '../node_modules/react-native-permissions/ios'
   pod 'Permission-Camera', :path => "#{permissions_path}/Camera"
   pod 'OpenSSL-Universal', '1.1.2200'
