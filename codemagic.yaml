@@ -156,7 +156,9 @@ workflows:
           EOF
       - name: Install yarn dependencies
         script: |
-          npm run git:update && rm -f package-lock.json && corepack enable && corepack prepare yarn@3.6.4 --activate && yarn --version && yarn install
+          npm run git:update
+          rm -f package-lock.json
+          yarn install --immutable
       - name: Install CocoaPods dependencies
         script: |
          cd ios && pod install
@@ -249,7 +251,9 @@ workflows:
           EOF
       - name: Install yarn dependencies
         script: |
-          npm run git:update && rm -f package-lock.json && corepack enable && corepack prepare yarn@3.6.4 --activate && yarn --version && yarn install
+          npm run git:update
+          rm -f package-lock.json
+          yarn install --immutable
       - name: Install CocoaPods dependencies
         script: |
           cd ios && pod install
