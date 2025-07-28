@@ -59,6 +59,14 @@ const ModalConfirmTransaction = ({visible, hideModal, onSuccess}) => {
     }
   }, [fingerprint, onSuccess, visible]);
 
+  useEffect(() => {
+    if (visible) {
+      setTimeout(() => {
+        handleFingerprintAuth().then();
+      }, 200);
+    }
+  }, [handleFingerprintAuth, visible]);
+
   const onSubmit = values => {
     const {currentPassword} = values;
     if (currentPassword === storePassword) {
