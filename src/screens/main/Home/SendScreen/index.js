@@ -38,7 +38,7 @@ import {
   setSelectedDeriveAddress,
   updateCurrentCoin,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import Loading from 'components/Loading';
 import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
 import Toast from 'react-native-toast-message';

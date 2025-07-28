@@ -1,5 +1,4 @@
 import React, {useContext, useEffect} from 'react';
-import RNScreenshotPrevent from 'react-native-screenshot-prevent';
 import {View, Text, TouchableOpacity, FlatList} from 'react-native';
 
 import {useSelector} from 'react-redux';
@@ -7,6 +6,11 @@ import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './VerifyCreateStyles';
 import {selectCurrentWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import {useIsFocused} from '@react-navigation/native';
+import {
+  disabledPreventScreenshot,
+  enablePreventScreenshot,
+} from 'utils/screenshot';
 
 export const VerifyCreate = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
@@ -14,14 +18,15 @@ export const VerifyCreate = ({navigation, route}) => {
   const isHideNextButton = route?.params?.isHideNextButton;
 
   const currentWallet = useSelector(selectCurrentWallet);
+  const isFocused = useIsFocused();
 
   useEffect(() => {
-    RNScreenshotPrevent.enabled(true);
-
-    return () => {
-      RNScreenshotPrevent.enabled(false);
-    };
-  }, []);
+    if (isFocused) {
+      enablePreventScreenshot().then(_ => {});
+    } else {
+      disabledPreventScreenshot().then(_ => {});
+    }
+  }, [isFocused]);
 
   if (!currentWallet?.phrase) {
     return;

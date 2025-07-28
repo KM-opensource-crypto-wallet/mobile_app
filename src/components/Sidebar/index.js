@@ -385,8 +385,8 @@ export default function Sidebar({navigation, route}) {
           component={ReceivePaymentUrl}
           options={{
             headerTitleAlign: 'center',
-            headerTitle: 'Receive Payment Url',
-            drawerLabel: 'Receive Payment Url',
+            headerTitle: 'Request Crypto',
+            drawerLabel: 'Request Crypto',
             headerLeft: () => (
               <TouchableOpacity
                 style={{

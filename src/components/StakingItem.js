@@ -1,6 +1,6 @@
 import React, {useContext} from 'react';
 import {Text, TouchableOpacity, View, StyleSheet} from 'react-native';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import {currencySymbol} from 'data/currency';
 import KeyboardArrow from 'assets/images/icons/keyboard-arrow-right.svg';
 import {ThemeContext} from 'theme/ThemeContext';

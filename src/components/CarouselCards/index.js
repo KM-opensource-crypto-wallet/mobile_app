@@ -15,11 +15,11 @@ export const CarouselCards = ({navigation}) => {
   const swiperRef = useRef(null);
 
   const handleSkip = () => {
-    swiperRef.current.scrollBy(3, true);
+    swiperRef.current.scrollBy(data.length - 1, true);
   };
 
   const handleNext = () => {
-    if (index < 3) {
+    if (index < data.length - 1) {
       swiperRef.current.scrollBy(1, true);
     }
   };
@@ -47,7 +47,7 @@ export const CarouselCards = ({navigation}) => {
 
         <View
           style={
-            index === 3
+            index === data.length - 1
               ? styles.hidden
               : {
                   ...styles.paginationContainer,
@@ -61,12 +61,12 @@ export const CarouselCards = ({navigation}) => {
           </TouchableOpacity>
 
           <View style={styles.paginationDotsContainer}>
-            {[0, 1, 2, 3].map(item => (
+            {data.map((_, subIndex) => (
               <View
-                key={item}
+                key={'pagination_dots_' + subIndex}
                 style={[
                   styles.paginationDot,
-                  index === item ? styles.activeDot : styles.inactiveDot,
+                  index === subIndex ? styles.activeDot : styles.inactiveDot,
                 ]}
               />
             ))}
@@ -82,7 +82,7 @@ export const CarouselCards = ({navigation}) => {
           </TouchableOpacity>
         </View>
 
-        {index === 3 && (
+        {index === data.length - 1 && (
           <View style={styles.section}>
             <TouchableOpacity
               onPress={() => navigation.navigate('Registration')}

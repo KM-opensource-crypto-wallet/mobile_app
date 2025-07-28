@@ -1,7 +1,7 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {SCREEN_WIDTH} from 'utils/dimensions';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
 import {setSelectedNft} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 

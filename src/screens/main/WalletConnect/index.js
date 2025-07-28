@@ -2,7 +2,7 @@ import React, {useContext, useCallback} from 'react';
 import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import myStyles from './WalletsConnectStyles';
 import {ThemeContext} from 'theme/ThemeContext';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import WalletConnectImage from 'assets/images/WalletConnect.png';
 import WalletConnectItem from 'components/WalletConnectItem';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';

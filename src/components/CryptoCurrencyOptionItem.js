@@ -4,7 +4,7 @@ import ThemedIcon from 'components/ThemedIcon';
 import {ThemeContext} from 'theme/ThemeContext';
 const {width: screenWidth} = Dimensions.get('window');
 const itemWidth = screenWidth / 1.4;
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 import ChainItem from 'components/ChainItem';
 
 const CryptoCurrencyOptionItem = ({item}) => {

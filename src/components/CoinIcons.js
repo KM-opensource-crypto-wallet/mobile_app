@@ -2,7 +2,7 @@ import React, {useContext} from 'react';
 
 import {View, Text, StyleSheet} from 'react-native';
 import {ThemeContext} from 'theme/ThemeContext';
-import FastImage from 'react-native-fast-image';
+import FastImage from '@d11/react-native-fast-image';
 
 const maxDisplay = 5;
 const CoinIcons = ({icons}) => {
