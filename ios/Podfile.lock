@@ -2659,6 +2659,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - RNOS (1.2.6):
+    - React
   - RNPermissions (3.10.1):
     - boost
     - DoubleConversion
@@ -3170,6 +3172,7 @@ DEPENDENCIES:
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNInAppBrowser (from `../node_modules/react-native-inappbrowser-reborn`)
   - RNLocalize (from `../node_modules/react-native-localize`)
+  - RNOS (from `../node_modules/react-native-os`)
   - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
@@ -3430,6 +3433,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-inappbrowser-reborn"
   RNLocalize:
     :path: "../node_modules/react-native-localize"
+  RNOS:
+    :path: "../node_modules/react-native-os"
   RNPermissions:
     :path: "../node_modules/react-native-permissions"
   RNReactNativeHapticFeedback:
@@ -3579,6 +3584,7 @@ SPEC CHECKSUMS:
   RNGestureHandler: c202f13fa95347076d8aca4ccb61739b067396cb
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
   RNLocalize: 04178cdebf7d24821d25bc894343c6d2dd98374e
+  RNOS: 6f2f9a70895bbbfbdad7196abd952e7b01d45027
   RNPermissions: 7e4ccec8927adac0a859f6f7e824ac620fcd7a0a
   RNReactNativeHapticFeedback: 7ab0232cc103ac7d928635410fa0df7b11c53ada
   RNReanimated: 2010262133feb53009f16faaa404042eed7da018

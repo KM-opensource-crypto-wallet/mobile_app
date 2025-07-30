@@ -327,26 +327,26 @@ const Main = () => {
           theme.backgroundColor === '#121212' ? 'light-content' : 'dark-content'
         }
       />
-      {disableMessage ? (
-        <DisableComponent />
-      ) : (
-        <NavigationContainer
-          ref={navigationRef}
-          onReady={() => {
-            MainNavigation.setNavigationObject(navigationRef.current);
-          }}>
-          <MenuProvider>
-            <BottomSheetModalProvider>{routing}</BottomSheetModalProvider>
-            <ModalAppUpdate visible={showUpdateModal} />
-          </MenuProvider>
-          <LoginModal
-            visible={loginModalVisible}
-            onClose={() => {
-              setLoginModalVisible(false);
-            }}
-          />
-        </NavigationContainer>
-      )}
+      {/*{disableMessage ? (*/}
+      {/*  <DisableComponent />*/}
+      {/*) : (*/}
+      {/*  <NavigationContainer*/}
+      {/*    ref={navigationRef}*/}
+      {/*    onReady={() => {*/}
+      {/*      MainNavigation.setNavigationObject(navigationRef.current);*/}
+      {/*    }}>*/}
+      {/*    <MenuProvider>*/}
+      {/*      <BottomSheetModalProvider>{routing}</BottomSheetModalProvider>*/}
+      {/*      <ModalAppUpdate visible={showUpdateModal} />*/}
+      {/*    </MenuProvider>*/}
+      {/*    <LoginModal*/}
+      {/*      visible={loginModalVisible}*/}
+      {/*      onClose={() => {*/}
+      {/*        setLoginModalVisible(false);*/}
+      {/*      }}*/}
+      {/*    />*/}
+      {/*  </NavigationContainer>*/}
+      {/*)}*/}
       {/*<Delete />*/}
       {isLoading && <Spinner />}
     </GestureHandlerRootView>
