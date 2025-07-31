@@ -2,7 +2,6 @@
 import React, {useCallback, useState} from 'react';
 import {
   Linking,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -11,6 +10,7 @@ import {
 } from 'react-native';
 import ModalDeleteData from 'components/ModalDeteletData';
 import {CONTACT_DETAILS} from 'utils/wlData';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const ErrorComponent = () => {
   const [count, setCount] = useState(0);

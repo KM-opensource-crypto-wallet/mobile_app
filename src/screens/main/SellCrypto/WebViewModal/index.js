@@ -5,12 +5,11 @@ import {
   TouchableOpacity,
   Text,
   View,
-  SafeAreaView,
 } from 'react-native';
 import {WebView} from 'react-native-webview';
 import {ThemeContext} from 'theme/ThemeContext';
 import CloseIcon from 'assets/images/icons/close.svg';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import myStyles from './WebViewModalStyles';
 
 export const WebViewModal = props => {
@@ -59,6 +58,7 @@ export const WebViewModal = props => {
     <Modal
       animationType="slide"
       visible={props.visible}
+      statusBarTranslucent={true}
       onRequestClose={onCloseHandler}>
       <SafeAreaView style={styles.container}>
         <View style={[styles.header, {height: insets.top - 25}]}>

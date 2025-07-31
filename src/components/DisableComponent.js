@@ -1,15 +1,9 @@
 import React, {useCallback} from 'react';
-import {
-  Linking,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import {Linking, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useSelector} from 'react-redux';
 import {getDisableMessage} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
 import {CONTACT_DETAILS} from 'utils/wlData';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const DisableComponent = () => {
   const disableMessage = useSelector(getDisableMessage);

@@ -12,7 +12,6 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   AppState,
-  SafeAreaView,
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {Formik} from 'formik';
@@ -33,6 +32,7 @@ import myStyles from './LoginScreenStyles';
 import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {isNoUpdateAvailable} from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
 import {LOGO, LOGO_DARK, WL_APP_NAME} from 'utils/wlData';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const LoginComponent = ({navigation, onClose, visible}) => {
   const {theme} = useContext(ThemeContext);
@@ -119,7 +119,6 @@ const LoginComponent = ({navigation, onClose, visible}) => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
-
   const handleSubmit = values => {
     Keyboard.dismiss();
     if (storePassword === values.password) {

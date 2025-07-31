@@ -29,7 +29,6 @@ import ModalReset from 'components/ModalReset';
 import {useFocusEffect} from '@react-navigation/native';
 import {DrawerActions} from '@react-navigation/native';
 import Exchange from 'screens/main/Exchange';
-import DialogExchange from 'components/DialogExchange';
 import LogOutIcon from 'assets/images/sidebarIcons/Logout.svg';
 import LogOutIconDark from 'assets/images/sidebarIcons/Logout_dark.svg';
 import AboutScreen from 'screens/main/About/AboutScreen';
@@ -55,17 +54,12 @@ export default function Sidebar({navigation, route}) {
   const {theme} = useContext(ThemeContext);
   const [modal, setModal] = useState(false);
   const [modalList, setModalList] = useState('');
-  const [dialogVisible, setDialogVisible] = useState(false);
   const floatingHeight = useFloatingHeight();
   const isIpad = useFloatingWidth();
   const dispatch = useDispatch();
   const deviceCountry = useMemo(() => {
     return getCountry()?.toUpperCase();
   }, []);
-
-  useEffect(() => {
-    setDialogVisible(route?.params?.showDialog || false);
-  }, [route.params]);
 
   useEffect(() => {
     if (modal === false) {
@@ -494,16 +488,6 @@ export default function Sidebar({navigation, route}) {
         hideModal={setModal}
         navigation={navigation}
         page={modalList}
-      />
-      <DialogExchange
-        visible={dialogVisible}
-        hideDialog={setDialogVisible}
-        data={
-          route?.params?.dialog || {
-            firstLine: '',
-            secondLine: '',
-          }
-        }
       />
     </>
   );
