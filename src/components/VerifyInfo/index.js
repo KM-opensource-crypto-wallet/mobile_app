@@ -39,6 +39,7 @@ export const VerifyInfoModal = ({visible, onClose}) => {
   return (
     <Modal
       visible={visible}
+      statusBarTranslucent={true}
       dismissable={false}
       transparent={true}
       onDismiss={onClose}>

@@ -40,7 +40,7 @@ import QRCodeIcon from 'assets/images/sidebarIcons/QRCode.svg';
 import BurgerMenuIcon from 'assets/images/sidebarIcons/BurgerMenu.svg';
 import {MainNavigation} from 'utils/navigation';
 import {TabView, TabBar, SceneMap} from 'react-native-tab-view';
-import {SCREEN_WIDTH} from 'utils/dimensions';
+import {IS_IOS, SCREEN_WIDTH} from 'utils/dimensions';
 import Coins from 'components/Coins';
 import NFTList from 'components/NFTList';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -71,7 +71,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import Toast from 'react-native-toast-message';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {createWalletConnection} from 'dok-wallet-blockchain-networks/service/walletconnect';
-import {LOGO_SINGLE, LOGO_SINGLE_DARK} from 'utils/wlData';
+import {IS_KIML_WALLET, LOGO_SINGLE, LOGO_SINGLE_DARK} from 'utils/wlData';
 import AddCoins from 'components/AddCoins';
 
 const renderScene = SceneMap({
@@ -125,10 +125,14 @@ const HomeScreen = ({navigation, route}) => {
   const qrScheme = route.params?.qrScheme;
   const qrAmount = route.params?.qrAmount;
   const newDateToString = route.params?.newDateToString;
-  const [routes] = React.useState([
-    {key: 'coins', title: 'Coins'},
-    {key: 'nftlist', title: 'NFT'},
-  ]);
+  const [routes] = React.useState(
+    IS_IOS && IS_KIML_WALLET
+      ? [{key: 'coins', title: 'Coins'}]
+      : [
+          {key: 'coins', title: 'Coins'},
+          {key: 'nftlist', title: 'NFT'},
+        ],
+  );
   const [index, setIndex] = React.useState(0);
   const currentEthereumAddress = useRef(null);
   const messageProccessed = useRef({});

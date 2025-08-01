@@ -24,6 +24,7 @@ const ModalDeleteData = ({visible, hideModal}) => {
     <Modal
       visible={visible}
       transparent={true}
+      statusBarTranslucent={true}
       style={{backgroundColor: 'transparent'}}>
       <View style={styles.modalView}>
         <View style={styles.anotherContainerView}>

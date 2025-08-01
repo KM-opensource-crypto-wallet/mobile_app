@@ -29,7 +29,6 @@ import ModalReset from 'components/ModalReset';
 import {useFocusEffect} from '@react-navigation/native';
 import {DrawerActions} from '@react-navigation/native';
 import Exchange from 'screens/main/Exchange';
-import DialogExchange from 'components/DialogExchange';
 import LogOutIcon from 'assets/images/sidebarIcons/Logout.svg';
 import LogOutIconDark from 'assets/images/sidebarIcons/Logout_dark.svg';
 import AboutScreen from 'screens/main/About/AboutScreen';
@@ -55,17 +54,12 @@ export default function Sidebar({navigation, route}) {
   const {theme} = useContext(ThemeContext);
   const [modal, setModal] = useState(false);
   const [modalList, setModalList] = useState('');
-  const [dialogVisible, setDialogVisible] = useState(false);
   const floatingHeight = useFloatingHeight();
   const isIpad = useFloatingWidth();
   const dispatch = useDispatch();
   const deviceCountry = useMemo(() => {
     return getCountry()?.toUpperCase();
   }, []);
-
-  useEffect(() => {
-    setDialogVisible(route?.params?.showDialog || false);
-  }, [route.params]);
 
   useEffect(() => {
     if (modal === false) {
@@ -193,7 +187,7 @@ export default function Sidebar({navigation, route}) {
             ),
           })}
         />
-        {IS_IOS && IS_DOK_WALLET ? (
+        {IS_IOS ? (
           <Drawer.Screen
             name="SelectCountry"
             component={SelectCountry}
@@ -294,38 +288,36 @@ export default function Sidebar({navigation, route}) {
               })}
             />
           )}
-        {(IS_ANDROID || IS_DOK_WALLET) && (
-          <Drawer.Screen
-            name="SelectCountrySellCrypto"
-            component={SelectCountry}
-            initialParams={{isSellCrypto: true}}
-            options={({navigation}) => ({
-              title: 'Sell Crypto',
-              headerLeft: () => (
-                <TouchableOpacity
-                  style={{
-                    padding: 11,
-                    paddingLeft: isIpad ? 50 : 11,
-                  }}
-                  onPress={() => navigation.navigate('Home')}>
-                  <BackIcon
-                    width="22"
-                    height="18"
-                    fill={theme.borderActiveColor}
-                  />
-                </TouchableOpacity>
-              ),
-              headerTitleAlign: 'center',
-              drawerIcon: ({focused}) => (
-                <BuyCryptoIcon
-                  width="25"
-                  height="26"
-                  fill={focused ? theme.background : theme.sidebarIcon}
+        <Drawer.Screen
+          name="SelectCountrySellCrypto"
+          component={SelectCountry}
+          initialParams={{isSellCrypto: true}}
+          options={({navigation}) => ({
+            title: 'Sell Crypto',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={{
+                  padding: 11,
+                  paddingLeft: isIpad ? 50 : 11,
+                }}
+                onPress={() => navigation.navigate('Home')}>
+                <BackIcon
+                  width="22"
+                  height="18"
+                  fill={theme.borderActiveColor}
                 />
-              ),
-            })}
-          />
-        )}
+              </TouchableOpacity>
+            ),
+            headerTitleAlign: 'center',
+            drawerIcon: ({focused}) => (
+              <BuyCryptoIcon
+                width="25"
+                height="26"
+                fill={focused ? theme.background : theme.sidebarIcon}
+              />
+            ),
+          })}
+        />
         <Drawer.Screen
           name="Wallets"
           component={Wallets}
@@ -494,16 +486,6 @@ export default function Sidebar({navigation, route}) {
         hideModal={setModal}
         navigation={navigation}
         page={modalList}
-      />
-      <DialogExchange
-        visible={dialogVisible}
-        hideDialog={setDialogVisible}
-        data={
-          route?.params?.dialog || {
-            firstLine: '',
-            secondLine: '',
-          }
-        }
       />
     </>
   );
