@@ -187,7 +187,7 @@ export default function Sidebar({navigation, route}) {
             ),
           })}
         />
-        {IS_IOS && IS_DOK_WALLET ? (
+        {IS_IOS ? (
           <Drawer.Screen
             name="SelectCountry"
             component={SelectCountry}
@@ -288,38 +288,36 @@ export default function Sidebar({navigation, route}) {
               })}
             />
           )}
-        {(IS_ANDROID || IS_DOK_WALLET) && (
-          <Drawer.Screen
-            name="SelectCountrySellCrypto"
-            component={SelectCountry}
-            initialParams={{isSellCrypto: true}}
-            options={({navigation}) => ({
-              title: 'Sell Crypto',
-              headerLeft: () => (
-                <TouchableOpacity
-                  style={{
-                    padding: 11,
-                    paddingLeft: isIpad ? 50 : 11,
-                  }}
-                  onPress={() => navigation.navigate('Home')}>
-                  <BackIcon
-                    width="22"
-                    height="18"
-                    fill={theme.borderActiveColor}
-                  />
-                </TouchableOpacity>
-              ),
-              headerTitleAlign: 'center',
-              drawerIcon: ({focused}) => (
-                <BuyCryptoIcon
-                  width="25"
-                  height="26"
-                  fill={focused ? theme.background : theme.sidebarIcon}
+        <Drawer.Screen
+          name="SelectCountrySellCrypto"
+          component={SelectCountry}
+          initialParams={{isSellCrypto: true}}
+          options={({navigation}) => ({
+            title: 'Sell Crypto',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={{
+                  padding: 11,
+                  paddingLeft: isIpad ? 50 : 11,
+                }}
+                onPress={() => navigation.navigate('Home')}>
+                <BackIcon
+                  width="22"
+                  height="18"
+                  fill={theme.borderActiveColor}
                 />
-              ),
-            })}
-          />
-        )}
+              </TouchableOpacity>
+            ),
+            headerTitleAlign: 'center',
+            drawerIcon: ({focused}) => (
+              <BuyCryptoIcon
+                width="25"
+                height="26"
+                fill={focused ? theme.background : theme.sidebarIcon}
+              />
+            ),
+          })}
+        />
         <Drawer.Screen
           name="Wallets"
           component={Wallets}
