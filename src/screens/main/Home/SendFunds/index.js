@@ -348,7 +348,7 @@ const SendFunds = ({navigation, route}) => {
                                 styles.addressInput,
                                 fieldDisable && {width: '100%'},
                               ]}
-                              disabled={fieldDisable}
+                              editable={!fieldDisable}
                               label="Enter wallet adress or scan QR"
                               textColor={fieldDisable ? theme.gray : theme.font}
                               theme={{
@@ -406,7 +406,7 @@ const SendFunds = ({navigation, route}) => {
                           <View style={styles.inputView}>
                             <TextInput
                               style={styles.input}
-                              disabled={fieldDisable}
+                              editable={!fieldDisable}
                               label="Enter amount of Crypto to send"
                               textColor={fieldDisable ? theme.gray : theme.font}
                               theme={{
@@ -473,7 +473,7 @@ const SendFunds = ({navigation, route}) => {
                           <View style={styles.inputView}>
                             <TextInput
                               style={styles.input}
-                              disabled={fieldDisable}
+                              editable={!fieldDisable}
                               label={`Enter ${localCurrency} amount of Crypto to send`}
                               textColor={fieldDisable ? theme.gray : theme.font}
                               theme={{
@@ -483,11 +483,9 @@ const SendFunds = ({navigation, route}) => {
                                     : 'red',
                                 },
                               }}
-                              outlineColor={
-                                errors.currencyAmount ? 'red' : theme.gray
-                              }
+                              outlineColor={errors.amount ? 'red' : theme.gray}
                               activeOutlineColor={
-                                errors.currencyAmount ? 'red' : theme.font
+                                errors.amount ? 'red' : theme.font
                               }
                               autoCapitalize="none"
                               returnKeyType="next"
@@ -544,7 +542,7 @@ const SendFunds = ({navigation, route}) => {
                             <Text style={styles.listTitle}>Memo:</Text>
                             <TextInput
                               style={styles.input}
-                              disabled={fieldDisable}
+                              editable={!fieldDisable}
                               label="Enter Memo or Scan QR"
                               textColor={fieldDisable ? theme.gray : theme.font}
                               theme={{

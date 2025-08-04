@@ -1,20 +1,29 @@
-import React, {useContext, useEffect, useMemo} from 'react';
-import {Linking, Modal, Text, TouchableOpacity, View} from 'react-native';
+import React, {useContext, useMemo, useState} from 'react';
+import {
+  ActivityIndicator,
+  Linking,
+  Modal,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './AddCoinsStyles';
 
+import {useNavigation} from '@react-navigation/native';
 import CoinItem from 'components/CoinItem/CoinItem';
 import Loading from 'components/Loading';
 import {
-  isAllCoinsLoading,
-  selectAllCoins,
+  getCurrencyLoading,
+  getMissingCoins,
 } from 'dok-wallet-blockchain-networks/redux/currency/currencySelectors';
-import {fetchAllCoins} from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
+import {setMissingCoins} from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
+import {setPaymentData} from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
 import {getPaymentData} from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
 import {addOrToggleCoinInWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {useNavigation} from '@react-navigation/native';
-import {setPaymentData} from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
+import {refreshCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {setCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 
 const AddCoins = ({visible, hideModal}) => {
   const navigation = useNavigation();
@@ -23,34 +32,42 @@ const AddCoins = ({visible, hideModal}) => {
   const styles = myStyles(theme);
 
   const paymentData = useSelector(getPaymentData);
-  const allCoins = useSelector(selectAllCoins);
-  const isAllCoinLoading = useSelector(isAllCoinsLoading);
-
-  const [chain_name, symbol] = useMemo(
-    () => paymentData?.currency?.split(':') || [],
-    [paymentData?.currency],
-  );
-  const coin = useMemo(
-    () =>
-      allCoins.find(
-        item => item.chain_name === chain_name && item.symbol === symbol,
-      ),
-    [allCoins, chain_name, symbol],
+  const loading = useSelector(getCurrencyLoading);
+  const missingCoins = useSelector(getMissingCoins);
+  const filteredMissingCoins = useMemo(
+    () => missingCoins.filter(item => !item?.isInWallet),
+    [missingCoins],
   );
 
-  useEffect(() => {
-    dispatch(
-      fetchAllCoins({search: symbol || chain_name?.replaceAll('_', ' ')}),
-    );
-  }, [chain_name, dispatch, symbol]);
+  const [adding, setAdding] = useState(false);
 
   const handleDismiss = () => {
     hideModal(false);
+    dispatch(setMissingCoins([]));
+    dispatch(setPaymentData(null));
   };
-  const handleAddAndContinue = () => {
-    dispatch(addOrToggleCoinInWallet(coin));
-    const currentDate = new Date().toISOString();
-    setTimeout(() => {
+
+  const handleAddAndContinue = async () => {
+    setAdding(true);
+    try {
+      for (const coin of missingCoins) {
+        if (coin?.isInWallet) {
+          dispatch(setCurrentCoin(coin._id));
+        } else {
+          const {newCoin, existingCoinId} = await dispatch(
+            addOrToggleCoinInWallet(coin),
+          ).unwrap();
+          if (existingCoinId) {
+            dispatch(setCurrentCoin(existingCoinId));
+          }
+          if (newCoin) {
+            await dispatch(refreshCurrentCoin({currentCoin: newCoin}));
+            dispatch(setCurrentCoin(newCoin?._id));
+          }
+        }
+      }
+
+      const currentDate = new Date().toISOString();
       navigation.navigate('SendFunds', {
         ...paymentData,
         amount: paymentData?.amount,
@@ -58,9 +75,10 @@ const AddCoins = ({visible, hideModal}) => {
         memo: paymentData?.meta?.memo,
         date: currentDate,
       });
-      dispatch(setPaymentData(null));
-    }, 0);
-    handleDismiss();
+      handleDismiss();
+    } finally {
+      setAdding(false);
+    }
   };
   const handleCloseApp = () => {
     handleDismiss();
@@ -77,21 +95,24 @@ const AddCoins = ({visible, hideModal}) => {
       animationType="slide"
       onDismiss={handleDismiss}>
       <View style={styles.container}>
-        <View style={styles.modalView}>
-          <View style={styles.infoBox}>
+        {loading ? (
+          <View>
+            <Loading />
+          </View>
+        ) : (
+          <View style={styles.modalView}>
             <View style={styles.infoList}>
-              <Text style={styles.titleInfo}>
+              <Text style={styles.titleInfo}>Add Coins</Text>
+              <Text style={[styles.titleInfo, {fontSize: 14}]}>
                 This coin is not added in your wallet, would you like to add it
                 ?
               </Text>
             </View>
-            {isAllCoinLoading ? (
-              <View style={{padding: 20}}>
-                <Loading />
-              </View>
-            ) : coin ? (
-              <TouchableOpacity disabled>
-                <CoinItem item={coin} />
+            {filteredMissingCoins.length > 0 ? (
+              <TouchableOpacity disabled style={styles.coinList}>
+                {filteredMissingCoins.map(coin => (
+                  <CoinItem key={`coins-list-${coin?._id}`} item={coin} />
+                ))}
               </TouchableOpacity>
             ) : (
               <View style={styles.errorBox}>
@@ -103,26 +124,30 @@ const AddCoins = ({visible, hideModal}) => {
             )}
             <View style={styles.btnList}>
               <TouchableOpacity
-                style={[styles.learnBox, styles.learnBorder]}
+                disabled={adding}
+                style={[styles.button, adding && {backgroundColor: theme.gray}]}
                 onPress={handleDismiss}>
-                <Text style={styles.learnText}>Cancel</Text>
+                <Text style={styles.buttonTitle}>Cancel</Text>
               </TouchableOpacity>
-              {coin ? (
-                <TouchableOpacity
-                  style={styles.learnBox}
-                  onPress={handleAddAndContinue}>
-                  <Text style={styles.learnText}>Add and Continue</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={styles.learnBox}
-                  onPress={handleCloseApp}>
-                  <Text style={styles.learnText}>Close App</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                disabled={adding}
+                style={[styles.button, adding && {backgroundColor: theme.gray}]}
+                onPress={
+                  filteredMissingCoins.length > 0
+                    ? handleAddAndContinue
+                    : handleCloseApp
+                }>
+                {adding ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={styles.buttonTitle}>
+                    {filteredMissingCoins.length > 0 ? 'Add' : 'Close App'}
+                  </Text>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
-        </View>
+        )}
       </View>
     </Modal>
   );
