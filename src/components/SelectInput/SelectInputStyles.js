@@ -80,6 +80,10 @@ const myStyles = theme =>
       marginLeft: 10,
       fontSize: 12,
     },
+    inputSearchStyle: {
+      fontSize: 16,
+      color: theme.font,
+    },
   });
 
 export default myStyles;

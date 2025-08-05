@@ -56,7 +56,7 @@ const SelectInput = ({
         activeColor={{backgroundColor: theme.secondaryBackgroundColor}}
         placeholderStyle={styles.placeholderStyle}
         selectedTextStyle={styles.selectedTextStyle}
-        inputSearchStyle={form !== 'Network' && styles.inputSearchStyle}
+        inputSearchStyle={styles.inputSearchStyle}
         iconStyle={styles.iconStyle}
         data={listData}
         search={true}

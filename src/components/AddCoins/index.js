@@ -72,7 +72,7 @@ const AddCoins = ({visible, hideModal}) => {
         ...paymentData,
         amount: paymentData?.amount,
         address: paymentData?.address,
-        memo: paymentData?.meta?.memo,
+        memo: paymentData?.memo,
         date: currentDate,
       });
       handleDismiss();

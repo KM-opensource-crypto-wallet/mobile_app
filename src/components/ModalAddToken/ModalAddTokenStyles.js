@@ -63,7 +63,7 @@ const myStyles = (theme, bottom) =>
       borderBottomWidth: 1,
       borderBottomColor: theme.gray,
     },
-    headerText: {fontSize: 16},
+    headerText: {fontSize: 16, color: theme.font},
     modalBody: {padding: 15},
 
     qrContainer: {

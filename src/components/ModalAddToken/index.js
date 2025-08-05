@@ -283,7 +283,6 @@ const ModalAddToken = ({
                   }}
                   outlineColor={'#989898'}
                   activeOutlineColor={theme.borderActiveColor}
-                  disabled={true}
                   mode="outlined"
                   name="name"
                   value={name}
@@ -301,7 +300,6 @@ const ModalAddToken = ({
                     }}
                     outlineColor={'#989898'}
                     activeOutlineColor={theme.borderActiveColor}
-                    disabled={true}
                     mode="outlined"
                     name="symbol"
                     value={symbol}
@@ -319,7 +317,6 @@ const ModalAddToken = ({
                       },
                     }}
                     activeOutlineColor={theme.borderActiveColor}
-                    disabled={true}
                     mode="outlined"
                     name="decimal"
                     value={decimal}
