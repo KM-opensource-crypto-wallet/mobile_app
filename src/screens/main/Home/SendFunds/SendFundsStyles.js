@@ -109,6 +109,7 @@ const myStyles = theme =>
       marginLeft: 10,
       fontSize: 12,
       marginTop: 4,
+      color: theme.font,
     },
     listTitle: {
       color: theme.font,

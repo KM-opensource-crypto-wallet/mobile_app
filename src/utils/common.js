@@ -2,6 +2,7 @@ import {IS_ANDROID} from 'utils/dimensions';
 import {sha256} from 'react-native-sha256';
 import {getBuildNumber, getVersion} from 'react-native-device-info';
 import crypto from 'react-native-quick-crypto';
+import {Linking} from 'react-native';
 
 export const inAppBrowserOptions = IS_ANDROID
   ? {
@@ -123,5 +124,39 @@ export const getQueryParams = url => {
   } catch (error) {
     console.error('Error parsing URL:', error);
     return {};
+  }
+};
+
+function safelyStringify(data) {
+  try {
+    return JSON.stringify(data);
+  } catch (e) {
+    return data;
+  }
+}
+
+export const handleTransferRedirect = async (
+  redirect_url,
+  tx_hash,
+  status,
+  meta = null,
+) => {
+  try {
+    const decodedUrl = decodeURIComponent(redirect_url);
+    const url = new URL(decodedUrl);
+
+    // Add required params
+    url.searchParams.set('tx_hash', tx_hash);
+    url.searchParams.set('status', status);
+
+    // Add meta params if provided
+    if (meta) {
+      url.searchParams.set('meta', safelyStringify(meta));
+    }
+
+    await Linking.openURL(url.toString());
+  } catch (error) {
+    console.error('Failed to open redirect URL:', error);
+    throw error;
   }
 };

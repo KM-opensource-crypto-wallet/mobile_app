@@ -65,6 +65,7 @@ import {TextInput} from 'react-native-paper';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {getSellCryptoRequestDetails} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import {handleTransferRedirect} from 'utils/common';
 
 const Transfer = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
@@ -91,6 +92,7 @@ const Transfer = ({navigation, route}) => {
   const currentWallet = useSelector(selectCurrentWallet);
   const fromScreen = route?.params?.fromScreen;
   const redirect_url = route?.params?.redirect_url;
+  const meta = route?.params?.meta;
   const {
     selectedFromAsset,
     selectedFromWallet,
@@ -351,14 +353,12 @@ const Transfer = ({navigation, route}) => {
     const {tx_hash, status} = await submitTransferData();
     if (redirect_url && tx_hash) {
       try {
-        const decodedUrl = decodeURIComponent(redirect_url);
-        const link = `${decodedUrl}&tx_hash=${tx_hash}&status=${status}`;
-        await Linking.openURL(link);
+        await handleTransferRedirect(redirect_url, tx_hash, status, meta);
       } catch (error) {
         console.error('Failed to open redirect URL:', error);
       }
     }
-  }, [redirect_url, submitTransferData]);
+  }, [meta, redirect_url, submitTransferData]);
 
   const handleSubmitForm = () => {
     setShowConfirmModal(true);

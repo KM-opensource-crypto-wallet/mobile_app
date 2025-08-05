@@ -34,7 +34,10 @@ import {
 } from 'dok-wallet-blockchain-networks/helper';
 import DokDropdown from 'components/DokDropdown';
 import ValidatorOptionItem from 'components/ValidatorOptionItem';
-import {fetchValidatorByChain} from 'dok-wallet-blockchain-networks/redux/staking/stakingSlice';
+import {
+  fetchValidatorByChain,
+  setStakingLoading,
+} from 'dok-wallet-blockchain-networks/redux/staking/stakingSlice';
 import {
   getStakingLoading,
   getStakingValidatorsByChain,
@@ -104,6 +107,8 @@ const CreateStaking = ({navigation}) => {
   useEffect(() => {
     if (isValidatorSupport) {
       dispatch(fetchValidatorByChain({chain_name: currentCoin?.chain_name}));
+    } else {
+      dispatch(setStakingLoading(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

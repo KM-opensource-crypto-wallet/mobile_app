@@ -60,9 +60,11 @@ const SendFunds = ({navigation, route}) => {
   const qrAmount = route?.params?.qrAmount;
   const linkAddress = route?.params?.address;
   const linkAmount = route?.params?.amount;
+  const linkMemo = route?.params?.memo;
   const newDate = route?.params?.newDateToString;
   const fieldDisable = parseBoolean(route?.params?.fieldDisable);
   const redirect_url = route?.params?.redirect_url;
+  const meta = route?.params?.meta;
   const localCurrency = useSelector(getLocalCurrency);
   const currentWallet = useSelector(selectCurrentWallet);
   const transferData = useSelector(getTransferData);
@@ -108,11 +110,15 @@ const SendFunds = ({navigation, route}) => {
   useEffect(() => {
     const localAddress = qrAddress || linkAddress;
     const localAmount = qrAmount || linkAmount;
+    const localMemo = linkMemo;
     const localCurrencyAmount = localAmount
       ? multiplyBNWithFixed(localAmount, currentCoin?.currencyRate, 2)
       : '';
     if (localAddress) {
       formikRef?.current?.setFieldValue('send', localAddress);
+    }
+    if (localMemo) {
+      formikRef?.current?.setFieldValue('memo', localMemo);
     }
     if (localAmount) {
       formikRef?.current?.setFieldValue('amount', localAmount);
@@ -125,12 +131,14 @@ const SendFunds = ({navigation, route}) => {
         formikRef?.current?.setFieldTouched('send', true);
         formikRef?.current?.setFieldTouched('amount', true);
         formikRef?.current?.setFieldTouched('currencyAmount', true);
+        formikRef?.current?.setFieldTouched('memo', true);
       }, 0);
     }
   }, [
     currentCoin?.currencyRate,
     linkAddress,
     linkAmount,
+    linkMemo,
     newDate,
     qrAddress,
     qrAmount,
@@ -258,6 +266,7 @@ const SendFunds = ({navigation, route}) => {
       navigation.navigate('Transfer', {
         fromScreen: 'SendFunds',
         redirect_url,
+        meta,
       });
     } else {
       formikRef?.current?.setFieldError('send', 'address is not valid');
@@ -295,7 +304,7 @@ const SendFunds = ({navigation, route}) => {
                       2,
                     )
                   : '',
-              memo: '',
+              memo: linkMemo || '',
             }}
             validationSchema={validationSchemaSendFunds(
               availableAmount,
@@ -566,17 +575,19 @@ const SendFunds = ({navigation, route}) => {
                               value={values.memo}
                               onSubmitEditing={handleSubmit}
                               right={
-                                <TextInput.Icon
-                                  style={styles.scan}
-                                  icon="qrcode-scan"
-                                  iconColor={theme.backgroundColor}
-                                  size={15}
-                                  onPress={() => {
-                                    navigation.navigate('Scanner', {
-                                      page: 'SendFundsMemo',
-                                    });
-                                  }}
-                                />
+                                !fieldDisable && (
+                                  <TextInput.Icon
+                                    style={styles.scan}
+                                    icon="qrcode-scan"
+                                    iconColor={theme.backgroundColor}
+                                    size={15}
+                                    onPress={() => {
+                                      navigation.navigate('Scanner', {
+                                        page: 'SendFundsMemo',
+                                      });
+                                    }}
+                                  />
+                                )
                               }
                             />
                             <Text style={styles.infoText}>
@@ -626,7 +637,7 @@ const SendFunds = ({navigation, route}) => {
                       </View>
                     </View>
                     <TouchableOpacity
-                      // disabled={!isValid}
+                      disabled={!isValid}
                       style={{
                         ...styles.button,
                         backgroundColor: isValid

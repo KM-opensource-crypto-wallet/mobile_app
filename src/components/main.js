@@ -28,6 +28,7 @@ import {
   addMinutes,
   isAfterCurrentDate,
   isNewerVersion,
+  safelyJsonParse,
 } from 'dok-wallet-blockchain-networks/helper';
 import {getLockTime} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {
@@ -166,7 +167,7 @@ const Main = () => {
         dispatch(
           setPaymentData({
             ...data,
-            ...(data?.meta && {meta: JSON.parse(data.meta)}),
+            meta: safelyJsonParse(data?.meta) || null,
             date: currentDate,
           }),
         );
@@ -260,7 +261,7 @@ const Main = () => {
             dispatch(
               setPaymentData({
                 ...data,
-                ...(data?.meta && {meta: parseJson(data.meta)}),
+                meta: safelyJsonParse(data?.meta) || null,
                 date: currentDate,
               }),
             );
