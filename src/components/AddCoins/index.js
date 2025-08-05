@@ -76,6 +76,9 @@ const AddCoins = ({visible, hideModal}) => {
         date: currentDate,
       });
       handleDismiss();
+    } catch (error) {
+      console.error('Failed to add coins:', error);
+      // Consider showing a toast or error message to the user
     } finally {
       setAdding(false);
     }
