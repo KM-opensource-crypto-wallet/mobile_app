@@ -15,10 +15,7 @@ import {
   selectCurrentWallet,
   selectIsBackedUp,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {
-  searchCoinFromCurrency,
-  setCurrentCoin,
-} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {setCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {VerifyInfoModal} from 'components/VerifyInfo';
 import {
   getNewsMessage,
@@ -27,6 +24,7 @@ import {
 import {
   setIsAskedBackupModal,
   setNewsMessage,
+  searchAndAddCoins,
 } from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
 import {
   selectRequestedModalVisible,
@@ -157,25 +155,26 @@ const HomeScreen = ({navigation, route}) => {
   }, [wcUri, isWalletConnectInitialized]);
 
   useEffect(() => {
+    setAddCoinModalVisible(false);
     if (paymentData?.address && paymentData?.currency) {
-      setAddCoinModalVisible(false);
-      dispatch(searchCoinFromCurrency({currency: paymentData?.currency}))
+      setAddCoinModalVisible(true);
+      dispatch(searchAndAddCoins({currency: paymentData?.currency}))
         .unwrap()
         .then(() => {
-          const currentDate = new Date().toISOString();
+          setAddCoinModalVisible(false);
           setTimeout(() => {
             navigation.navigate('SendFunds', {
               ...paymentData,
               amount: paymentData?.amount,
               address: paymentData?.address,
               memo: paymentData?.meta?.memo,
-              date: currentDate,
+              date: new Date().toISOString(),
             });
             dispatch(setPaymentData(null));
           }, 0);
         })
         .catch(err => {
-          console.error('Failed to process payment data:', err);
+          console.error('Failed to searchAndAddCoins:', err);
           setAddCoinModalVisible(true);
         });
     }
@@ -434,10 +433,12 @@ const HomeScreen = ({navigation, route}) => {
               bottomSheetRef={ref => (newsBottomSheetRef.current = ref)}
               message={newsMessage}
             />
-            <AddCoins
-              visible={addCoinModalVisible}
-              hideModal={setAddCoinModalVisible}
-            />
+            {addCoinModalVisible && (
+              <AddCoins
+                visible={addCoinModalVisible}
+                hideModal={setAddCoinModalVisible}
+              />
+            )}
           </Portal>
         </Provider>
       </ErrorBoundary>

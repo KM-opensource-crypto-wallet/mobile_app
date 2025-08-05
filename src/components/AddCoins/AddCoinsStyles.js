@@ -11,37 +11,37 @@ const myStyles = theme =>
       backgroundColor: theme.secondaryBackgroundColor,
       borderRadius: 10,
       margin: 20,
-      paddingTop: 20,
+      padding: 20,
+      rowGap: 20,
     },
-
+    infoList: {
+      rowGap: 10,
+    },
+    coinList: {
+      marginHorizontal: -15,
+    },
     titleInfo: {
       color: theme.font,
       fontSize: 20,
-      textAlign: 'center',
       fontFamily: 'Roboto-Regular',
-      marginBottom: 20,
     },
     btnList: {
-      marginTop: 20,
+      columnGap: 15,
       flexDirection: 'row',
       alignItems: 'center',
-      borderTopWidth: 1,
       borderTopColor: theme.gray,
     },
-    learnBorder: {
+    button: {
       flex: 1,
-      borderRightWidth: 1,
-      borderRightColor: theme.gray,
-    },
-    learnBox: {
-      flex: 1,
-      padding: 10,
+      height: 60,
+      borderRadius: 10,
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundColor: theme.background,
     },
-    learnText: {
-      color: theme.background,
-      fontSize: 17,
+    buttonTitle: {
+      color: theme.title,
+      fontSize: 18,
       fontFamily: 'Roboto-Regular',
     },
     errorBox: {
@@ -50,6 +50,7 @@ const myStyles = theme =>
       justifyContent: 'center',
     },
     error: {
+      color: theme.font,
       textAlign: 'center',
     },
   });
