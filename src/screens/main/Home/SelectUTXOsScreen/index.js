@@ -250,7 +250,11 @@ const SelectUTXOsScreen = ({navigation}) => {
                   0,
                 );
                 dispatch(
-                  setCurrentTransferData({selectedUTXOsValue, selectedUTXOs}),
+                  setCurrentTransferData({
+                    selectedUTXOsValue,
+                    selectedUTXOs,
+                    isSendFunds: false,
+                  }),
                 );
                 navigation.navigate('SendFunds');
               }}>

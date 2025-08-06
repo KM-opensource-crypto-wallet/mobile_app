@@ -121,6 +121,7 @@ const CreateStaking = ({navigation}) => {
         currentCoin,
         amount: validateBigNumberStr(values?.amount),
         resourceType: values?.resourceType?.value,
+        isSendFunds: false,
       }),
     );
     dispatch(

@@ -133,6 +133,7 @@ const VoteStaking = ({navigation}) => {
         currentCoin,
         amount: values?.amount,
         displayValidators,
+        isSendFunds: false,
       }),
     );
     dispatch(
