@@ -143,6 +143,7 @@ const WithdrawStaking = ({navigation, route}) => {
           currentCoin,
           amount: validateBigNumberStr(amount),
           resourceType: resourceType?.value,
+          isSendFunds: false,
         }),
       );
       dispatch(
