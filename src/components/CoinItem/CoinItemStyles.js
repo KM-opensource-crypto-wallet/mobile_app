@@ -51,17 +51,6 @@ const myStyles = theme =>
       fontFamily: 'Roboto-Regular',
       flexShrink: 1,
     },
-    iconBox: {
-      width: 39,
-      height: 39,
-      color: theme.backgroundColor,
-      backgroundColor: theme.font,
-      borderRadius: 20,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 10,
-    },
     arrow: {
       fill: theme.gray,
     },
@@ -70,11 +59,6 @@ const myStyles = theme =>
     },
     circle: {
       fill: theme.background,
-    },
-    imageStyle: {
-      height: '100%',
-      width: '100%',
-      borderRadius: 20,
     },
     dragIcon: {
       marginRight: 8,

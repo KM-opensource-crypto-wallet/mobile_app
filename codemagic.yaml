@@ -72,7 +72,7 @@ workflows:
       - name: Build KIML Wallet Android release
         script: |
           export NODE_OPTIONS="--max-old-space-size=8192" && cd android
-          ./gradlew bundleKimlwalletRelease \
+          ./gradlew assembleKimlwalletRelease \
             -PversionCode=$KIMLWALLET_ANDROID_BUILD_NUMBER \
             -PversionName=$KIMLWALLET_ANDROID_VERSION_NAME
       - name: Publish Dok Wallet
@@ -84,16 +84,9 @@ workflows:
             --rollout 0.20 \
             --bundle android/app/build/outputs/bundle/dokwalletRelease/app-dokwallet-release.aab
 
-      - name: Publish KIML Wallet
-        script: |
-          echo $KIMLWALLET_GCLOUD_SERVICE_ACCOUNT_CREDENTIALS > kiml_gcloud.json
-          google-play bundles publish \
-            --credentials @file:kiml_gcloud.json \
-            --track "internal" \
-            --rollout 0.20 \
-            --bundle android/app/build/outputs/bundle/kimlwalletRelease/app-kimlwallet-release.aab
     artifacts:
       - android/app/build/outputs/**/*.aab
+      - android/app/build/outputs/**/*.apk
 
     publishing:
       slack:

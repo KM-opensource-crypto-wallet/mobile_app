@@ -10,8 +10,8 @@ import {
   setCurrentCoin,
   setCurrentWalletCoinsPosition,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import FastImage from '@d11/react-native-fast-image';
 import ChainItem from 'components/ChainItem';
+import CoinIcon from 'components/CoinIcon/CoinIcon';
 import {currencySymbol} from 'data/currency';
 import KeyboardArrow from 'assets/images/icons/keyboard-arrow-right.svg';
 import myStyles from './CoinItemStyles';
@@ -107,18 +107,7 @@ const CoinItem = ({
           />
         </TouchableOpacity>
       )}
-      <View style={styles.iconBox}>
-        {item?.icon && (
-          <FastImage
-            source={{uri: item?.icon}}
-            resizeMode={'contain'}
-            style={styles.imageStyle}
-          />
-        )}
-        {/*{item?.icon && (*/}
-        {/*  <ThemedIcon icon={item?.icon} theme={theme} font={1} />*/}
-        {/*)}*/}
-      </View>
+      <CoinIcon item={item} />
 
       <View style={styles.list}>
         <View style={styles.box}>
@@ -216,5 +205,3 @@ export default memo(CoinItem, (prevProps, nextProps) => {
     prevProps.showDeleteMode === nextProps.showDeleteMode
   );
 });
-
-// export default CoinItem;
