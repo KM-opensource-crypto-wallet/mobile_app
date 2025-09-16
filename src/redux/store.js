@@ -19,6 +19,7 @@ import {extraDataSlice} from 'dok-wallet-blockchain-networks/redux/extraData/ext
 import {messageSlice} from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
 import {sellCryptoSlice} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
 import {addressBookSlice} from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSlice';
+import {batchTransactionSlice} from '../../dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
 
 const storage = createSensitiveStorage({
   keychainService: process.env.REDUX_KEYCHAIN_NAME,
@@ -53,6 +54,7 @@ const rootReducer = persistCombineReducers(config, {
   [messageSlice.name]: messageSlice.reducer,
   [sellCryptoSlice.name]: sellCryptoSlice.reducer,
   [addressBookSlice.name]: addressBookSlice.reducer,
+  [batchTransactionSlice.name]: batchTransactionSlice.reducer,
 });
 
 // Logging middleware

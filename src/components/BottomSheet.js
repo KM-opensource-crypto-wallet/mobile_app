@@ -43,12 +43,20 @@ const CustomBackdrop = props => {
 };
 
 const DokBottomSheet = props => {
-  const {bottomSheetRef, snapPoints, onDismiss} = props;
+  const {bottomSheetRef, snapPoints, onDismiss, onChange} = props;
   const {theme} = useContext(ThemeContext);
   const localBottomSheetRef = useRef();
   const snapPointsLocal = useMemo(() => snapPoints || ['40%'], [snapPoints]);
   const {handleSheetPositionChange} =
     useBottomSheetBackHandler(localBottomSheetRef);
+
+  const onLocalChange = useCallback(
+    index => {
+      handleSheetPositionChange(index);
+      onChange?.(index);
+    },
+    [handleSheetPositionChange, onChange],
+  );
 
   const renderBackdrop = useCallback(subProps => {
     return (
@@ -72,7 +80,7 @@ const DokBottomSheet = props => {
       enableDismissOnClose={true}
       onDismiss={onDismiss}
       closeOnPress={true}
-      onChange={handleSheetPositionChange}
+      onChange={onLocalChange}
       backdropComponent={renderBackdrop}>
       {props.children}
     </BottomSheetModal>

@@ -27,6 +27,7 @@ import {selectAllNewCoins} from 'dok-wallet-blockchain-networks/redux/currency/c
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {setNewCoins} from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
 import {syncCoinsWithServer} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import BatchTransactionBanner from 'components/BatchTransactionBanner';
 
 const {width: screenWidth} = Dimensions.get('window');
 
@@ -62,6 +63,7 @@ const Coins = () => {
 
   return (
     <View style={styles.mainView}>
+      <BatchTransactionBanner />
       {!!coinsNames && !isImportWithPrivateKey && (
         <View style={styles.syncView}>
           <Text style={styles.syncTitle} numberOfLines={2}>
