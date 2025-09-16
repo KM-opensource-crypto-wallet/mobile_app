@@ -24,7 +24,6 @@ const BatchTransactionBanner = () => {
   const dispatch = useDispatch();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const walletSheetRef = useRef();
-
   const {transactionCount, displayText, walletTransactions} = useMemo(() => {
     if (!batchTransactions || !currentWallet?.clientId) {
       return {transactionCount: 0, chainCount: 0, displayText: ''};
@@ -40,9 +39,10 @@ const BatchTransactionBanner = () => {
 
     // Get unique chains from transactions
     const chains = [
-      ...new Set(localWalletTransactions.map(tx => tx.chain_display_name)),
+      ...new Set(
+        localWalletTransactions.map(tx => tx.coinInfo?.chain_display_name),
+      ),
     ].filter(Boolean);
-
     let chainText = '';
     if (chains.length === 1) {
       chainText = ` on ${chains[0]}`;
