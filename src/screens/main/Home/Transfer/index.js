@@ -5,6 +5,7 @@ import React, {
   useContext,
   useRef,
   useLayoutEffect,
+  useMemo,
 } from 'react';
 import myStyles from './TransferStyles';
 import {
@@ -66,6 +67,7 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {getSellCryptoRequestDetails} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {handleTransferRedirect} from 'utils/common';
+import BatchTransactionItem from 'components/BatchTransactionItem';
 
 const Transfer = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
@@ -115,6 +117,8 @@ const Transfer = ({navigation, route}) => {
   const isStakingScreen = fromScreen === 'Staking';
   const isVoteStakingScreen = fromScreen === 'VoteStaking';
   const isSellCryptoScreen = fromScreen === 'SellCrypto';
+  const isBatchTransaction = fromScreen === 'BatchTransaction';
+
   const isDeactivateStaking = route?.params?.isDeactivateStaking;
   const isWithdrawStaking = route?.params?.isWithdrawStaking;
   const isStakingRewards = route?.params?.isStakingRewards;
@@ -129,6 +133,19 @@ const Transfer = ({navigation, route}) => {
 
   const isFeesOptionsEnabled = useSelector(isFeesOptions);
   const feesOptions = useSelector(getTransferDataFeesOptions);
+
+  const nativeBalanceForBatchTransactions = useMemo(() => {
+    if (isBatchTransaction && transferData?.transactionsData?.length) {
+      const totalBN = transferData?.transactionsData?.reduce((sum, item) => {
+        if (item?.coinInfo?.type === 'coin') {
+          return sum.plus(new BigNumber(item.transferData?.amount || '0'));
+        }
+        return sum;
+      }, new BigNumber(0));
+      return totalBN.toString();
+    }
+    return null;
+  }, [isBatchTransaction, transferData?.transactionsData]);
 
   useEffect(() => {
     if (feesOptions?.[0]?.gasPrice) {
@@ -156,6 +173,8 @@ const Transfer = ({navigation, route}) => {
         ? 'Confirm Deactivate Staking'
         : isStakingRewards
         ? 'Confirm Staking Rewards'
+        : isBatchTransaction
+        ? 'Confirm Batch Transaction'
         : '',
     });
 
@@ -168,7 +187,8 @@ const Transfer = ({navigation, route}) => {
       ((isSendFundScreen ||
         isSellCryptoScreen ||
         isSendNFT ||
-        isStakingScreen) &&
+        isStakingScreen ||
+        isBatchTransaction) &&
         feeSuccess)
     ) {
       setIsFetchedSuccessful('true');
@@ -181,7 +201,10 @@ const Transfer = ({navigation, route}) => {
           dispatch(
             calculateEstimateFee({
               fromAddress:
-                isSendFundScreen || isStakingScreen || isSellCryptoScreen
+                isSendFundScreen ||
+                isStakingScreen ||
+                isSellCryptoScreen ||
+                isBatchTransaction
                   ? transferData?.currentCoin?.address
                   : isExchangeScreen
                   ? selectedFromAsset?.address
@@ -231,6 +254,11 @@ const Transfer = ({navigation, route}) => {
               selectedVotes: isVoteStakingScreen
                 ? transferData?.selectedVotes
                 : null,
+              isBatchTransaction,
+              currentCoin: isBatchTransaction
+                ? transferData?.currentCoin
+                : null,
+              calls: isBatchTransaction ? transferData?.calls : null,
               isCreateStaking: isCreateStaking,
               isWithdrawStaking: !!isWithdrawStaking,
               isStakingRewards: !!isStakingRewards,
@@ -288,11 +316,17 @@ const Transfer = ({navigation, route}) => {
           : null,
         mint: isSendNFT ? transferData?.selectedNFT?.mint : null,
         isNFT: isSendNFT,
+        isBatchTransaction,
+        calls: isBatchTransaction ? transferData?.calls : null,
+        transactionsData: isBatchTransaction
+          ? transferData?.transactionsData
+          : null,
         from:
           isStakingScreen ||
           isSendNFT ||
           isVoteStakingScreen ||
-          isSellCryptoScreen
+          isSellCryptoScreen ||
+          isBatchTransaction
             ? transferData?.currentCoin?.address
             : null,
         validatorPubKey: isStakingScreen ? transferData?.validatorPubKey : null,
@@ -324,6 +358,8 @@ const Transfer = ({navigation, route}) => {
     transferData?.selectedNFT?.token_address,
     transferData?.selectedNFT?.associatedTokenAddress,
     transferData?.selectedNFT?.mint,
+    transferData?.calls,
+    transferData?.transactionsData,
     transferData?.validatorPubKey,
     transferData?.stakingBalance,
     transferData?.resourceType,
@@ -331,11 +367,13 @@ const Transfer = ({navigation, route}) => {
     transferData?.stakingAddress,
     isSendFundScreen,
     isStakingScreen,
+    isSellCryptoScreen,
     isExchangeScreen,
     amountFrom,
     selectedFromWallet,
     isSendNFT,
     currentWallet,
+    isBatchTransaction,
     isVoteStakingScreen,
     isWithdrawStaking,
     isStakingRewards,
@@ -344,7 +382,6 @@ const Transfer = ({navigation, route}) => {
     isDeactivateStaking,
     phrase,
     navigation,
-    isSellCryptoScreen,
   ]);
 
   const onSuccess = useCallback(async () => {
@@ -364,11 +401,14 @@ const Transfer = ({navigation, route}) => {
     setShowConfirmModal(true);
     isPauseCalculateFees.current = true;
   };
-
   const isDisabled = isBalanceNotAvailable(
     transferData?.selectedUTXOsValue || balance,
     transferData?.transactionFee,
-    isExchangeScreen && selectedFromAsset?.type === 'coin' ? amountFrom : null,
+    isExchangeScreen && selectedFromAsset?.type === 'coin'
+      ? amountFrom
+      : isBatchTransaction
+      ? nativeBalanceForBatchTransactions
+      : null,
   );
 
   const onChangeCustomFees = text => {
@@ -831,6 +871,38 @@ const Transfer = ({navigation, route}) => {
     );
   };
 
+  const renderBatchTransactionUI = () => {
+    const batchTransactions = Array.isArray(transferData?.transactionsData)
+      ? transferData?.transactionsData
+      : [];
+
+    return (
+      <View style={styles.formInput}>
+        {batchTransactions?.map((item, index) => (
+          <BatchTransactionItem
+            key={`batch_transaction_${index}`}
+            item={item}
+            isSelected={false}
+            isSelectionMode={false}
+            localCurrency={localCurrency}
+          />
+        ))}
+        <View style={styles.box}>
+          <View style={styles.itemView}>
+            <Text style={styles.title}>{'Network Fee'}</Text>
+            <Text style={styles.boxBalance}>
+              {isFetchingFeesAgain
+                ? 'Refreshing'
+                : `${transferData?.transactionFee || '0'} ${
+                    transferData?.currentCoin?.chain_symbol
+                  }`}
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <DokSafeAreaView style={styles.mainView}>
       {!!isSubmitting && <Spinner />}
@@ -862,6 +934,8 @@ const Transfer = ({navigation, route}) => {
                 ? renderSendNFTUI()
                 : isStakingScreen
                 ? renderStakingUI()
+                : isBatchTransaction
+                ? renderBatchTransactionUI()
                 : renderVotingUI()}
               {isFeesOptionsEnabled &&
                 isFeesOptionChain(convertedChainName) &&

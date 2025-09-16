@@ -122,7 +122,7 @@ export const darkTheme = {
   headerBorder: '#B7B7B7',
   sidebarIcon: '#FFFFFF',
   backdrop: 'rgba(255, 255, 255, 0.1)',
-  walletItemColor: '#151517',
+  walletItemColor: '#242428',
   toastBackground: '#232441',
   progressBottom: '#2650F4',
   leftToastBackground: '#191B26',

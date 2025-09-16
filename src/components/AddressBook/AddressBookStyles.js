@@ -54,7 +54,6 @@ const myStyles = (theme, bottom) =>
       paddingHorizontal: 20,
       paddingBottom: 16 + bottom,
     },
-
   });
 
 export default myStyles;

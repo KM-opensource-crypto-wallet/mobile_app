@@ -43,6 +43,7 @@ import {
   validateBigNumberStr,
   validateNumberInInput,
   validateNumber,
+  isEip7702SupportedChain,
 } from 'dok-wallet-blockchain-networks/helper';
 import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {showToast} from 'utils/toast';
@@ -51,6 +52,8 @@ import AddressBookPicker from 'components/AddressBookPicker';
 import {getTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSelector';
 import {isBitcoinChain} from 'dok-wallet-blockchain-networks/helper';
 import {parseBoolean} from 'utils/common';
+import {addBatchTransaction} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
+import {v4} from 'uuid';
 
 const SendFunds = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
@@ -69,6 +72,9 @@ const SendFunds = ({navigation, route}) => {
   const currentWallet = useSelector(selectCurrentWallet);
   const transferData = useSelector(getTransferData);
   const isBitcoin = isBitcoinChain(currentCoin?.chain_name);
+  const uuid = useMemo(() => {
+    return v4();
+  }, []);
 
   const [modal, setModal] = useState(false);
   const [maxAmount, setMaxAmount] = useState('0.00000');
@@ -174,6 +180,36 @@ const SendFunds = ({navigation, route}) => {
       formikRef?.current?.setFieldValue('memo', route?.params?.memo);
     }
   }, [route?.params?.memo]);
+
+  const addToBatch = useCallback(async () => {
+    const values = formikRef.current.values;
+    const currentChain = getChain(currentCoin?.chain_name);
+    const isValid = await currentChain.isValidAddress({address: values?.send});
+    let validAddress = null;
+    if (!isValid && isNameSupportChain(currentCoin?.chain_name)) {
+      validAddress = await currentChain?.isValidName({name: values?.send});
+    }
+    if (isValid || validAddress) {
+      dispatch(
+        addBatchTransaction({
+          transactionId: uuid,
+          selectedCoin: currentCoin,
+          transferData: {
+            contractAddress: currentCoin?.contractAddress,
+            fromAddress: currentCoin?.address,
+            toAddress: values?.send,
+            decimals: currentCoin?.decimal,
+            amount: validateBigNumberStr(values?.amount),
+            fiatAmount: values?.currencyAmount || '0',
+          },
+          isERC20Token: currentCoin?.type?.toLowerCase() === 'token',
+          navigation,
+        }),
+      );
+    } else {
+      formikRef?.current?.setFieldError('send', 'address is not valid');
+    }
+  }, [currentCoin, dispatch, navigation, uuid]);
 
   const handleSubmitForm = async values => {
     if (
@@ -636,6 +672,25 @@ const SendFunds = ({navigation, route}) => {
                         {/*</View>*/}
                       </View>
                     </View>
+                    {isEip7702SupportedChain(currentCoin?.chain_name) && (
+                      <TouchableOpacity
+                        disabled={!isValid}
+                        style={{
+                          ...styles.button,
+                          backgroundColor: isValid ? 'transparent' : theme.gray,
+                          borderColor: isValid ? theme.background : theme.gray,
+                          borderWidth: 1,
+                        }}
+                        onPress={addToBatch}>
+                        <Text
+                          style={[
+                            styles.buttonTitle,
+                            isValid && {color: theme.background},
+                          ]}>
+                          Add to batch
+                        </Text>
+                      </TouchableOpacity>
+                    )}
                     <TouchableOpacity
                       disabled={!isValid}
                       style={{
