@@ -138,6 +138,7 @@ const VoteStaking = ({navigation}) => {
     );
     dispatch(
       calculateEstimateFee({
+        isFetchNonce: true,
         fromAddress: currentCoin?.address,
         amount: values?.amount,
         selectedVotes: finalSelectedVotes,

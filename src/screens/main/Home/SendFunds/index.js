@@ -289,6 +289,7 @@ const SendFunds = ({navigation, route}) => {
       );
       dispatch(
         calculateEstimateFee({
+          isFetchNonce: true,
           fromAddress: currentCoin?.address,
           toAddress: validAddress || values?.send,
           amount: validateBigNumberStr(values?.amount),

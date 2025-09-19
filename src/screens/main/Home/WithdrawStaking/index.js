@@ -148,6 +148,7 @@ const WithdrawStaking = ({navigation, route}) => {
       );
       dispatch(
         calculateEstimateFee({
+          isFetchNonce: true,
           fromAddress: currentCoin?.address,
           amount: validateBigNumberStr(amount),
           validatorPubKey: selectedStake?.validator_address,
