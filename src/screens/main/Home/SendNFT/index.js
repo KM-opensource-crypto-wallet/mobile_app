@@ -109,6 +109,7 @@ const SendNFT = ({navigation, route}) => {
 
       dispatch(
         calculateEstimateFee({
+          isFetchNonce: true,
           selectedCoin: selectedNft?.coin,
           selectedWallet,
           fromAddress: selectedNft?.coin?.address,

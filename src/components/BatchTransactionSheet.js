@@ -166,6 +166,7 @@ const BatchTransactionSheet = ({bottomSheetRef, onDismiss, transactions}) => {
     dispatch(updateCurrentTransferData(transferData));
     dispatch(
       calculateEstimateFee({
+        isFetchNonce: true,
         currentCoin: filteredTransactions?.[0]?.coinInfo,
         transferData,
         isBatchTransaction: true,

@@ -49,6 +49,7 @@ import {currencySymbol} from 'data/currency';
 import {
   getBalanceForNativeCoin,
   getCurrentWalletPhrase,
+  getFailedTransaction,
   selectCurrentWallet,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import Loading from 'components/Loading';
@@ -68,6 +69,8 @@ import {getSellCryptoRequestDetails} from 'dok-wallet-blockchain-networks/redux/
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {handleTransferRedirect} from 'utils/common';
 import BatchTransactionItem from 'components/BatchTransactionItem';
+import DuplicateTransactionModal from 'components/DuplicateTransactionModal';
+import dayjs from 'dayjs';
 
 const Transfer = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
@@ -80,9 +83,11 @@ const Transfer = ({navigation, route}) => {
   const customError = useSelector(getTransferDataCustomError);
   const balance = useSelector(getBalanceForNativeCoin);
   const phrase = useSelector(getCurrentWalletPhrase);
+  const failedTransaction = useSelector(getFailedTransaction);
   const sellCryptoRequestDetails = useSelector(getSellCryptoRequestDetails);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isFetchingFeesAgain, setIsFetchingFeesAgain] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [selectedFeesType, setSelectedFeesType] = useState('recommended');
   const [customFees, setCustomFees] = useState('');
   const selectedFeesTypeRef = useRef('recommended');
@@ -200,6 +205,8 @@ const Transfer = ({navigation, route}) => {
 
           dispatch(
             calculateEstimateFee({
+              isFetchNonce: false,
+              existingNonce: transferData?.nonce,
               fromAddress:
                 isSendFundScreen ||
                 isStakingScreen ||
@@ -285,6 +292,54 @@ const Transfer = ({navigation, route}) => {
   useEffect(() => {
     setLocalImage(transferData?.selectedNFT?.metadata?.image);
   }, [transferData?.selectedNFT?.metadata?.image]);
+
+  useEffect(() => {
+    const validateDuplicateTransaction = () => {
+      const failedTimestamp = failedTransaction?.timestamp;
+      if (
+        failedTimestamp &&
+        dayjs().diff(dayjs(failedTimestamp), 'minutes') < 5
+      ) {
+        const currentFrom =
+          isSendFundScreen ||
+          isStakingScreen ||
+          isSellCryptoScreen ||
+          isBatchTransaction
+            ? transferData?.currentCoin?.address
+            : isExchangeScreen
+            ? selectedFromAsset?.address
+            : transferData?.selectedNFT?.coin?.address;
+        const currentTo = transferData.toAddress;
+        const currentAmount =
+          isSendFundScreen || isStakingScreen || isSellCryptoScreen
+            ? transferData?.amount
+            : isExchangeScreen
+            ? amountFrom
+            : '0';
+        const currentContractAddress = isSendNFT
+          ? transferData?.selectedNFT?.token_address ||
+            transferData?.selectedNFT?.associatedTokenAddress
+          : transferData?.currentCoin?.contractAddress;
+
+        const currentChainName = transferData?.currentCoin?.chain_name;
+        const currentSymbol = transferData?.currentCoin?.symbol;
+        const currentCalls = transferData?.calls;
+        if (
+          currentFrom === failedTransaction?.fromAddress &&
+          currentTo === failedTransaction?.toAddress &&
+          currentAmount === failedTransaction?.amount &&
+          currentContractAddress === failedTransaction?.contractAddress &&
+          currentChainName === failedTransaction?.chain_name &&
+          currentSymbol === failedTransaction?.symbol &&
+          currentCalls?.toString() === failedTransaction?.calls?.toString()
+        ) {
+          setShowDuplicateModal(true);
+        }
+      }
+    };
+    validateDuplicateTransaction();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const submitTransferData = useCallback(async () => {
     return await dispatch(
@@ -1081,6 +1136,10 @@ const Transfer = ({navigation, route}) => {
         }}
         visible={showConfirmModal}
         onSuccess={onSuccess}
+      />
+      <DuplicateTransactionModal
+        visible={showDuplicateModal}
+        onClose={() => setShowDuplicateModal(false)}
       />
     </DokSafeAreaView>
   );
