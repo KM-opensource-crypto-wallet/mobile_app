@@ -10,12 +10,8 @@ import myStyles from './ModalResetStyles';
 import {resetWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {useDispatch} from 'react-redux';
 import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
-import {
-  resetCurrentTransferData
-} from "../../../dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice";
-import {
-  resetBatchTransactions
-} from "../../../dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice";
+import {resetCurrentTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
+import {resetBatchTransactions} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
 
 const WIDTH = Dimensions.get('window').width + 80;
 const {height: screenHeight} = Dimensions.get('window');
