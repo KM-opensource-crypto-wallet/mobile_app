@@ -28,6 +28,7 @@ const chainLogoMap = {
   tron: require('../../assets/chain_logo/tron.png'),
   viction: require('../../assets/chain_logo/viction.png'),
   zksync: require('../../assets/chain_logo/zksync.png'),
+  sei: require('../../assets/chain_logo/sei.png'),
 };
 
 const ChainIcon = ({chainName, itemType, size = 20}) => {
