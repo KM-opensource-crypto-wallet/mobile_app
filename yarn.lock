@@ -9955,25 +9955,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^0.30.0":
-  version: 0.30.0
-  resolution: "axios@npm:0.30.0"
+"axios@npm:^0.30.2":
+  version: 0.30.2
+  resolution: "axios@npm:0.30.2"
   dependencies:
     follow-redirects: ^1.15.4
-    form-data: ^4.0.0
+    form-data: ^4.0.4
     proxy-from-env: ^1.1.0
-  checksum: 5179e93f4d8a4f8fc6fce3d46b4087aff60d1f2aeb36fad289e506dfd327c3436aafe1a91b371f47ffc2ef1b0a3f7ea278a24f6b1af88216d691b1e6c262b32f
+  checksum: c21a17bab1385c1b9aad0d3a293397be418a24d16ef02b34bb332a40c4ae645ce4e06ff2cf44acd5fb3cacea6fe6e6ea018ed581e0cd21fdfbd74e4e94f54f92
   languageName: node
   linkType: hard
 
-"axios@npm:^1.2.1, axios@npm:^1.6.0, axios@npm:^1.6.4, axios@npm:^1.6.7, axios@npm:^1.6.8, axios@npm:^1.7.2, axios@npm:^1.8.3, axios@npm:^1.8.4, axios@npm:^1.9.0":
-  version: 1.9.0
-  resolution: "axios@npm:1.9.0"
+"axios@npm:^1.13.1, axios@npm:^1.2.1, axios@npm:^1.6.0, axios@npm:^1.6.4, axios@npm:^1.6.7, axios@npm:^1.6.8, axios@npm:^1.7.2, axios@npm:^1.8.3":
+  version: 1.13.1
+  resolution: "axios@npm:1.13.1"
   dependencies:
     follow-redirects: ^1.15.6
-    form-data: ^4.0.0
+    form-data: ^4.0.4
     proxy-from-env: ^1.1.0
-  checksum: 631f02c9c279f2ae90637a4989cc9d75c1c27aefd16b6e8eb90f98a4d0bddaccfd1cb1387be12101d1ab0f9bbf0c47e2451b4de0cf2870462a7d9ed3de8da3f2
+  checksum: fd34e26d22adaba5ce59b02963ecc4f7a6a4a44950014512f3f86dde10ab30df377dd10260ea9d36aafe9f1f87191a95f5b50c3979485be50f10b465c7b1a164
   languageName: node
   linkType: hard
 
@@ -11922,7 +11922,7 @@ __metadata:
     add: ^2.0.6
     assert: ^1.5.0
     asyncstorage-down: ^4.2.0
-    axios: ^1.8.4
+    axios: ^1.13.1
     babel-jest: ^29.6.3
     babel-plugin-module-resolver: ^5.0.0
     bchaddrjs: ^0.5.2
