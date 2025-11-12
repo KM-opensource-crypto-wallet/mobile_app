@@ -18,28 +18,23 @@ const BuyCrypto = ({navigation}) => {
   const providers = useSelector(getCryptoProviders);
   const shownOTC = useSelector(getCryptoProvidersOTC);
   const country = useSelector(getSelectedCountry);
-  if (providers.length === 0) {
+  if (providers.length === 0 && !shownOTC) {
     return (
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.contentContainer}>
-          {providers.length === 0 && !shownOTC ? (
-            <View style={styles.centerView}>
-              <Text
-                style={
-                  styles.title
-                }>{`No providers are available for selected country '${getName(
-                country,
-              )}'.`}</Text>
-            </View>
-          ) : null}
+          <View style={styles.centerView}>
+            <Text
+              style={
+                styles.title
+              }>{`No providers are available for selected country '${getName(
+              country,
+            )}'.`}</Text>
+          </View>
         </ScrollView>
       </View>
     );
   }
-  if (providers.length >= 1) {
-    return <CryptoProviders />;
-  }
-  return null;
+  return <CryptoProviders />;
 };
 
 export default BuyCrypto;
