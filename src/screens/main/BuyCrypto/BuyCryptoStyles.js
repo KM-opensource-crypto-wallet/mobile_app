@@ -23,40 +23,6 @@ const myStyles = theme =>
       fontFamily: 'Roboto-Regular',
       fontWeight: '700',
     },
-    cardBox: {
-      marginTop: 20,
-      marginHorizontal: 20,
-      width: 325,
-      height: 186,
-    },
-    cardItem: {
-      height: 186,
-      resizeMode: 'contain',
-    },
-    textContainer: {
-      position: 'absolute',
-      bottom: 12,
-      left: 30,
-      overflow: 'hidden',
-      width: 285,
-      zIndex: 9999,
-      gap: 12,
-    },
-    cardTitle: {
-      color: 'white',
-      fontSize: 20,
-      fontFamily: 'Roboto-Regular',
-      fontWeight: '600',
-      flexShrink: 1,
-    },
-    cardDescription: {
-      color: 'white',
-      fontSize: 14,
-      fontFamily: 'Roboto-Regular',
-      fontWeight: '500',
-      marginTop: 6,
-      flexShrink: 1,
-    },
   });
 
 export default myStyles;

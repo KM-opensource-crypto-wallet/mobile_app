@@ -31,7 +31,6 @@ import SendFunds from 'screens/main/Home/SendFunds';
 ///////////////////////////////////////////////////////////////
 // import CryptoInfo from 'screens/main/BuyCrypto/CryptoInfo';
 // import CryptoOptions from 'screens/main/BuyCrypto/CryptoProviders';
-import CryptoProviders from 'screens/main/BuyCrypto/CryptoProviders';
 import LocalCurrency from 'screens/main/Settings/LocalCurrency';
 import Notifications from 'screens/main/Settings/Notifications';
 import Check from 'assets/images/settings/check.svg';
@@ -338,30 +337,6 @@ export const useRoute = isAuth => {
         component={SellCrypto}
         options={({navigation}) => ({
           title: 'Sell Crypto',
-          headerStyle: {
-            borderBottomColor: theme.headerBorder,
-            borderBottomWidth: 1,
-            backgroundColor: theme.backgroundColor,
-          },
-          headerTitleStyle: {
-            color: theme.borderActiveColor,
-          },
-
-          headerLeft: () => (
-            <TouchableOpacity
-              style={styles.headerLeftStyle}
-              onPress={() => navigation.goBack()}>
-              <Back width="22" height="18" fill={theme.borderActiveColor} />
-            </TouchableOpacity>
-          ),
-          cardStyleInterpolator: forFade,
-        })}
-      />
-      <Stack.Screen
-        name="CryptoProviders"
-        component={CryptoProviders}
-        options={({navigation}) => ({
-          title: 'Buy Crypto',
           headerStyle: {
             borderBottomColor: theme.headerBorder,
             borderBottomWidth: 1,
