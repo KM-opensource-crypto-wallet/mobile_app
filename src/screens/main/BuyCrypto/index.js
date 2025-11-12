@@ -10,7 +10,7 @@ import {
   getSelectedCountry,
 } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
 import {getName} from 'country-list';
-import CryptoProviders from '../../../components/CryptoProviders';
+import CryptoProviders from 'components/CryptoProviders';
 
 const BuyCrypto = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
