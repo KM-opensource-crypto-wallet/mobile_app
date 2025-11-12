@@ -1,14 +1,28 @@
 import React, {useContext, useCallback} from 'react';
-import {ScrollView, Text, TouchableOpacity, View, Linking} from 'react-native';
+import {
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+  Linking,
+  ImageBackground,
+} from 'react-native';
 import myStyles from './ContactUsStyles';
 import {ThemeContext} from 'theme/ThemeContext';
 import WalletConnectItem from 'components/WalletConnectItem';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {CONTACT_DETAILS} from 'utils/wlData';
+import {cards} from 'data/data';
+import {useSelector} from 'react-redux';
+import {getCryptoProvidersOTC} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
+import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {currencySymbol} from 'data/currency';
 
 const ContactUs = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
+  const shownOTC = useSelector(getCryptoProvidersOTC);
+  const localCurrency = useSelector(getLocalCurrency);
 
   const onPressContactViaEmail = useCallback(async () => {
     try {
@@ -56,6 +70,41 @@ const ContactUs = ({navigation}) => {
           )}
           <View style={styles.borderView} />
           <WalletConnectItem />
+          <>
+            {cards.map((item, index) => {
+              if (index === 1 && shownOTC) {
+                return (
+                  <TouchableOpacity
+                    style={styles.cardBox}
+                    key={index}
+                    onPress={() => {
+                      if (index === 0) {
+                        navigation.navigate('CryptoProviders');
+                      } else {
+                        navigation.navigate('OTC');
+                      }
+                    }}>
+                    <ImageBackground
+                      source={item.src}
+                      style={styles.cardItem}
+                      resizeMode={'contain'}>
+                      <View style={styles.textContainer}>
+                        <Text style={styles.cardTitle} numberOfLines={3}>
+                          {index === 0 ? 'Credit Card\nBank Transfer' : 'OTC'}
+                        </Text>
+                        <Text style={styles.cardDescription} numberOfLines={1}>
+                          {index === 0
+                            ? 'Alternative Payment Method'
+                            : `(Must be over ${currencySymbol[localCurrency]}10000)`}
+                        </Text>
+                      </View>
+                    </ImageBackground>
+                  </TouchableOpacity>
+                );
+              }
+              return null;
+            })}
+          </>
         </ScrollView>
       </View>
     </DokSafeAreaView>
