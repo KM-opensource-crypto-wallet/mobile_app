@@ -1,10 +1,11 @@
+/* eslint-disable react/no-unstable-nested-components */
 import {
   createDrawerNavigator,
   DrawerContentScrollView,
   DrawerItemList,
   DrawerItem,
 } from '@react-navigation/drawer';
-import {View, Text, Button, Image, StyleSheet} from 'react-native';
+import {Text} from 'react-native';
 import React, {useState, useEffect, useContext, useMemo} from 'react';
 
 import BuyCrypto from 'screens/main/BuyCrypto';

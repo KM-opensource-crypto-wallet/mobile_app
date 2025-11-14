@@ -71,23 +71,25 @@ const ContactUs = ({navigation}) => {
           <WalletConnectItem />
           <>
             {shownOTC && (
-              <TouchableOpacity
-                style={styles.cardBox}
-                onPress={() => navigation.navigate('OTC')}>
-                <ImageBackground
-                  source={CARD_2}
-                  style={styles.cardItem}
-                  resizeMode={'contain'}>
-                  <View style={styles.textContainer}>
-                    <Text style={styles.cardTitle} numberOfLines={3}>
-                      {'OTC'}
-                    </Text>
-                    <Text style={styles.cardDescription} numberOfLines={1}>
-                      {`(Must be over ${currencySymbol[localCurrency]}10000)`}
-                    </Text>
-                  </View>
-                </ImageBackground>
-              </TouchableOpacity>
+              <View style={styles.cardWrapper}>
+                <TouchableOpacity
+                  style={styles.cardBox}
+                  onPress={() => navigation.navigate('OTC')}>
+                  <ImageBackground
+                    source={CARD_2}
+                    style={styles.cardItem}
+                    resizeMode={'contain'}>
+                    <View style={styles.textContainer}>
+                      <Text style={styles.cardTitle} numberOfLines={3}>
+                        {'OTC'}
+                      </Text>
+                      <Text style={styles.cardDescription} numberOfLines={1}>
+                        {`(Must be over ${currencySymbol[localCurrency]}10000)`}
+                      </Text>
+                    </View>
+                  </ImageBackground>
+                </TouchableOpacity>
+              </View>
             )}
           </>
         </ScrollView>
