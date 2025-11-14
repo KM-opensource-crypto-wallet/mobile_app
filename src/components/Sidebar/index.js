@@ -9,7 +9,6 @@ import {Text} from 'react-native';
 import React, {useState, useEffect, useContext, useMemo} from 'react';
 
 import BuyCrypto from 'screens/main/BuyCrypto';
-import ResetWallet from 'screens/main/ResetWallet';
 import Settings from 'screens/main/Settings';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import BackIcon from 'assets/images/sidebarIcons/Back.svg';
@@ -21,23 +20,18 @@ import ResetWalletIcon from 'assets/images/sidebarIcons/ResetWallet.svg';
 import WallestIcon from 'assets/images/sidebarIcons/Wallet.svg';
 import WalletConnectIcon from 'assets/images/sidebarIcons/WalletConnect.svg';
 import ContactUsIcon from 'assets/images/sidebarIcons/contact_us.svg';
-import AddIcon from 'assets/images/sidebarIcons/Add.svg';
 import ConvertIcon from 'assets/images/sidebarIcons/CryptoConvert.svg';
-import Home from 'screens/main/Home';
 import Wallets from 'screens/main/Wallets';
-import {useSelector, useDispatch} from 'react-redux';
 import ModalReset from 'components/ModalReset';
-import {useFocusEffect} from '@react-navigation/native';
 import {DrawerActions} from '@react-navigation/native';
 import Exchange from 'screens/main/Exchange';
 import LogOutIcon from 'assets/images/sidebarIcons/Logout.svg';
 import LogOutIconDark from 'assets/images/sidebarIcons/Logout_dark.svg';
 import AboutScreen from 'screens/main/About/AboutScreen';
 import HomeScreen from 'screens/main/Home/HomeScreen';
-import {IS_ANDROID, IS_IOS, useFloatingHeight} from 'utils/dimensions';
+import {IS_ANDROID, IS_IOS} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
 import {useFloatingWidth} from 'hooks/useFloatingWidth';
-import {selectCurrentWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import WalletConnect from 'screens/main/WalletConnect';
 import ContactUs from 'screens/main/ContactUs';
 import SelectCountry from 'screens/main/BuyCrypto/SelectCountry';
@@ -50,14 +44,72 @@ const Drawer = createDrawerNavigator();
 
 const HIDE_SWAP_COUNTRIES = ['US'];
 
+function CustomDrawerContent(props) {
+  const {theme, setModalList, setModal} = props;
+  return (
+    <>
+      <DrawerContentScrollView {...props}>
+        <DrawerItemList {...props} />
+        <DrawerItem
+          icon={({focused}) => (
+            <ResetWalletIcon
+              fill={focused ? theme.background : theme.sidebarIcon}
+              style={{marginVertical: -4}}
+            />
+          )}
+          label={() => (
+            <Text
+              style={{
+                color:
+                  theme.backgroundColor === '#121212' ? '#FFFFFF' : '#989898',
+                fontFamily: 'Roboto-Regular',
+                fontSize: 16,
+                marginVertical: -4,
+              }}>
+              Delete Account
+            </Text>
+          )}
+          onPress={() => {
+            setModalList('Delete Account');
+            setModal(true);
+          }}
+        />
+        <DrawerItem
+          icon={({focused}) =>
+            theme.backgroundColor === '#121212' ? (
+              <LogOutIconDark width="25" height="26" />
+            ) : (
+              <LogOutIcon width="25" height="26" />
+            )
+          }
+          label={() => (
+            <Text
+              style={{
+                color:
+                  theme.backgroundColor === '#121212' ? '#FFFFFF' : '#989898',
+                fontFamily: 'Roboto-Regular',
+                fontSize: 16,
+                marginVertical: -4,
+                marginLeft: -2,
+              }}>
+              Logout
+            </Text>
+          )}
+          onPress={() => {
+            setModalList('Logout');
+            setModal(true);
+          }}
+        />
+      </DrawerContentScrollView>
+    </>
+  );
+}
+
 export default function Sidebar({navigation, route}) {
-  const userWalletName = useSelector(selectCurrentWallet)?.walletName;
   const {theme} = useContext(ThemeContext);
   const [modal, setModal] = useState(false);
   const [modalList, setModalList] = useState('');
-  const floatingHeight = useFloatingHeight();
   const isIpad = useFloatingWidth();
-  const dispatch = useDispatch();
   const deviceCountry = useMemo(() => {
     return getCountry()?.toUpperCase();
   }, []);
@@ -71,82 +123,17 @@ export default function Sidebar({navigation, route}) {
     }
   }, [modal, navigation]);
 
-  function CustomDrawerContent(props) {
-    return (
-      <>
-        <DrawerContentScrollView {...props}>
-          <DrawerItemList {...props} />
-          <DrawerItem
-            icon={({focused}) => (
-              <ResetWalletIcon
-                fill={focused ? theme.background : theme.sidebarIcon}
-                style={{marginVertical: -4}}
-              />
-            )}
-            label={() => (
-              <Text
-                style={{
-                  color:
-                    theme.backgroundColor === '#121212' ? '#FFFFFF' : '#989898',
-
-                  fontFamily: 'Roboto-Regular',
-                  fontSize: 16,
-                  marginVertical: -4,
-                }}>
-                Delete Account
-              </Text>
-            )}
-            onPress={() => {
-              setModalList('Delete Account');
-              setModal(true);
-            }}
-          />
-
-          <DrawerItem
-            icon={({focused}) =>
-              theme.backgroundColor === '#121212' ? (
-                <LogOutIconDark
-                  width="25"
-                  height="26"
-                  // style={{marginVertical: -4, marginLeft: -4}}
-                />
-              ) : (
-                <LogOutIcon
-                  width="25"
-                  height="26"
-                  // fill={focused ? theme.background : theme.sidebarIcon}
-                  // style={{marginVertical: -4, marginLeft: -4}}
-                />
-              )
-            }
-            label={() => (
-              <Text
-                style={{
-                  color:
-                    theme.backgroundColor === '#121212' ? '#FFFFFF' : '#989898',
-                  // color: '#989898',
-                  fontFamily: 'Roboto-Regular',
-                  fontSize: 16,
-                  marginVertical: -4,
-                  marginLeft: -2,
-                }}>
-                Logout
-              </Text>
-            )}
-            onPress={() => {
-              setModalList('Logout');
-              setModal(true);
-            }}
-          />
-        </DrawerContentScrollView>
-      </>
-    );
-  }
-
   return (
     <>
       <Drawer.Navigator
-        drawerContent={props => <CustomDrawerContent {...props} />}
+        drawerContent={props => (
+          <CustomDrawerContent
+            {...props}
+            theme={theme}
+            setModalList={setModalList}
+            setModal={setModal}
+          />
+        )}
         drawerHideStatusBarOnOpen={true}
         screenOptions={{
           drawerActiveBackgroundColor: 'transparent',
