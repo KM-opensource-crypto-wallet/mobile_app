@@ -89,8 +89,6 @@ const myStyles = theme =>
       flexShrink: 1,
     },
     cardWrapper: {
-      display: 'flex',
-      justifyContent: 'center',
       alignItems: 'center',
     },
   });
