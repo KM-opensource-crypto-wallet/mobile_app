@@ -88,6 +88,9 @@ const myStyles = theme =>
       marginTop: 6,
       flexShrink: 1,
     },
+    cardWrapper: {
+      alignItems: 'center',
+    },
   });
 
 export default myStyles;
