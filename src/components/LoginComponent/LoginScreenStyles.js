@@ -48,7 +48,7 @@ const myStyles = theme =>
       fontWeight: 'bold',
     },
     input: {
-      marginBottom: 20,
+      marginBottom: 10,
       backgroundColor: theme.backgroundColor,
     },
     button: {
@@ -92,6 +92,9 @@ const myStyles = theme =>
       fontFamily: 'Roboto-Regular',
       width: 230,
       textAlign: 'center',
+    },
+    attempts: {
+      marginBottom: 10,
     },
   });
 

@@ -26,13 +26,21 @@ import {validationSchemaLogin} from 'utils/validationSchema';
 import ModalReset from 'components/ModalReset';
 import {isFingerprint} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import FingerprintScanner from 'react-native-fingerprint-scanner';
-import {IS_IOS, useFloatingHeight} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './LoginScreenStyles';
 import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {isNoUpdateAvailable} from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
 import {LOGO, LOGO_DARK, WL_APP_NAME} from 'utils/wlData';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useRateLimit} from 'hooks/useRateLimit';
+import {showToast} from 'utils/toast';
+import ModalInfo from 'components/ModalInfo';
+import {Constants} from 'utils/common';
+import {resetWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {resetCurrentTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
+import {resetBatchTransactions} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
+import {logOutSuccess} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
+import {isWalletReset} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 
 const LoginComponent = ({navigation, onClose, visible}) => {
   const {theme} = useContext(ThemeContext);
@@ -42,13 +50,14 @@ const LoginComponent = ({navigation, onClose, visible}) => {
   const [hide, setHide] = useState(true);
   const [wrong, setWrong] = useState(false);
   const [modal, setModal] = useState(false);
+  const [lastAttempt, setLastAttempt] = useState(false);
   const storePassword = useSelector(getUserPassword);
   const fingerprint = useSelector(isFingerprint);
-  const floatingBtnHeight = useFloatingHeight();
   const allWallets = useSelector(selectAllWallets);
   const isNoAppUpdate = useSelector(isNoUpdateAvailable);
   const appState = useRef(AppState.currentState);
-
+  const rateLimitCheck = useSelector(isWalletReset);
+  const {attempts, recordFailure, maxAttempts, resetAttempts} = useRateLimit();
   const redirectSuccess = useCallback(() => {
     if (onClose) {
       onClose();
@@ -119,9 +128,12 @@ const LoginComponent = ({navigation, onClose, visible}) => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
-  const handleSubmit = values => {
+  const handleSubmit = async values => {
     Keyboard.dismiss();
     if (storePassword === values.password) {
+      if (rateLimitCheck) {
+        await resetAttempts();
+      }
       dispatch(fingerprintAuthSuccess(true));
       dispatch(logInSuccess(values.password));
       dispatch(loadingOff());
@@ -130,7 +142,50 @@ const LoginComponent = ({navigation, onClose, visible}) => {
       } else {
         navigation.reset({
           index: 0,
-          routes: [{name: 'ResetWallet', params: {isFromOnBoarding: true}}],
+          routes: [
+            {
+              name: 'ResetWallet',
+              params: {isFromOnBoarding: true},
+            },
+          ],
+        });
+      }
+    } else if (rateLimitCheck) {
+      const threshold = maxAttempts - 2; // 3
+      const attemptsLeft = maxAttempts - attempts.length - 1;
+      if (attempts.length >= threshold) {
+        // show popup
+        await recordFailure();
+        if (attemptsLeft === 1) {
+          setLastAttempt(true);
+        } else if (!attemptsLeft) {
+          // NOTE: Delete wallet
+          showToast({
+            type: 'warningToast',
+            title: 'wallet deleted',
+            message: `Attempts lefts ${attemptsLeft}`,
+          });
+          dispatch(resetWallet());
+          dispatch(resetCurrentTransferData());
+          dispatch(resetBatchTransactions());
+          dispatch(logOutSuccess());
+          setTimeout(() => {
+            navigation?.reset({
+              index: 0,
+              routes: [{name: 'CarouselCards'}],
+            });
+          }, 200);
+        }
+        setWrong(true);
+        dispatch(loadingOff());
+      } else {
+        await recordFailure();
+        setWrong(true);
+        dispatch(loadingOff());
+        showToast({
+          type: 'warningToast',
+          title: `${attemptsLeft}`,
+          message: 'Attempts lefts ',
         });
       }
     } else {
@@ -140,7 +195,6 @@ const LoginComponent = ({navigation, onClose, visible}) => {
   };
 
   return (
-    //use this safeareaview don't use other
     <SafeAreaView style={styles.safeAreaView}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
@@ -226,6 +280,12 @@ const LoginComponent = ({navigation, onClose, visible}) => {
           </View>
         </View>
       </TouchableWithoutFeedback>
+      <ModalInfo
+        visible={lastAttempt}
+        title={Constants.lastAttempt.title}
+        message={Constants.lastAttempt.subTitle}
+        handleClose={() => setLastAttempt(false)}
+      />
       <ModalReset
         visible={modal}
         hideModal={setModal}

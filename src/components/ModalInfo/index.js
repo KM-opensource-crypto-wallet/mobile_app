@@ -1,6 +1,6 @@
-import React, {useContext} from 'react';
+import React, {useCallback, useContext, useState} from 'react';
 import {Dimensions, TouchableOpacity, View} from 'react-native';
-import {Modal, Portal, Text} from 'react-native-paper';
+import {Modal, Portal, Text, TextInput} from 'react-native-paper';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './ModalInfoStyles';
 
@@ -19,7 +19,12 @@ if (isIpad) {
 const ModalInfo = ({visible, handleClose, title, message}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-
+  const [text, setText] = useState('');
+  const handlerConfirm = useCallback(() => {
+    if (text.toLowerCase() === 'confirm') {
+      handleClose();
+    }
+  }, [handleClose, text]);
   return (
     <Portal>
       <Modal
@@ -36,11 +41,33 @@ const ModalInfo = ({visible, handleClose, title, message}) => {
           <Text style={styles.titleInfo}>{title}</Text>
           <Text style={styles.info}>{message}</Text>
         </View>
+        <Text style={styles.info}>Write confirm to delete all wallets.</Text>
+        <View style={{paddingHorizontal: 20}}>
+          <TextInput
+            style={styles.inputStyle}
+            onChangeText={setText}
+            value={text}
+            placeholder={'Confirm'}
+            placeholderTextColor={theme.placeholderColor}
+          />
+        </View>
         <View style={styles.btnList}>
+          {/* <TouchableOpacity
+            style={[styles.learnBorder, styles.button]}
+            // onPress={() => handlerNo()}
+          >
+            <Text style={styles.learnText}>Close</Text>
+          </TouchableOpacity> */}
+
           <TouchableOpacity
-            style={styles.learnBox}
-            onPress={() => handleClose()}>
-            <Text style={styles.learnText}>Okay</Text>
+            style={[
+              styles.learnBorder,
+              styles.button,
+              text.toLowerCase() !== 'confirm' && {opacity: 0.5},
+            ]}
+            disabled={text.toLowerCase() !== 'confirm'}
+            onPress={handlerConfirm}>
+            <Text style={styles.learnText}>Confirm</Text>
           </TouchableOpacity>
         </View>
       </Modal>

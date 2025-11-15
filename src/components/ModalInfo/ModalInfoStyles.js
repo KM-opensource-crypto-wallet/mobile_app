@@ -39,15 +39,26 @@ const myStyles = theme =>
       textAlign: 'center',
       fontFamily: 'Roboto-Regular',
     },
-    btnList: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderTopWidth: 1,
-      borderTopColor: theme.gray,
-    },
-    learnBorder: {
-      borderRightWidth: 1,
-      borderRightColor: theme.gray,
+    // btnList: {
+    //   flexDirection: 'row',
+    //   alignItems: 'center',
+    //   borderTopWidth: 1,
+    //   borderTopColor: theme.gray,
+    // },
+    // learnBorder: {
+    //   borderRightWidth: 1,
+    //   borderRightColor: theme.gray,
+    // },
+    inputStyle: {
+      borderWidth: 1,
+      height: 44,
+      maxHeight: 44,
+      borderColor: theme.headerBorder,
+      width: '100%',
+      color: theme.font,
+      borderRadius: 8,
+      paddingHorizontal: 10,
+      marginVertical: 8,
     },
     learnBox: {
       width: ITEM_WIDTH,
@@ -59,6 +70,30 @@ const myStyles = theme =>
       color: theme.background,
       fontSize: 17,
       fontFamily: 'Roboto-Regular',
+    },
+    //
+    btnList: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      width: '100%',
+      marginTop: 20,
+    },
+
+    button: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 12,
+      borderRadius: 10,
+      marginHorizontal: 6, // space between No and Yes
+    },
+
+    learnBorder: {
+      borderWidth: 1.5,
+      borderColor: '#000',
+      borderRadius: 10,
+      paddingVertical: 12,
     },
   });
 
