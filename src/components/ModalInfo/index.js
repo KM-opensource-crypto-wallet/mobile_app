@@ -58,9 +58,15 @@ const ModalInfo = ({
             <Text style={styles.info}>
               {confirmPrompt || 'Write confirm to delete all wallets.'}
             </Text>
-            <View style={{paddingHorizontal: 20}}>
+            <View style={{paddingHorizontal: 10}}>
               <TextInput
-                style={styles.inputStyle}
+                mode="flat"
+                style={[
+                  styles.inputStyle,
+                  {backgroundColor: theme.secondaryBackgroundColor},
+                ]}
+                underlineColor="transparent"
+                activeUnderlineColor="transparent"
                 onChangeText={setText}
                 value={text}
                 placeholder={confirmWord}
@@ -70,13 +76,6 @@ const ModalInfo = ({
           </>
         )}
         <View style={styles.btnList}>
-          {/* <TouchableOpacity
-            style={[styles.learnBorder, styles.button]}
-            // onPress={() => handlerNo()}
-          >
-            <Text style={styles.learnText}>Close</Text>
-          </TouchableOpacity> */}
-
           <TouchableOpacity
             style={[
               styles.learnBorder,

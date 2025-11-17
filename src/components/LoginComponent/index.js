@@ -32,7 +32,6 @@ import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/wal
 import {isNoUpdateAvailable} from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
 import {LOGO, LOGO_DARK, WL_APP_NAME} from 'utils/wlData';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useRateLimit} from 'hooks/useRateLimit';
 import {showToast} from 'utils/toast';
 import ModalInfo from 'components/ModalInfo';
 import {Constants} from 'utils/common';
@@ -41,6 +40,15 @@ import {resetCurrentTransferData} from 'dok-wallet-blockchain-networks/redux/cur
 import {resetBatchTransactions} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
 import {logOutSuccess} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {isWalletReset} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {
+  getAttempts,
+  getMaxAttempt,
+  getIsLocked,
+} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
+import {
+  recordFailureAttempts,
+  resetAttempts,
+} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 
 const LoginComponent = ({navigation, onClose, visible}) => {
   const {theme} = useContext(ThemeContext);
@@ -57,7 +65,10 @@ const LoginComponent = ({navigation, onClose, visible}) => {
   const isNoAppUpdate = useSelector(isNoUpdateAvailable);
   const appState = useRef(AppState.currentState);
   const rateLimitCheck = useSelector(isWalletReset);
-  const {attempts, recordFailure, maxAttempts, resetAttempts} = useRateLimit();
+
+  const attempts = useSelector(getAttempts);
+  const isLocked = useSelector(getIsLocked);
+  const MAX_ATTEMPT = useSelector(getMaxAttempt);
   const redirectSuccess = useCallback(() => {
     if (onClose) {
       onClose();
@@ -132,7 +143,7 @@ const LoginComponent = ({navigation, onClose, visible}) => {
     Keyboard.dismiss();
     if (storePassword === values.password) {
       if (rateLimitCheck) {
-        await resetAttempts();
+        dispatch(resetAttempts());
       }
       dispatch(fingerprintAuthSuccess(true));
       dispatch(logInSuccess(values.password));
@@ -151,21 +162,19 @@ const LoginComponent = ({navigation, onClose, visible}) => {
         });
       }
     } else if (rateLimitCheck) {
-      const threshold = maxAttempts - 1; // e.g. 3 when maxAttempts = 5
-      const failureCount = await recordFailure(); // includes time-window cleanup
-      const attemptsLeft = maxAttempts - failureCount;
+      const threshold = MAX_ATTEMPT - 1;
+      const failureCount = attempts.length;
+      const attemptsLeft = MAX_ATTEMPT - failureCount;
       if (failureCount >= threshold) {
         if (attemptsLeft === 1) {
-          // Show last-attempt warning modal
           setLastAttempt(true);
-        } else if (attemptsLeft <= 0) {
-          // Delete wallet on exhausting attempts
+        } else if (attemptsLeft <= 0 && isLocked) {
           showToast({
             type: 'warningToast',
             title: 'Wallet Deleted',
             message: 'Too many failed login attempts',
           });
-          await resetAttempts(); // clear client-side rate-limit state
+          dispatch(resetAttempts());
           dispatch(resetWallet());
           dispatch(resetCurrentTransferData());
           dispatch(resetBatchTransactions());
@@ -184,16 +193,16 @@ const LoginComponent = ({navigation, onClose, visible}) => {
         dispatch(loadingOff());
         showToast({
           type: 'warningToast',
-          title: `${attemptsLeft}`,
-          message: 'Attempts left',
+          title: 'Invalid password',
+          message: `${attemptsLeft} Attempts left`,
         });
       }
+      dispatch(recordFailureAttempts());
     } else {
       setWrong(true);
       dispatch(loadingOff());
     }
   };
-
   return (
     <SafeAreaView style={styles.safeAreaView}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
