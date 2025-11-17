@@ -35,10 +35,6 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {showToast} from 'utils/toast';
 import ModalInfo from 'components/ModalInfo';
 import {Constants} from 'utils/common';
-import {resetWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {resetCurrentTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import {resetBatchTransactions} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
-import {logOutSuccess} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {isWalletReset} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {
   getAttempts,
@@ -46,8 +42,8 @@ import {
   getIsLocked,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 import {
-  recordFailureAttempts,
   resetAttempts,
+  handleAttempts,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 
 const LoginComponent = ({navigation, onClose, visible}) => {
@@ -139,33 +135,32 @@ const LoginComponent = ({navigation, onClose, visible}) => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
-  const handleSubmit = async values => {
-    Keyboard.dismiss();
-    if (storePassword === values.password) {
-      if (rateLimitCheck) {
-        dispatch(resetAttempts());
-      }
-      dispatch(fingerprintAuthSuccess(true));
-      dispatch(logInSuccess(values.password));
-      dispatch(loadingOff());
-      if (hasWallet()) {
-        redirectSuccess();
-      } else {
-        navigation.reset({
-          index: 0,
-          routes: [
-            {
-              name: 'ResetWallet',
-              params: {isFromOnBoarding: true},
-            },
-          ],
-        });
-      }
-    } else if (rateLimitCheck) {
-      const threshold = MAX_ATTEMPT - 1;
-      const failureCount = attempts.length;
-      const attemptsLeft = MAX_ATTEMPT - failureCount;
-      if (failureCount >= threshold) {
+  const handleSubmit = useCallback(
+    async values => {
+      Keyboard.dismiss();
+      if (storePassword === values.password) {
+        if (rateLimitCheck) {
+          dispatch(resetAttempts());
+        }
+        dispatch(fingerprintAuthSuccess(true));
+        dispatch(logInSuccess(values.password));
+        dispatch(loadingOff());
+        if (hasWallet()) {
+          redirectSuccess();
+        } else {
+          navigation.reset({
+            index: 0,
+            routes: [
+              {
+                name: 'ResetWallet',
+                params: {isFromOnBoarding: true},
+              },
+            ],
+          });
+        }
+      } else if (rateLimitCheck) {
+        const failureCount = attempts.length;
+        const attemptsLeft = MAX_ATTEMPT - failureCount;
         if (attemptsLeft === 1) {
           setLastAttempt(true);
         } else if (attemptsLeft <= 0 && isLocked) {
@@ -174,41 +169,40 @@ const LoginComponent = ({navigation, onClose, visible}) => {
             title: 'Wallet Deleted',
             message: 'Too many failed login attempts',
           });
-          dispatch(resetAttempts());
-          dispatch(resetWallet());
-          dispatch(resetCurrentTransferData());
-          dispatch(resetBatchTransactions());
-          dispatch(logOutSuccess());
-          setTimeout(() => {
-            navigation?.reset({
-              index: 0,
-              routes: [{name: 'CarouselCards'}],
-            });
-          }, 200);
+        } else {
+          showToast({
+            type: 'warningToast',
+            title: 'Invalid password',
+            message: `${attemptsLeft} Attempts left`,
+          });
+          setWrong(true);
+          dispatch(loadingOff());
         }
-        setWrong(true);
-        dispatch(loadingOff());
+        dispatch(handleAttempts({navigation}));
       } else {
         setWrong(true);
         dispatch(loadingOff());
-        showToast({
-          type: 'warningToast',
-          title: 'Invalid password',
-          message: `${attemptsLeft} Attempts left`,
-        });
       }
-      dispatch(recordFailureAttempts());
-    } else {
-      setWrong(true);
-      dispatch(loadingOff());
-    }
-  };
+    },
+    [
+      MAX_ATTEMPT,
+      attempts.length,
+      dispatch,
+      hasWallet,
+      isLocked,
+      navigation,
+      rateLimitCheck,
+      redirectSuccess,
+      storePassword,
+    ],
+  );
   return (
     <SafeAreaView style={styles.safeAreaView}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           <View style={styles.formInput}>
             {theme.backgroundColor === '#121212' ? <LOGO_DARK /> : <LOGO />}
+            <Text>{attempts.length}</Text>
             <Text style={styles.title}>Sign in</Text>
             <Formik
               initialValues={{password: ''}}
