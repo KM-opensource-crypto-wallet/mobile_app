@@ -16,15 +16,27 @@ if (isIpad) {
   ITEM_WIDTH = Math.round(WIDTH * 0.7);
 }
 
-const ModalInfo = ({visible, handleClose, title, message}) => {
+const ModalInfo = ({
+  visible,
+  handleClose,
+  title,
+  message,
+  requireConfirm = false,
+  confirmWord = 'confirm',
+  confirmPrompt,
+}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const [text, setText] = useState('');
+  const normalizedText = text.trim().toLowerCase();
+  const normalizedConfirm = confirmWord.toLowerCase();
+  const isDisabled = requireConfirm && normalizedText !== normalizedConfirm;
+
   const handlerConfirm = useCallback(() => {
-    if (text.toLowerCase() === 'confirm') {
+    if (!requireConfirm || !isDisabled) {
       handleClose();
     }
-  }, [handleClose, text]);
+  }, [handleClose, isDisabled, requireConfirm]);
   return (
     <Portal>
       <Modal
@@ -41,16 +53,22 @@ const ModalInfo = ({visible, handleClose, title, message}) => {
           <Text style={styles.titleInfo}>{title}</Text>
           <Text style={styles.info}>{message}</Text>
         </View>
-        <Text style={styles.info}>Write confirm to delete all wallets.</Text>
-        <View style={{paddingHorizontal: 20}}>
-          <TextInput
-            style={styles.inputStyle}
-            onChangeText={setText}
-            value={text}
-            placeholder={'Confirm'}
-            placeholderTextColor={theme.placeholderColor}
-          />
-        </View>
+        {requireConfirm && (
+          <>
+            <Text style={styles.info}>
+              {confirmPrompt || 'Write confirm to delete all wallets.'}
+            </Text>
+            <View style={{paddingHorizontal: 20}}>
+              <TextInput
+                style={styles.inputStyle}
+                onChangeText={setText}
+                value={text}
+                placeholder={confirmWord}
+                placeholderTextColor={theme.placeholderColor}
+              />
+            </View>
+          </>
+        )}
         <View style={styles.btnList}>
           {/* <TouchableOpacity
             style={[styles.learnBorder, styles.button]}
@@ -63,9 +81,9 @@ const ModalInfo = ({visible, handleClose, title, message}) => {
             style={[
               styles.learnBorder,
               styles.button,
-              text.toLowerCase() !== 'confirm' && {opacity: 0.5},
+              requireConfirm && isDisabled && {opacity: 0.5},
             ]}
-            disabled={text.toLowerCase() !== 'confirm'}
+            disabled={isDisabled}
             onPress={handlerConfirm}>
             <Text style={styles.learnText}>Confirm</Text>
           </TouchableOpacity>

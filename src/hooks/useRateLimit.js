@@ -13,11 +13,6 @@ export function useRateLimit({
   const [attempts, setAttempts] = useState([]);
   const [isLocked, setIsLocked] = useState(false);
 
-  // Load attempts on mount
-  useEffect(() => {
-    loadAttempts();
-  }, [loadAttempts]);
-
   // Remove old attempts (outside time window)
   const filterOldAttempts = useCallback(
     arr => {
@@ -65,6 +60,11 @@ export function useRateLimit({
     setAttempts([]);
     setIsLocked(false);
   }, [key]);
+
+  // Load attempts on mount
+  useEffect(() => {
+    loadAttempts();
+  }, [loadAttempts]);
 
   return {
     attempts,

@@ -151,20 +151,21 @@ const LoginComponent = ({navigation, onClose, visible}) => {
         });
       }
     } else if (rateLimitCheck) {
-      const threshold = maxAttempts - 2; // 3
-      const attemptsLeft = maxAttempts - attempts.length - 1;
-      if (attempts.length >= threshold) {
-        // show popup
-        await recordFailure();
+      const threshold = maxAttempts - 1; // e.g. 3 when maxAttempts = 5
+      const failureCount = await recordFailure(); // includes time-window cleanup
+      const attemptsLeft = maxAttempts - failureCount;
+      if (failureCount >= threshold) {
         if (attemptsLeft === 1) {
+          // Show last-attempt warning modal
           setLastAttempt(true);
-        } else if (!attemptsLeft) {
-          // NOTE: Delete wallet
+        } else if (attemptsLeft <= 0) {
+          // Delete wallet on exhausting attempts
           showToast({
             type: 'warningToast',
-            title: 'wallet deleted',
-            message: `Attempts lefts ${attemptsLeft}`,
+            title: 'Wallet deleted',
+            message: `Attempts left ${attemptsLeft}`,
           });
+          await resetAttempts(); // clear client-side rate-limit state
           dispatch(resetWallet());
           dispatch(resetCurrentTransferData());
           dispatch(resetBatchTransactions());
@@ -179,13 +180,12 @@ const LoginComponent = ({navigation, onClose, visible}) => {
         setWrong(true);
         dispatch(loadingOff());
       } else {
-        await recordFailure();
         setWrong(true);
         dispatch(loadingOff());
         showToast({
           type: 'warningToast',
           title: `${attemptsLeft}`,
-          message: 'Attempts lefts ',
+          message: 'Attempts left',
         });
       }
     } else {
@@ -284,6 +284,7 @@ const LoginComponent = ({navigation, onClose, visible}) => {
         visible={lastAttempt}
         title={Constants.lastAttempt.title}
         message={Constants.lastAttempt.subTitle}
+        requireConfirm
         handleClose={() => setLastAttempt(false)}
       />
       <ModalReset
