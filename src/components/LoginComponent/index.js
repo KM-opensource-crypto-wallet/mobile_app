@@ -162,8 +162,8 @@ const LoginComponent = ({navigation, onClose, visible}) => {
           // Delete wallet on exhausting attempts
           showToast({
             type: 'warningToast',
-            title: 'Wallet deleted',
-            message: `Attempts left ${attemptsLeft}`,
+            title: 'Wallet Deleted',
+            message: 'Too many failed login attempts',
           });
           await resetAttempts(); // clear client-side rate-limit state
           dispatch(resetWallet());

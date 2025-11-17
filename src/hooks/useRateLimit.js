@@ -24,7 +24,23 @@ export function useRateLimit({
 
   const loadAttempts = useCallback(async () => {
     const stored = await getAsyncStorageData(key);
-    const parsed = stored ? JSON.parse(stored) : [];
+    let parsed = [];
+    if (stored) {
+      try {
+        parsed = JSON.parse(stored);
+        // Validate it's an array of numbers
+        if (
+          !Array.isArray(parsed) ||
+          !parsed.every(ts => typeof ts === 'number')
+        ) {
+          console.warn('Invalid attempts data format, resetting');
+          parsed = [];
+        }
+      } catch (err) {
+        console.error('Failed to parse login attempts:', err);
+        parsed = [];
+      }
+    }
     const cleaned = filterOldAttempts(parsed);
 
     setAttempts(cleaned);
