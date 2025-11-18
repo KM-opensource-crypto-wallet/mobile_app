@@ -60,15 +60,9 @@ const myStyles = theme =>
       fontFamily: 'Roboto-Regular',
     },
     inputStyle: {
-      borderWidth: 1,
-      height: 44,
-      maxHeight: 44,
-      borderColor: theme.headerBorder,
-      width: '100%',
-      color: '#fff',
-      borderRadius: 8,
-      paddingHorizontal: 10,
+      height: 50,
       marginVertical: 8,
+      backgroundColor: theme.secondaryBackgroundColor,
     },
     button: {
       flex: 1,

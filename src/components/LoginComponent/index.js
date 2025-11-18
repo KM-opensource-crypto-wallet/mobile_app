@@ -41,8 +41,10 @@ import {
   setLastAttempt,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {getLastAttempt} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
+import {useNavigation} from '@react-navigation/native';
 
-const LoginComponent = ({navigation, onClose, visible}) => {
+const LoginComponent = ({onClose, visible}) => {
+  const navigation = useNavigation();
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
@@ -153,7 +155,10 @@ const LoginComponent = ({navigation, onClose, visible}) => {
           });
         }
       } else if (rateLimitCheck) {
-        dispatch(handleAttempts({navigation}));
+        const resp = await dispatch(handleAttempts({navigation})).unwrap();
+        if (resp?.successful_deleted) {
+          onClose?.();
+        }
         setWrong(true);
         dispatch(loadingOff());
       } else {
@@ -261,6 +266,8 @@ const LoginComponent = ({navigation, onClose, visible}) => {
         title={Constants.lastAttempt.title}
         message={Constants.lastAttempt.subTitle}
         handleClose={() => dispatch(setLastAttempt(false))}
+        showTextInput={true}
+        confirmPrompt={'Confirm'}
       />
       <ModalReset
         visible={modal}

@@ -22,7 +22,7 @@ const myStyles = theme =>
     infoList: {
       padding: ITEM_PAD,
       width: ITEM_WIDTH,
-      height: modalHeight - 60,
+      minHeight: modalHeight - 60,
       display: 'flex',
       justifyContent: 'center',
 
@@ -44,15 +44,9 @@ const myStyles = theme =>
       marginTop: 16,
     },
     inputStyle: {
-      borderWidth: 1,
-      height: 44,
-      maxHeight: 44,
-      borderColor: theme.headerBorder,
-      flex: 1,
+      height: 50,
+      maxHeight: 50,
       width: '100%',
-      color: theme.font,
-      borderRadius: 8,
-      paddingHorizontal: 20,
       marginVertical: 8,
     },
     btnList: {
