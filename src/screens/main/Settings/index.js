@@ -21,6 +21,7 @@ import {
   isFeesOptions,
   isFingerprint,
   isSearchInHomeScreen,
+  isWalletReset,
   isUpdateSearchInHomeScreen,
 } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {
@@ -28,6 +29,7 @@ import {
   updateFeesOptions,
   updateFingerprint,
   updateSearchInHomeScreen,
+  setResetWallet,
 } from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
 import FingerprintScanner from 'react-native-fingerprint-scanner';
 import {fingerprintAuthOut} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
@@ -58,6 +60,7 @@ const Settings = ({navigation}) => {
   const feesOptions = useSelector(isFeesOptions);
   const chatOptions = useSelector(isChatOptions);
   const searchInHomeScreen = useSelector(isSearchInHomeScreen);
+  const rateLimitCheck = useSelector(isWalletReset);
 
   const onToggleSwitch = () => {
     if (isFingerprintEnabled) {
@@ -86,6 +89,9 @@ const Settings = ({navigation}) => {
 
   const onChangeSearchOptionsHomeScreen = value => {
     dispatch(updateSearchInHomeScreen(value));
+  };
+  const onChangeApplyRateLimit = value => {
+    dispatch(setResetWallet(value));
   };
 
   const onPressRateApp = useCallback(async () => {
@@ -412,6 +418,42 @@ const Settings = ({navigation}) => {
               onValueChange={onChangeSearchOptionsHomeScreen}
               trackColor={{false: 'gray', true: '#E8E8E8'}}
               thumbColor={searchInHomeScreen ? theme.background : 'white'}
+              ios_backgroundColor="#E8E8E8"
+            />
+          </View>
+          <View
+            style={{
+              ...styles.btn,
+              justifyContent: 'space-between',
+              marginTop: 12,
+              borderBottomWidth: 0.5,
+              borderBottomColor: theme.gray,
+            }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                flex: 1,
+              }}>
+              <MaterialCommunityIcons
+                name={'security'}
+                color={theme.font}
+                size={25}
+              />
+              <View style={styles.box}>
+                <Text style={styles.btnTitle}>{'Wallet Reset on Failure'}</Text>
+                <Text style={styles.btnText}>
+                  {
+                    'The wallet resets automatically after 5 failed password attempts.'
+                  }
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={rateLimitCheck}
+              onValueChange={onChangeApplyRateLimit}
+              trackColor={{false: 'gray', true: '#E8E8E8'}}
+              thumbColor={rateLimitCheck ? theme.background : 'white'}
               ios_backgroundColor="#E8E8E8"
             />
           </View>

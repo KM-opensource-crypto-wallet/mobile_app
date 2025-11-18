@@ -1,6 +1,13 @@
 import React, {useState, useEffect, useContext} from 'react';
-import {Dimensions, TouchableOpacity, View, TextInput} from 'react-native';
-import {Modal, Text} from 'react-native-paper';
+import {
+  Dimensions,
+  TouchableOpacity,
+  View,
+  ScrollView,
+  Keyboard,
+  TouchableWithoutFeedback,
+} from 'react-native';
+import {Modal, Text, TextInput} from 'react-native-paper';
 import {
   logOutSuccess,
   fingerprintAuthOut,
@@ -9,13 +16,11 @@ import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './ModalResetStyles';
 import {resetWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {useDispatch} from 'react-redux';
-import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
 import {resetCurrentTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {resetBatchTransactions} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
+import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
 
 const WIDTH = Dimensions.get('window').width + 80;
-const {height: screenHeight} = Dimensions.get('window');
-const modalHeight = screenHeight / 2.5;
 
 const isIpad = WIDTH >= 768;
 
@@ -31,7 +36,6 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const [text, setText] = useState('');
-  const [keyboardOffset, setKeyboardOffset] = useState(0);
   const dispatch = useDispatch();
   const [list, setList] = useState('');
   const keyboardHeight = useKeyboardHeight();
@@ -39,16 +43,6 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
   useEffect(() => {
     setList(page);
   }, [page]);
-
-  // Keyboard event listeners
-  useEffect(() => {
-    const modalTop = (screenHeight - modalHeight) / 2;
-    const overlap = modalTop + modalHeight - (screenHeight - keyboardHeight);
-
-    if (overlap > 0) {
-      setKeyboardOffset(-overlap - 20); // Extra 20px padding
-    }
-  }, [keyboardHeight]);
 
   const handlerNo = () => {
     if (list === 'Delete Account') {
@@ -92,45 +86,71 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
         width: ITEM_WIDTH,
         alignSelf: 'center',
         borderRadius: 10,
-        height: modalHeight,
-        transform: [{translateY: keyboardOffset}], // Apply keyboard offset
+        marginBottom: keyboardHeight > 0 ? keyboardHeight / 2 : 0,
       }}
       dismissable={false}>
-      <View style={styles.infoList}>
-        <Text style={styles.titleInfo}>{page}</Text>
-        <Text style={styles.info}>
-          It will delete all wallets and password. Please make sure you have a
-          copy of 12/18/24-word seed phrase. You will need it in order to
-          restore your wallet. Without it you will NOT be able to restore your
-          wallet and you will lose access to your funds.
-        </Text>
-        <Text style={styles.info}>Write confirm to delete all wallets.</Text>
-        <TextInput
-          style={styles.inputStyle}
-          onChangeText={setText}
-          value={text}
-          placeholder={'Confirm'}
-          placeholderTextColor={theme.placeholderColor}
-        />
-      </View>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{flexGrow: 1}}
+          showsVerticalScrollIndicator={false}>
+          <View style={styles.infoList}>
+            <Text style={styles.titleInfo}>{page}</Text>
+            <Text style={styles.info}>
+              It will delete all wallets and password. Please make sure you have
+              a copy of 12/18/24-word seed phrase. You will need it in order to
+              restore your wallet. Without it you will NOT be able to restore
+              your wallet and you will lose access to your funds.
+            </Text>
+            <Text style={styles.info}>
+              Write confirm to delete all wallets.
+            </Text>
+            <TextInput
+              style={styles.inputStyle}
+              textColor={theme.font}
+              theme={{
+                colors: {
+                  onSurfaceVariant: theme.gray,
+                },
+              }}
+              outlineColor={theme.gray}
+              activeOutlineColor={theme.font}
+              autoCapitalize="none"
+              returnKeyType="done"
+              mode="outlined"
+              onChangeText={setText}
+              value={text}
+              placeholder={'Confirm'}
+              placeholderTextColor={theme.placeholderColor}
+              onSubmitEditing={() => {
+                if (text.toLowerCase() === 'confirm') {
+                  handlerYes();
+                }
+              }}
+            />
+          </View>
 
-      <View style={styles.btnList}>
-        <View style={styles.learnBorder}>
-          <TouchableOpacity style={styles.learnBox} onPress={() => handlerNo()}>
-            <Text style={styles.learnText}>No</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={styles.btnList}>
+            <View style={styles.learnBorder}>
+              <TouchableOpacity
+                style={styles.learnBox}
+                onPress={() => handlerNo()}>
+                <Text style={styles.learnText}>No</Text>
+              </TouchableOpacity>
+            </View>
 
-        <TouchableOpacity
-          style={[
-            styles.learnBox,
-            text.toLowerCase() !== 'confirm' && {opacity: 0.5},
-          ]}
-          onPress={() => handlerYes()}
-          disabled={text.toLowerCase() !== 'confirm'}>
-          <Text style={styles.learnText}>Yes</Text>
-        </TouchableOpacity>
-      </View>
+            <TouchableOpacity
+              style={[
+                styles.learnBox,
+                text.toLowerCase() !== 'confirm' && {opacity: 0.5},
+              ]}
+              onPress={() => handlerYes()}
+              disabled={text.toLowerCase() !== 'confirm'}>
+              <Text style={styles.learnText}>Yes</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };

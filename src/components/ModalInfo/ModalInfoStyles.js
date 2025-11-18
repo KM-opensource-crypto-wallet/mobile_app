@@ -47,7 +47,6 @@ const myStyles = theme =>
     },
     learnBorder: {
       borderRightWidth: 1,
-      borderRightColor: theme.gray,
     },
     learnBox: {
       width: ITEM_WIDTH,
@@ -59,6 +58,17 @@ const myStyles = theme =>
       color: theme.background,
       fontSize: 17,
       fontFamily: 'Roboto-Regular',
+    },
+    inputStyle: {
+      height: 50,
+      marginVertical: 8,
+      backgroundColor: theme.secondaryBackgroundColor,
+    },
+    button: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 12,
     },
   });
 

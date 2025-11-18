@@ -26,15 +26,25 @@ import {validationSchemaLogin} from 'utils/validationSchema';
 import ModalReset from 'components/ModalReset';
 import {isFingerprint} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import FingerprintScanner from 'react-native-fingerprint-scanner';
-import {IS_IOS, useFloatingHeight} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './LoginScreenStyles';
 import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {isNoUpdateAvailable} from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
 import {LOGO, LOGO_DARK, WL_APP_NAME} from 'utils/wlData';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import ModalInfo from 'components/ModalInfo';
+import {Constants} from 'utils/common';
+import {isWalletReset} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {
+  resetAttempts,
+  handleAttempts,
+  setLastAttempt,
+} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
+import {getLastAttempt} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
+import {useNavigation} from '@react-navigation/native';
 
-const LoginComponent = ({navigation, onClose, visible}) => {
+const LoginComponent = ({onClose, visible}) => {
+  const navigation = useNavigation();
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
@@ -44,10 +54,12 @@ const LoginComponent = ({navigation, onClose, visible}) => {
   const [modal, setModal] = useState(false);
   const storePassword = useSelector(getUserPassword);
   const fingerprint = useSelector(isFingerprint);
-  const floatingBtnHeight = useFloatingHeight();
   const allWallets = useSelector(selectAllWallets);
   const isNoAppUpdate = useSelector(isNoUpdateAvailable);
   const appState = useRef(AppState.currentState);
+  const rateLimitCheck = useSelector(isWalletReset);
+
+  const lastAttempt = useSelector(getLastAttempt);
 
   const redirectSuccess = useCallback(() => {
     if (onClose) {
@@ -119,28 +131,51 @@ const LoginComponent = ({navigation, onClose, visible}) => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
-  const handleSubmit = values => {
-    Keyboard.dismiss();
-    if (storePassword === values.password) {
-      dispatch(fingerprintAuthSuccess(true));
-      dispatch(logInSuccess(values.password));
-      dispatch(loadingOff());
-      if (hasWallet()) {
-        redirectSuccess();
+  const handleSubmit = useCallback(
+    async values => {
+      Keyboard.dismiss();
+      if (storePassword === values.password) {
+        if (rateLimitCheck) {
+          dispatch(resetAttempts());
+        }
+        dispatch(fingerprintAuthSuccess(true));
+        dispatch(logInSuccess(values.password));
+        dispatch(loadingOff());
+        if (hasWallet()) {
+          redirectSuccess();
+        } else {
+          navigation.reset({
+            index: 0,
+            routes: [
+              {
+                name: 'ResetWallet',
+                params: {isFromOnBoarding: true},
+              },
+            ],
+          });
+        }
+      } else if (rateLimitCheck) {
+        const resp = await dispatch(handleAttempts({navigation})).unwrap();
+        if (resp?.successful_deleted) {
+          onClose?.();
+        }
+        setWrong(true);
+        dispatch(loadingOff());
       } else {
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'ResetWallet', params: {isFromOnBoarding: true}}],
-        });
+        setWrong(true);
+        dispatch(loadingOff());
       }
-    } else {
-      setWrong(true);
-      dispatch(loadingOff());
-    }
-  };
-
+    },
+    [
+      dispatch,
+      hasWallet,
+      navigation,
+      rateLimitCheck,
+      redirectSuccess,
+      storePassword,
+    ],
+  );
   return (
-    //use this safeareaview don't use other
     <SafeAreaView style={styles.safeAreaView}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
@@ -226,6 +261,14 @@ const LoginComponent = ({navigation, onClose, visible}) => {
           </View>
         </View>
       </TouchableWithoutFeedback>
+      <ModalInfo
+        visible={lastAttempt}
+        title={Constants.lastAttempt.title}
+        message={Constants.lastAttempt.subTitle}
+        handleClose={() => dispatch(setLastAttempt(false))}
+        showTextInput={true}
+        confirmPrompt={'Confirm'}
+      />
       <ModalReset
         visible={modal}
         hideModal={setModal}

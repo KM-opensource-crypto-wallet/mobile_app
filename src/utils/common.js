@@ -160,3 +160,11 @@ export const handleTransferRedirect = async (
     throw error;
   }
 };
+
+export const Constants = {
+  lastAttempt: {
+    title: 'Last Attempt',
+    subTitle:
+      'You have one more attempt if you type a wrong password again your wallet will delete completely.',
+  },
+};
