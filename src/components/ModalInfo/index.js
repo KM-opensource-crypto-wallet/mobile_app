@@ -21,7 +21,6 @@ const ModalInfo = ({
   handleClose,
   title,
   message,
-  requireConfirm = false,
   confirmWord = 'confirm',
   confirmPrompt,
 }) => {
@@ -30,13 +29,13 @@ const ModalInfo = ({
   const [text, setText] = useState('');
   const normalizedText = text.trim().toLowerCase();
   const normalizedConfirm = confirmWord.toLowerCase();
-  const isDisabled = requireConfirm && normalizedText !== normalizedConfirm;
+  const isDisabled = normalizedText !== normalizedConfirm;
 
   const handlerConfirm = useCallback(() => {
-    if (!requireConfirm || !isDisabled) {
+    if (!isDisabled) {
       handleClose();
     }
-  }, [handleClose, isDisabled, requireConfirm]);
+  }, [handleClose, isDisabled]);
   return (
     <Portal>
       <Modal
@@ -53,34 +52,34 @@ const ModalInfo = ({
           <Text style={styles.titleInfo}>{title}</Text>
           <Text style={styles.info}>{message}</Text>
         </View>
-        {requireConfirm && (
-          <>
-            <Text style={styles.info}>
-              {confirmPrompt || 'Write confirm to delete all wallets.'}
-            </Text>
-            <View style={{paddingHorizontal: 10}}>
-              <TextInput
-                mode="flat"
-                style={[
-                  styles.inputStyle,
-                  {backgroundColor: theme.secondaryBackgroundColor},
-                ]}
-                underlineColor="transparent"
-                activeUnderlineColor="transparent"
-                onChangeText={setText}
-                value={text}
-                placeholder={confirmWord}
-                placeholderTextColor={theme.placeholderColor}
-              />
-            </View>
-          </>
-        )}
+
+        <>
+          <Text style={styles.info}>
+            {'Write confirm to delete all wallets.'}
+          </Text>
+          <View style={{paddingHorizontal: 10}}>
+            <TextInput
+              mode="flat"
+              style={[
+                styles.inputStyle,
+                {backgroundColor: theme.secondaryBackgroundColor},
+              ]}
+              underlineColor="transparent"
+              activeUnderlineColor="transparent"
+              onChangeText={setText}
+              value={text}
+              placeholder={confirmWord}
+              placeholderTextColor={theme.placeholderColor}
+            />
+          </View>
+        </>
+
         <View style={styles.btnList}>
           <TouchableOpacity
             style={[
               styles.learnBorder,
               styles.button,
-              requireConfirm && isDisabled && {opacity: 0.5},
+              isDisabled && {opacity: 0.5},
             ]}
             disabled={isDisabled}
             onPress={handlerConfirm}>

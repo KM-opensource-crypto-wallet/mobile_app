@@ -435,7 +435,11 @@ const Settings = ({navigation}) => {
                 alignItems: 'center',
                 flex: 1,
               }}>
-              <IoniconsIcon name={'search'} size={24} color={theme.font} />
+              <MaterialCommunityIcons
+                name={'security'}
+                color={theme.font}
+                size={25}
+              />
               <View style={styles.box}>
                 <Text style={styles.btnTitle}>{'Wallet Reset on Failure'}</Text>
                 <Text style={styles.btnText}>

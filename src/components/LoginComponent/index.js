@@ -32,19 +32,15 @@ import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/wal
 import {isNoUpdateAvailable} from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
 import {LOGO, LOGO_DARK, WL_APP_NAME} from 'utils/wlData';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {showToast} from 'utils/toast';
 import ModalInfo from 'components/ModalInfo';
 import {Constants} from 'utils/common';
 import {isWalletReset} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {
-  getAttempts,
-  getMaxAttempt,
-  getIsLocked,
-} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
-import {
   resetAttempts,
   handleAttempts,
+  setLastAttempt,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
+import {getLastAttempt} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 
 const LoginComponent = ({navigation, onClose, visible}) => {
   const {theme} = useContext(ThemeContext);
@@ -54,7 +50,6 @@ const LoginComponent = ({navigation, onClose, visible}) => {
   const [hide, setHide] = useState(true);
   const [wrong, setWrong] = useState(false);
   const [modal, setModal] = useState(false);
-  const [lastAttempt, setLastAttempt] = useState(false);
   const storePassword = useSelector(getUserPassword);
   const fingerprint = useSelector(isFingerprint);
   const allWallets = useSelector(selectAllWallets);
@@ -62,9 +57,8 @@ const LoginComponent = ({navigation, onClose, visible}) => {
   const appState = useRef(AppState.currentState);
   const rateLimitCheck = useSelector(isWalletReset);
 
-  const attempts = useSelector(getAttempts);
-  const isLocked = useSelector(getIsLocked);
-  const MAX_ATTEMPT = useSelector(getMaxAttempt);
+  const lastAttempt = useSelector(getLastAttempt).payload;
+
   const redirectSuccess = useCallback(() => {
     if (onClose) {
       onClose();
@@ -159,37 +153,17 @@ const LoginComponent = ({navigation, onClose, visible}) => {
           });
         }
       } else if (rateLimitCheck) {
-        const failureCount = attempts.length;
-        const attemptsLeft = MAX_ATTEMPT - failureCount;
-        if (attemptsLeft === 1) {
-          setLastAttempt(true);
-        } else if (attemptsLeft <= 0 && isLocked) {
-          showToast({
-            type: 'warningToast',
-            title: 'Wallet Deleted',
-            message: 'Too many failed login attempts',
-          });
-        } else {
-          showToast({
-            type: 'warningToast',
-            title: 'Invalid password',
-            message: `${attemptsLeft} Attempts left`,
-          });
-          setWrong(true);
-          dispatch(loadingOff());
-        }
         dispatch(handleAttempts({navigation}));
+        setWrong(true);
+        dispatch(loadingOff());
       } else {
         setWrong(true);
         dispatch(loadingOff());
       }
     },
     [
-      MAX_ATTEMPT,
-      attempts.length,
       dispatch,
       hasWallet,
-      isLocked,
       navigation,
       rateLimitCheck,
       redirectSuccess,
@@ -202,7 +176,6 @@ const LoginComponent = ({navigation, onClose, visible}) => {
         <View style={styles.container}>
           <View style={styles.formInput}>
             {theme.backgroundColor === '#121212' ? <LOGO_DARK /> : <LOGO />}
-            <Text>{attempts.length}</Text>
             <Text style={styles.title}>Sign in</Text>
             <Formik
               initialValues={{password: ''}}
@@ -287,8 +260,7 @@ const LoginComponent = ({navigation, onClose, visible}) => {
         visible={lastAttempt}
         title={Constants.lastAttempt.title}
         message={Constants.lastAttempt.subTitle}
-        requireConfirm
-        handleClose={() => setLastAttempt(false)}
+        handleClose={() => dispatch(setLastAttempt(false))}
       />
       <ModalReset
         visible={modal}
