@@ -1,5 +1,4 @@
 package com.coinswallet
-import expo.modules.ReactActivityDelegateWrapper
 
 import android.os.Bundle
 

@@ -147,7 +147,10 @@ const ReceivePaymentUrl = () => {
                         activeOutlineColor={
                           errors.amount ? 'red' : theme.borderActiveColor
                         }
-                        returnKeyType="next"
+                        returnKeyType="done"
+                        onSubmitEditing={() => {
+                          Keyboard.dismiss();
+                        }}
                         mode="outlined"
                         blurOnSubmit={false}
                         name="amount"
@@ -185,7 +188,10 @@ const ReceivePaymentUrl = () => {
                         activeOutlineColor={
                           errors.amount ? 'red' : theme.borderActiveColor
                         }
-                        returnKeyType="next"
+                        returnKeyType="done"
+                        onSubmitEditing={() => {
+                          Keyboard.dismiss();
+                        }}
                         mode="outlined"
                         blurOnSubmit={false}
                         name="currencyAmount"

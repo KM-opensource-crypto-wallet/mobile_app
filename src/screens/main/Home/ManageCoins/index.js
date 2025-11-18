@@ -151,12 +151,12 @@ const ManageCoins = ({navigation, route}) => {
   }, [allCoins, searchQuery]);
 
   const onPressAddMoreCoin = useCallback(() => {
-    addMoreCoinsSheet?.current?.close?.();
+    addMoreCoinsSheet?.current?.dismiss?.();
     addMoreCoinsSheet?.current?.present?.();
   }, []);
 
   const onDismissAddCoinsSheet = useCallback(() => {
-    addMoreCoinsSheet?.current?.close?.();
+    addMoreCoinsSheet?.current?.dismiss?.();
   }, []);
 
   const onPressDelete = useCallback(item => {

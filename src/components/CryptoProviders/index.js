@@ -49,7 +49,7 @@ import {IS_ANDROID, IS_IOS} from 'utils/dimensions';
 import ModalAddCoins from 'components/ModalAddCoins';
 import PaymentOptionItem from 'components/PaymentOptionItem';
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {IS_KIML_WALLET} from 'utils/wlData';
 
 const currencyPicker = [
@@ -206,13 +206,9 @@ const CryptoProviders = () => {
           onDismiss={onDismissAddCoinsSheet}
         />
         <KeyboardAwareScrollView
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
-          enableResetScrollToCoords={false}
-          keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
+          {...(IS_ANDROID ? {extraKeyboardSpace: 30} : {})}
           contentContainerStyle={styles.contentContainerStyle}>
           <TouchableWithoutFeedback
             style={styles.container}
@@ -370,7 +366,10 @@ const CryptoProviders = () => {
                         activeOutlineColor={
                           errors.amount ? 'red' : theme.borderActiveColor
                         }
-                        returnKeyType="next"
+                        returnKeyType="done"
+                        onSubmitEditing={()=>{
+                          Keyboard.dismiss();
+                        }}
                         mode="outlined"
                         blurOnSubmit={false}
                         name="amount"

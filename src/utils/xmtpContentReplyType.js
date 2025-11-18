@@ -1,5 +1,3 @@
-import {JSContentCodec} from '@xmtp/react-native-sdk';
-
 const ContentTypeCustomReply = {
   authorityId: 'com.dok.wallet',
   typeId: 'customReply',

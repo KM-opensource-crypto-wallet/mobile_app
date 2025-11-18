@@ -12,6 +12,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   AppState,
+    SafeAreaView,
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {Formik} from 'formik';
@@ -32,7 +33,6 @@ import myStyles from './LoginScreenStyles';
 import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {isNoUpdateAvailable} from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
 import {LOGO, LOGO_DARK, WL_APP_NAME} from 'utils/wlData';
-import {SafeAreaView} from 'react-native-safe-area-context';
 
 const LoginComponent = ({navigation, onClose, visible}) => {
   const {theme} = useContext(ThemeContext);
@@ -139,6 +139,10 @@ const LoginComponent = ({navigation, onClose, visible}) => {
     }
   };
 
+  const dismissKeyboard = useCallback(() => {
+    Keyboard.dismiss();
+  }, []);
+
   return (
     //use this safeareaview don't use other
     <SafeAreaView style={styles.safeAreaView}>
@@ -175,7 +179,7 @@ const LoginComponent = ({navigation, onClose, visible}) => {
                       errors.password ? 'red' : theme.borderActiveColor
                     }
                     autoCapitalize="none"
-                    returnKeyType="next"
+                    returnKeyType="done"
                     mode="outlined"
                     secureTextEntry={hide ? true : false}
                     blurOnSubmit={false}
@@ -185,6 +189,7 @@ const LoginComponent = ({navigation, onClose, visible}) => {
                         onPress={() => setHide(!hide)}
                       />
                     }
+                    onSubmitEditing={dismissKeyboard}
                     name="password"
                     autoFocus={!fingerprint && isNoAppUpdate}
                     onChangeText={handleChange('password')}

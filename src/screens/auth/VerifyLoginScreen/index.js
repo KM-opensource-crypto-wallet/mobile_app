@@ -81,6 +81,10 @@ export const VerifyLoginScreen = ({navigation}) => {
     }
   };
 
+  const dismissKeyboard = useCallback(() => {
+    Keyboard.dismiss();
+  }, []);
+
   return (
     <>
       <View style={styles.container}>
@@ -116,7 +120,8 @@ export const VerifyLoginScreen = ({navigation}) => {
                     errors.password ? 'red' : theme.borderActiveColor
                   }
                   autoCapitalize="none"
-                  returnKeyType="next"
+                  returnKeyType="done"
+                  onSubmitEditing={dismissKeyboard}
                   mode="outlined"
                   secureTextEntry={hide ? true : false}
                   blurOnSubmit={false}

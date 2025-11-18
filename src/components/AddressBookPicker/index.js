@@ -16,7 +16,7 @@ const AddressBookPicker = ({chain_name, walletId, onSelectAddress}) => {
   }, []);
 
   const presentBottomSheet = useCallback(() => {
-    bottomSheetRef.current?.close?.();
+    bottomSheetRef.current?.dismiss?.();
     bottomSheetRef.current?.present?.();
   }, []);
 

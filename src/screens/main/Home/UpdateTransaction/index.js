@@ -159,7 +159,7 @@ const UpdateTransaction = () => {
 
   return (
     <DokSafeAreaView style={styles.container}>
-      {isSubmitting && <Spinner />}
+      {/*{isSubmitting && <Spinner />}*/}
       <ScrollView
         contentContainerStyle={styles.containerContainerStyle}
         keyboardShouldPersistTaps={'always'}>
@@ -224,13 +224,14 @@ const UpdateTransaction = () => {
                             : theme.borderActiveColor
                         }
                         autoCapitalize="none"
-                        returnKeyType="next"
+                        returnKeyType="go"
                         mode="outlined"
                         blurOnSubmit={false}
                         name="tx"
                         onChangeText={handleChange('tx')}
                         onBlur={handleBlur('tx')}
                         value={values.tx}
+                        onSubmitEditing={handleSubmit}
                       />
                       {errors.tx && touched.tx && (
                         <Text style={styles.textConfirm}>{errors.tx}</Text>

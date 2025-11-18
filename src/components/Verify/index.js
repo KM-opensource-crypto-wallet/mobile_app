@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   Keyboard,
-  TouchableWithoutFeedback,
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {CheckBox} from '@rneui/themed';
@@ -18,7 +17,7 @@ import {IS_ANDROID, useFloatingHeight} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './VerifyStyles';
 import {useFloatingWidth} from 'hooks/useFloatingWidth';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
 import {SCREEN_HEIGHT} from '@gorhom/bottom-sheet';
 import {useDispatch} from 'react-redux';
@@ -92,10 +91,8 @@ export const Verify = ({route, navigation}) => {
   const selectedItem = list[selected - 1];
   return (
     <KeyboardAwareScrollView
-      enableOnAndroid={true}
-      enableAutomaticScroll={true}
       bounces={false}
-      extraScrollHeight={-SCREEN_HEIGHT * 0.15}
+      extraKeyboardSpace={-SCREEN_HEIGHT * 0.15}
       style={styles.container}
       contentContainerStyle={{flexGrow: 1}}>
       <View

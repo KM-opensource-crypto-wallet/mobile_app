@@ -1,38 +1,41 @@
 /**
  * @format
  */
-
-import 'node-libs-react-native/globals';
-import 'text-encoding-polyfill';
-import 'react-native-get-random-values';
-import 'react-native-url-polyfill/auto';
-import '@ethersproject/shims';
-import './shim';
+// import 'node-libs-react-native/globals';
+// import {install} from 'react-native-quick-crypto';
+// import 'text-encoding-polyfill';
+// import '@walletconnect/react-native-compat';
+// import 'react-native-get-random-values';
+// import 'react-native-url-polyfill/auto';
+// import '@ethersproject/shims';
+// import './shim';
+// Install crypto polyfill for @noble/hashes and WalletConnect
+// install();
 import {AppRegistry, Platform} from 'react-native';
 import App from './App';
 import {name as coinswallet} from './app.json';
-import {Bugfender} from '@bugfender/rn-bugfender';
+// import {Bugfender} from '@bugfender/rn-bugfender';
 
 import structuredClone from '@ungap/structured-clone';
 
-if (Platform.OS !== 'web' && !('structuredClone' in global)) {
-  global.structuredClone = structuredClone;
-}
+// if (Platform.OS !== 'web' && !('structuredClone' in global)) {
+//   global.structuredClone = structuredClone;
+// }
 
-if (!__DEV__) {
-  Bugfender.init({
-    appKey: process.env.BUGFENDER_APP_KEY,
-    logUIEvents: false,
-    enableLogcatLogging: false, // Android specific
-    printToConsole: false,
-  })
-    .then(() => {
-      console.log('init bugfender');
-    })
-    .catch(err => {
-      console.error('Error in setup bugfender', err);
-    });
-}
+// if (!__DEV__) {
+//   Bugfender.init({
+//     appKey: process.env.BUGFENDER_APP_KEY,
+//     logUIEvents: false,
+//     enableLogcatLogging: false, // Android specific
+//     printToConsole: false,
+//   })
+//     .then(() => {
+//       console.log('init bugfender');
+//     })
+//     .catch(err => {
+//       console.error('Error in setup bugfender', err);
+//     });
+// }
 
 AppRegistry.registerComponent(coinswallet, () => App);
 

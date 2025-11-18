@@ -1,4 +1,4 @@
-import React, {useContext, useState, useEffect} from 'react';
+import React, {useContext, useState, useEffect, useRef} from 'react';
 import {TouchableOpacity, View, Text, Keyboard} from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {Formik} from 'formik';
@@ -22,6 +22,7 @@ export const RegistrationScreen = ({navigation}) => {
   const [hide, setHide] = useState(true);
   const [hideConfirm, setHideConfirm] = useState(true);
   const floatingBtnHeight = useFloatingHeight();
+  const confirmTextinputRef = useRef(null);
 
   const handleSubmit = values => {
     dispatch(loadingOn());
@@ -89,11 +90,15 @@ export const RegistrationScreen = ({navigation}) => {
                   onChangeText={handleChange('password')}
                   onBlur={handleBlur('password')}
                   value={values.password}
+                  onSubmitEditing={()=>{
+                    confirmTextinputRef?.current?.focus?.()
+                  }}
                 />
                 {errors.password && touched.password && (
                   <Text style={styles.textConfirm}>{errors.password}</Text>
                 )}
                 <TextInput
+                  ref={confirmTextinputRef}
                   style={styles.input}
                   label="Confirm new password"
                   theme={{
@@ -107,7 +112,7 @@ export const RegistrationScreen = ({navigation}) => {
                     errors.passConfirm ? 'red' : theme.borderActiveColor
                   }
                   autoCapitalize="none"
-                  returnKeyType="next"
+                  returnKeyType="go"
                   mode="outlined"
                   secureTextEntry={hideConfirm ? true : false}
                   blurOnSubmit={false}
@@ -121,6 +126,7 @@ export const RegistrationScreen = ({navigation}) => {
                   onChangeText={handleChange('passConfirm')}
                   onBlur={handleBlur('passConfirm')}
                   value={values.passConfirm}
+                  onSubmitEditing={handleSubmit}
                 />
                 {errors.passConfirm && touched.passConfirm && (
                   <Text style={styles.textConfirm}>{errors.passConfirm}</Text>

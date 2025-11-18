@@ -1,5 +1,5 @@
 import React, {useMemo, useContext, useRef, useCallback} from 'react';
-import {BottomSheetModal} from '@gorhom/bottom-sheet';
+import {BottomSheetModal, BottomSheetView} from '@gorhom/bottom-sheet';
 import {ThemeContext} from 'theme/ThemeContext';
 import Animated, {
   Extrapolation,
@@ -75,6 +75,7 @@ const DokBottomSheet = props => {
       snapPoints={snapPointsLocal}
       backgroundStyle={{backgroundColor: theme.backgroundColor}}
       index={0}
+      enableDynamicSizing={false}
       handleIndicatorStyle={{backgroundColor: theme.primary}}
       enablePanDownToClose={true}
       enableDismissOnClose={true}
@@ -82,7 +83,7 @@ const DokBottomSheet = props => {
       closeOnPress={true}
       onChange={onLocalChange}
       backdropComponent={renderBackdrop}>
-      {props.children}
+    {props.children}
     </BottomSheetModal>
   );
 };

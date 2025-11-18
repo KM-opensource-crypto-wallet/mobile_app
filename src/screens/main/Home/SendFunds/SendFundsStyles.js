@@ -173,6 +173,9 @@ const myStyles = theme =>
       fontSize: 18,
       fontFamily: 'Roboto-Regular',
     },
+    footerView: {
+      paddingTop: 20,
+    },
   });
 
 export default myStyles;

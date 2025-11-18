@@ -64,7 +64,7 @@ import FastImage from '@d11/react-native-fast-image';
 import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
 import ValidatorItem from 'components/ValidatorItem';
 import {TextInput} from 'react-native-paper';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {getSellCryptoRequestDetails} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {handleTransferRedirect} from 'utils/common';
@@ -965,13 +965,9 @@ const Transfer = ({navigation, route}) => {
         <Loading />
       ) : feeSuccess || isExchangeSuccess || isFetchedSuccessful === 'true' ? (
         <KeyboardAwareScrollView
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
-          // enableResetScrollToCoords={false}
-          keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
+          {...(IS_ANDROID ? {extraKeyboardSpace: 30} : {})}
           contentContainerStyle={styles.contentContainerStyle}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View
@@ -1088,6 +1084,9 @@ const Transfer = ({navigation, route}) => {
                           keyboardType={'numeric'}
                           autoCapitalize="none"
                           returnKeyType="done"
+                          onSubmitEditing={() => {
+                            Keyboard.dismiss();
+                          }}
                           mode="outlined"
                           blurOnSubmit={false}
                           name="customFees"

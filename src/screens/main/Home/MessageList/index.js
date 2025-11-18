@@ -27,6 +27,7 @@ import EntypoIcon from 'react-native-vector-icons/Entypo';
 import ModalInfo from 'components/ModalInfo';
 import {TABS_INFO} from 'dok-wallet-blockchain-networks/helper';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import styles from 'react-native-webview/lib/WebView.styles';
 
 const renderScene = ({route}) => {
   switch (route.key) {
@@ -39,24 +40,32 @@ const renderScene = ({route}) => {
   }
 };
 
-const RenderTabBar = props => {
-  const {styles, theme} = props;
+const RenderTabBar = (props, color = 'black') => {
+  const {myStyles, theme} = props;
+  console.log('myStyles', myStyles);
   return (
     <TabBar
       {...props}
-      renderLabel={({route, focused}) => (
-        <View style={{width: '100%'}}>
-          <Text
-            style={[
-              styles.tabBarFontStyle,
-              focused && {fontWeight: 'bold', color: theme.background},
-            ]}>
-            {route.title}
-          </Text>
-        </View>
-      )}
-      indicatorStyle={styles.indicatorStyle}
-      style={styles.tabBarStyle}
+      commonOptions={{
+        // ...(props.commonOptions || {}),
+        label: ({route, focused}) => (
+          <View style={{width: '100%'}}>
+            <Text
+              style={[
+                  myStyles.tabBarFontStyle,
+                focused && {fontWeight: 'bold', color: theme.background},
+              ]}>
+              {route.title}
+            </Text>
+          </View>
+        ),
+          // labelStyle: myStyles.tabBarFontStyle,
+      }}
+      // commonOptions={{
+      //     labelStyle: {color: 'black'},
+      // }}
+      indicatorStyle={myStyles.indicatorStyle}
+      style={myStyles.tabBarStyle}
     />
   );
 };
@@ -146,7 +155,7 @@ const MessageList = ({navigation}) => {
           onIndexChange={setIndex}
           initialLayout={{width: SCREEN_WIDTH}}
           renderTabBar={props => (
-            <RenderTabBar {...props} styles={styles} theme={theme} />
+            <RenderTabBar {...props} myStyles={styles} theme={theme} />
           )}
         />
         <ModalInfo

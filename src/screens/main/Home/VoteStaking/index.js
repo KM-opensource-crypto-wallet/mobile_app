@@ -7,7 +7,7 @@ import React, {
   useState,
 } from 'react';
 import myStyles from './VoteStakingStyle';
-import {Keyboard, Text, TouchableOpacity, View} from 'react-native';
+import {FlatList, Keyboard, Text, TouchableOpacity, View} from 'react-native';
 import {shallowEqual, useDispatch, useSelector} from 'react-redux';
 import {IS_ANDROID} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
@@ -16,7 +16,7 @@ import {
   calculateEstimateFee,
   setCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import {KeyboardAwareFlatList} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
   isValidObject,
@@ -229,12 +229,15 @@ const VoteStaking = ({navigation}) => {
           style={styles.input}
           onChangeText={handleSearch}
         />
-        <KeyboardAwareFlatList
+        <FlatList
+          renderScrollComponent={props => (
+            <KeyboardAwareScrollView
+              {...props}
+              keyboardShouldPersistTaps="always"
+              extraKeyboardSpace={IS_ANDROID ? 30 : 0}
+            />
+          )}
           style={styles.flatlistStyle}
-          enableOnAndroid={true}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
-          keyboardShouldPersistTaps={'always'}
-          keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           keyExtractor={item => item.validatorAddress}
           data={validatorsList}
           contentContainerStyle={styles.contentContainerStyle}

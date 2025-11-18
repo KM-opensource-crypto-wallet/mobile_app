@@ -90,11 +90,11 @@ const MessageBubble = () => {
           style={[styles.box, animatedStyle, isOpen && {paddingLeft: 12}]}>
           {isOpen ? (
             <>
-              {isFetchingConv ? (
-                <View style={styles.emptyViewStyle}>
-                  <ActivityIndicator color={theme.background} />
-                </View>
-              ) : (
+              {/*{isFetchingConv ? (*/}
+              {/*  <View style={styles.emptyViewStyle}>*/}
+              {/*    <ActivityIndicator color={theme.background} />*/}
+              {/*  </View>*/}
+              {/*) : (*/}
                 <TouchableOpacity
                   style={styles.messageButtonStyle}
                   onPress={onPressMessage}>
@@ -105,7 +105,7 @@ const MessageBubble = () => {
                     style={styles.messageIconStyle}
                   />
                 </TouchableOpacity>
-              )}
+              {/*)}*/}
               <SimpleTouchableOpacity onPress={onPressClose}>
                 <IoniconsIcon
                   name={'chevron-forward'}

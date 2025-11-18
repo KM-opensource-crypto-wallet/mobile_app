@@ -1,31 +1,34 @@
-import {
-  Client,
-  Conversation,
-  listMessages,
-  ReplyCodec,
-  sendMessage,
-} from '@xmtp/react-native-sdk';
+// import {
+//   Client,
+//   Conversation,
+//   listMessages,
+//   ReplyCodec,
+//   sendMessage,
+// } from '@xmtp/react-native-sdk';
 import {IS_SANDBOX} from 'dok-wallet-blockchain-networks/config/config';
 import {ContentTypeCustomReplyCodec} from './xmtpContentReplyType';
 
 export const XMTP = {
   client: null,
-  initializeClient: async ({wallet, address}) => {
+
+  async initializeClient({wallet, address}) {
     if (this.client?.address !== address) {
-      this.client = await Client.create(wallet, {
-        env: IS_SANDBOX ? 'dev' : 'production',
-        codecs: [new ReplyCodec(), new ContentTypeCustomReplyCodec()],
-      });
+      // this.client = await Client.create(wallet, {
+      //   env: IS_SANDBOX ? 'dev' : 'production',
+      //   codecs: [new ReplyCodec(), new ContentTypeCustomReplyCodec()],
+      // });
     }
   },
-  getClient: () => {
+
+  getClient() {
     if (!this.client) {
       console.warn('Please initialize client first');
       return;
     }
     return this.client;
   },
-  getConversations: async () => {
+
+  async getConversations() {
     if (!this.client) {
       console.warn('Please initialize client first');
       return;
@@ -34,61 +37,68 @@ export const XMTP = {
     await this.client.contacts.refreshConsentList();
     return await XMTP.formatConversation(conversations);
   },
-  checkAccountExists: async ({address}) => {
+
+  async checkAccountExists({address}) {
     if (!this.client) {
       console.warn('Please initialize client first');
       return;
     }
     return await this.client.canMessage(address);
   },
-  getMessages: async ({topic, limit = 20, before = null, after = null}) => {
+
+  async getMessages({topic, limit = 20, before = null, after = null}) {
     if (!this.client) {
       console.warn('Please initialize client first');
       return;
     }
-    const messages = await listMessages(
-      this.client,
-      topic,
-      limit,
-      before,
-      after,
-    );
-    return XMTP.formatMessage(messages);
+    // const messages = await listMessages(
+    //     this.client,
+    //     topic,
+    //     limit,
+    //     before,
+    //     after,
+    // );
+    // return XMTP.formatMessage(messages);
   },
-  newConversation: async ({address}) => {
+
+  async newConversation({address}) {
     if (!this.client) {
       console.warn('Please initialize client first');
       return;
     }
     return await this.client.conversations.newConversation(address);
   },
-  getConversation: ({topic, peerAddress, createdAt, version}) => {
+
+  getConversation({topic, peerAddress, createdAt, version}) {
     if (!this.client) {
       console.warn('Please initialize client first');
       return;
     }
-    return new Conversation(this.client, {
-      topic,
-      peerAddress,
-      createdAt,
-      version,
-    });
+    // return new Conversation(this.client, {
+    //   topic,
+    //   peerAddress,
+    //   createdAt,
+    //   version,
+    // });
   },
-  blockConversation: async ({peerAddress}) => {
+
+  async blockConversation({peerAddress}) {
     if (!this.client) {
       console.warn('Please initialize client first');
       return;
     }
     return await this.client?.contacts.deny([peerAddress]);
   },
-  unBlockConversation: async ({peerAddress}) => {
+
+  async unBlockConversation({peerAddress}) {
     if (!this.client) {
       console.warn('Please initialize client first');
       return;
     }
     return await this.client?.contacts.allow([peerAddress]);
   },
-  unSubscribeStream: () => {
+
+  unSubscribeStream() {
     if (!this.client) {
       console.warn('Please initialize client first');
       return;
@@ -96,14 +106,16 @@ export const XMTP = {
     this.client.conversations.cancelStreamAllMessages();
     this.client.conversations.cancelStream();
   },
-  sendMessage: async ({clientAddress, topic, message}) => {
+
+  async sendMessage({clientAddress, topic, message}) {
     if (!this.client) {
       console.warn('Please initialize client first');
       return;
     }
-    return await sendMessage(this.client, topic, message);
+    // return await sendMessage(this.client, topic, message);
   },
-  formatMessage: messages => {
+
+  formatMessage(messages) {
     const tempMesssages = Array.isArray(messages) ? messages : [];
     const finalMessages = [];
     for (let i = 0; i < tempMesssages.length; i++) {
@@ -145,11 +157,12 @@ export const XMTP = {
     }
     return finalMessages;
   },
-  formatConversation: async conversations => {
+
+  async formatConversation(conversations) {
     const tempConversations = Array.isArray(conversations) ? conversations : [];
 
     const consents = await Promise.all(
-      tempConversations.map(item => item.consentState()),
+        tempConversations.map(item => item.consentState()),
     );
     return tempConversations.map((conv, index) => ({
       topic: conv.topic,

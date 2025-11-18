@@ -84,7 +84,10 @@ const RenderTabBar = props => {
       {...props}
       indicatorStyle={styles.indicatorStyle}
       style={styles.tabBarStyle}
-      labelStyle={styles.tabBarFontStyle}
+      commonOptions={{
+        ...(props.commonOptions || {}),
+        labelStyle: styles.tabBarFontStyle,
+      }}
     />
   );
 };

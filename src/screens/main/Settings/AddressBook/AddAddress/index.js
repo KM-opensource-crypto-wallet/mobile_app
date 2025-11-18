@@ -24,7 +24,7 @@ import {
   isEVMChain,
   PrivateKeyList,
 } from 'dok-wallet-blockchain-networks/helper';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {useDispatch, useSelector} from 'react-redux';
 import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
@@ -124,6 +124,7 @@ const AddAddress = ({navigation, route}) => {
 
   const formikRef = useRef();
   const inputNameRef = useRef(null);
+  const inputOptionLabelRef = useRef(null);
   const qrAddress = route?.params?.qrAddress;
   const addressBook = useSelector(getAddressBook);
   const existedNames = useMemo(() => {
@@ -217,13 +218,10 @@ const AddAddress = ({navigation, route}) => {
 
   return (
     <KeyboardAwareScrollView
-      enableOnAndroid={true}
-      enableAutomaticScroll={true}
+      contentContainerStyle={styles.contentContainerStyle}
       bounces={false}
       keyboardShouldPersistTaps={'always'}
-      {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
-      keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
-      contentContainerStyle={styles.contentContainerStyle}>
+      {...(IS_ANDROID ? {extraKeyboardSpace: 30} : {})}>
       <TouchableWithoutFeedback
         style={styles.container}
         onPress={() => {
@@ -368,7 +366,7 @@ const AddAddress = ({navigation, route}) => {
                     maxLength={50}
                     outlineColor={errorName ? 'red' : theme.gray}
                     activeOutlineColor={errorName ? 'red' : theme.font}
-                    returnKeyType="return"
+                    returnKeyType="next"
                     mode="outlined"
                     blurOnSubmit={false}
                     name="name"
@@ -376,13 +374,14 @@ const AddAddress = ({navigation, route}) => {
                     onBlur={handleBlur('name')}
                     value={values.name}
                     onSubmitEditing={() => {
-                      Keyboard.dismiss();
+                      inputOptionLabelRef?.current?.focus?.();
                     }}
                   />
                   {!!errorName && (
                     <Text style={styles.textConfirm}>{errorName}</Text>
                   )}
                   <TextInput
+                    ref={inputOptionLabelRef}
                     style={styles.input}
                     textColor={theme.font}
                     label="Optional Label"
@@ -394,7 +393,7 @@ const AddAddress = ({navigation, route}) => {
                     }}
                     outlineColor={errors.label ? 'red' : theme.gray}
                     activeOutlineColor={errors.label ? 'red' : theme.font}
-                    returnKeyType="return"
+                    returnKeyType="done"
                     mode="outlined"
                     blurOnSubmit={false}
                     name="label"

@@ -20,7 +20,7 @@ import {
   calculateEstimateFee,
   setCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {currencySymbol} from 'data/currency';
 import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import BigNumber from 'bignumber.js';
@@ -149,13 +149,9 @@ const CreateStaking = ({navigation}) => {
     <Provider>
       <Portal>
         <KeyboardAwareScrollView
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
-          enableResetScrollToCoords={false}
-          keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
+          {...(IS_ANDROID ? {extraKeyboardSpace: 30} : {})}
           contentContainerStyle={styles.contentContainerStyle}>
           <Formik
             innerRef={formikRef}
@@ -226,7 +222,7 @@ const CreateStaking = ({navigation}) => {
                                 errors.amount ? 'red' : theme.font
                               }
                               autoCapitalize="none"
-                              returnKeyType="next"
+                              returnKeyType="done"
                               mode="outlined"
                               blurOnSubmit={false}
                               name="amount"
@@ -245,7 +241,9 @@ const CreateStaking = ({navigation}) => {
                               }}
                               onBlur={handleBlur('amount')}
                               value={values.amount}
-                              onSubmitEditing={handleSubmit}
+                              onSubmitEditing={() => {
+                                Keyboard.dismiss();
+                              }}
                               keyboardType="decimal-pad"
                               type="number"
                             />
@@ -314,7 +312,9 @@ const CreateStaking = ({navigation}) => {
                               }}
                               onBlur={handleBlur('currencyAmount')}
                               value={values.currencyAmount}
-                              onSubmitEditing={handleSubmit}
+                              onSubmitEditing={() => {
+                                Keyboard.dismiss();
+                              }}
                               keyboardType="decimal-pad"
                               type="number"
                             />

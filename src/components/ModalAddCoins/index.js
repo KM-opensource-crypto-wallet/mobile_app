@@ -15,6 +15,16 @@ const renderScene = SceneMap({
   add_coins_group: TabAddCoinGroups,
 });
 
+const TabLabel = ({route, focused}) => {
+  const {theme} = useContext(ThemeContext);
+  const styles = myStyles(theme);
+  return (
+    <Text style={[styles.tabLabel, focused && styles.tabLabelFocused]}>
+      {route.title}
+    </Text>
+  );
+};
+
 const RenderTabBar = props => {
   const {styles} = props;
   return (
@@ -22,11 +32,10 @@ const RenderTabBar = props => {
       {...props}
       indicatorStyle={styles.indicator}
       style={styles.tabBar}
-      renderLabel={({route, focused}) => (
-        <Text style={[styles.tabLabel, focused && styles.tabLabelFocused]}>
-          {route.title}
-        </Text>
-      )}
+      commonOptions={{
+        ...(props.commonOptions || {}),
+        label: TabLabel, // Pass the component reference
+      }}
     />
   );
 };
@@ -41,23 +50,21 @@ const ModalAddCoins = ({bottomSheetRef, onDismiss}) => {
   ]);
 
   return (
-    <>
-      <DokBottomSheet
-        bottomSheetRef={bottomSheetRef}
-        snapPoints={['90%']}
-        onDismiss={onDismiss}>
-        <View style={styles.centeredView}>
-          <TabView
-            navigationState={{index, routes}}
-            renderScene={renderScene}
-            onIndexChange={setIndex}
-            initialLayout={{width: SCREEN_WIDTH}}
-            renderTabBar={props => <RenderTabBar {...props} styles={styles} />}
-            lazy={true}
-          />
-        </View>
-      </DokBottomSheet>
-    </>
+    <DokBottomSheet
+      bottomSheetRef={bottomSheetRef}
+      snapPoints={['90%']}
+      onDismiss={onDismiss}>
+      <View style={styles.centeredView}>
+        <TabView
+          navigationState={{index, routes}}
+          renderScene={renderScene}
+          onIndexChange={setIndex}
+          initialLayout={{width: SCREEN_WIDTH}}
+          renderTabBar={props => <RenderTabBar {...props} styles={styles} />}
+          lazy={true}
+        />
+      </View>
+    </DokBottomSheet>
   );
 };
 

@@ -236,7 +236,10 @@ export const CustomDerivation = () => {
                       : theme.borderActiveColor
                   }
                   autoCapitalize="none"
-                  returnKeyType="next"
+                  returnKeyType="done"
+                  onSubmitEditing={() => {
+                    Keyboard.dismiss();
+                  }}
                   mode="outlined"
                   blurOnSubmit={false}
                   name="customDerivePath"

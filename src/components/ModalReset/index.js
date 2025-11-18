@@ -53,7 +53,7 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
   const handlerNo = () => {
     if (list === 'Delete Account') {
       hideModal(false);
-      navigation.navigate('Sidebar', {
+      navigation.popTo('Sidebar', {
         screen: 'Home',
       });
     } else {

@@ -72,73 +72,71 @@ export default function Sidebar({navigation, route}) {
 
   function CustomDrawerContent(props) {
     return (
-      <>
-        <DrawerContentScrollView {...props}>
-          <DrawerItemList {...props} />
-          <DrawerItem
-            icon={({focused}) => (
-              <ResetWalletIcon
-                fill={focused ? theme.background : theme.sidebarIcon}
-                style={{marginVertical: -4}}
+      <DrawerContentScrollView {...props}>
+        <DrawerItemList {...props} />
+        <DrawerItem
+          icon={({focused}) => (
+            <ResetWalletIcon
+              fill={focused ? theme.background : theme.sidebarIcon}
+              style={{marginVertical: -4}}
+            />
+          )}
+          label={() => (
+            <Text
+              style={{
+                color:
+                  theme.backgroundColor === '#121212' ? '#FFFFFF' : '#989898',
+
+                fontFamily: 'Roboto-Regular',
+                fontSize: 16,
+                marginVertical: -4,
+              }}>
+              Delete Account
+            </Text>
+          )}
+          onPress={() => {
+            setModalList('Delete Account');
+            setModal(true);
+          }}
+        />
+
+        <DrawerItem
+          icon={({focused}) =>
+            theme.backgroundColor === '#121212' ? (
+              <LogOutIconDark
+                width="25"
+                height="26"
+                // style={{marginVertical: -4, marginLeft: -4}}
               />
-            )}
-            label={() => (
-              <Text
-                style={{
-                  color:
-                    theme.backgroundColor === '#121212' ? '#FFFFFF' : '#989898',
-
-                  fontFamily: 'Roboto-Regular',
-                  fontSize: 16,
-                  marginVertical: -4,
-                }}>
-                Delete Account
-              </Text>
-            )}
-            onPress={() => {
-              setModalList('Delete Account');
-              setModal(true);
-            }}
-          />
-
-          <DrawerItem
-            icon={({focused}) =>
-              theme.backgroundColor === '#121212' ? (
-                <LogOutIconDark
-                  width="25"
-                  height="26"
-                  // style={{marginVertical: -4, marginLeft: -4}}
-                />
-              ) : (
-                <LogOutIcon
-                  width="25"
-                  height="26"
-                  // fill={focused ? theme.background : theme.sidebarIcon}
-                  // style={{marginVertical: -4, marginLeft: -4}}
-                />
-              )
-            }
-            label={() => (
-              <Text
-                style={{
-                  color:
-                    theme.backgroundColor === '#121212' ? '#FFFFFF' : '#989898',
-                  // color: '#989898',
-                  fontFamily: 'Roboto-Regular',
-                  fontSize: 16,
-                  marginVertical: -4,
-                  marginLeft: -2,
-                }}>
-                Logout
-              </Text>
-            )}
-            onPress={() => {
-              setModalList('Logout');
-              setModal(true);
-            }}
-          />
-        </DrawerContentScrollView>
-      </>
+            ) : (
+              <LogOutIcon
+                width="25"
+                height="26"
+                // fill={focused ? theme.background : theme.sidebarIcon}
+                // style={{marginVertical: -4, marginLeft: -4}}
+              />
+            )
+          }
+          label={() => (
+            <Text
+              style={{
+                color:
+                  theme.backgroundColor === '#121212' ? '#FFFFFF' : '#989898',
+                // color: '#989898',
+                fontFamily: 'Roboto-Regular',
+                fontSize: 16,
+                marginVertical: -4,
+                marginLeft: -2,
+              }}>
+              Logout
+            </Text>
+          )}
+          onPress={() => {
+            setModalList('Logout');
+            setModal(true);
+          }}
+        />
+      </DrawerContentScrollView>
     );
   }
 
@@ -199,7 +197,11 @@ export default function Sidebar({navigation, route}) {
                     padding: 11,
                     paddingLeft: isIpad ? 50 : 11,
                   }}
-                  onPress={() => navigation.navigate('Home')}>
+                  onPress={() =>
+                    navigation.popTo('Sidebar', {
+                      screen: 'Home',
+                    })
+                  }>
                   <BackIcon
                     width="22"
                     height="18"
@@ -232,7 +234,11 @@ export default function Sidebar({navigation, route}) {
                     padding: 11,
                     paddingLeft: isIpad ? 50 : 11,
                   }}
-                  onPress={() => navigation.navigate('Home')}>
+                  onPress={() =>
+                    navigation.popTo('Sidebar', {
+                      screen: 'Home',
+                    })
+                  }>
                   <BackIcon
                     width="22"
                     height="18"
@@ -267,7 +273,11 @@ export default function Sidebar({navigation, route}) {
                       padding: 11,
                       paddingLeft: isIpad ? 50 : 11,
                     }}
-                    onPress={() => navigation.navigate('Home')}>
+                    onPress={() =>
+                      navigation.popTo('Sidebar', {
+                        screen: 'Home',
+                      })
+                    }>
                     <BackIcon
                       width="22"
                       height="18"
@@ -301,7 +311,11 @@ export default function Sidebar({navigation, route}) {
                     padding: 11,
                     paddingLeft: isIpad ? 50 : 11,
                   }}
-                  onPress={() => navigation.navigate('Home')}>
+                  onPress={() =>
+                    navigation.popTo('Sidebar', {
+                      screen: 'Home',
+                    })
+                  }>
                   <BackIcon
                     width="22"
                     height="18"
@@ -330,7 +344,11 @@ export default function Sidebar({navigation, route}) {
                   padding: 11,
                   paddingLeft: isIpad ? 50 : 11,
                 }}
-                onPress={() => navigation.navigate('Home')}>
+                onPress={() =>
+                  navigation.popTo('Sidebar', {
+                    screen: 'Home',
+                  })
+                }>
                 <BackIcon
                   width="22"
                   height="18"
@@ -357,7 +375,11 @@ export default function Sidebar({navigation, route}) {
                   padding: 11,
                   paddingLeft: isIpad ? 50 : 11,
                 }}
-                onPress={() => navigation.navigate('Home')}>
+                onPress={() =>
+                  navigation.popTo('Sidebar', {
+                    screen: 'Home',
+                  })
+                }>
                 <BackIcon
                   width="22"
                   height="18"
@@ -387,7 +409,11 @@ export default function Sidebar({navigation, route}) {
                   padding: 11,
                   paddingLeft: isIpad ? 50 : 11,
                 }}
-                onPress={() => navigation.navigate('Home')}>
+                onPress={() =>
+                  navigation.popTo('Sidebar', {
+                    screen: 'Home',
+                  })
+                }>
                 <BackIcon
                   width="22"
                   height="18"
@@ -415,7 +441,11 @@ export default function Sidebar({navigation, route}) {
                   padding: 11,
                   paddingLeft: isIpad ? 50 : 11,
                 }}
-                onPress={() => navigation.navigate('Home')}>
+                onPress={() =>
+                  navigation.popTo('Sidebar', {
+                    screen: 'Home',
+                  })
+                }>
                 <BackIcon
                   width="22"
                   height="18"
@@ -438,7 +468,11 @@ export default function Sidebar({navigation, route}) {
                   padding: 11,
                   paddingLeft: isIpad ? 50 : 11,
                 }}
-                onPress={() => navigation.navigate('Home')}>
+                onPress={() =>
+                  navigation.popTo('Sidebar', {
+                    screen: 'Home',
+                  })
+                }>
                 <BackIcon
                   width="22"
                   height="18"
@@ -467,7 +501,11 @@ export default function Sidebar({navigation, route}) {
                   padding: 11,
                   paddingLeft: isIpad ? 50 : 11,
                 }}
-                onPress={() => navigation.navigate('Home')}>
+                onPress={() =>
+                  navigation.popTo('Sidebar', {
+                    screen: 'Home',
+                  })
+                }>
                 <BackIcon
                   width="22"
                   height="18"

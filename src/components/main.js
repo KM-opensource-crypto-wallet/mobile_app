@@ -352,22 +352,24 @@ const Main = () => {
       {disableMessage ? (
         <DisableComponent />
       ) : (
-        <NavigationContainer
-          ref={navigationRef}
-          onReady={() => {
-            MainNavigation.setNavigationObject(navigationRef.current);
-          }}>
-          <MenuProvider>
-            <BottomSheetModalProvider>{routing}</BottomSheetModalProvider>
-            <ModalAppUpdate visible={showUpdateModal} />
-          </MenuProvider>
-          <LoginModal
-            visible={loginModalVisible}
-            onClose={() => {
-              setLoginModalVisible(false);
-            }}
-          />
-        </NavigationContainer>
+        <BottomSheetModalProvider>
+          <NavigationContainer
+            ref={navigationRef}
+            onReady={() => {
+              MainNavigation.setNavigationObject(navigationRef.current);
+            }}>
+            <MenuProvider>
+              {routing}
+              <ModalAppUpdate visible={showUpdateModal} />
+            </MenuProvider>
+            <LoginModal
+              visible={loginModalVisible}
+              onClose={() => {
+                setLoginModalVisible(false);
+              }}
+            />
+          </NavigationContainer>
+        </BottomSheetModalProvider>
       )}
       {/*<Delete />*/}
       {isLoading && <Spinner />}

@@ -17,7 +17,7 @@ import {
   calculateEstimateFee,
   setCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {currencySymbol} from 'data/currency';
 import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import BigNumber from 'bignumber.js';
@@ -214,13 +214,9 @@ const WithdrawStaking = ({navigation, route}) => {
     <Provider>
       <Portal>
         <KeyboardAwareScrollView
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
           {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
-          enableResetScrollToCoords={false}
-          keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           contentContainerStyle={styles.contentContainerStyle}>
           <TouchableWithoutFeedback
             onPress={() => {
@@ -267,7 +263,10 @@ const WithdrawStaking = ({navigation, route}) => {
                           }
                           textColor={theme.font}
                           autoCapitalize="none"
-                          returnKeyType="next"
+                          returnKeyType="done"
+                          onSubmitEditing={()=>{
+                            Keyboard.dismiss();
+                          }}
                           mode="outlined"
                           blurOnSubmit={false}
                           editable={!disableTextInput}
@@ -341,7 +340,10 @@ const WithdrawStaking = ({navigation, route}) => {
                             errors.currencyAmount ? 'red' : theme.font
                           }
                           autoCapitalize="none"
-                          returnKeyType="next"
+                          returnKeyType="done"
+                          onSubmitEditing={()=>{
+                            Keyboard.dismiss();
+                          }}
                           mode="outlined"
                           blurOnSubmit={false}
                           name="currencyAmount"

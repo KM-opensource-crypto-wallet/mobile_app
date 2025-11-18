@@ -27,7 +27,7 @@ import {
   calculateEstimateFee,
   setCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {
   getSelectedNft,
   selectCurrentWallet,
@@ -134,13 +134,9 @@ const SendNFT = ({navigation, route}) => {
     <Provider>
       <Portal>
         <KeyboardAwareScrollView
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
-          enableResetScrollToCoords={false}
-          keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
+          {...(IS_ANDROID ? {extraKeyboardSpace: 30} : {})}
           contentContainerStyle={styles.contentContainerStyle}>
           <Formik
             innerRef={formikRef}
@@ -184,14 +180,16 @@ const SendNFT = ({navigation, route}) => {
                           outlineColor={errors.send ? 'red' : theme.gray}
                           activeOutlineColor={errors.send ? 'red' : theme.font}
                           autoCapitalize="none"
-                          returnKeyType="next"
+                          returnKeyType="done"
                           mode="outlined"
                           blurOnSubmit={false}
                           name="send"
                           onChangeText={handleChange('send')}
                           onBlur={handleBlur('send')}
                           value={values.send}
-                          onSubmitEditing={handleSubmit}
+                          onSubmitEditing={()=>{
+                              Keyboard.dismiss();
+                          }}
                           right={
                             <TextInput.Icon
                               style={styles.scan}

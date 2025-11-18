@@ -12,7 +12,6 @@ import {
   Text,
   TouchableWithoutFeedback,
   Keyboard,
-  KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
@@ -27,6 +26,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 import ThemedIcon from 'components/ThemedIcon';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import ModalDelete from 'components/ModalDelete';
+import {KeyboardAvoidingView} from 'react-native-keyboard-controller';
 import {
   _currentWalletIndexSelector,
   selectAllWalletName,
@@ -203,12 +203,16 @@ const CreateWallet = ({navigation, route}) => {
       .notOneOf(finalAllWallets.current, 'The name of wallet already existed'),
   });
 
+  const dismissKeyboard = useCallback(() => {
+    Keyboard.dismiss();
+  }, []);
+
   return (
     <DokSafeAreaView style={styles.safeAreaView}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView
-          keyboardVerticalOffset={80}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={'padding'}
+          keyboardVerticalOffset={100}
           style={styles.container}>
           <View style={styles.formInput}>
             <Text style={styles.brand}>{walletName || ''}</Text>
@@ -247,7 +251,7 @@ const CreateWallet = ({navigation, route}) => {
                         errors.name ? 'red' : theme.borderActiveColor
                       }
                       autoCapitalize="none"
-                      returnKeyType="next"
+                      returnKeyType="done"
                       mode="outlined"
                       blurOnSubmit={false}
                       name="name"
@@ -259,7 +263,7 @@ const CreateWallet = ({navigation, route}) => {
                         handleBlur('currentPassword');
                       }}
                       value={values.name}
-                      // onSubmitEditing={handleSubmit}
+                      onSubmitEditing={dismissKeyboard}
                     />
                     {errors.name && (
                       <Text style={styles.textConfirm}>{errors.name}</Text>

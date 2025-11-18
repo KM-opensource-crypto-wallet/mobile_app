@@ -29,7 +29,7 @@ import {
   calculateEstimateFee,
   setCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {currencySymbol} from 'data/currency';
 import {
   selectCurrentCoin,
@@ -310,6 +310,10 @@ const SendFunds = ({navigation, route}) => {
     }
   };
 
+  const dismissKeyboard = useCallback(()=>{
+    Keyboard.dismiss();
+  },[])
+
   const onSelectAddress = useCallback(item => {
     const address = item?.address;
     if (address) {
@@ -321,12 +325,10 @@ const SendFunds = ({navigation, route}) => {
     <Provider>
       <Portal>
         <KeyboardAwareScrollView
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
           bounces={false}
+          bottomOffset={50}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
-          keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
+          {...(IS_ANDROID ? {extraKeyboardSpace: 30} : {})}
           contentContainerStyle={styles.contentContainerStyle}>
           <Formik
             innerRef={formikRef}
@@ -357,9 +359,7 @@ const SendFunds = ({navigation, route}) => {
               setFieldValue,
             }) => (
               <TouchableWithoutFeedback
-                onPress={() => {
-                  Keyboard.dismiss();
-                }}>
+                onPress={dismissKeyboard}>
                 <View style={{flex: 1}}>
                   <View
                     style={{
@@ -407,16 +407,16 @@ const SendFunds = ({navigation, route}) => {
                                 errors.send ? 'red' : theme.font
                               }
                               autoCapitalize="none"
-                              returnKeyType="next"
+                              returnKeyType="done"
                               mode="outlined"
                               blurOnSubmit={false}
                               name="send"
                               onChangeText={text => {
                                 setFieldValue('send', text);
                               }}
+                              onSubmitEditing={dismissKeyboard}
                               onBlur={handleBlur('send')}
                               value={values.send}
-                              onSubmitEditing={handleSubmit}
                               right={
                                 !fieldDisable && (
                                   <TextInput.Icon
@@ -465,7 +465,7 @@ const SendFunds = ({navigation, route}) => {
                                 errors.amount ? 'red' : theme.font
                               }
                               autoCapitalize="none"
-                              returnKeyType="next"
+                              returnKeyType="done"
                               mode="outlined"
                               blurOnSubmit={false}
                               name="amount"
@@ -484,7 +484,7 @@ const SendFunds = ({navigation, route}) => {
                               }}
                               onBlur={handleBlur('amount')}
                               value={values.amount}
-                              onSubmitEditing={handleSubmit}
+                              onSubmitEditing={dismissKeyboard}
                               keyboardType="decimal-pad"
                               type="number"
                             />
@@ -534,7 +534,7 @@ const SendFunds = ({navigation, route}) => {
                                 errors.amount ? 'red' : theme.font
                               }
                               autoCapitalize="none"
-                              returnKeyType="next"
+                              returnKeyType="done"
                               mode="outlined"
                               blurOnSubmit={false}
                               name="currencyAmount"
@@ -553,7 +553,7 @@ const SendFunds = ({navigation, route}) => {
                               }}
                               onBlur={handleBlur('currencyAmount')}
                               value={values.currencyAmount}
-                              onSubmitEditing={handleSubmit}
+                              onSubmitEditing={dismissKeyboard}
                               keyboardType="decimal-pad"
                               type="number"
                             />
@@ -601,7 +601,7 @@ const SendFunds = ({navigation, route}) => {
                                 errors.memo ? 'red' : theme.font
                               }
                               autoCapitalize="none"
-                              returnKeyType="next"
+                              returnKeyType="done"
                               mode="outlined"
                               blurOnSubmit={false}
                               name="memo"
@@ -610,7 +610,7 @@ const SendFunds = ({navigation, route}) => {
                               }}
                               onBlur={handleBlur('memo')}
                               value={values.memo}
-                              onSubmitEditing={handleSubmit}
+                              onSubmitEditing={dismissKeyboard}
                               right={
                                 !fieldDisable && (
                                   <TextInput.Icon
@@ -639,70 +639,44 @@ const SendFunds = ({navigation, route}) => {
                             )}
                           </View>
                         )}
-
-                        {/*<View style={styles.blockList}>*/}
-                        {/*  <Text style={styles.blockTitle}>Blockchain fee</Text>*/}
-                        {/*  <View style={{direction: 'rtl'}}>*/}
-                        {/*    <View style={styles.box}>*/}
-                        {/*      <Text style={styles.boxText}>*/}
-                        {/*        {currentCoin.totalAmount}*/}
-                        {/*      </Text>*/}
-                        {/*      <Text style={{...styles.boxText, marginLeft: 5}}>*/}
-                        {/*        {currentCoin.title}*/}
-                        {/*      </Text>*/}
-                        {/*    </View>*/}
-                        {/*    <View style={{...styles.box, alignSelf: 'flex-end'}}>*/}
-                        {/*      <Text style={styles.boxText}>*/}
-                        {/*        {currencySymbol}*/}
-                        {/*        {currentCoin.totalCourse}*/}
-                        {/*      </Text>*/}
-                        {/*    </View>*/}
-                        {/*  </View>*/}
-                        {/*</View>*/}
-                        {/*<View style={styles.switchList}>*/}
-                        {/*  <Switch*/}
-                        {/*    value={isSwitchOn}*/}
-                        {/*    onValueChange={onToggleSwitch}*/}
-                        {/*    trackColor={{false: 'gray', true: '#E8E8E8'}}*/}
-                        {/*    thumbColor={isSwitchOn ? '#F44D03' : 'white'}*/}
-                        {/*    ios_backgroundColor="#E8E8E8"*/}
-                        {/*  />*/}
-                        {/*  <Text style={styles.switchText}>*/}
-                        {/*    Fast Transaction*/}
-                        {/*  </Text>*/}
-                        {/*</View>*/}
                       </View>
                     </View>
-                    {isEip7702SupportedChain(currentCoin?.chain_name) && (
+                    <View style={styles.footerView}>
+                      {isEip7702SupportedChain(currentCoin?.chain_name) && (
+                        <TouchableOpacity
+                          disabled={!isValid}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: isValid
+                              ? 'transparent'
+                              : theme.gray,
+                            borderColor: isValid
+                              ? theme.background
+                              : theme.gray,
+                            borderWidth: 1,
+                          }}
+                          onPress={addToBatch}>
+                          <Text
+                            style={[
+                              styles.buttonTitle,
+                              isValid && {color: theme.background},
+                            ]}>
+                            Add to batch
+                          </Text>
+                        </TouchableOpacity>
+                      )}
                       <TouchableOpacity
                         disabled={!isValid}
                         style={{
                           ...styles.button,
-                          backgroundColor: isValid ? 'transparent' : theme.gray,
-                          borderColor: isValid ? theme.background : theme.gray,
-                          borderWidth: 1,
+                          backgroundColor: isValid
+                            ? theme.background
+                            : theme.gray,
                         }}
-                        onPress={addToBatch}>
-                        <Text
-                          style={[
-                            styles.buttonTitle,
-                            isValid && {color: theme.background},
-                          ]}>
-                          Add to batch
-                        </Text>
+                        onPress={handleSubmit}>
+                        <Text style={styles.buttonTitle}>Next</Text>
                       </TouchableOpacity>
-                    )}
-                    <TouchableOpacity
-                      disabled={!isValid}
-                      style={{
-                        ...styles.button,
-                        backgroundColor: isValid
-                          ? theme.background
-                          : theme.gray,
-                      }}
-                      onPress={handleSubmit}>
-                      <Text style={styles.buttonTitle}>Next</Text>
-                    </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
               </TouchableWithoutFeedback>

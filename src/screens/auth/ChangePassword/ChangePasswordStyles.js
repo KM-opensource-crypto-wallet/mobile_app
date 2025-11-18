@@ -14,10 +14,18 @@ if (isIpad) {
 
 const myStyles = theme =>
   StyleSheet.create({
+    safeAreaView: {
+      flex: 1,
+      backgroundColor: theme.backgroundColor,
+    },
     container: {
       flex: 1,
       backgroundColor: theme.backgroundColor,
       alignItems: 'center',
+    },
+    contentContainerStyle: {
+      flexGrow: 1,
+      backgroundColor: theme.backgroundColor,
     },
     formInput: {
       width: inputWidth,
