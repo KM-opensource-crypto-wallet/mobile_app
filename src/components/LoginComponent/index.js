@@ -57,7 +57,7 @@ const LoginComponent = ({navigation, onClose, visible}) => {
   const appState = useRef(AppState.currentState);
   const rateLimitCheck = useSelector(isWalletReset);
 
-  const lastAttempt = useSelector(getLastAttempt).payload;
+  const lastAttempt = useSelector(getLastAttempt);
 
   const redirectSuccess = useCallback(() => {
     if (onClose) {
