@@ -8,8 +8,6 @@ import {getBundleId} from 'react-native-device-info';
 import {IOS_APPSTORE_URL, WL_APP_NAME} from 'utils/wlData';
 
 const WIDTH = Dimensions.get('window').width + 80;
-const {height: screenHeight} = Dimensions.get('window');
-const modalHeight = screenHeight / 2.5;
 
 const isIpad = WIDTH >= 768;
 
@@ -34,13 +32,14 @@ const ModalAppUpdate = ({visible}) => {
           width: ITEM_WIDTH,
           alignSelf: 'center',
           borderRadius: 10,
-          height: modalHeight,
         }}
         dismissable={false}>
         <View style={styles.infoList}>
           <Text style={styles.titleInfo}>{'New Updates Available!'}</Text>
           <Text style={styles.info}>
-            {`There is a new version of the ${WL_APP_NAME} available on the App Store
+            {`There is a new version of the ${WL_APP_NAME} available on the ${
+              IS_IOS ? 'App Store' : 'Play Store'
+            }
 Please update it to continue using app.`}
           </Text>
         </View>

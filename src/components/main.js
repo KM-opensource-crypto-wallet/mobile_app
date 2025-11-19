@@ -75,13 +75,17 @@ import dayjs from 'dayjs';
 import axios from 'axios';
 import {isTestFlight} from 'react-native-test-flight';
 import {setAdjustPan} from 'rn-android-keyboard-adjust';
-import {getDisableMessage} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
+import {
+  getAndroidLatestVersion,
+  getDisableMessage,
+} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
 import DisableComponent from 'components/DisableComponent';
 import {getLastUpdateCheckTimestamp} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 import {setLastUpdateCheckTimestamp} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {getFeesInfo} from 'dok-wallet-blockchain-networks/feesInfo/feesInfo';
-import {WALLET_CONNECT_DATA} from 'utils/wlData';
+import {IS_KIML_WALLET, WALLET_CONNECT_DATA} from 'utils/wlData';
 import {ThemeContext} from 'theme/ThemeContext';
+import ModalApkDownload from 'components/ModalApkDownload';
 
 const unsecureRoute = [
   'ContactUs',
@@ -114,6 +118,7 @@ const Main = () => {
   const storePassword = useSelector(getUserPassword);
   const lockTime = useSelector(getLockTime);
   const isReduxStoreLoad = useSelector(isReduxStoreLoaded);
+  const kimlWalletLatestVersion = useSelector(getAndroidLatestVersion);
   const walletConnectSessions = useSelector(
     selectWalletConnectSessions,
     shallowEqual,
@@ -222,7 +227,10 @@ const Main = () => {
         if (isAppLaunched) {
           dispatch(setLastUpdateCheckTimestamp(new Date()));
         }
-        const liveVersion = await getLiveVersion();
+        const liveVersion =
+          IS_ANDROID && IS_KIML_WALLET
+            ? kimlWalletLatestVersion
+            : await getLiveVersion();
         const currentVersion = getVersion();
         if (isNewerVersion(liveVersion, currentVersion)) {
           setShowUpdateModal(true);
@@ -238,12 +246,21 @@ const Main = () => {
   };
 
   useEffect(() => {
+    if (IS_KIML_WALLET && IS_ANDROID && kimlWalletLatestVersion) {
+      checkInAppUpdates(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kimlWalletLatestVersion]);
+
+  useEffect(() => {
     let unsubscribe = null;
     if (IS_ANDROID) {
       setAdjustPan();
     }
     if (isReduxStoreLoad) {
-      checkInAppUpdates(true);
+      if (!IS_KIML_WALLET || !IS_ANDROID) {
+        checkInAppUpdates(true);
+      }
       getInitialUrlLink();
       dispatch(createIfNotExistsMasterClientId());
       dispatch(createClientIdIfNotExist());
@@ -359,7 +376,12 @@ const Main = () => {
           }}>
           <MenuProvider>
             <BottomSheetModalProvider>{routing}</BottomSheetModalProvider>
-            <ModalAppUpdate visible={showUpdateModal} />
+            {(!IS_KIML_WALLET || !IS_ANDROID) && (
+              <ModalAppUpdate visible={showUpdateModal} />
+            )}
+            {IS_KIML_WALLET && IS_ANDROID && (
+              <ModalApkDownload visible={showUpdateModal} />
+            )}
           </MenuProvider>
           <LoginModal
             visible={loginModalVisible}
