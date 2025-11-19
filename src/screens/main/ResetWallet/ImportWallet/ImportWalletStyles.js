@@ -18,8 +18,16 @@ if (isIpad) {
 
 const myStyles = theme =>
   StyleSheet.create({
+    safeAreaView: {
+      flex: 1,
+      backgroundColor: theme.backgroundColor,
+    },
     container: {
       flex: 1,
+      backgroundColor: theme.backgroundColor,
+    },
+    contentContainer: {
+      flexGrow: 1,
       backgroundColor: theme.backgroundColor,
       alignItems: 'center',
     },
@@ -80,7 +88,7 @@ const myStyles = theme =>
       fontFamily: 'Roboto-Regular',
     },
     keyboardOverView: {
-      bottom: 20,
+      bottom: -100,
       width: SCREEN_WIDTH,
       height: 50,
       position: 'absolute',
