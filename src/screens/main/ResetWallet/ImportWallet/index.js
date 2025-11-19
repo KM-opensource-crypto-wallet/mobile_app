@@ -81,11 +81,12 @@ const ImportWallet = ({navigation}) => {
 
   return (
     <DokSafeAreaView style={styles.safeAreaView}>
-      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-        <ScrollView
-          bounces={false}
-          style={styles.container}
-          contentContainerStyle={styles.contentContainer}>
+      <ScrollView
+        bounces={false}
+        keyboardShouldPersistTaps={'always'}
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}>
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
           <View style={styles.formInput}>
             <Text style={styles.title}>Import</Text>
             <Text style={styles.title}>your Wallet</Text>
@@ -148,30 +149,30 @@ const ImportWallet = ({navigation}) => {
               Your Private Key will be encrypted and stored on this device.
             </Text>
           </View>
-          {!!suggestionMnemonic?.length && (
-            <ScrollView
-              style={[styles.keyboardOverView, {bottom: finalKeyboardHeight}]}
-              contentContainerStyle={{
-                alignItems: 'center',
-                flexGrow: 1,
-                paddingHorizontal: 20,
-              }}
-              horizontal={true}
-              keyboardShouldPersistTaps={'always'}
-              bounces={false}
-              showsHorizontalScrollIndicator={false}>
-              {suggestionMnemonic.map(item => (
-                <TouchableOpacity
-                  key={item + ''}
-                  style={styles.itemView}
-                  onPress={() => onPressMnemonicWord(item)}>
-                  <Text style={styles.wordText}>{item}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-        </ScrollView>
-      </TouchableWithoutFeedback>
+        </TouchableWithoutFeedback>
+        {!!suggestionMnemonic?.length && (
+          <ScrollView
+            style={[styles.keyboardOverView, {bottom: finalKeyboardHeight}]}
+            contentContainerStyle={{
+              alignItems: 'center',
+              flexGrow: 1,
+              paddingHorizontal: 20,
+            }}
+            horizontal={true}
+            keyboardShouldPersistTaps={'always'}
+            bounces={false}
+            showsHorizontalScrollIndicator={false}>
+            {suggestionMnemonic.map(item => (
+              <TouchableOpacity
+                key={item + ''}
+                style={styles.itemView}
+                onPress={() => onPressMnemonicWord(item)}>
+                <Text style={styles.wordText}>{item}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+      </ScrollView>
     </DokSafeAreaView>
   );
 };
