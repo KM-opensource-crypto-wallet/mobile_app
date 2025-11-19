@@ -15,16 +15,17 @@ import {
   RefreshControl,
 } from 'react-native';
 import myStyles from './SendScreenStyles';
-import SendIcon from 'assets/images/send/send.svg';
-import RecIcon from 'assets/images/send/rec.svg';
-import {useSelector, useDispatch} from 'react-redux';
-import {Provider, Portal} from 'react-native-paper';
-import CopyIcon from 'assets/images/icons/copy.svg';
+// import SendIcon from 'assets/images/send/send.svg';
+import SendIcon from '../../../../assets/images/send/send.svg';
+import RecIcon from '../../../../assets/images/send/rec.svg';
+import { useSelector, useDispatch } from 'react-redux';
+import { Provider, Portal } from 'react-native-paper';
+import CopyIcon from '../../../../assets/images/icons/copy.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 
-import {ThemeContext} from 'theme/ThemeContext';
-import {currencySymbol} from 'data/currency';
+import { ThemeContext } from '../../../../theme/ThemeContext';
+import { currencySymbol } from '../../../../data/currency';
 import {
   checkIsNativeCoinAvailable,
   getCurrentWalletIsAddMoreAddressPopupHidden,
@@ -39,10 +40,10 @@ import {
   updateCurrentCoin,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import FastImage from '@d11/react-native-fast-image';
-import Loading from 'components/Loading';
-import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
+import Loading from '../../../../components/Loading';
+import ModalConfirmTransaction from '../../../../components/ModalConfirmTransaction';
 import Toast from 'react-native-toast-message';
-import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
+import { triggerHapticFeedbackLight } from '../../../../utils/hapticFeedback';
 import {
   getCustomizePublicAddress,
   isBitcoinChain,
@@ -50,7 +51,7 @@ import {
   isPrivateKeyNotSupportedChain,
   isStakingChain,
 } from 'dok-wallet-blockchain-networks/helper';
-import DokDropdown from 'components/DokDropdown';
+import DokDropdown from '../../../../components/DokDropdown';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   Menu,
@@ -59,13 +60,13 @@ import {
   MenuTrigger,
 } from 'react-native-popup-menu';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
-import ModalAdvanceCustomDerivation from 'components/ModalAdvanceCustomDerivation';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
-import {clearSelectedUTXOs} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
+import ModalAdvanceCustomDerivation from '../../../../components/ModalAdvanceCustomDerivation';
+import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
+import { clearSelectedUTXOs } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 
-const SendScreen = ({navigation, route}) => {
+const SendScreen = ({ navigation, route }) => {
   const currentCoin = useSelector(selectCurrentCoin);
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const localCurrency = useSelector(getLocalCurrency);
   const isImportWithPrivateKey = useSelector(isImportWalletWithPrivateKey);
@@ -79,7 +80,7 @@ const SendScreen = ({navigation, route}) => {
   const [showAdvanceModal, setShowAdvanceModal] = useState(false);
   const isCustomDerivationClicked = useRef(false);
 
-  const {item} = route.params;
+  const { item } = route.params;
   const isBitcoin = isBitcoinChain(currentCoin?.chain_name);
   const isStaking =
     isStakingChain(currentCoin?.chain_name) && currentCoin?.type === 'coin';
@@ -91,9 +92,8 @@ const SendScreen = ({navigation, route}) => {
   const deriveAddresses = useMemo(() => {
     return currentCoin?.deriveAddresses?.map(subItem => ({
       options: subItem,
-      label: `${getCustomizePublicAddress(subItem?.address)} ${
-        isBitcoin ? `(${subItem?.balance || 0} ${currentCoin?.symbol})` : ''
-      }`,
+      label: `${getCustomizePublicAddress(subItem?.address)} ${isBitcoin ? `(${subItem?.balance || 0} ${currentCoin?.symbol})` : ''
+        }`,
       value: subItem.address,
     }));
   }, [currentCoin?.deriveAddresses, currentCoin?.symbol, isBitcoin]);
@@ -164,7 +164,7 @@ const SendScreen = ({navigation, route}) => {
     if (isDeriveAddressChain && !isImportWithPrivateKey) {
       navigation.setOptions({
         headerRight: () => (
-          <View style={{marginRight: 8}}>
+          <View style={{ marginRight: 8 }}>
             <Menu>
               <MenuTrigger>
                 <EntypoIcon
@@ -190,7 +190,7 @@ const SendScreen = ({navigation, route}) => {
     } else if (isBitcoin) {
       navigation.setOptions({
         headerRight: () => (
-          <View style={{marginRight: 8}}>
+          <View style={{ marginRight: 8 }}>
             <Menu>
               <MenuTrigger>
                 <EntypoIcon
@@ -273,7 +273,7 @@ const SendScreen = ({navigation, route}) => {
                   )} */}
                   {currentCoin?.icon && (
                     <FastImage
-                      source={{uri: item?.icon}}
+                      source={{ uri: item?.icon }}
                       resizeMode={'contain'}
                       style={{
                         height: '100%',
@@ -284,7 +284,7 @@ const SendScreen = ({navigation, route}) => {
                   )}
                 </View>
                 <View style={styles.coinBox}>
-                  <Text style={{...styles.coinNumber, marginRight: 5}}>
+                  <Text style={{ ...styles.coinNumber, marginRight: 5 }}>
                     {currentCoin.totalAmount}
                   </Text>
                   <Text style={styles.coinNumber}>{currentCoin?.symbol}</Text>
@@ -302,7 +302,7 @@ const SendScreen = ({navigation, route}) => {
               </View>
               <View style={styles.btnList}>
                 <TouchableOpacity
-                  style={{...styles.btn, ...styles.shadow, marginRight: 20}}
+                  style={{ ...styles.btn, ...styles.shadow, marginRight: 20 }}
                   onPress={() => {
                     if (isNativeCoinAvailable) {
                       dispatch(clearSelectedUTXOs());
@@ -319,7 +319,7 @@ const SendScreen = ({navigation, route}) => {
                   <Text style={styles.btnText}>Send</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={{...styles.btn, ...styles.shadow}}
+                  style={{ ...styles.btn, ...styles.shadow }}
                   onPress={() => navigation.navigate('RecieveFunds')}>
                   <RecIcon style={styles.icon} />
                   <Text style={styles.btnText}>Receive</Text>

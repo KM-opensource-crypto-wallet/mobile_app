@@ -12,7 +12,7 @@ import {
   logOutSuccess,
   fingerprintAuthOut,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
-import {ThemeContext} from 'theme/ThemeContext';
+import { ThemeContext } from '../../theme/ThemeContext';
 import myStyles from './ModalResetStyles';
 import {resetWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {useDispatch} from 'react-redux';
@@ -32,8 +32,8 @@ if (isIpad) {
   ITEM_WIDTH = Math.round(WIDTH * 0.7);
 }
 
-const ModalReset = ({visible, hideModal, navigation, page}) => {
-  const {theme} = useContext(ThemeContext);
+const ModalReset = ({ visible, hideModal, navigation, page }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const [text, setText] = useState('');
   const dispatch = useDispatch();
@@ -65,7 +65,7 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
       setTimeout(() => {
         navigation.reset({
           index: 0,
-          routes: [{name: 'CarouselCards'}],
+          routes: [{ name: 'CarouselCards' }],
         });
       }, 200);
     } else {
@@ -73,7 +73,7 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
       dispatch(fingerprintAuthOut());
       navigation.reset({
         index: 0,
-        routes: [{name: 'Login'}],
+        routes: [{ name: 'Login' }],
       });
     }
   };
@@ -86,7 +86,8 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
         width: ITEM_WIDTH,
         alignSelf: 'center',
         borderRadius: 10,
-        marginBottom: keyboardHeight > 0 ? keyboardHeight / 2 : 0,
+        height: modalHeight,
+        transform: [{ translateY: keyboardOffset }], // Apply keyboard offset
       }}
       dismissable={false}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>

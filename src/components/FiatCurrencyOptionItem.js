@@ -1,9 +1,9 @@
-import React, {useContext} from 'react';
-import {StyleSheet, Text, View} from 'react-native';
-import {ThemeContext} from 'theme/ThemeContext';
+import React, { useContext } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { ThemeContext } from '../theme/ThemeContext';
 
-const FiatCurrencyOptionItem = ({item}) => {
-  const {theme} = useContext(ThemeContext);
+const FiatCurrencyOptionItem = ({ item }) => {
+  const { theme } = useContext(ThemeContext);
   const myStyles = styles(theme);
   return (
     <View style={myStyles.listView}>

@@ -1,15 +1,16 @@
-import {IS_ANDROID} from 'utils/dimensions';
-import {sha256} from 'react-native-sha256';
-import {getBuildNumber, getVersion} from 'react-native-device-info';
+import { IS_ANDROID } from '../utils/dimensions'
+import { sha256 } from 'react-native-sha256';
+import { getBuildNumber, getVersion } from 'react-native-device-info';
 import crypto from 'react-native-quick-crypto';
-import {Linking} from 'react-native';
+import { Linking } from 'react-native';
+import * as Crypto from 'expo-crypto';
 
 export const inAppBrowserOptions = IS_ANDROID
   ? {
-      forceCloseOnRedirection: false,
-      showInRecents: true,
-    }
-  : {modalEnabled: true};
+    forceCloseOnRedirection: false,
+    showInRecents: true,
+  }
+  : { modalEnabled: true };
 
 export const parseBoolean = value => value === 'true' || value === true;
 
@@ -28,14 +29,16 @@ export async function generateSHA256ForCoins(coins, isEVMChain) {
     let coinNames = [];
     for (let i = 0; i < coinData.length; i++) {
       const item = coinData[i];
-      const str = `${
-        isEVMChain(item?.chain_name) ? 'ETH' : item.chain_symbol
-      }:${item.address}`;
+      const str = `${isEVMChain(item?.chain_name) ? 'ETH' : item.chain_symbol
+        }:${item.address}`;
       if (item?.type === 'coin' && !coinNames.includes(str)) {
         coinNames.push(str);
       }
     }
-    return Promise.all(coinNames.map(item => sha256(item)));
+    return Promise.all(coinNames.map(item => Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      item
+    )));
   }
   return [];
 }

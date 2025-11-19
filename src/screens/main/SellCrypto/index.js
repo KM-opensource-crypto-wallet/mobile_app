@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useRef, useState} from 'react';
+import React, { useCallback, useContext, useRef, useState } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -8,47 +8,47 @@ import {
   Platform,
 } from 'react-native';
 import ProgressDialog from 'react-native-progress-dialog';
-import {ThemeContext} from 'theme/ThemeContext';
+import { ThemeContext } from '../../../theme/ThemeContext';
 import myStyles from './SellCryptoStyles';
-import {Portal, Provider, TextInput} from 'react-native-paper';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {IS_ANDROID} from 'utils/dimensions';
-import {Formik} from 'formik';
-import {sellCryptoValidation} from 'utils/validationSchema';
-import DokDropdown from 'components/DokDropdown';
-import CryptoCurrencyOptionItem from 'components/CryptoCurrencyOptionItem';
+import { Portal, Provider, TextInput } from 'react-native-paper';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { IS_ANDROID } from '../../../utils/dimensions';
+import { Formik } from 'formik';
+import { sellCryptoValidation } from '../../../utils/validationSchema';
+import DokDropdown from '../../../components/DokDropdown';
+import CryptoCurrencyOptionItem from '../../../components/CryptoCurrencyOptionItem';
 import FastImage from '@d11/react-native-fast-image';
-import {shallowEqual, useDispatch, useSelector} from 'react-redux';
-import {getUserCoinsOptions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import FiatCurrencyOptionItem from 'components/FiatCurrencyOptionItem';
-import {validateNumberInInput} from 'dok-wallet-blockchain-networks/helper';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { getUserCoinsOptions } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import FiatCurrencyOptionItem from '../../../components/FiatCurrencyOptionItem';
+import { validateNumberInInput } from 'dok-wallet-blockchain-networks/helper';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
-import CopyIcon from 'assets/images/icons/copy.svg';
+import { triggerHapticFeedbackLight } from '../../../utils/hapticFeedback';
+import CopyIcon from '../../../assets/images/icons/copy.svg';
 import Toast from 'react-native-toast-message';
-import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import {validateNumber} from 'dok-wallet-blockchain-networks/helper';
-import {currencySymbol} from 'data/currency';
-import Loading from 'components/Loading';
-import {WebViewModal} from './WebViewModal';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {_currentWalletIndexSelector} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {getSellCryptoProviders} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
-import {getSellCryptoLoading} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
-import {setSellCryptoLoading} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
-import {debounceFetchSellCryptoQuote} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
-import {fetchSellCryptoQuote} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
-import {setRequestDetails} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
-import {fetchSellCryptoPaymentDetails} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
-import {fetchSellCryptoUrl} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
-import {initiateSellCryptoTransfer} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
-import {setCurrentTransferSuccess} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import {getSellCryptoRequestDetails} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
-import {setTransferDetails} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
-import {getSelectedCountry} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
+import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import { validateNumber } from 'dok-wallet-blockchain-networks/helper';
+import { currencySymbol } from '../../../data/currency';
+import Loading from '../../../components/Loading';
+import { WebViewModal } from './WebViewModal';
+import { selectAllWallets } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { _currentWalletIndexSelector } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { getSellCryptoProviders } from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
+import { getSellCryptoLoading } from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
+import { setSellCryptoLoading } from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
+import { debounceFetchSellCryptoQuote } from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
+import { fetchSellCryptoQuote } from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
+import { setRequestDetails } from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
+import { fetchSellCryptoPaymentDetails } from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
+import { fetchSellCryptoUrl } from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
+import { initiateSellCryptoTransfer } from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
+import { setCurrentTransferSuccess } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
+import { getSellCryptoRequestDetails } from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
+import { setTransferDetails } from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
+import { getSelectedCountry } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
 
-const SellCrypto = ({navigation}) => {
-  const {theme} = useContext(ThemeContext);
+const SellCrypto = ({ navigation }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const currencyPicker = [
@@ -90,7 +90,7 @@ const SellCrypto = ({navigation}) => {
         const tempCoinDetails = tempWallet?.coins.find(
           item =>
             item?.symbol?.toUpperCase() ===
-              coinDetails?.options?.symbol?.toUpperCase() &&
+            coinDetails?.options?.symbol?.toUpperCase() &&
             item?.chain_name === coinDetails?.options?.chain_name,
         );
         if (tempCoinDetails?.chain_symbol === 'BNB') {
@@ -113,7 +113,7 @@ const SellCrypto = ({navigation}) => {
           possibleCoinDetails.push(optionPayload);
         }
       }
-      return {selectedCoinDetails, possibleCoinDetails, selectedWalletDetails};
+      return { selectedCoinDetails, possibleCoinDetails, selectedWalletDetails };
     },
     [allWallets, currentWalletIndex],
   );
@@ -199,7 +199,7 @@ const SellCrypto = ({navigation}) => {
         }
         dispatch(setCurrentTransferSuccess(false));
         dispatch(initiateSellCryptoTransfer());
-        navigation.navigate('Transfer', {fromScreen: 'SellCrypto'});
+        navigation.navigate('Transfer', { fromScreen: 'SellCrypto' });
       }
     },
     [dispatch, navigation],
@@ -253,7 +253,7 @@ const SellCrypto = ({navigation}) => {
           enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
+          {...(IS_ANDROID ? { extraScrollHeight: 30 } : {})}
           enableResetScrollToCoords={false}
           keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           contentContainerStyle={styles.contentContainerStyle}>
@@ -281,11 +281,11 @@ const SellCrypto = ({navigation}) => {
                 }) => (
                   <View>
                     <DokDropdown
-                      titleStyle={{color: theme.primary}}
+                      titleStyle={{ color: theme.primary }}
                       placeholder={'Select Crypto'}
                       title={'Select Crypto'}
                       data={coinOptions}
-                      dropdownStyle={{height: 70}}
+                      dropdownStyle={{ height: 70 }}
                       search={true}
                       searchField={'value'}
                       keyboardAvoiding={true}
@@ -293,7 +293,7 @@ const SellCrypto = ({navigation}) => {
                       onChangeValue={item => {
                         setFieldValue('selectedCoin', item);
                         onSubmit(
-                          {...values, selectedCoin: item},
+                          { ...values, selectedCoin: item },
                           null,
                           true,
                           false,
@@ -306,9 +306,9 @@ const SellCrypto = ({navigation}) => {
                       renderLeftIcon={() =>
                         values.selectedCoin?.options?.icon && (
                           <FastImage
-                            source={{uri: values.selectedCoin?.options?.icon}}
+                            source={{ uri: values.selectedCoin?.options?.icon }}
                             resizeMode={'contain'}
-                            style={{height: 40, width: 40, marginRight: 8}}
+                            style={{ height: 40, width: 40, marginRight: 8 }}
                           />
                         )
                       }
@@ -322,22 +322,22 @@ const SellCrypto = ({navigation}) => {
                     <Text style={styles.addCoinText}>
                       {'Looking for more coins?'}
                       <Text
-                        style={{color: theme.background}}
+                        style={{ color: theme.background }}
                         onPress={() => setModalAddCoinsVisible(true)}>
                         {' Click here for add coins on selected wallet'}
                       </Text>
                     </Text>
-                    <View style={{height: 12}} />
+                    <View style={{ height: 12 }} />
                     <DokDropdown
-                      titleStyle={{color: theme.primary}}
+                      titleStyle={{ color: theme.primary }}
                       placeholder={'Select payout currency'}
                       title={'Select Payout Currency'}
                       data={currencyPicker}
-                      dropdownStyle={{height: 70}}
+                      dropdownStyle={{ height: 70 }}
                       onChangeValue={item => {
                         setFieldValue('fiatCurrency', item.value);
                         onSubmit(
-                          {...values, fiatCurrency: item.value},
+                          { ...values, fiatCurrency: item.value },
                           null,
                           true,
                           false,
@@ -380,7 +380,7 @@ const SellCrypto = ({navigation}) => {
                         );
                         setFieldValue('amount', tempValues);
                         onSubmit(
-                          {...values, amount: tempValues},
+                          { ...values, amount: tempValues },
                           null,
                           true,
                           true,
@@ -441,7 +441,7 @@ const SellCrypto = ({navigation}) => {
                           }}>
                           <View style={styles.imageBox}>
                             <FastImage
-                              source={{uri: item.src}}
+                              source={{ uri: item.src }}
                               style={styles.image}
                             />
                           </View>
@@ -449,13 +449,11 @@ const SellCrypto = ({navigation}) => {
                             <Text style={styles.btnTitle}>{item.title}</Text>
                             <Text style={styles.btnCoins} numberOfLines={1}>
                               {item?.fromAmount &&
-                              item?.toAmount &&
-                              values.selectedCoin
-                                ? `${item.fromAmount} ${
-                                    values.selectedCoin?.options?.symbol
-                                  } ==> ${currencySymbol[values.fiatCurrency]}${
-                                    item.toAmount
-                                  }`
+                                item?.toAmount &&
+                                values.selectedCoin
+                                ? `${item.fromAmount} ${values.selectedCoin?.options?.symbol
+                                } ==> ${currencySymbol[values.fiatCurrency]}${item.toAmount
+                                }`
                                 : ''}
                             </Text>
                           </View>

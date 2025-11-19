@@ -1,17 +1,17 @@
-import React, {useContext, useEffect, useMemo, useState} from 'react';
-import {Text, TouchableOpacity, Dimensions, View} from 'react-native';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { Text, TouchableOpacity, Dimensions, View } from 'react-native';
 
-import QRCodeScanner from 'react-native-qrcode-scanner';
+// import QRCodeScanner from 'react-native-qrcode-scanner';
 import * as Animatable from 'react-native-animatable';
 import myStyles from './ScannerStyles';
-import {ThemeContext} from 'theme/ThemeContext';
-import {parseCryptoQrCodeString} from 'dok-wallet-blockchain-networks/helper';
-import {shallowEqual, useDispatch, useSelector} from 'react-redux';
-import {selectUserCoins} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {setCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import { ThemeContext } from '../../../theme/ThemeContext';
+import { parseCryptoQrCodeString } from 'dok-wallet-blockchain-networks/helper';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { selectUserCoins } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { setCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import DeviceInfo from 'react-native-device-info';
-import {TextInput} from 'react-native-paper';
-import {createWalletConnection} from 'dok-wallet-blockchain-networks/service/walletconnect';
+import { TextInput } from 'react-native-paper';
+import { createWalletConnection } from 'dok-wallet-blockchain-networks/service/walletconnect';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -37,8 +37,8 @@ console.disableYellowBox = true;
 //   });
 // }
 
-const Scanner = ({navigation, route}) => {
-  const {theme} = useContext(ThemeContext);
+const Scanner = ({ navigation, route }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const page = route.params.page;
   const walletConnect = route.params.walletConnect;
@@ -66,7 +66,7 @@ const Scanner = ({navigation, route}) => {
   }, []);
 
   // console.log('route on scanner', route);
-  const onSuccess = ({data}) => {
+  const onSuccess = ({ data }) => {
     // Linking.openURL(e.data).catch(err =>
     //   console.error('An error occured', err),
     // );
@@ -76,7 +76,7 @@ const Scanner = ({navigation, route}) => {
       data?.slice(0, 2) === 'wc' &&
       walletConnect
     ) {
-      createWalletConnection({uri: data}).then();
+      createWalletConnection({ uri: data }).then();
       navigation.navigate('Home');
     } else if (page === 'ImportWalletByPrivateKey' || page === 'NewMessage') {
       navigation.navigate({
@@ -161,7 +161,7 @@ const Scanner = ({navigation, route}) => {
 
   if (isSimulator) {
     return (
-      <View style={{flex: 1, paddingTop: 100}}>
+      <View style={{ flex: 1, paddingTop: 100 }}>
         <TextInput
           textColor={theme.font}
           label="Scanner Text"
@@ -182,20 +182,22 @@ const Scanner = ({navigation, route}) => {
             justifyContent: 'center',
           }}
           onPress={() => {
-            onSuccess({data: text});
+            onSuccess({ data: text });
           }}>
-          <Text style={{color: 'white', fontSize: 18}}>Done</Text>
+          <Text style={{ color: 'white', fontSize: 18 }}>Done</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <QRCodeScanner
+    <>
+      {/* NOTE: update camera library  */}
+      {/* <QRCodeScanner
       onRead={onSuccess}
       // flashMode={RNCamera.Constants.FlashMode.torch}
       showMarker={true}
-      cameraStyle={{height: SCREEN_HEIGHT * 0.711}}
+      cameraStyle={{ height: SCREEN_HEIGHT * 0.711 }}
       bottomViewStyle={styles.bottomStyle}
       topViewStyle={styles.bottomStyle}
       //   bottomContent={
@@ -211,7 +213,7 @@ const Scanner = ({navigation, route}) => {
       customMarker={
         <View style={styles.rectangleContainer}>
           <View style={styles.topOverlay} />
-          <View style={{flexDirection: 'row'}}>
+          <View style={{ flexDirection: 'row' }}>
             <View style={styles.leftAndRightOverlay} />
 
             <View style={styles.rectangle}>
@@ -233,14 +235,16 @@ const Scanner = ({navigation, route}) => {
           <View style={styles.btnContainer}>
             <TouchableOpacity
               onPress={() => {
-                navigation.navigate(page, {showModal: false});
+                navigation.navigate(page, { showModal: false });
               }}>
               <Text style={styles.btn}>CANCEL</Text>
             </TouchableOpacity>
           </View>
         </View>
       }
-    />
+    /> */}
+    </>
+
   );
 };
 

@@ -1,10 +1,10 @@
-import React, {useState, useEffect, useContext} from 'react';
-import {View, Text} from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import { View, Text } from 'react-native';
 import myStyles from './SelectInputStyles';
-import KeyboardArrow from 'assets/images/icons/keyboard-arrow-right.svg';
-import ArrowDown from 'assets/images/buy/arrow-down.svg';
-import {Dropdown} from 'react-native-element-dropdown';
-import {ThemeContext} from 'theme/ThemeContext';
+import KeyboardArrow from '../../assets/images/icons/keyboard-arrow-right.svg';
+import ArrowDown from '../../assets/images/buy/arrow-down.svg';
+import { Dropdown } from 'react-native-element-dropdown';
+import { ThemeContext } from '../../theme/ThemeContext';
 
 const SelectInput = ({
   setValue,
@@ -15,7 +15,7 @@ const SelectInput = ({
   number,
   initialValue,
 }) => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const [select, setSelect] = useState(initialValue || '');
@@ -46,14 +46,14 @@ const SelectInput = ({
       <Dropdown
         style={[
           styles.dropdown,
-          show && {borderColor: '#222'},
-          !!error && {borderColor: 'red'},
+          show && { borderColor: '#222' },
+          !!error && { borderColor: 'red' },
         ]}
         containerStyle={{
           backgroundColor: theme.secondaryBackgroundColor,
         }}
-        itemTextStyle={{color: theme.font}}
-        activeColor={{backgroundColor: theme.secondaryBackgroundColor}}
+        itemTextStyle={{ color: theme.font }}
+        activeColor={{ backgroundColor: theme.secondaryBackgroundColor }}
         placeholderStyle={styles.placeholderStyle}
         selectedTextStyle={styles.selectedTextStyle}
         inputSearchStyle={styles.inputSearchStyle}
@@ -75,9 +75,9 @@ const SelectInput = ({
         }}
         renderRightIcon={() =>
           form === 'Country' ? (
-            <KeyboardArrow height="30" width="30" style={{fill: theme.gray}} />
+            <KeyboardArrow height="30" width="30" style={{ fill: theme.gray }} />
           ) : (
-            <ArrowDown height="30" width="30" style={{fill: theme.gray}} />
+            <ArrowDown height="30" width="30" style={{ fill: theme.gray }} />
           )
         }
         renderItem={number === '2' ? false : renderItem}

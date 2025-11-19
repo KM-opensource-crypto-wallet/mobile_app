@@ -1,11 +1,11 @@
 import React from 'react';
-import {Dimensions, TouchableOpacity, View, Text, Modal} from 'react-native';
+import { Dimensions, TouchableOpacity, View, Text, Modal } from 'react-native';
 
 import styles from './ModalDeleteData';
-import {persistor} from 'redux/store';
+import { persistor } from '../../src/redux/store';
 import RNRestart from 'react-native-restart';
 
-const ModalDeleteData = ({visible, hideModal}) => {
+const ModalDeleteData = ({ visible, hideModal }) => {
   const handlerNo = () => {
     hideModal();
   };
@@ -25,7 +25,7 @@ const ModalDeleteData = ({visible, hideModal}) => {
       visible={visible}
       transparent={true}
       statusBarTranslucent={true}
-      style={{backgroundColor: 'transparent'}}>
+      style={{ backgroundColor: 'transparent' }}>
       <View style={styles.modalView}>
         <View style={styles.anotherContainerView}>
           <View style={styles.infoList}>

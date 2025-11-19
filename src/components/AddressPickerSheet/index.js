@@ -1,18 +1,18 @@
-import React, {useCallback, useContext, useMemo, useState} from 'react';
-import {View, Text, TouchableOpacity} from 'react-native';
-import {ThemeContext} from 'theme/ThemeContext';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { ThemeContext } from '../../theme/ThemeContext';
 import myStyles from './AddressPickerSheetStyles';
-import DokBottomSheet from 'components/BottomSheet';
-import {Searchbar} from 'react-native-paper';
-import {BottomSheetFlatList} from '@gorhom/bottom-sheet';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import KeyboardHeightView from 'components/KeyboardHeightView';
-import {useSelector} from 'react-redux';
-import {getAddressBook} from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSelector';
-import {isEVMChain} from 'dok-wallet-blockchain-networks/helper';
-import AddressBookItem from 'components/AddressBookItem';
-import EmptyView from 'components/EmptyView';
-import {useNavigation} from '@react-navigation/native';
+import DokBottomSheet from '../../components/BottomSheet';
+import { Searchbar } from 'react-native-paper';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import KeyboardHeightView from '../../components/KeyboardHeightView';
+import { useSelector } from 'react-redux';
+import { getAddressBook } from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSelector';
+import { isEVMChain } from 'dok-wallet-blockchain-networks/helper';
+import AddressBookItem from '../../components/AddressBookItem';
+import EmptyView from '../../components/EmptyView';
+import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 const getItemHeight = item => {
   return item.label ? 101 : 80;
@@ -25,8 +25,8 @@ const AddressPickerSheet = ({
   walletId,
   onSelectedAddress,
 }) => {
-  const {theme} = useContext(ThemeContext);
-  const {bottom} = useSafeAreaInsets();
+  const { theme } = useContext(ThemeContext);
+  const { bottom } = useSafeAreaInsets();
   const styles = myStyles(theme, bottom);
   const addressBook = useSelector(getAddressBook);
   const filterAddressBook = useMemo(() => {
@@ -49,8 +49,8 @@ const AddressPickerSheet = ({
   const data = useMemo(() => {
     return searchText
       ? filterAddressBook?.filter(wallet =>
-          wallet.walletName?.toLowerCase()?.includes(searchText?.toLowerCase()),
-        )
+        wallet.walletName?.toLowerCase()?.includes(searchText?.toLowerCase()),
+      )
       : filterAddressBook;
   }, [searchText, filterAddressBook]);
   const navigation = useNavigation();
@@ -62,7 +62,7 @@ const AddressPickerSheet = ({
       offset += getItemHeight(fdata[i]);
     }
     const length = getItemHeight(fdata[index]);
-    return {length, offset, index};
+    return { length, offset, index };
   }, []);
 
   const onPressItem = useCallback(
@@ -73,7 +73,7 @@ const AddressPickerSheet = ({
   );
 
   const renderItem = useCallback(
-    ({item}) => (
+    ({ item }) => (
       <AddressBookItem
         item={item}
         isFromPicker={true}
@@ -102,10 +102,10 @@ const AddressPickerSheet = ({
               style={styles.input}
               onChangeText={setSearchText}
               autoFocus={false}
-              inputStyle={{minHeight: 0}}
+              inputStyle={{ minHeight: 0 }}
             />
             <TouchableOpacity
-              hitSlop={{left: 4, right: 4, top: 4, bottom: 4}}
+              hitSlop={{ left: 4, right: 4, top: 4, bottom: 4 }}
               onPress={() => {
                 onDismiss();
                 navigation.navigate('AddAddress');

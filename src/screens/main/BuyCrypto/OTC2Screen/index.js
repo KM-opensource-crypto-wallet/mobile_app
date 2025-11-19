@@ -1,4 +1,4 @@
-import React, {useContext, useState, useCallback} from 'react';
+import React, { useContext, useState, useCallback } from 'react';
 import {
   TouchableOpacity,
   View,
@@ -9,20 +9,20 @@ import {
 } from 'react-native';
 
 import myStyles from './OTC2ScreenStyles';
-import {ThemeContext} from 'theme/ThemeContext';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {shallowEqual, useSelector} from 'react-redux';
-import {other, otherDark} from 'data/currency';
-import DokDropdown from 'components/DokDropdown';
-import CryptoCurrencyOptionItem from 'components/CryptoCurrencyOptionItem';
-import CurrencyOptionItem from 'components/CurrencyOptionItem';
-import CryptoRadioButton from 'components/CryptoRadioButton';
-import CryptoCheckbox from 'components/CryptoCheckbox';
-import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import {addOTC} from 'dok-wallet-blockchain-networks/service/dokApi';
-import {getUserCoinsOptions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {InAppBrowser} from 'react-native-inappbrowser-reborn';
-import {inAppBrowserOptions} from 'utils/common';
+import { ThemeContext } from '../../../../theme/ThemeContext';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { shallowEqual, useSelector } from 'react-redux';
+import { other, otherDark } from '../../../../data/currency';
+import DokDropdown from '../../../../components/DokDropdown';
+import CryptoCurrencyOptionItem from '../../../../components/CryptoCurrencyOptionItem';
+import CurrencyOptionItem from '../../../../components/CurrencyOptionItem';
+import CryptoRadioButton from '../../../../components/CryptoRadioButton';
+import CryptoCheckbox from '../../../../components/CryptoCheckbox';
+import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import { addOTC } from 'dok-wallet-blockchain-networks/service/dokApi';
+import { getUserCoinsOptions } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { InAppBrowser } from 'react-native-inappbrowser-reborn';
+import { inAppBrowserOptions } from '../../../../utils/common';
 
 const amountOptions = [
   {
@@ -47,8 +47,8 @@ const amountOptions = [
   },
 ];
 
-export const OTC2Screen = ({navigation, route}) => {
-  const {theme} = useContext(ThemeContext);
+export const OTC2Screen = ({ navigation, route }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const coinOptions = useSelector(getUserCoinsOptions, shallowEqual);
   const otherOptions = {
@@ -77,7 +77,7 @@ export const OTC2Screen = ({navigation, route}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onChangeCryptoCoin = useCallback(item => {
-    setState(prevState => ({...prevState, selectedCryptoCoin: item}));
+    setState(prevState => ({ ...prevState, selectedCryptoCoin: item }));
   }, []);
 
   const onSubmit = useCallback(async () => {
@@ -128,7 +128,7 @@ export const OTC2Screen = ({navigation, route}) => {
     navigation,
   ]);
 
-  const {isBuy, risk, selectedAmount, selectedCryptoCoin, sourceOfFund, terms} =
+  const { isBuy, risk, selectedAmount, selectedCryptoCoin, sourceOfFund, terms } =
     state;
   const isDisabled =
     !risk ||
@@ -144,7 +144,7 @@ export const OTC2Screen = ({navigation, route}) => {
       keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
       style={styles.container}
       contentContainerStyle={styles.contentContainerStyle}>
-      <View style={{flex: 1}}>
+      <View style={{ flex: 1 }}>
         <View style={styles.formInput}>
           <Text
             style={{
@@ -192,7 +192,7 @@ export const OTC2Screen = ({navigation, route}) => {
           </View>
           <View style={styles.dropdownContainer}>
             <DokDropdown
-              titleStyle={{color: theme.primary}}
+              titleStyle={{ color: theme.primary }}
               placeholder={'Select Crypto'}
               title={'Select Crypto'}
               data={dropDownList}
@@ -204,7 +204,7 @@ export const OTC2Screen = ({navigation, route}) => {
             />
           </View>
           <DokDropdown
-            titleStyle={{color: theme.primary}}
+            titleStyle={{ color: theme.primary }}
             placeholder={'Select amount'}
             title={'Select amount'}
             data={amountOptions}
@@ -267,7 +267,7 @@ export const OTC2Screen = ({navigation, route}) => {
           disabled={isDisabled}
           style={[
             styles.button,
-            {backgroundColor: isDisabled ? theme.gray : theme.background},
+            { backgroundColor: isDisabled ? theme.gray : theme.background },
           ]}
           onPress={onSubmit}>
           {isSubmitting ? (

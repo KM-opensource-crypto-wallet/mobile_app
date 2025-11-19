@@ -5,12 +5,12 @@ import React, {
   useRef,
   useCallback,
 } from 'react';
-import {View} from 'react-native';
+import { View } from 'react-native';
 import myStyles from './TabAddCoinsStyles';
-import {CryptoList} from 'components/CryptoList';
-import {useDispatch, useSelector} from 'react-redux';
-import {Searchbar} from 'react-native-paper';
-import {ThemeContext} from 'theme/ThemeContext';
+import { CryptoList } from '../../components/CryptoList';
+import { useDispatch, useSelector } from 'react-redux';
+import { Searchbar } from 'react-native-paper';
+import { ThemeContext } from '../../theme/ThemeContext';
 
 import {
   fetchAllCoins,
@@ -26,12 +26,12 @@ import {
   selectAllCoins,
   selectSearchAllCoins,
 } from 'dok-wallet-blockchain-networks/redux/currency/currencySelectors';
-import Loading from 'components/Loading';
-import {selectCurrentWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import Loading from '../../components/Loading';
+import { selectCurrentWallet } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TabAddCoins = () => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const [searchQuery, setSearchQuery] = useState('');
   const allCoins = useSelector(selectAllCoins);
@@ -42,7 +42,7 @@ const TabAddCoins = () => {
   const isSearchAllCoinLoading = useSelector(isSearchAllCoinsLoading);
   const currentWallet = useSelector(selectCurrentWallet);
   const dispatch = useDispatch();
-  const {bottom} = useSafeAreaInsets();
+  const { bottom } = useSafeAreaInsets();
   const queryPayload = useRef({
     limit: 20,
     orderBy: 'order',
@@ -124,7 +124,7 @@ const TabAddCoins = () => {
           }}
           searchText={searchQuery.trim()}
           currentWallet={currentWallet}
-          contentContainerStyle={{paddingBottom: bottom}}
+          contentContainerStyle={{ paddingBottom: bottom }}
         />
       )}
     </View>

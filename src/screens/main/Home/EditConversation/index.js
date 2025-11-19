@@ -14,20 +14,21 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import {TextInput} from 'react-native-paper';
-import {Formik} from 'formik';
+import { TextInput } from 'react-native-paper';
+import { Formik } from 'formik';
 import * as Yup from 'yup';
 import myStyles from './EditConversation';
-import {shallowEqual, useDispatch, useSelector} from 'react-redux';
-import {ThemeContext} from 'theme/ThemeContext';
-import Exclamationcircleo from 'assets/images/icons/exclamationcircle.svg';
-import {addConversationsName} from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
-import {getSelectedConversations} from 'dok-wallet-blockchain-networks/redux/messages/messageSelector';
-import {getCustomizePublicAddress} from 'dok-wallet-blockchain-networks/helper';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { ThemeContext } from '../../../../theme/ThemeContext';
+// import Exclamationcircleo from 'assets/images/icons/exclamationcircle.svg';
+import Exclamationcircleo from '../../../../assets/images/icons/exclamationcircle.svg';
+import { addConversationsName } from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
+import { getSelectedConversations } from 'dok-wallet-blockchain-networks/redux/messages/messageSelector';
+import { getCustomizePublicAddress } from 'dok-wallet-blockchain-networks/helper';
+import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
 
-const EditConversation = ({navigation}) => {
-  const {theme} = useContext(ThemeContext);
+const EditConversation = ({ navigation }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const formikRef = useRef(null);
   const dispatch = useDispatch();
@@ -51,7 +52,7 @@ const EditConversation = ({navigation}) => {
 
   const onSubmit = useCallback(
     values => {
-      dispatch(addConversationsName({name: values?.name}));
+      dispatch(addConversationsName({ name: values?.name }));
       navigation.goBack();
     },
     [dispatch, navigation],
@@ -74,12 +75,12 @@ const EditConversation = ({navigation}) => {
               innerRef={formikRef}
               validationSchema={validationSchema}
               onSubmit={onSubmit}>
-              {({handleChange, handleSubmit, values, errors}) => (
+              {({ handleChange, handleSubmit, values, errors }) => (
                 <View
                   style={{
                     flex: 1,
                   }}>
-                  <View style={{flex: 1}}>
+                  <View style={{ flex: 1 }}>
                     <TextInput
                       style={styles.input}
                       label="Name"

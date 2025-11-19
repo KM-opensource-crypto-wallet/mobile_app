@@ -15,18 +15,18 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import {TextInput} from 'react-native-paper';
-import {Formik} from 'formik';
+import { TextInput } from 'react-native-paper';
+import { Formik } from 'formik';
 import * as Yup from 'yup';
-import {wallet} from 'data/data';
+import { wallet } from '../../../../data/data';
 import myStyles from './CreateWalletStyles';
-import {useSelector, shallowEqual, useDispatch} from 'react-redux';
-import Exclamationcircleo from 'assets/images/icons/exclamationcircle.svg';
-import {isIpad, useFloatingHeight} from 'utils/dimensions';
-import {ThemeContext} from 'theme/ThemeContext';
-import ThemedIcon from 'components/ThemedIcon';
+import { useSelector, shallowEqual, useDispatch } from 'react-redux';
+import Exclamationcircleo from '../../../../assets/images/icons/exclamationcircle.svg';
+import { isIpad, useFloatingHeight } from '../../../../utils/dimensions';
+import { ThemeContext } from '../../../../theme/ThemeContext';
+import ThemedIcon from '../../../../components/ThemedIcon';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import ModalDelete from 'components/ModalDelete';
+import ModalDelete from '../../../../components/ModalDelete';
 import {
   _currentWalletIndexSelector,
   selectAllWalletName,
@@ -38,13 +38,13 @@ import {
   deleteWallet,
   updateWalletName,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import Spinner from 'components/Spinner';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import Spinner from '../../../../components/Spinner';
+import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
 
 // import { useNavigationState, CommonActions, StackActions } from "@react-navigation/native";
 
-const CreateWallet = ({navigation, route}) => {
-  const {theme} = useContext(ThemeContext);
+const CreateWallet = ({ navigation, route }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const formikRef = useRef(null);
   const dispatch = useDispatch();
@@ -119,7 +119,7 @@ const CreateWallet = ({navigation, route}) => {
       navigation.setOptions({
         headerRight: () => (
           <TouchableOpacity
-            hitSlop={{top: 10, right: 10, bottom: 10, left: 10}}
+            hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
             onPress={() => {
               setShowDeleteModal(true);
             }}>
@@ -127,7 +127,7 @@ const CreateWallet = ({navigation, route}) => {
               name="delete"
               color={theme.font}
               size={22}
-              style={{marginRight: isIpad ? 50 : 10, marginBottom: 3}}
+              style={{ marginRight: isIpad ? 50 : 10, marginBottom: 3 }}
             />
           </TouchableOpacity>
         ),
@@ -138,7 +138,7 @@ const CreateWallet = ({navigation, route}) => {
 
   const validateNewWalletName = value => {
     if (currentWallet?.walletName !== value) {
-      const wrong = allWallets.some(({walletName}, index) => {
+      const wrong = allWallets.some(({ walletName }, index) => {
         if (walletName === value && index !== currentWallet.id) {
           return true;
         }
@@ -152,7 +152,7 @@ const CreateWallet = ({navigation, route}) => {
     setShowDeleteModal(false);
     navigation.reset({
       index: 0,
-      routes: [{name: 'Sidebar'}],
+      routes: [{ name: 'Sidebar' }],
     });
     setTimeout(() => {
       if (walletIndex !== null && walletIndex !== undefined) {
@@ -188,7 +188,7 @@ const CreateWallet = ({navigation, route}) => {
         setIsLoading(false);
         navigation.reset({
           index: 0,
-          routes: [{name: 'Sidebar'}],
+          routes: [{ name: 'Sidebar' }],
         });
       } catch (e) {
         setIsLoading(false);
@@ -232,7 +232,7 @@ const CreateWallet = ({navigation, route}) => {
                   style={{
                     flex: 1,
                   }}>
-                  <View style={{flex: 1}}>
+                  <View style={{ flex: 1 }}>
                     <TextInput
                       style={styles.input}
                       label="Name"
@@ -259,7 +259,7 @@ const CreateWallet = ({navigation, route}) => {
                         handleBlur('currentPassword');
                       }}
                       value={values.name}
-                      // onSubmitEditing={handleSubmit}
+                    // onSubmitEditing={handleSubmit}
                     />
                     {errors.name && (
                       <Text style={styles.textConfirm}>{errors.name}</Text>
@@ -321,7 +321,7 @@ const CreateWallet = ({navigation, route}) => {
                   </View>
                   <TouchableOpacity
                     disabled={wrong && true}
-                    style={{...styles.button, opacity: wrong && 0.5}}
+                    style={{ ...styles.button, opacity: wrong && 0.5 }}
                     onPress={handleSubmit}>
                     <Text style={styles.buttonTitle}>
                       {walletName ? 'Update Wallet' : 'Create Wallet'}

@@ -1,10 +1,10 @@
-import React, {useContext} from 'react';
-import {View, StyleSheet, Text} from 'react-native';
-import {ThemeContext} from 'theme/ThemeContext';
+import React, { useContext } from 'react';
+import { View, StyleSheet, Text } from 'react-native';
+import { ThemeContext } from '../theme/ThemeContext';
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const PaymentOptionItem = ({item}) => {
-  const {theme} = useContext(ThemeContext);
+const PaymentOptionItem = ({ item }) => {
+  const { theme } = useContext(ThemeContext);
   const myStyles = styles(theme);
   return (
     <View style={myStyles.list}>

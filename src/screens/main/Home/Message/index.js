@@ -13,11 +13,11 @@ import {
   InputToolbar,
   Send,
 } from 'react-native-gifted-chat';
-import {Text, TouchableOpacity, View} from 'react-native';
-import myStyles from 'screens/main/Home/Message/MessageStyles';
-import {ThemeContext} from 'theme/ThemeContext';
-import {isContainsURL} from 'dok-wallet-blockchain-networks/helper';
-import {shallowEqual, useDispatch, useSelector} from 'react-redux';
+import { Text, TouchableOpacity, View } from 'react-native';
+import myStyles from '../../../../screens/main/Home/Message/MessageStyles';
+import { ThemeContext } from '../../../../theme/ThemeContext';
+import { isContainsURL } from 'dok-wallet-blockchain-networks/helper';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import {
   getMessage,
   getMoreMessages,
@@ -29,24 +29,24 @@ import {
   isFetchingMessages,
   isFetchingMoreMessages,
 } from 'dok-wallet-blockchain-networks/redux/messages/messageSelector';
-import Loading from 'components/Loading';
-import {XMTP} from 'utils/xmtp';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {parseUrlQS, validatePaymentUrl} from 'utils/common';
-import {setPaymentData} from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
-import {showToast} from 'utils/toast';
-import {getMessageAllowUrls} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
-import {useIsFocused} from '@react-navigation/native';
-import {IS_ANDROID} from 'utils/dimensions';
-import {setAdjustPan, setAdjustResize} from 'rn-android-keyboard-adjust';
+import Loading from '../../../../components/Loading';
+import { XMTP } from '../../../../utils/xmtp';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { parseUrlQS, validatePaymentUrl } from '../../src/utils/common';
+import { setPaymentData } from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
+import { showToast } from '../../../../../src/utils/toast';
+import { getMessageAllowUrls } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
+import { useIsFocused } from '@react-navigation/native';
+import { IS_ANDROID } from '../../../../utils/dimensions';
+import { setAdjustPan, setAdjustResize } from 'rn-android-keyboard-adjust';
 
 import Clipboard from '@react-native-clipboard/clipboard';
-import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
-import Checkbox from 'components/Checkbox';
-import MessageHeader from 'components/MessageHeader';
-import MessagePopover from 'components/MessagePopover';
+import { triggerHapticFeedbackLight } from '../../../../utils/hapticFeedback';
+import Checkbox from '../../../../components/Checkbox';
+import MessageHeader from '../../../../components/MessageHeader';
+import MessagePopover from '../../../../components/MessagePopover';
 import Icon from 'react-native-vector-icons/FontAwesome6';
-import {ContentTypeCustomReply} from 'utils/xmtpContentReplyType';
+import { ContentTypeCustomReply } from '../../../../utils/xmtpContentReplyType';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -55,11 +55,11 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import DialogReplyFail from 'components/DialogReplyFail';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import DialogReplyFail from '../../../../components/DialogReplyFail';
+import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
 
-const Message = ({navigation}) => {
-  const {theme} = useContext(ThemeContext);
+const Message = ({ navigation }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const conversation = useSelector(getSelectedConversations, shallowEqual);
   const dispatch = useDispatch();
@@ -77,7 +77,7 @@ const Message = ({navigation}) => {
   const [text, setText] = useState('');
   const [isErrorInMessage, setIsErrorInMessage] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const {bottom} = useSafeAreaInsets();
+  const { bottom } = useSafeAreaInsets();
   const [isMultiSelectEnable, setIsMultiSelectEnable] = useState(false);
   const isMultiSelectedEnableRef = useRef(false);
   const messageContainerRef = useRef(null);
@@ -124,7 +124,7 @@ const Message = ({navigation}) => {
 
   useEffect(() => {
     if (conversation?.topic) {
-      dispatch(getMessage({topic: conversation?.topic}));
+      dispatch(getMessage({ topic: conversation?.topic }));
     }
     setConversationObj(
       XMTP.getConversation({
@@ -195,7 +195,7 @@ const Message = ({navigation}) => {
     const messsageLength = messages.length;
     const lastMessage = messages[messsageLength - 1];
     const lastMessageDate = new Date(lastMessage?.createdAt);
-    dispatch(getMoreMessages({lastMessageDate, topic: conversation.topic}));
+    dispatch(getMoreMessages({ lastMessageDate, topic: conversation.topic }));
   }, [conversation.topic, dispatch, messages]);
 
   const triggerBlinkForMessage = useCallback(
@@ -203,8 +203,8 @@ const Message = ({navigation}) => {
       setBlinkingMessageId(messageId);
       blinkOpacity.value = withRepeat(
         withSequence(
-          withTiming(0.2, {duration: 200}),
-          withTiming(1, {duration: 200}),
+          withTiming(0.2, { duration: 200 }),
+          withTiming(1, { duration: 200 }),
         ),
         2,
         true,
@@ -281,7 +281,7 @@ const Message = ({navigation}) => {
     currentMessage => {
       const messageId = currentMessage?._id;
       const isSelected = !!selectedMessages[messageId];
-      const previousSelectedMessages = {...selectedMessageRef.current};
+      const previousSelectedMessages = { ...selectedMessageRef.current };
       if (isSelected) {
         delete previousSelectedMessages[messageId];
       } else {
@@ -417,11 +417,11 @@ const Message = ({navigation}) => {
           shouldUpdateMessage={(props, nextProps) => {
             return (
               JSON.stringify(props.currentMessage) !==
-                JSON.stringify(nextProps.currentMessage) ||
+              JSON.stringify(nextProps.currentMessage) ||
               isMultiSelectEnable !== isMultiSelectedEnableRef.current ||
               blinkingMessageId !== null ||
               !!selectedMessageRef.current[props.currentMessage._id] !==
-                !!selectedMessages[nextProps.currentMessage._id]
+              !!selectedMessages[nextProps.currentMessage._id]
             );
           }}
           onPressUrl={url => {
@@ -429,7 +429,7 @@ const Message = ({navigation}) => {
               const qsObj = parseUrlQS(url);
               if (validatePaymentUrl(url, qsObj)) {
                 const currentDate = new Date().toISOString();
-                dispatch(setPaymentData({...qsObj, date: currentDate}));
+                dispatch(setPaymentData({ ...qsObj, date: currentDate }));
               }
             } catch (e) {
               console.warn('error in getInitialUrlLink', e);
@@ -452,10 +452,10 @@ const Message = ({navigation}) => {
                 }}>
                 <TouchableOpacity
                   activeOpacity={0.6}
-                  style={[styles.rowView, isLeft && {paddingLeft: 0}]}
+                  style={[styles.rowView, isLeft && { paddingLeft: 0 }]}
                   onLongPress={() => onLongPressMessage(currentMessage)}
                   onPress={() => onPressMessage(currentMessage)}>
-                  <Animated.View style={[{height: 32}, checkboxWidthStyle]}>
+                  <Animated.View style={[{ height: 32 }, checkboxWidthStyle]}>
                     <Animated.View style={[checkboxPositionStyle]}>
                       <Checkbox
                         checked={isSelected}
@@ -487,7 +487,7 @@ const Message = ({navigation}) => {
                             id={currentMessage?.id}>
                             <Text>
                               {currentMessage?.repliedUserId ===
-                              conversation?.clientAddress
+                                conversation?.clientAddress
                                 ? 'You'
                                 : 'Other'}
                             </Text>
@@ -559,13 +559,13 @@ const Message = ({navigation}) => {
           renderInputToolbar={props => (
             <InputToolbar
               {...props}
-              containerStyle={{backgroundColor: theme.backgroundColor}}
+              containerStyle={{ backgroundColor: theme.backgroundColor }}
             />
           )}
           renderComposer={props => (
             <Composer
               {...props}
-              style={{...props.style, backgroundColor: theme.backgroundColor}}
+              style={{ ...props.style, backgroundColor: theme.backgroundColor }}
               textInputProps={{
                 onChangeText: localText => {
                   setIsErrorInMessage(

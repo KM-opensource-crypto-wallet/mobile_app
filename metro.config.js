@@ -1,24 +1,35 @@
-const {getDefaultConfig} = require('expo/metro-config');
-const {mergeConfig} = require('@react-native/metro-config');
+const { getDefaultConfig, mergeConfig } = require("@react-native/metro-config");
 
 const defaultConfig = getDefaultConfig(__dirname);
-const {assetExts, sourceExts} = defaultConfig.resolver;
+const { assetExts, sourceExts } = defaultConfig.resolver;
+
 /**
  * Metro configuration
  * https://reactnative.dev/docs/metro
  *
  * @type {import('metro-config').MetroConfig}
  */
-
 const config = {
-  transformer: {
-    babelTransformerPath: require.resolve('react-native-svg-transformer'),
-  },
-  resolver: {
-    assetExts: assetExts.filter(ext => ext !== 'svg'),
-    sourceExts: [...sourceExts, 'svg'],
-    extraNodeModules: require('node-libs-react-native'),
-  },
+    transformer: {
+        babelTransformerPath: require.resolve(
+            "react-native-svg-transformer/react-native",
+        ),
+    },
+    resolver: {
+        assetExts: assetExts.filter((ext) => ext !== "svg"),
+        sourceExts: [...sourceExts, "svg"],
+        extraNodeModules: {
+            crypto: require.resolve('crypto-browserify'),
+            stream: require.resolve('readable-stream'),
+            buffer: require.resolve('buffer'),
+            process: require.resolve('process/browser'),
+            events: require.resolve('events'),
+            https: require.resolve('https-browserify'),
+            http: require.resolve('http-browserify'),
+            url: require.resolve('url'),
+            assert: require.resolve('assert'),
+        },
+    },
 };
 
-module.exports = mergeConfig(getDefaultConfig(__dirname), config);
+module.exports = mergeConfig(defaultConfig, config);

@@ -1,20 +1,20 @@
 import React from 'react';
-import {View, Text, FlatList} from 'react-native';
+import { View, Text, FlatList } from 'react-native';
 import myStyles from './PrivacyMode';
 
-import {useSelector, useDispatch} from 'react-redux';
-import {useContext} from 'react';
-import {ThemeContext} from 'theme/ThemeContext';
+import { useSelector, useDispatch } from 'react-redux';
+import { useContext } from 'react';
+import { ThemeContext } from '../../../../theme/ThemeContext';
 
-import {togglePrivacyMode} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {Avatar, Switch} from 'react-native-paper';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import { togglePrivacyMode } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import { selectAllWallets } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { Avatar, Switch } from 'react-native-paper';
+import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
 
 const PrivacyMode = () => {
   const allWallets = useSelector(selectAllWallets);
 
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const dispatch = useDispatch();
@@ -31,14 +31,14 @@ const PrivacyMode = () => {
           data={allWallets}
           contentContainerStyle={styles.contentContainerStyle}
           keyExtractor={item => item.walletName}
-          renderItem={({item, index}) => (
+          renderItem={({ item, index }) => (
             <View style={styles.walletBox}>
               <View style={styles.rowView}>
                 <View style={styles.avatarWrapper}>
                   <Avatar.Image
                     style={styles.avatarAvatar}
                     size={54}
-                    source={require('assets/images/Mark.png')}
+                    source={require('../../../../assets/images/Mark.png')}
                   />
                 </View>
                 <View style={styles.textContainer}>
@@ -48,9 +48,9 @@ const PrivacyMode = () => {
               <Switch
                 value={!!item.privacyMode}
                 onValueChange={value => {
-                  dispatch(togglePrivacyMode({walletIndex: index}));
+                  dispatch(togglePrivacyMode({ walletIndex: index }));
                 }}
-                trackColor={{false: 'gray', true: '#E8E8E8'}}
+                trackColor={{ false: 'gray', true: '#E8E8E8' }}
                 thumbColor={item.privacyMode ? theme.background : 'white'}
                 ios_backgroundColor="#E8E8E8"
               />

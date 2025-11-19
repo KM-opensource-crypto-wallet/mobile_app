@@ -1,11 +1,11 @@
-import React, {memo, useCallback, useContext} from 'react';
-import {TouchableOpacity, Text, View} from 'react-native';
-import {ThemeContext} from 'theme/ThemeContext';
+import React, { memo, useCallback, useContext } from 'react';
+import { TouchableOpacity, Text, View } from 'react-native';
+import { ThemeContext } from '../../theme/ThemeContext';
 import myStyles from './AddressBookItemStyles';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
+import { triggerHapticFeedbackLight } from '../../utils/hapticFeedback';
 import Toast from 'react-native-toast-message';
-import CopyIcon from 'assets/images/icons/copy.svg';
+import CopyIcon from '../../assets/images/icons/copy.svg';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
 import {
   Menu,
@@ -14,7 +14,7 @@ import {
   MenuTrigger,
 } from 'react-native-popup-menu';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import ChainItem from 'components/ChainItem';
+import ChainItem from '../../components/ChainItem';
 
 const AddressBookItem = ({
   item,
@@ -23,7 +23,7 @@ const AddressBookItem = ({
   isFromPicker,
   onPressItem,
 }) => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const onPressCopy = useCallback(() => {
@@ -76,7 +76,7 @@ const AddressBookItem = ({
       {!isFromPicker && (
         <Menu>
           <MenuTrigger>
-            <View style={{padding: 8}}>
+            <View style={{ padding: 8 }}>
               <EntypoIcon
                 size={24}
                 name={'dots-three-vertical'}
@@ -101,10 +101,10 @@ const AddressBookItem = ({
                   name={'trash'}
                   resizeMode={'contain'}
                   size={20}
-                  style={{marginBottom: 2}}
+                  style={{ marginBottom: 2 }}
                   color={'red'}
                 />
-                <Text style={[styles.optionText, {color: 'red'}]}>
+                <Text style={[styles.optionText, { color: 'red' }]}>
                   {'Delete'}
                 </Text>
               </View>

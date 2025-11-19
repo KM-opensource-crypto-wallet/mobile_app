@@ -1,12 +1,12 @@
 import myStyles from './ResetWalletStyles';
-import React, {useContext} from 'react';
-import {View, Text, TouchableOpacity} from 'react-native';
-import {ThemeContext} from 'theme/ThemeContext';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
-import {CREATE_WALLET, IMPORT_WALLET} from 'utils/wlData';
+import React, { useContext } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { ThemeContext } from '../../../theme/ThemeContext';
+import { DokSafeAreaView } from '../../../components/DokSafeAreaView';
+import { CREATE_WALLET, IMPORT_WALLET } from '../../../../src/utils/wlData';
 
-const ResetWallet = ({navigation, route}) => {
-  const {theme} = useContext(ThemeContext);
+const ResetWallet = ({ navigation, route }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const isFromOnBoarding = route?.params?.isFromOnBoarding;
 
@@ -41,7 +41,7 @@ const ResetWallet = ({navigation, route}) => {
               }}>
               <CREATE_WALLET height={150} width={150} />
               <View style={styles.textBox}>
-                <Text style={{...styles.textBtn, color: theme.font}}>
+                <Text style={{ ...styles.textBtn, color: theme.font }}>
                   Create
                 </Text>
                 <Text
@@ -57,7 +57,7 @@ const ResetWallet = ({navigation, route}) => {
             <TouchableOpacity
               activeOpacity={1}
               onPress={() =>
-                navigation.navigate('ImportWallet', {isAdd: !!isFromOnBoarding})
+                navigation.navigate('ImportWallet', { isAdd: !!isFromOnBoarding })
               }
               style={{
                 ...styles.btn,

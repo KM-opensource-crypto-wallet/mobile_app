@@ -1,8 +1,8 @@
 // Delete.js
 
 import React from 'react';
-import {persistor} from 'redux/store';
-import {TouchableOpacity, Text} from 'react-native';
+import { persistor } from '../../src/redux/store';
+import { TouchableOpacity, Text } from 'react-native';
 
 const Delete = () => {
   const handleClearStorage = () => {

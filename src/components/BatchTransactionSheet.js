@@ -6,15 +6,15 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {ThemeContext} from 'theme/ThemeContext';
-import DokBottomSheet from 'components/BottomSheet';
-import DokDropdown from 'components/DokDropdown';
-import {BottomSheetFlatList} from '@gorhom/bottom-sheet';
-import BatchTransactionItem from 'components/BatchTransactionItem';
-import {useDispatch, useSelector} from 'react-redux';
-import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import { ThemeContext } from '../theme/ThemeContext';
+import DokBottomSheet from '../components/BottomSheet';
+import DokDropdown from '../components/DokDropdown';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import BatchTransactionItem from '../components/BatchTransactionItem';
+import { useDispatch, useSelector } from 'react-redux';
+import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {
   removeBatchTransaction,
   setSelectedChain,
@@ -42,15 +42,15 @@ import {
   calculateEstimateFee,
   updateCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
-import Loading from 'components/Loading';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import Loading from '../components/Loading';
 
-const BatchTransactionSheet = ({bottomSheetRef, onDismiss, transactions}) => {
-  const {theme} = useContext(ThemeContext);
+const BatchTransactionSheet = ({ bottomSheetRef, onDismiss, transactions }) => {
+  const { theme } = useContext(ThemeContext);
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const {bottom = 0} = useSafeAreaInsets();
+  const { bottom = 0 } = useSafeAreaInsets();
   const styles = myStyles(theme, bottom);
   const localCurrency = useSelector(getLocalCurrency);
   const selectedChain = useSelector(getSelectedChain);
@@ -136,7 +136,7 @@ const BatchTransactionSheet = ({bottomSheetRef, onDismiss, transactions}) => {
   }, [dispatch, isSelectionMode]);
 
   const renderTransactionItem = useCallback(
-    ({item}) => {
+    ({ item }) => {
       const isSelected = selectedItems.includes(item.transactionId);
 
       return (

@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useRef} from 'react';
+import React, { useCallback, useContext, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,10 +7,10 @@ import {
   Dimensions,
   FlatList,
 } from 'react-native';
-import {currencySymbol} from 'data/currency';
+import { currencySymbol } from '../data/currency';
 
-import {shallowEqual, useDispatch, useSelector} from 'react-redux';
-import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {
   countTotalAssets,
   getSelectedNftAvailable,
@@ -19,14 +19,14 @@ import {
   getSelectedNftLoading,
   selectUserCoins,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {useNavigation} from '@react-navigation/native';
-import {ThemeContext} from 'theme/ThemeContext';
-import NFTChainList from 'components/NFTChainList';
-import NFTMainChainItem from 'components/NFTMainChainItem';
-import Loading from 'components/Loading';
-import {fetchNft} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import { useNavigation } from '@react-navigation/native';
+import { ThemeContext } from '../theme/ThemeContext';
+import NFTChainList from '../components/NFTChainList';
+import NFTMainChainItem from '../components/NFTMainChainItem';
+import Loading from '../components/Loading';
+import { fetchNft } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 
-const {width: screenWidth} = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get('window');
 
 const isIpad = screenWidth >= 768;
 
@@ -44,7 +44,7 @@ const EmptyNFTView = (styles, selectedNftChain) => {
 };
 
 const NFTList = () => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const nftData = useSelector(getSelectedNftData, shallowEqual);
   const loading = useSelector(getSelectedNftLoading, shallowEqual);
@@ -55,7 +55,7 @@ const NFTList = () => {
   const navigation = useNavigation();
 
   const renderItem = useCallback(
-    ({item, index}) => {
+    ({ item, index }) => {
       return (
         <NFTMainChainItem
           item={item}
@@ -69,14 +69,14 @@ const NFTList = () => {
   );
 
   const onRefresh = useCallback(() => {
-    dispatch(fetchNft({selectedNftChain}));
+    dispatch(fetchNft({ selectedNftChain }));
   }, [dispatch, selectedNftChain]);
 
   const onEndReach = useCallback(async () => {
     const fetchRef = isFetchingRef.current[selectedNftChain];
     if (!fetchRef && available) {
       isFetchingRef.current[selectedNftChain] = true;
-      await dispatch(fetchNft({selectedNftChain, cursor: available})).unwrap();
+      await dispatch(fetchNft({ selectedNftChain, cursor: available })).unwrap();
       isFetchingRef.current[selectedNftChain] = false;
     }
   }, [available, dispatch, selectedNftChain]);

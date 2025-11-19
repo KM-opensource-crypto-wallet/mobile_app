@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useMemo, useRef, useState} from 'react';
+import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
 import {
   TouchableOpacity,
   View,
@@ -10,13 +10,13 @@ import {
 } from 'react-native';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
 import myStyles from './CustomDerivationStyles';
-import {ThemeContext} from 'theme/ThemeContext';
-import DokDropdown from 'components/DokDropdown';
-import {TextInput} from 'react-native-paper';
-import {useFormik} from 'formik';
+import { ThemeContext } from '../../../../theme/ThemeContext';
+import DokDropdown from '../../../../components/DokDropdown';
+import { TextInput } from 'react-native-paper';
+import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import {useDispatch, useSelector} from 'react-redux';
-import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
   allDerivePath,
   customObj,
@@ -29,15 +29,15 @@ import {
   deleteDeriveAddressInCurrentCoin,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import FastImage from '@d11/react-native-fast-image';
-import DeriveAddressSheet from 'components/DeriveAddressSheet';
-import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
+import DeriveAddressSheet from '../../../../components/DeriveAddressSheet';
+import ModalConfirmTransaction from '../../../../components/ModalConfirmTransaction';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
+import { triggerHapticFeedbackLight } from '../../../../utils/hapticFeedback';
 import Toast from 'react-native-toast-message';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
 
 export const CustomDerivation = () => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const currentCoin = useSelector(selectCurrentCoin);
   const dispatch = useDispatch();
@@ -155,7 +155,7 @@ export const CustomDerivation = () => {
     setFieldValue,
   } = useFormik({
     enableReinitialize: true,
-    initialValues: {selectedDerivationOptions: '', customDerivePath: ''},
+    initialValues: { selectedDerivationOptions: '', customDerivePath: '' },
     validationSchema: Yup.object().shape({
       selectedDerivationOptions: Yup.string().required(
         'Derivation Options is required',
@@ -164,7 +164,7 @@ export const CustomDerivation = () => {
     onSubmit: async submittedValue => {
       try {
         setIsSubmitting(true);
-        const {selectedDerivationOptions, customDerivePath} = submittedValue;
+        const { selectedDerivationOptions, customDerivePath } = submittedValue;
         const chainName = isEVMChain(currentCoin?.chain_name)
           ? 'ethereum'
           : currentCoin?.chain_name;
@@ -201,7 +201,7 @@ export const CustomDerivation = () => {
         <View style={styles.mainContainer}>
           <View style={styles.formInput}>
             <DokDropdown
-              titleStyle={{color: theme.primary}}
+              titleStyle={{ color: theme.primary }}
               search={true}
               searchPlaceholder="Search..."
               placeholder={'Select Derivation'}
@@ -297,7 +297,7 @@ export const CustomDerivation = () => {
     values.selectedDerivationOptions,
   ]);
 
-  const renderHeader = useCallback(({section: {title, data}}) => {
+  const renderHeader = useCallback(({ section: { title, data } }) => {
     if (!data?.length) {
       return null;
     }
@@ -318,11 +318,11 @@ export const CustomDerivation = () => {
   }, []);
 
   const renderItem = useCallback(
-    ({item}) => {
+    ({ item }) => {
       return (
         <View style={styles.listItemView}>
           <FastImage
-            source={{uri: currentCoin?.icon}}
+            source={{ uri: currentCoin?.icon }}
             style={styles.iconStyle}
             resizeMode={'contain'}
           />
@@ -339,7 +339,7 @@ export const CustomDerivation = () => {
           </View>
           <TouchableOpacity
             onPress={() => onPressDotIcon(item)}
-            hitSlop={{top: 10, right: 10, bottom: 10, left: 10}}>
+            hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}>
             <EntypoIcon
               size={24}
               name={'dots-three-vertical'}
@@ -365,7 +365,7 @@ export const CustomDerivation = () => {
         return;
       }
       dispatch(
-        deleteDeriveAddressInCurrentCoin({address: selectedItem?.address}),
+        deleteDeriveAddressInCurrentCoin({ address: selectedItem?.address }),
       );
     } else {
       Clipboard.setString(selectedItem?.privateKey);

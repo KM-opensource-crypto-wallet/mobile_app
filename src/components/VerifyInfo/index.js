@@ -1,4 +1,4 @@
-import React, {useState, useContext} from 'react';
+import React, { useState, useContext } from 'react';
 import {
   Dimensions,
   TouchableOpacity,
@@ -6,12 +6,12 @@ import {
   Platform,
   Modal,
 } from 'react-native';
-import {Text} from 'react-native-paper';
-import Warning from 'assets/images/verify/warning.svg';
-import CryptoCheckbox from 'components/CryptoCheckbox';
-import {ThemeContext} from 'theme/ThemeContext';
+import { Text } from 'react-native-paper';
+import Warning from '../../assets/images/verify/warning.svg';
+import CryptoCheckbox from '../../components/CryptoCheckbox';
+import { ThemeContext } from '../../theme/ThemeContext';
 import myStyles from './VerifyInfoStyles';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 
 export const WIDTH = Dimensions.get('window').width + 80;
 const isIpad = Platform.OS === 'ios' && WIDTH >= 768;
@@ -22,8 +22,8 @@ if (isIpad) {
   ITEM_WIDTH = Math.round(WIDTH * 0.75);
 }
 
-export const VerifyInfoModal = ({visible, onClose}) => {
-  const {theme} = useContext(ThemeContext);
+export const VerifyInfoModal = ({ visible, onClose }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const navigation = useNavigation();
   const [infoCheck, setInfoCheck] = useState(false);

@@ -1,15 +1,15 @@
-import React, {useState, useEffect, useContext, useCallback} from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import myStyles from './DraggableCryptoListStyles';
-import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import {useSelector, useDispatch} from 'react-redux';
-import {ThemeContext} from 'theme/ThemeContext';
+import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import { useSelector, useDispatch } from 'react-redux';
+import { ThemeContext } from '../../theme/ThemeContext';
 
-import CoinItem from 'components/CoinItem/CoinItem';
+import CoinItem from '../../components/CoinItem/CoinItem';
 import DraggableFlatList, {
   ScaleDecorator,
 } from 'react-native-draggable-flatlist';
-import {Keyboard, View} from 'react-native';
-import {rearrangeCurrentWalletCoins} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import { Keyboard, View } from 'react-native';
+import { rearrangeCurrentWalletCoins } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 
 const DraggableCryptoList = ({
   number,
@@ -20,7 +20,7 @@ const DraggableCryptoList = ({
   showDeleteMode,
   onPressDelete,
 }) => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const localCurrency = useSelector(getLocalCurrency);
   const [renderList, setRenderList] = useState([]);
@@ -31,8 +31,8 @@ const DraggableCryptoList = ({
   }, [list]);
 
   const onDragEnd = useCallback(
-    ({data}) => {
-      dispatch(rearrangeCurrentWalletCoins({rearrangeCoins: data}));
+    ({ data }) => {
+      dispatch(rearrangeCurrentWalletCoins({ rearrangeCoins: data }));
     },
     [dispatch],
   );
@@ -50,7 +50,7 @@ const DraggableCryptoList = ({
         keyExtractor={item => {
           return item?._id;
         }}
-        renderItem={({item, getIndex, isActive, drag}) => {
+        renderItem={({ item, getIndex, isActive, drag }) => {
           return (
             <ScaleDecorator>
               <CoinItem

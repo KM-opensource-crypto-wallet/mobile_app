@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useMemo, useState} from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import {
   TouchableOpacity,
   View,
@@ -8,31 +8,31 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import englishMnemonics from 'bip39/src/wordlists/english.json';
-import {TextInput} from 'react-native-paper';
-import {useFormik} from 'formik';
+import { TextInput } from 'react-native-paper';
+import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import myStyles from './ImportWalletStyles';
-import {ThemeContext} from 'theme/ThemeContext';
-import {IS_ANDROID, IS_IOS} from 'utils/dimensions';
-import {validateMnemonic} from 'bip39';
-import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
-import {fetchWordsStartingWith} from 'dok-wallet-blockchain-networks/helper';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { ThemeContext } from 'theme/ThemeContext';
+import { IS_ANDROID, IS_IOS } from 'utils/dimensions';
+import { validateMnemonic } from 'bip39';
+import { useKeyboardHeight } from 'hooks/useKeyboardHeight';
+import { fetchWordsStartingWith } from 'dok-wallet-blockchain-networks/helper';
+import { DokSafeAreaView } from 'components/DokSafeAreaView';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const ImportWallet = ({navigation}) => {
-  const {theme} = useContext(ThemeContext);
+const ImportWallet = ({ navigation }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const keyboardHeight = useKeyboardHeight();
   const [suggestionMnemonic, setSuggestionMnemonic] = useState([]);
-  const {bottom} = useSafeAreaInsets();
+  const { bottom } = useSafeAreaInsets();
   const finalKeyboardHeight = useMemo(() => {
     return IS_IOS ? keyboardHeight - bottom : keyboardHeight;
   }, [bottom, keyboardHeight]);
 
   const formik = useFormik({
     enableReinitialize: true,
-    initialValues: {phrase: ''},
+    initialValues: { phrase: '' },
     validationSchema: Yup.object().shape({
       phrase: Yup.string().required('Seed phrase is required'),
     }),
@@ -41,14 +41,14 @@ const ImportWallet = ({navigation}) => {
         const phrase = values.phrase?.trim();
         const finalPhrase = phrase.split(/[\n\r\s]+/).join(' ');
         if (validateMnemonic(finalPhrase)) {
-          navigation.navigate('CreateWallet', {phrase: finalPhrase});
+          navigation.navigate('CreateWallet', { phrase: finalPhrase });
         } else {
           formik.setFieldError('phrase', 'Invalid seed phrase');
         }
       } catch (err) {
         if (err.stack) {
           console.error(`in importWallet: ${JSON.stringify(err)}`);
-          formik.setErrors({phrase: '* Wrong seed'});
+          formik.setErrors({ phrase: '* Wrong seed' });
         }
       }
     },
@@ -103,7 +103,7 @@ const ImportWallet = ({navigation}) => {
               maxHeight={150}
               autoComplete={'off'}
               autoCorrect={false}
-              {...(IS_ANDROID ? {keyboardType: 'visible-password'} : {})}
+              {...(IS_ANDROID ? { keyboardType: 'visible-password' } : {})}
               spellCheck={false}
               label="Enter seed phrase"
               theme={{
@@ -150,7 +150,7 @@ const ImportWallet = ({navigation}) => {
           </View>
           {!!suggestionMnemonic?.length && (
             <ScrollView
-              style={[styles.keyboardOverView, {bottom: finalKeyboardHeight}]}
+              style={[styles.keyboardOverView, { bottom: finalKeyboardHeight }]}
               contentContainerStyle={{
                 alignItems: 'center',
                 flexGrow: 1,

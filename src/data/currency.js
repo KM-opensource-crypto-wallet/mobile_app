@@ -1,5 +1,5 @@
-import Dollar from 'assets/images/crypto/$.svg';
-import Euro from 'assets/images/crypto/euro.svg';
+import Dollar from '../assets/images/crypto/$.svg';
+import Euro from '../assets/images/crypto/euro.svg';
 
 export let currency = [
   {

@@ -1,8 +1,8 @@
-import React, {useState, useEffect, useCallback, useContext} from 'react';
-import {TouchableOpacity, View, Text, Keyboard} from 'react-native';
-import {TextInput} from 'react-native-paper';
-import {Formik} from 'formik';
-import {useDispatch, useSelector} from 'react-redux';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import { TouchableOpacity, View, Text, Keyboard } from 'react-native';
+import { TextInput } from 'react-native-paper';
+import { Formik } from 'formik';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   fingerprintAuthSuccess,
   loadingOff,
@@ -12,18 +12,18 @@ import {
   getUserPassword,
   getFingerprintAuth,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
-import {validationSchemaLogin} from 'utils/validationSchema';
-import ModalReset from 'components/ModalReset';
-import {isFingerprint} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import { validationSchemaLogin } from '../../../utils/validationSchema';
+import ModalReset from '../../../components/ModalReset';
+import { isFingerprint } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import FingerprintScanner from 'react-native-fingerprint-scanner';
-import {ThemeContext} from 'theme/ThemeContext';
+import { ThemeContext } from '../../../theme/ThemeContext';
 import myStyles from './VerifyLoginScreenStyles';
 
-import {IS_IOS} from 'utils/dimensions';
-import {WL_APP_NAME} from 'utils/wlData';
+import { IS_IOS } from '../utils/dimensions';
+import { WL_APP_NAME } from '../../../src/utils/wlData';
 
-export const VerifyLoginScreen = ({navigation}) => {
-  const {theme} = useContext(ThemeContext);
+export const VerifyLoginScreen = ({ navigation }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const dispatch = useDispatch();
@@ -42,7 +42,7 @@ export const VerifyLoginScreen = ({navigation}) => {
         });
 
         dispatch(fingerprintAuthSuccess(isAuth));
-        navigation.navigate('VerifyCreate', {isHideNextButton: true});
+        navigation.navigate('VerifyCreate', { isHideNextButton: true });
       } catch (error) {
         if (error.name === 'SystemCancel') {
           console.error('Authentication was canceled by the system');
@@ -74,7 +74,7 @@ export const VerifyLoginScreen = ({navigation}) => {
     if (storePassword === values.password) {
       dispatch(loadingOff());
       dispatch(fingerprintAuthSuccess(true));
-      navigation.navigate('VerifyCreate', {isHideNextButton: true});
+      navigation.navigate('VerifyCreate', { isHideNextButton: true });
     } else {
       setWrong(true);
       dispatch(loadingOff());
@@ -85,11 +85,11 @@ export const VerifyLoginScreen = ({navigation}) => {
     <>
       <View style={styles.container}>
         <View style={styles.formInput}>
-          <Text style={[styles.resetTitle, {marginBottom: 16}]}>
+          <Text style={[styles.resetTitle, { marginBottom: 16 }]}>
             {'Please enter your password to access the seed phrase'}
           </Text>
           <Formik
-            initialValues={{password: ''}}
+            initialValues={{ password: '' }}
             validationSchema={validationSchemaLogin}
             onSubmit={handleSubmit}>
             {({

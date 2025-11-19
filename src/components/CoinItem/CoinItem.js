@@ -1,21 +1,21 @@
-import React, {memo, useCallback, useContext} from 'react';
+import React, { memo, useCallback, useContext } from 'react';
 import {
   checkValidChainForWalletImportWithPrivateKey,
   isBitcoinChain,
   validateSupportedChain,
 } from 'dok-wallet-blockchain-networks/helper';
-import {Keyboard, Switch, Text, TouchableOpacity, View} from 'react-native';
+import { Keyboard, Switch, Text, TouchableOpacity, View } from 'react-native';
 import {
   addOrToggleCoinInWallet,
   setCurrentCoin,
   setCurrentWalletCoinsPosition,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import ChainItem from 'components/ChainItem';
-import CoinIcon from 'components/CoinIcon/CoinIcon';
-import {currencySymbol} from 'data/currency';
-import KeyboardArrow from 'assets/images/icons/keyboard-arrow-right.svg';
+import ChainItem from '../../components/ChainItem';
+import CoinIcon from '../../components/CoinIcon/CoinIcon';
+import { currencySymbol } from '../../data/currency';
+import KeyboardArrow from '../../assets/images/icons/keyboard-arrow-right.svg';
 import myStyles from './CoinItemStyles';
-import {ThemeContext} from 'theme/ThemeContext';
+import { ThemeContext } from '../../theme/ThemeContext';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome6';
 import AntIcon from 'react-native-vector-icons/AntDesign';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -40,7 +40,7 @@ const CoinItem = ({
   const isCoinInWallet = item?.isInWallet;
   const isToken = item?.type === 'token';
   const isAddCoin = number === 3;
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const isDisabledItem =
@@ -54,7 +54,7 @@ const CoinItem = ({
 
   const onPressMove = isMoveUp => {
     Keyboard.dismiss();
-    dispatch(setCurrentWalletCoinsPosition({index, isMoveUp}));
+    dispatch(setCurrentWalletCoinsPosition({ index, isMoveUp }));
   };
 
   const onPressItem = useCallback(() => {
@@ -69,7 +69,7 @@ const CoinItem = ({
     setRenderList(prevState =>
       prevState.map(subItem => {
         if (item._id === subItem._id) {
-          return {...subItem, isInWallet: !subItem.isInWallet};
+          return { ...subItem, isInWallet: !subItem.isInWallet };
         }
         return subItem;
       }),
@@ -88,8 +88,8 @@ const CoinItem = ({
     <TouchableOpacity
       style={[
         styles.section,
-        isDisabledItem && {backgroundColor: theme.disabledItem},
-        isSortSelected && {paddingHorizontal: 24},
+        isDisabledItem && { backgroundColor: theme.disabledItem },
+        isSortSelected && { paddingHorizontal: 24 },
       ]}
       key={index}
       disabled={number !== 1}
@@ -99,7 +99,7 @@ const CoinItem = ({
           style={styles.dragIcon}
           onLongPress={drag}
           disabled={isActiveDrag}
-          hitSlop={{top: 12, right: 12, bottom: 12, left: 12}}>
+          hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}>
           <FontAwesomeIcon
             name={'grip-vertical'}
             size={24}
@@ -200,7 +200,7 @@ export default memo(CoinItem, (prevProps, nextProps) => {
     key1 === key2 &&
     JSON.stringify(prevProps.item) === JSON.stringify(nextProps.item) &&
     JSON.stringify(prevProps.currentWallet) ===
-      JSON.stringify(nextProps.currentWallet) &&
+    JSON.stringify(nextProps.currentWallet) &&
     prevProps.isSortSelected === nextProps.isSortSelected &&
     prevProps.showDeleteMode === nextProps.showDeleteMode
   );

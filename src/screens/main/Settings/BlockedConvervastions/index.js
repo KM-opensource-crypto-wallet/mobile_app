@@ -5,9 +5,9 @@ import React, {
   useMemo,
   useRef,
 } from 'react';
-import {FlatList, View, TouchableOpacity, Text} from 'react-native';
-import {ThemeContext} from 'theme/ThemeContext';
-import {shallowEqual, useDispatch, useSelector} from 'react-redux';
+import { FlatList, View, TouchableOpacity, Text } from 'react-native';
+import { ThemeContext } from '../../../../theme/ThemeContext';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import {
   getConversations,
   isFetchingConversations,
@@ -16,14 +16,14 @@ import {
   getConversation,
   updateConsentState,
 } from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
-import EmptyView from 'components/EmptyView';
+import EmptyView from '../../../../components/EmptyView';
 import myStyles from './BlockConversationStyles';
-import Loading from 'components/Loading';
-import {getCustomizePublicAddress} from 'dok-wallet-blockchain-networks/helper';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import Loading from '../../../../components/Loading';
+import { getCustomizePublicAddress } from 'dok-wallet-blockchain-networks/helper';
+import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
 
 const BlockedConversations = () => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const conversations = useSelector(getConversations, shallowEqual);
   const isFetchingConv = useSelector(isFetchingConversations);
@@ -59,14 +59,14 @@ const BlockedConversations = () => {
           <FlatList
             contentContainerStyle={styles.contentContainerStyle}
             data={filterConversations}
-            renderItem={({item, index}) => (
+            renderItem={({ item, index }) => (
               <View style={styles.itemView}>
                 <View style={styles.subView}>
                   <View style={styles.subRowView}>
                     <Text
                       style={styles.headerTitle}>{`${getCustomizePublicAddress(
-                      item?.peerAddress,
-                    )}`}</Text>
+                        item?.peerAddress,
+                      )}`}</Text>
                   </View>
                 </View>
                 <TouchableOpacity

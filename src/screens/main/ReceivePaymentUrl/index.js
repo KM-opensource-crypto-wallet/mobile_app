@@ -13,32 +13,32 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import {Formik} from 'formik';
+import { Formik } from 'formik';
 import myStyles from './ReceivePaymentUrlStyles';
-import {shallowEqual, useDispatch, useSelector} from 'react-redux';
-import {Portal, Provider, TextInput} from 'react-native-paper';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { Portal, Provider, TextInput } from 'react-native-paper';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {ThemeContext} from 'theme/ThemeContext';
-import {getUserCoinsOptions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { ThemeContext } from '../../../theme/ThemeContext';
+import { getUserCoinsOptions } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import FastImage from '@d11/react-native-fast-image';
-import DokDropdown from 'components/DokDropdown';
-import CryptoCurrencyOptionItem from 'components/CryptoCurrencyOptionItem';
-import {amountValidation} from 'utils/validationSchema';
-import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import CopyIcon from 'assets/images/icons/copy.svg';
-import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
+import DokDropdown from '../../../components/DokDropdown';
+import CryptoCurrencyOptionItem from '../../../components/CryptoCurrencyOptionItem';
+import { amountValidation } from '../../../utils/validationSchema';
+import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import CopyIcon from '../../../assets/images/icons/copy.svg';
+import { triggerHapticFeedbackLight } from '../../../utils/hapticFeedback';
 import Toast from 'react-native-toast-message';
-import {setCryptoProviderLoading} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProviderSlice';
-import ModalAddCoins from 'components/ModalAddCoins';
+import { setCryptoProviderLoading } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProviderSlice';
+import ModalAddCoins from '../../../components/ModalAddCoins';
 import BigNumber from 'bignumber.js';
 import {
   multiplyBNWithFixed,
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
-import {URLData} from 'utils/wlData';
+import { URLData } from '../../../../src/utils/wlData';
 
 const ReceivePaymentUrl = () => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const localCurrency = useSelector(getLocalCurrency);
   const coinOptions = useSelector(getUserCoinsOptions, shallowEqual);
@@ -81,8 +81,8 @@ const ReceivePaymentUrl = () => {
                 currencyAmount: '',
               }}
               validationSchema={amountValidation}
-              onSubmit={() => {}}>
-              {({handleBlur, values, errors, touched, setFieldValue}) => {
+              onSubmit={() => { }}>
+              {({ handleBlur, values, errors, touched, setFieldValue }) => {
                 const selectedCoin = values?.selectedCoin?.options;
                 const receivePaymentUrl = `${URLData.appUrl}/home/send/send-funds?address=${selectedCoin?.walletAddress}&amount=${values?.amount}&currency=${selectedCoin?.chain_name}:${selectedCoin?.symbol}`;
                 return (
@@ -93,11 +93,11 @@ const ReceivePaymentUrl = () => {
                     }}>
                     <View>
                       <DokDropdown
-                        titleStyle={{color: theme.primary}}
+                        titleStyle={{ color: theme.primary }}
                         placeholder={'Select Crypto'}
                         title={'Select Crypto'}
                         data={coinOptions}
-                        dropdownStyle={{height: 70}}
+                        dropdownStyle={{ height: 70 }}
                         search={true}
                         searchField={'value'}
                         keyboardAvoiding={true}
@@ -112,9 +112,9 @@ const ReceivePaymentUrl = () => {
                         renderLeftIcon={() =>
                           selectedCoin?.icon && (
                             <FastImage
-                              source={{uri: selectedCoin?.icon}}
+                              source={{ uri: selectedCoin?.icon }}
                               resizeMode={'contain'}
-                              style={{height: 40, width: 40, marginRight: 8}}
+                              style={{ height: 40, width: 40, marginRight: 8 }}
                             />
                           )
                         }
@@ -128,7 +128,7 @@ const ReceivePaymentUrl = () => {
                       <Text style={styles.addCoinText}>
                         {'Looking for more coins?'}
                         <Text
-                          style={{color: theme.background}}
+                          style={{ color: theme.background }}
                           onPress={onPressAddMoreCoin}>
                           {' Click here for add coins on selected wallet'}
                         </Text>

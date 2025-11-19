@@ -1,10 +1,10 @@
-import React, {useContext, useState} from 'react';
-import {View, Text, TouchableOpacity} from 'react-native';
+import React, { useContext, useState } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import myStyles from './CryptoButtonsStyles';
-import {ThemeContext} from 'theme/ThemeContext';
+import { ThemeContext } from '../../theme/ThemeContext';
 
 const CryptoButtons = () => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const [active, setActive] = useState(1);

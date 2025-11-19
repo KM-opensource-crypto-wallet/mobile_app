@@ -1,12 +1,12 @@
-import React, {useContext} from 'react';
-import {View, StyleSheet, Text, Dimensions} from 'react-native';
-import {ThemeContext} from 'theme/ThemeContext';
-const {width: screenWidth} = Dimensions.get('window');
+import React, { useContext } from 'react';
+import { View, StyleSheet, Text, Dimensions } from 'react-native';
+import { ThemeContext } from '../theme/ThemeContext';
+const { width: screenWidth } = Dimensions.get('window');
 const itemWidth = screenWidth / 1.4;
 import FastImage from '@d11/react-native-fast-image';
 
-const ValidatorOptionItem = ({item, currentCoin}) => {
-  const {theme} = useContext(ThemeContext);
+const ValidatorOptionItem = ({ item, currentCoin }) => {
+  const { theme } = useContext(ThemeContext);
   const myStyles = styles(theme);
 
   return (
@@ -14,9 +14,9 @@ const ValidatorOptionItem = ({item, currentCoin}) => {
       <View style={myStyles.iconBox}>
         {!!item?.options?.image && (
           <FastImage
-            source={{uri: item?.options?.image}}
+            source={{ uri: item?.options?.image }}
             resizeMode={'contain'}
-            style={{height: '100%', width: '100%', borderRadius: 20}}
+            style={{ height: '100%', width: '100%', borderRadius: 20 }}
           />
         )}
       </View>
@@ -26,16 +26,15 @@ const ValidatorOptionItem = ({item, currentCoin}) => {
           {item?.options?.name}
         </Text>
         <View
-          style={[myStyles.rowView, !item?.options?.name && {marginTop: 0}]}>
+          style={[myStyles.rowView, !item?.options?.name && { marginTop: 0 }]}>
           {!!item?.options?.apy_estimate && (
             <Text style={myStyles.text}>
               {item?.options?.apy_estimate + '% APY'}
             </Text>
           )}
           <Text style={[myStyles.text]} numberOfLines={1}>
-            {`STAKE ${Math.round(item?.options?.activated_stake)} ${
-              currentCoin?.symbol
-            }`}
+            {`STAKE ${Math.round(item?.options?.activated_stake)} ${currentCoin?.symbol
+              }`}
           </Text>
         </View>
       </View>

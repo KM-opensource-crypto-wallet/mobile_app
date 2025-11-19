@@ -4,54 +4,56 @@ import {
   DrawerItemList,
   DrawerItem,
 } from '@react-navigation/drawer';
-import {View, Text, Button, Image, StyleSheet} from 'react-native';
-import React, {useState, useEffect, useContext, useMemo} from 'react';
+import { View, Text, Button, Image, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 
-import BuyCrypto from 'screens/main/BuyCrypto';
-import ResetWallet from 'screens/main/ResetWallet';
-import Settings from 'screens/main/Settings';
-import {TouchableOpacity} from 'react-native-gesture-handler';
-import BackIcon from 'assets/images/sidebarIcons/Back.svg';
-import HomeIcon from 'assets/images/sidebarIcons/Home.svg';
-import BuyCryptoIcon from 'assets/images/sidebarIcons/BuyCrypto.svg';
-import SettingsIcon from 'assets/images/sidebarIcons/Settings.svg';
-import InfoIcon from 'assets/images/sidebarIcons/Info.svg';
-import ResetWalletIcon from 'assets/images/sidebarIcons/ResetWallet.svg';
-import WallestIcon from 'assets/images/sidebarIcons/Wallet.svg';
-import WalletConnectIcon from 'assets/images/sidebarIcons/WalletConnect.svg';
-import ContactUsIcon from 'assets/images/sidebarIcons/contact_us.svg';
-import AddIcon from 'assets/images/sidebarIcons/Add.svg';
-import ConvertIcon from 'assets/images/sidebarIcons/CryptoConvert.svg';
-import Home from 'screens/main/Home';
-import Wallets from 'screens/main/Wallets';
-import {useSelector, useDispatch} from 'react-redux';
-import ModalReset from 'components/ModalReset';
-import {useFocusEffect} from '@react-navigation/native';
-import {DrawerActions} from '@react-navigation/native';
-import Exchange from 'screens/main/Exchange';
-import LogOutIcon from 'assets/images/sidebarIcons/Logout.svg';
-import LogOutIconDark from 'assets/images/sidebarIcons/Logout_dark.svg';
-import AboutScreen from 'screens/main/About/AboutScreen';
-import HomeScreen from 'screens/main/Home/HomeScreen';
-import {IS_ANDROID, IS_IOS, useFloatingHeight} from 'utils/dimensions';
-import {ThemeContext} from 'theme/ThemeContext';
-import {useFloatingWidth} from 'hooks/useFloatingWidth';
-import {selectCurrentWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import WalletConnect from 'screens/main/WalletConnect';
-import ContactUs from 'screens/main/ContactUs';
-import SelectCountry from 'screens/main/BuyCrypto/SelectCountry';
-import ReceivePaymentUrl from 'screens/main/ReceivePaymentUrl';
+import BuyCrypto from '../../screens/main/BuyCrypto';
+import ResetWallet from '../../screens/main/ResetWallet';
+import Settings from '../../screens/main/Settings';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+// import BackIcon from 'assets/images/sidebarIcons/Back.svg';
+import BackIcon from '../../assets/images/sidebarIcons/Back.svg';
+import HomeIcon from '../../assets/images/sidebarIcons/Home.svg';
+import BuyCryptoIcon from '../../assets/images/sidebarIcons/BuyCrypto.svg';
+import SettingsIcon from '../../assets/images/sidebarIcons/Settings.svg';
+import InfoIcon from '../../assets/images/sidebarIcons/Info.svg';
+import ResetWalletIcon from '../../assets/images/sidebarIcons/ResetWallet.svg';
+import WallestIcon from '../../assets/images/sidebarIcons/Wallet.svg';
+import WalletConnectIcon from '../../assets/images/sidebarIcons/WalletConnect.svg';
+import ContactUsIcon from '../../assets/images/sidebarIcons/contact_us.svg';
+import AddIcon from '../../assets/images/sidebarIcons/Add.svg';
+import ConvertIcon from '../../assets/images/sidebarIcons/CryptoConvert.svg';
+// import Home from 'screens/main/Home';
+import Home from '../../screens/main/Home';
+import Wallets from '../../screens/main/Wallets';
+import { useSelector, useDispatch } from 'react-redux';
+import ModalReset from '../../components/ModalReset';
+import { useFocusEffect } from '@react-navigation/native';
+import { DrawerActions } from '@react-navigation/native';
+import Exchange from '../../screens/main/Exchange';
+import LogOutIcon from '../../assets/images/sidebarIcons/Logout.svg';
+import LogOutIconDark from '../../assets/images/sidebarIcons/Logout_dark.svg';
+import AboutScreen from '../../screens/main/About/AboutScreen';
+import HomeScreen from '../../screens/main/Home/HomeScreen';
+import { IS_ANDROID, IS_IOS, useFloatingHeight } from '../../utils/dimensions';
+import { ThemeContext } from '../../theme/ThemeContext';
+import { useFloatingWidth } from '../../hooks/useFloatingWidth';
+import { selectCurrentWallet } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import WalletConnect from '../../screens/main/WalletConnect';
+import ContactUs from '../../screens/main/ContactUs';
+import SelectCountry from '../../screens/main/BuyCrypto/SelectCountry';
+import ReceivePaymentUrl from '../../screens/main/ReceivePaymentUrl';
 import Entypo from 'react-native-vector-icons/Entypo';
-import {getCountry} from 'react-native-localize';
-import {IS_DOK_WALLET} from 'utils/wlData';
+import { getCountry } from 'react-native-localize';
+import { IS_DOK_WALLET } from '../../../src/utils/wlData';
 
 const Drawer = createDrawerNavigator();
 
 const HIDE_SWAP_COUNTRIES = ['US'];
 
-export default function Sidebar({navigation, route}) {
+export default function Sidebar({ navigation, route }) {
   const userWalletName = useSelector(selectCurrentWallet)?.walletName;
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const [modal, setModal] = useState(false);
   const [modalList, setModalList] = useState('');
   const floatingHeight = useFloatingHeight();
@@ -76,10 +78,10 @@ export default function Sidebar({navigation, route}) {
         <DrawerContentScrollView {...props}>
           <DrawerItemList {...props} />
           <DrawerItem
-            icon={({focused}) => (
+            icon={({ focused }) => (
               <ResetWalletIcon
                 fill={focused ? theme.background : theme.sidebarIcon}
-                style={{marginVertical: -4}}
+                style={{ marginVertical: -4 }}
               />
             )}
             label={() => (
@@ -102,19 +104,19 @@ export default function Sidebar({navigation, route}) {
           />
 
           <DrawerItem
-            icon={({focused}) =>
+            icon={({ focused }) =>
               theme.backgroundColor === '#121212' ? (
                 <LogOutIconDark
                   width="25"
                   height="26"
-                  // style={{marginVertical: -4, marginLeft: -4}}
+                // style={{marginVertical: -4, marginLeft: -4}}
                 />
               ) : (
                 <LogOutIcon
                   width="25"
                   height="26"
-                  // fill={focused ? theme.background : theme.sidebarIcon}
-                  // style={{marginVertical: -4, marginLeft: -4}}
+                // fill={focused ? theme.background : theme.sidebarIcon}
+                // style={{marginVertical: -4, marginLeft: -4}}
                 />
               )
             }
@@ -177,12 +179,12 @@ export default function Sidebar({navigation, route}) {
         <Drawer.Screen
           name="Home"
           component={HomeScreen}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             // headerStyle: { display: "flex", alignItems: "center", justifyContent: "space-between" },
             headerTitleAlign: 'center',
             headerShown: false,
             drawerLabel: 'Home',
-            drawerIcon: ({focused}) => (
+            drawerIcon: ({ focused }) => (
               <HomeIcon fill={focused ? theme.background : theme.font} />
             ),
           })}
@@ -191,7 +193,7 @@ export default function Sidebar({navigation, route}) {
           <Drawer.Screen
             name="SelectCountry"
             component={SelectCountry}
-            options={({navigation}) => ({
+            options={({ navigation }) => ({
               title: 'Buy Crypto',
               headerLeft: () => (
                 <TouchableOpacity
@@ -211,7 +213,7 @@ export default function Sidebar({navigation, route}) {
               // headerTitleStyle: {
               //   color: theme.borderActiveColor,
               // },
-              drawerIcon: ({focused}) => (
+              drawerIcon: ({ focused }) => (
                 <BuyCryptoIcon
                   width="25"
                   height="26"
@@ -224,7 +226,7 @@ export default function Sidebar({navigation, route}) {
           <Drawer.Screen
             name="BuyCrypto"
             component={BuyCrypto}
-            options={({navigation}) => ({
+            options={({ navigation }) => ({
               title: 'Buy Crypto',
               headerLeft: () => (
                 <TouchableOpacity
@@ -244,7 +246,7 @@ export default function Sidebar({navigation, route}) {
               // headerTitleStyle: {
               //   color: theme.borderActiveColor,
               // },
-              drawerIcon: ({focused}) => (
+              drawerIcon: ({ focused }) => (
                 <BuyCryptoIcon
                   width="25"
                   height="26"
@@ -259,7 +261,7 @@ export default function Sidebar({navigation, route}) {
             <Drawer.Screen
               name="Exchange"
               component={Exchange}
-              options={({navigation}) => ({
+              options={({ navigation }) => ({
                 unmountOnBlur: true,
                 headerLeft: () => (
                   <TouchableOpacity
@@ -278,7 +280,7 @@ export default function Sidebar({navigation, route}) {
                 headerTitleAlign: 'center',
                 headerTitle: 'Swap',
                 title: 'Swap',
-                drawerIcon: ({focused}) => (
+                drawerIcon: ({ focused }) => (
                   <ConvertIcon
                     width="25"
                     height="26"
@@ -292,8 +294,8 @@ export default function Sidebar({navigation, route}) {
           <Drawer.Screen
             name="SelectCountrySellCrypto"
             component={SelectCountry}
-            initialParams={{isSellCrypto: true}}
-            options={({navigation}) => ({
+            initialParams={{ isSellCrypto: true }}
+            options={({ navigation }) => ({
               title: 'Sell Crypto',
               headerLeft: () => (
                 <TouchableOpacity
@@ -310,7 +312,7 @@ export default function Sidebar({navigation, route}) {
                 </TouchableOpacity>
               ),
               headerTitleAlign: 'center',
-              drawerIcon: ({focused}) => (
+              drawerIcon: ({ focused }) => (
                 <BuyCryptoIcon
                   width="25"
                   height="26"
@@ -323,7 +325,7 @@ export default function Sidebar({navigation, route}) {
         <Drawer.Screen
           name="Wallets"
           component={Wallets}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             headerLeft: () => (
               <TouchableOpacity
                 style={{
@@ -339,7 +341,7 @@ export default function Sidebar({navigation, route}) {
               </TouchableOpacity>
             ),
             headerTitleAlign: 'center',
-            drawerIcon: ({focused}) => (
+            drawerIcon: ({ focused }) => (
               <WallestIcon
                 fill={focused ? theme.background : theme.sidebarIcon}
               />
@@ -350,7 +352,7 @@ export default function Sidebar({navigation, route}) {
           name="WalletConnect"
           label="WalletConnect"
           component={WalletConnect}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             headerLeft: () => (
               <TouchableOpacity
                 style={{
@@ -367,7 +369,7 @@ export default function Sidebar({navigation, route}) {
             ),
             headerTitle: 'WalletConnect',
             headerTitleAlign: 'center',
-            drawerIcon: ({focused}) => (
+            drawerIcon: ({ focused }) => (
               <WalletConnectIcon
                 fill={focused ? theme.background : theme.sidebarIcon}
               />
@@ -395,7 +397,7 @@ export default function Sidebar({navigation, route}) {
                 />
               </TouchableOpacity>
             ),
-            drawerIcon: ({focused}) => (
+            drawerIcon: ({ focused }) => (
               <Entypo
                 name={'link'}
                 size={24}
@@ -423,7 +425,7 @@ export default function Sidebar({navigation, route}) {
                 />
               </TouchableOpacity>
             ),
-            drawerIcon: ({focused}) => (
+            drawerIcon: ({ focused }) => (
               <InfoIcon fill={focused ? theme.background : theme.sidebarIcon} />
             ),
           }}
@@ -431,7 +433,7 @@ export default function Sidebar({navigation, route}) {
         <Drawer.Screen
           name="ContactUs"
           component={ContactUs}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             headerLeft: () => (
               <TouchableOpacity
                 style={{
@@ -449,7 +451,7 @@ export default function Sidebar({navigation, route}) {
             drawerLabel: 'Contact Us',
             headerTitle: 'Contact Us',
             headerTitleAlign: 'center',
-            drawerIcon: ({focused}) => (
+            drawerIcon: ({ focused }) => (
               <ContactUsIcon
                 fill={focused ? theme.background : theme.sidebarIcon}
               />
@@ -475,7 +477,7 @@ export default function Sidebar({navigation, route}) {
                 />
               </TouchableOpacity>
             ),
-            drawerIcon: ({focused}) => (
+            drawerIcon: ({ focused }) => (
               <SettingsIcon
                 fill={focused ? theme.background : theme.sidebarIcon}
               />

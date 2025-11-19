@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useEffect, useState} from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,29 +8,29 @@ import {
   BackHandler,
 } from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
-import {getSdkError} from '@walletconnect/utils';
-import {useDispatch, useSelector} from 'react-redux';
-import {getWalletConnect} from 'dok-wallet-blockchain-networks/service/walletconnect';
+import { getSdkError } from '@walletconnect/utils';
+import { useDispatch, useSelector } from 'react-redux';
+import { getWalletConnect } from 'dok-wallet-blockchain-networks/service/walletconnect';
 
 import {
   setWalletConnectConnection,
   setWalletConnectRequestModal,
 } from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSlice';
-import {ThemeContext} from 'theme/ThemeContext';
-import {selectWalletConnectRequestData} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSelectors';
-import {SCREEN_WIDTH} from 'utils/dimensions';
+import { ThemeContext } from '../theme/ThemeContext';
+import { selectWalletConnectRequestData } from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSelectors';
+import { SCREEN_WIDTH } from '../utils/dimensions';
 import {
   setWalletConnectWalletData,
   setWalletConnect,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {config} from 'dok-wallet-blockchain-networks/config/config';
+import { config } from 'dok-wallet-blockchain-networks/config/config';
 import {
   selectAllCoins,
   selectCurrentWallet,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import WalletConnect from 'assets/images/WalletConnect.png';
-import {useIsFocused, useNavigation} from '@react-navigation/native';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import WalletConnect from '../assets/images/WalletConnect.png';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { DokSafeAreaView } from '../components/DokSafeAreaView';
 
 const WalletConnectRequestModal = props => {
   const requestData = useSelector(selectWalletConnectRequestData);
@@ -120,7 +120,7 @@ const WalletConnectRequestModal = props => {
               item.chain_name === chain.chain_name,
           );
           if (foundCoin) {
-            finalData.push({...chain, ...foundCoin});
+            finalData.push({ ...chain, ...foundCoin });
           }
         }
       });
@@ -198,7 +198,7 @@ const WalletConnectRequestModal = props => {
         dispatch(setWalletConnectConnection(true));
 
         sessionId &&
-          dispatch(setWalletConnectWalletData({[sessionId]: chainData}));
+          dispatch(setWalletConnectWalletData({ [sessionId]: chainData }));
       }
     } catch (e) {
       console.error('Error in approve request', e);
@@ -230,14 +230,14 @@ const WalletConnectRequestModal = props => {
   // const onChangeAddress = useCallback((item: any) => {
   //     setSelectedWalletAddess(item);
   // }, []);
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
 
   const styles = myStyles(theme);
 
   const renderItem = (item, index) => {
     return (
       <View style={styles.itemView} key={item.key + index}>
-        <FastImage source={{uri: item?.icon}} style={styles.rowImageStyle} />
+        <FastImage source={{ uri: item?.icon }} style={styles.rowImageStyle} />
         <View style={styles.centerItemView}>
           <Text style={styles.itemTitle}>
             {`${item?.chain_display_name} (${currentWallet.walletName})`}
@@ -258,10 +258,10 @@ const WalletConnectRequestModal = props => {
         bounces={false}>
         <FastImage source={WalletConnect} style={styles.mainImageStyle} />
         <View style={styles.borderView} />
-        {image && <FastImage source={{uri: image}} style={styles.imageStyle} />}
+        {image && <FastImage source={{ uri: image }} style={styles.imageStyle} />}
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.url}>{url}</Text>
-        <View style={[styles.borderView, {marginTop: 12}]} />
+        <View style={[styles.borderView, { marginTop: 12 }]} />
         <Text style={styles.chainTitle}>{'Chains'}</Text>
         {chainData.map((item, index) => renderItem(item, index))}
         <View style={styles.bottomView}>

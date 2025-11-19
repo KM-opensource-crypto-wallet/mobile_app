@@ -1,9 +1,9 @@
-import {View, Text, TouchableOpacity} from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import myStyles from './NotificationsStyles';
-import {Switch} from 'react-native-paper';
-import ArrowDown from 'assets/images/settings/arrow-down.svg';
-import ArrowUp from 'assets/images/settings/arrow-up.svg';
-import {useSelector, useDispatch} from 'react-redux';
+import { Switch } from 'react-native-paper';
+import ArrowDown from '../../../../assets/images/settings/arrow-down.svg';
+import ArrowUp from '../../../../assets/images/settings/arrow-up.svg';
+import { useSelector, useDispatch } from 'react-redux';
 import {
   isNotificationsReceived,
   isNotificationsSent,
@@ -12,11 +12,11 @@ import {
   updateReceived,
   updateSent,
 } from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
-import {useContext} from 'react';
-import {ThemeContext} from 'theme/ThemeContext';
+import { useContext } from 'react';
+import { ThemeContext } from '../../../../theme/ThemeContext';
 
 const Notifications = () => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const isReceived = useSelector(isNotificationsReceived);
@@ -38,7 +38,7 @@ const Notifications = () => {
             borderBottomWidth: 0.5,
             borderBottomColor: theme.gray,
           }}>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <ArrowDown width="25" height="25" fill={theme.font} />
             <View style={styles.box}>
               <Text style={styles.btnTitle}>Received</Text>
@@ -47,7 +47,7 @@ const Notifications = () => {
           <Switch
             value={isReceived}
             onValueChange={onToggleSwitchReceive}
-            trackColor={{false: 'gray', true: '#E8E8E8'}}
+            trackColor={{ false: 'gray', true: '#E8E8E8' }}
             thumbColor={isSent ? theme.background : 'white'}
             ios_backgroundColor="#E8E8E8"
           />
@@ -57,7 +57,7 @@ const Notifications = () => {
             ...styles.btn,
             justifyContent: 'space-between',
           }}>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <ArrowUp width="25" height="25" fill={theme.font} />
             <View style={styles.box}>
               <Text style={styles.btnTitle}>Sent</Text>
@@ -66,7 +66,7 @@ const Notifications = () => {
           <Switch
             value={isSent}
             onValueChange={onToggleSwitchSent}
-            trackColor={{false: 'gray', true: '#E8E8E8'}}
+            trackColor={{ false: 'gray', true: '#E8E8E8' }}
             thumbColor={isSent ? theme.background : 'white'}
             ios_backgroundColor="#E8E8E8"
           />

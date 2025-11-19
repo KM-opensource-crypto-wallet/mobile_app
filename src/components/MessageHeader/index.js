@@ -1,10 +1,10 @@
-import React, {useContext, useMemo} from 'react';
-import {View, Text, TouchableOpacity} from 'react-native';
+import React, { useContext, useMemo } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import myStyles from './MessageHeaderStyles';
-import {ThemeContext} from 'theme/ThemeContext';
-import Back from 'assets/images/sidebarIcons/Back.svg';
+import { ThemeContext } from '../../theme/ThemeContext';
+import Back from '../../../src/assets/images/sidebarIcons/Back.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
+import { triggerHapticFeedbackLight } from '../../utils/hapticFeedback';
 import Toast from 'react-native-toast-message';
 import {
   Menu,
@@ -14,19 +14,19 @@ import {
 } from 'react-native-popup-menu';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
 import FeatherIcon from 'react-native-vector-icons/Feather';
-import {updateConsentState} from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
-import {InAppBrowser} from 'react-native-inappbrowser-reborn';
-import {inAppBrowserOptions} from 'utils/common';
-import {useDispatch} from 'react-redux';
-import {getCustomizePublicAddress} from 'dok-wallet-blockchain-networks/helper';
-import {useNavigation} from '@react-navigation/native';
+import { updateConsentState } from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
+import { InAppBrowser } from 'react-native-inappbrowser-reborn';
+import { inAppBrowserOptions } from '../../utils/common';
+import { useDispatch } from 'react-redux';
+import { getCustomizePublicAddress } from 'dok-wallet-blockchain-networks/helper';
+import { useNavigation } from '@react-navigation/native';
 import Animated, {
   SlideInRight,
   SlideOutRight,
   Easing,
 } from 'react-native-reanimated';
 import AntIcon from 'react-native-vector-icons/AntDesign';
-import CopyIcon from 'assets/images/icons/copy.svg';
+import CopyIcon from '../../assets/images/icons/copy.svg';
 
 const MessageHeader = ({
   conversation,
@@ -36,7 +36,7 @@ const MessageHeader = ({
   onPressCopy,
   onPressForward,
 }) => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -57,19 +57,19 @@ const MessageHeader = ({
         entering={SlideInRight.duration(250).easing(Easing.ease)}
         exiting={SlideOutRight.duration(250).easing(Easing.ease)}>
         <TouchableOpacity
-          hitSlop={{top: 8, left: 8, right: 8, bottom: 8}}
+          hitSlop={{ top: 8, left: 8, right: 8, bottom: 8 }}
           onPress={onPressClose}>
           <AntIcon size={22} name={'close'} color={theme.borderActiveColor} />
         </TouchableOpacity>
         {!!hasSelectedData && (
           <View style={styles.rowView}>
             <TouchableOpacity
-              hitSlop={{top: 8, left: 8, right: 8, bottom: 8}}
+              hitSlop={{ top: 8, left: 8, right: 8, bottom: 8 }}
               onPress={onPressCopy}>
               <CopyIcon fill={theme.borderActiveColor} width={20} height={30} />
             </TouchableOpacity>
             <TouchableOpacity
-              hitSlop={{top: 8, left: 8, right: 8, bottom: 8}}
+              hitSlop={{ top: 8, left: 8, right: 8, bottom: 8 }}
               onPress={onPressForward}>
               <EntypoIcon
                 size={22}
@@ -85,7 +85,7 @@ const MessageHeader = ({
   return (
     <View style={styles.mainView}>
       <TouchableOpacity
-        hitSlop={{top: 8, left: 8, right: 8, bottom: 8}}
+        hitSlop={{ top: 8, left: 8, right: 8, bottom: 8 }}
         onPress={() => {
           navigation.goBack();
         }}>
@@ -121,7 +121,7 @@ const MessageHeader = ({
               onSelect={() => {
                 navigation.navigate('EditConversation');
               }}
-              style={{padding: 0}}>
+              style={{ padding: 0 }}>
               <View style={styles.optionMenu}>
                 <EntypoIcon
                   size={22}
@@ -132,7 +132,7 @@ const MessageHeader = ({
               </View>
             </MenuOption>
             <MenuOption
-              style={{padding: 0}}
+              style={{ padding: 0 }}
               onSelect={() => {
                 dispatch(
                   updateConsentState({
@@ -160,7 +160,7 @@ const MessageHeader = ({
               </View>
             </MenuOption>
             <MenuOption
-              style={{padding: 0}}
+              style={{ padding: 0 }}
               onSelect={() => {
                 if (conversation?.peerAddress) {
                   InAppBrowser.open(

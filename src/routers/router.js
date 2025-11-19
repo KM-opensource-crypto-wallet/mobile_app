@@ -1,76 +1,76 @@
-import React, {useContext} from 'react';
-import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
+import React, { useContext } from 'react';
+import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
 
-import {useSelector} from 'react-redux';
-import {IS_IOS, SCREEN_WIDTH} from 'utils/dimensions';
+import { useSelector } from 'react-redux';
+import { IS_IOS, SCREEN_WIDTH } from '../utils/dimensions';
 
 const Stack = createStackNavigator();
-import {RegistrationScreen} from 'screens/auth/RegistrationScreen';
-import {LoginScreen} from 'screens/auth/LoginScreen';
-import {CarouselCards} from 'components/CarouselCards';
-import {Learn} from 'components/VerifyInfo/Learn';
-import {VerifyCreate} from 'components/VerifyCreate';
-import {Verify} from 'components/Verify';
-import Sidebar from 'components/Sidebar';
-import Scanner from 'screens/main/Scanner';
-import {Keyboard, StatusBar, StyleSheet, TouchableOpacity} from 'react-native';
-import Back from 'assets/images/sidebarIcons/Back.svg';
-import ShareIcon from 'assets/images/icons/share.svg';
-import CreateWallet from 'screens/main/Wallets/CreateWallet';
-import ManageCoins from 'screens/main/Home/ManageCoins';
+import { RegistrationScreen } from '../screens/auth/RegistrationScreen';
+import { LoginScreen } from '../screens/auth/LoginScreen';
+import { CarouselCards } from '../components/CarouselCards';
+import { Learn } from '../components/VerifyInfo/Learn';
+import { VerifyCreate } from '../components/VerifyCreate';
+import { Verify } from '../components/Verify';
+import Sidebar from '../components/Sidebar';
+import Scanner from '../screens/main/Scanner';
+import { Keyboard, StatusBar, StyleSheet, TouchableOpacity } from 'react-native';
+import Back from '../assets/images/sidebarIcons/Back.svg';
+import ShareIcon from '../assets/images/icons/share.svg';
+import CreateWallet from '../screens/main/Wallets/CreateWallet';
+import ManageCoins from '../screens/main/Home/ManageCoins';
 // ////////////////////////reset////////////////////////////////////////
-import ResetWallet from 'screens/main/ResetWallet';
-import LearnReset from 'screens/main/ResetWallet/LearnReset';
-import ImportWallet from 'screens/main/ResetWallet/ImportWallet';
+import ResetWallet from '../screens/main/ResetWallet';
+import LearnReset from '../screens/main/ResetWallet/LearnReset';
+import ImportWallet from '../screens/main/ResetWallet/ImportWallet';
 // ////////////////////////send////////////////////////////////////////
-import SendScreen from 'screens/main/Home/SendScreen';
-import SelectUTXOsScreen from 'screens/main/Home/SelectUTXOsScreen';
-import SortTransactions from 'components/SortTransactions';
-import RecieveFunds from 'screens/main/Home/RecieveFunds';
-import SendFunds from 'screens/main/Home/SendFunds';
+import SendScreen from '../screens/main/Home/SendScreen';
+import SelectUTXOsScreen from '../screens/main/Home/SelectUTXOsScreen';
+import SortTransactions from '../components/SortTransactions';
+import RecieveFunds from '../screens/main/Home/RecieveFunds';
+import SendFunds from '../screens/main/Home/SendFunds';
 ///////////////////////////////////////////////////////////////
 // import CryptoInfo from 'screens/main/BuyCrypto/CryptoInfo';
 // import CryptoOptions from 'screens/main/BuyCrypto/CryptoProviders';
-import LocalCurrency from 'screens/main/Settings/LocalCurrency';
-import Notifications from 'screens/main/Settings/Notifications';
-import Check from 'assets/images/settings/check.svg';
-import ChangePassword from 'screens/auth/ChangePassword';
-import {LogBox} from 'react-native';
-import AboutApp from 'screens/main/About/AboutApp';
-import TermsConditions from 'screens/main/About/TermsConditions';
-import PrivacyPolicy from 'screens/main/About/PrivacyPolicy';
-import {ThemeContext} from 'theme/ThemeContext';
-import {VerifyLoginScreen} from 'screens/auth/VerifyLoginScreen';
-import Transfer from 'screens/main/Home/Transfer';
-import {OTCScreen} from 'screens/main/BuyCrypto/OTCScreen';
-import {OTC2Screen} from 'screens/main/BuyCrypto/OTC2Screen';
-import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import DisplayTheme from 'screens/main/Settings/DisplayTheme';
-import WalletConnectRequestModal from 'components/WalletConnectRequestModal';
-import WalletConnectTransactionModal from 'components/WalletConnectTransactionModal';
-import AutoLock from 'screens/main/Settings/AutoLock';
-import SendNFT from 'screens/main/Home/SendNFT';
-import ImportWalletByPrivateKey from 'screens/main/ResetWallet/ImportWalletByPrivateKey';
-import EVMWalletDerivation from 'screens/main/Settings/EVMWalletDerivation';
-import TransactionList from 'screens/main/Home/TransactionList';
-import StakingList from 'screens/main/Home/StakingList';
-import CreateStaking from 'screens/main/Home/CreateStaking';
-import WithdrawStaking from 'screens/main/Home/WithdrawStaking';
-import BuyCrypto from 'screens/main/BuyCrypto';
-import MessageList from 'screens/main/Home/MessageList';
-import NewMessage from 'screens/main/Home/NewMessage';
-import Message from 'screens/main/Home/Message';
-import {CustomDerivation} from 'screens/main/Home/CustomDerivation';
-import VoteStaking from 'screens/main/Home/VoteStaking';
-import BlockedConversations from 'screens/main/Settings/BlockedConvervastions';
-import UpdateTransaction from 'screens/main/Home/UpdateTransaction';
-import EditConversation from 'screens/main/Home/EditConversation';
-import ForwardMessage from 'components/ForwardMessage';
-import PrivacyMode from 'screens/main/Settings/PrivacyMode';
-import SellCrypto from 'screens/main/SellCrypto';
-import AddAddress from 'screens/main/Settings/AddressBook/AddAddress';
-import AddressBook from 'components/AddressBook';
-import AddIcon from 'assets/images/sidebarIcons/Add.svg';
+import LocalCurrency from '../screens/main/Settings/LocalCurrency';
+import Notifications from '../screens/main/Settings/Notifications';
+import Check from '../assets/images/settings/check.svg';
+import ChangePassword from '../screens/auth/ChangePassword';
+import { LogBox } from 'react-native';
+import AboutApp from '../screens/main/About/AboutApp';
+import TermsConditions from '../screens/main/About/TermsConditions';
+import PrivacyPolicy from '../screens/main/About/PrivacyPolicy';
+import { ThemeContext } from '../theme/ThemeContext';
+import { VerifyLoginScreen } from '../screens/auth/VerifyLoginScreen';
+import Transfer from '../screens/main/Home/Transfer';
+import { OTCScreen } from '../screens/main/BuyCrypto/OTCScreen';
+import { OTC2Screen } from '../screens/main/BuyCrypto/OTC2Screen';
+import { selectCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import DisplayTheme from '../screens/main/Settings/DisplayTheme';
+import WalletConnectRequestModal from '../components/WalletConnectRequestModal';
+import WalletConnectTransactionModal from '../components/WalletConnectTransactionModal';
+import AutoLock from '../screens/main/Settings/AutoLock';
+import SendNFT from '../screens/main/Home/SendNFT';
+import ImportWalletByPrivateKey from '../screens/main/ResetWallet/ImportWalletByPrivateKey';
+import EVMWalletDerivation from '../screens/main/Settings/EVMWalletDerivation';
+import TransactionList from '../screens/main/Home/TransactionList';
+import StakingList from '../screens/main/Home/StakingList';
+import CreateStaking from '../screens/main/Home/CreateStaking';
+import WithdrawStaking from '../screens/main/Home/WithdrawStaking';
+import BuyCrypto from '../screens/main/BuyCrypto';
+import MessageList from '../screens/main/Home/MessageList';
+import NewMessage from '../screens/main/Home/NewMessage';
+import Message from '../screens/main/Home/Message';
+import { CustomDerivation } from '../screens/main/Home/CustomDerivation';
+import VoteStaking from '../screens/main/Home/VoteStaking';
+import BlockedConversations from '../screens/main/Settings/BlockedConvervastions';
+import UpdateTransaction from '../screens/main/Home/UpdateTransaction';
+import EditConversation from '../screens/main/Home/EditConversation';
+import ForwardMessage from '../components/ForwardMessage';
+import PrivacyMode from '../screens/main/Settings/PrivacyMode';
+import SellCrypto from '../screens/main/SellCrypto';
+import AddAddress from '../screens/main/Settings/AddressBook/AddAddress';
+import AddressBook from '../components/AddressBook';
+import AddIcon from '../assets/images/sidebarIcons/Add.svg';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 LogBox.ignoreLogs([
@@ -82,7 +82,7 @@ LogBox.ignoreLogs([
   'EventEmitter.removeListener',
 ]);
 
-const forFade = ({current}) => ({
+const forFade = ({ current }) => ({
   cardStyle: {
     opacity: current.progress,
   },
@@ -91,7 +91,7 @@ const forFade = ({current}) => ({
 export const useRoute = isAuth => {
   const currentCoin = useSelector(selectCurrentCoin);
 
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
 
   return (
     <Stack.Navigator
@@ -106,7 +106,7 @@ export const useRoute = isAuth => {
         },
         headerTitleAlign: 'center',
       }}>
-      <Stack.Group screenOptions={{headerShown: false}}>
+      <Stack.Group screenOptions={{ headerShown: false }}>
         {!isAuth && (
           <>
             <Stack.Screen name="CarouselCards" component={CarouselCards} />
@@ -121,7 +121,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="Learn"
           component={Learn}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Learn more',
             headerLeft: () => (
               <TouchableOpacity
@@ -137,7 +137,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="VerifyCreate"
           component={VerifyCreate}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Create',
             headerLeft: () => (
               <TouchableOpacity
@@ -158,7 +158,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="Verify"
           component={Verify}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             headerLeft: () => (
               <TouchableOpacity
                 style={styles.headerLeftStyle}
@@ -181,12 +181,12 @@ export const useRoute = isAuth => {
       <Stack.Screen
         name="Sidebar"
         component={Sidebar}
-        options={{headerShown: false}}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="CreateWallet"
         component={CreateWallet}
-        options={({navigation}) => ({
+        options={({ navigation }) => ({
           headerStyle: {
             borderBottomColor: theme.headerBorder,
             borderBottomWidth: 1,
@@ -210,7 +210,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="About App"
           component={AboutApp}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             headerLeft: () => (
               <TouchableOpacity
                 style={styles.headerLeftStyle}
@@ -224,7 +224,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="Terms & Conditions"
           component={TermsConditions}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Terms of Use',
 
             headerLeft: () => (
@@ -240,7 +240,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="Privacy Policy"
           component={PrivacyPolicy}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             headerLeft: () => (
               <TouchableOpacity
                 style={styles.headerLeftStyle}
@@ -311,7 +311,7 @@ export const useRoute = isAuth => {
       <Stack.Screen
         name="iOSBuyCrypto"
         component={BuyCrypto}
-        options={({navigation}) => ({
+        options={({ navigation }) => ({
           title: 'Buy Crypto',
           headerStyle: {
             borderBottomColor: theme.headerBorder,
@@ -335,7 +335,7 @@ export const useRoute = isAuth => {
       <Stack.Screen
         name="SellCrypto"
         component={SellCrypto}
-        options={({navigation}) => ({
+        options={({ navigation }) => ({
           title: 'Sell Crypto',
           headerStyle: {
             borderBottomColor: theme.headerBorder,
@@ -359,7 +359,7 @@ export const useRoute = isAuth => {
       <Stack.Screen
         name="OTC"
         component={OTCScreen}
-        options={({navigation}) => ({
+        options={({ navigation }) => ({
           title: 'Buy Crypto',
           headerStyle: {
             borderBottomColor: theme.headerBorder,
@@ -383,7 +383,7 @@ export const useRoute = isAuth => {
       <Stack.Screen
         name="OTC2"
         component={OTC2Screen}
-        options={({navigation}) => ({
+        options={({ navigation }) => ({
           title: 'Buy Crypto',
           headerStyle: {
             borderBottomColor: theme.headerBorder,
@@ -408,7 +408,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="LocalCurrency"
           component={LocalCurrency}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Local Currency',
 
             headerLeft: () => (
@@ -424,7 +424,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="DisplayTheme"
           component={DisplayTheme}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Theme',
 
             headerLeft: () => (
@@ -440,7 +440,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="AutoLock"
           component={AutoLock}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Auto Lock',
 
             headerLeft: () => (
@@ -456,7 +456,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="AddressBook"
           component={AddressBook}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Address Book',
             headerLeft: () => (
               <TouchableOpacity
@@ -468,7 +468,7 @@ export const useRoute = isAuth => {
             headerRight: () => (
               <TouchableOpacity
                 style={styles.headerRightStyle}
-                hitSlop={{left: 4, right: 4, top: 4, bottom: 4}}
+                hitSlop={{ left: 4, right: 4, top: 4, bottom: 4 }}
                 onPress={() => {
                   navigation.navigate('AddAddress');
                 }}>
@@ -486,7 +486,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="AddAddress"
           component={AddAddress}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Add Address',
             headerLeft: () => (
               <TouchableOpacity
@@ -501,7 +501,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="Notifications"
           component={Notifications}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Push Notifications',
 
             headerLeft: () => (
@@ -525,7 +525,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="ChangePassword"
           component={ChangePassword}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Change Password',
 
             headerLeft: () => (
@@ -541,7 +541,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="VerifyLogin"
           component={VerifyLoginScreen}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Verify Password',
 
             headerLeft: () => (
@@ -557,7 +557,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="EVMWalletDerivation"
           component={EVMWalletDerivation}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'EVM, SOL & TRX Addresses',
 
             headerLeft: () => (
@@ -573,7 +573,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="PrivacyMode"
           component={PrivacyMode}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Privacy Mode',
             headerLeft: () => (
               <TouchableOpacity
@@ -588,7 +588,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="BlockedConversations"
           component={BlockedConversations}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Blockchain Chat Blocked',
 
             headerLeft: () => (
@@ -605,7 +605,7 @@ export const useRoute = isAuth => {
       <Stack.Screen
         name="ManageCoins"
         component={ManageCoins}
-        options={({navigation}) => ({
+        options={({ navigation }) => ({
           headerStyle: {
             borderBottomColor: theme.headerBorder,
             borderBottomWidth: 1,
@@ -629,7 +629,7 @@ export const useRoute = isAuth => {
       <Stack.Screen
         name="MessageList"
         component={MessageList}
-        options={({navigation}) => ({
+        options={({ navigation }) => ({
           title: 'Messages',
           headerLeft: () => (
             <TouchableOpacity
@@ -644,7 +644,7 @@ export const useRoute = isAuth => {
       <Stack.Screen
         name="Message"
         component={Message}
-        options={({navigation}) => ({
+        options={({ navigation }) => ({
           headerShown: false,
           cardStyleInterpolator: forFade,
         })}
@@ -652,7 +652,7 @@ export const useRoute = isAuth => {
       <Stack.Screen
         name="NewMessage"
         component={NewMessage}
-        options={({navigation}) => ({
+        options={({ navigation }) => ({
           title: 'New Message',
           headerLeft: () => (
             <TouchableOpacity
@@ -667,7 +667,7 @@ export const useRoute = isAuth => {
       <Stack.Screen
         name="EditConversation"
         component={EditConversation}
-        options={({navigation}) => ({
+        options={({ navigation }) => ({
           title: 'Edit',
           headerLeft: () => (
             <TouchableOpacity
@@ -684,7 +684,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="SendScreen"
           component={SendScreen}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: currentCoin?.name || '--',
             headerLeft: () => (
               <TouchableOpacity
@@ -699,7 +699,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="SelectUTXOsScreen"
           component={SelectUTXOsScreen}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Select UTXOs',
             headerLeft: () => (
               <TouchableOpacity
@@ -714,7 +714,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="CustomDerivation"
           component={CustomDerivation}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Custom Derivation',
             headerLeft: () => (
               <TouchableOpacity
@@ -729,7 +729,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="TransactionList"
           component={TransactionList}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: `${currentCoin?.name || ''} Transactions`,
             headerLeft: () => (
               <TouchableOpacity
@@ -744,7 +744,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="UpdateTransaction"
           component={UpdateTransaction}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Update Transaction',
             headerLeft: () => (
               <TouchableOpacity
@@ -759,7 +759,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="StakingList"
           component={StakingList}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Staking',
             headerLeft: () => (
               <TouchableOpacity
@@ -774,7 +774,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="CreateStaking"
           component={CreateStaking}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Create Staking',
             headerLeft: () => (
               <TouchableOpacity
@@ -789,7 +789,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="VoteStaking"
           component={VoteStaking}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Select Validator',
             headerLeft: () => (
               <TouchableOpacity
@@ -804,7 +804,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="WithdrawStaking"
           component={WithdrawStaking}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Withdraw Staking',
             headerLeft: () => (
               <TouchableOpacity
@@ -820,7 +820,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="SendNFT"
           component={SendNFT}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Send NFT',
             headerLeft: () => (
               <TouchableOpacity
@@ -835,7 +835,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="SendFunds"
           component={SendFunds}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Send Funds',
             headerLeft: () => (
               <TouchableOpacity
@@ -851,7 +851,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="Transfer"
           component={Transfer}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Transfer',
             headerLeft: () => (
               <TouchableOpacity
@@ -866,7 +866,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="RecieveFunds"
           component={RecieveFunds}
-          options={({route, navigation}) => ({
+          options={({ route, navigation }) => ({
             title: 'Recieve Funds',
 
             headerBackImage: () => (
@@ -898,7 +898,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="SortTransactions"
           component={SortTransactions}
-          options={{headerShown: false}}
+          options={{ headerShown: false }}
         />
       </Stack.Group>
       {/* /////////////reset////////////////////////////////////////// */}
@@ -906,19 +906,19 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="ResetWallet"
           component={ResetWallet}
-          options={{headerShown: false}}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="LearnReset"
           component={LearnReset}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'What is a seed phrase?',
 
             headerLeft: () => (
               <TouchableOpacity
                 style={styles.headerLeftStyle}
                 onPress={() =>
-                  navigation.navigate('ResetWallet', {isFromOnBoarding: true})
+                  navigation.navigate('ResetWallet', { isFromOnBoarding: true })
                 }>
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
@@ -928,7 +928,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="ImportWallet"
           component={ImportWallet}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Import',
 
             headerLeft: () => (
@@ -943,7 +943,7 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="ImportWalletByPrivateKey"
           component={ImportWalletByPrivateKey}
-          options={({navigation}) => ({
+          options={({ navigation }) => ({
             title: 'Import Wallet By Private Key',
 
             headerLeft: () => (
@@ -978,7 +978,7 @@ export const useRoute = isAuth => {
       <Stack.Screen
         name="Scanner"
         component={Scanner}
-        options={({navigation}) => ({
+        options={({ navigation }) => ({
           title: 'Point at QR Code to Scan',
           headerLeft: () => (
             <TouchableOpacity

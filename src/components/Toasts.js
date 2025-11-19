@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React, { useContext } from 'react';
 import Toast from 'react-native-toast-message';
 import {
   View,
@@ -7,18 +7,18 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import {ThemeContext} from 'theme/ThemeContext';
+import { ThemeContext } from '../theme/ThemeContext';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const toastConfig = theme => {
   const myStyles = styles(theme);
   return {
-    progressToast: ({text1, text2, props}) => (
+    progressToast: ({ text1, text2, props }) => (
       <View style={myStyles.progressView}>
         <TouchableOpacity
-          hitSlop={{top: 6, bottom: 8, left: 8, right: 8}}
+          hitSlop={{ top: 6, bottom: 8, left: 8, right: 8 }}
           style={myStyles.closeIconStyle}
           onPress={() => {
             Toast.hide();
@@ -41,10 +41,10 @@ const toastConfig = theme => {
         <View style={myStyles.progressBottomBorder} />
       </View>
     ),
-    successToast: ({text1, text2, props}) => (
+    successToast: ({ text1, text2, props }) => (
       <View style={myStyles.progressView}>
         <TouchableOpacity
-          hitSlop={{top: 6, bottom: 8, left: 8, right: 8}}
+          hitSlop={{ top: 6, bottom: 8, left: 8, right: 8 }}
           style={myStyles.closeIconStyle}
           onPress={() => {
             Toast.hide();
@@ -71,10 +71,10 @@ const toastConfig = theme => {
         <View style={myStyles.successBottomBorder} />
       </View>
     ),
-    errorToast: ({text1, text2, props}) => (
+    errorToast: ({ text1, text2, props }) => (
       <View style={myStyles.progressView}>
         <TouchableOpacity
-          hitSlop={{top: 6, bottom: 8, left: 8, right: 8}}
+          hitSlop={{ top: 6, bottom: 8, left: 8, right: 8 }}
           style={myStyles.closeIconStyle}
           onPress={() => {
             Toast.hide();
@@ -101,10 +101,10 @@ const toastConfig = theme => {
         <View style={myStyles.errorBottomBorder} />
       </View>
     ),
-    warningToast: ({text1, text2, props}) => (
+    warningToast: ({ text1, text2, props }) => (
       <View style={myStyles.progressView}>
         <TouchableOpacity
-          hitSlop={{top: 6, bottom: 8, left: 8, right: 8}}
+          hitSlop={{ top: 6, bottom: 8, left: 8, right: 8 }}
           style={myStyles.closeIconStyle}
           onPress={() => {
             Toast.hide();
@@ -131,7 +131,7 @@ const toastConfig = theme => {
         <View style={myStyles.warningBottomBorder} />
       </View>
     ),
-    messageToast: ({text1, text2, ...props}) => (
+    messageToast: ({ text1, text2, ...props }) => (
       <TouchableOpacity
         style={myStyles.messageContainerView}
         onPress={() => {
@@ -139,7 +139,7 @@ const toastConfig = theme => {
           props?.onPress && props.onPress();
         }}>
         <TouchableOpacity
-          hitSlop={{top: 6, bottom: 8, left: 8, right: 8}}
+          hitSlop={{ top: 6, bottom: 8, left: 8, right: 8 }}
           style={myStyles.closeIconStyle}
           onPress={() => {
             Toast.hide();
@@ -158,8 +158,8 @@ const toastConfig = theme => {
 };
 
 const Toasts = () => {
-  const {theme} = useContext(ThemeContext);
-  const {top} = useSafeAreaInsets();
+  const { theme } = useContext(ThemeContext);
+  const { top } = useSafeAreaInsets();
   return (
     <Toast config={toastConfig(theme)} position={'bottom'} topOffset={top} />
   );
@@ -238,7 +238,7 @@ const styles = theme =>
       paddingVertical: 16,
       borderRadius: 8,
       shadowColor: '#C0C0C0',
-      shadowOffset: {width: 0, height: 5},
+      shadowOffset: { width: 0, height: 5 },
       shadowOpacity: 1,
       shadowRadius: 5,
       elevation: 12,

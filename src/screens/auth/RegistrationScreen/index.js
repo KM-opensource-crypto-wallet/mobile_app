@@ -1,21 +1,21 @@
-import React, {useContext, useState, useEffect} from 'react';
-import {TouchableOpacity, View, Text, Keyboard} from 'react-native';
-import {TextInput} from 'react-native-paper';
-import {Formik} from 'formik';
+import React, { useContext, useState, useEffect } from 'react';
+import { TouchableOpacity, View, Text, Keyboard } from 'react-native';
+import { TextInput } from 'react-native-paper';
+import { Formik } from 'formik';
 import {
   loadingOn,
   signUpSuccess,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 // import styles from './RegistrationScreenStyles';
-import {validationSchemaRegistration} from 'utils/validationSchema';
-import {IS_IOS, useFloatingHeight} from 'utils/dimensions';
+import { validationSchemaRegistration } from '../../../utils/validationSchema';
+import { IS_IOS, useFloatingHeight } from '../../../utils/dimensions';
 import myStyles from './RegistrationScreenStyles';
-import {ThemeContext} from 'theme/ThemeContext';
-import {useDispatch} from 'react-redux';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import { ThemeContext } from '../../../theme/ThemeContext';
+import { useDispatch } from 'react-redux';
+import { DokSafeAreaView } from '../../../components/DokSafeAreaView';
 
-export const RegistrationScreen = ({navigation}) => {
-  const {theme} = useContext(ThemeContext);
+export const RegistrationScreen = ({ navigation }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const dispatch = useDispatch();
@@ -28,7 +28,7 @@ export const RegistrationScreen = ({navigation}) => {
     Keyboard.dismiss();
     setTimeout(() => {
       dispatch(signUpSuccess(values.password));
-      navigation.replace('ResetWallet', {isFromOnBoarding: true});
+      navigation.replace('ResetWallet', { isFromOnBoarding: true });
     }, 200);
   };
 
@@ -47,7 +47,7 @@ export const RegistrationScreen = ({navigation}) => {
             Enter and confirm your new password bellow
           </Text>
           <Formik
-            initialValues={{password: '', passConfirm: ''}}
+            initialValues={{ password: '', passConfirm: '' }}
             validationSchema={validationSchemaRegistration}
             onSubmit={handleSubmit}>
             {({

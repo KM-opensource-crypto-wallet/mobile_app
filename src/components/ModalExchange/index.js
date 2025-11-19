@@ -1,11 +1,11 @@
-import React, {useState, useEffect, useContext} from 'react';
-import {Dimensions, TouchableOpacity, View} from 'react-native';
-import {Modal, Portal, Text, Provider} from 'react-native-paper';
+import React, { useState, useEffect, useContext } from 'react';
+import { Dimensions, TouchableOpacity, View } from 'react-native';
+import { Modal, Portal, Text, Provider } from 'react-native-paper';
 import myStyles from './ModalExchangeStyles';
-import {ThemeContext} from 'theme/ThemeContext';
+import { ThemeContext } from '../../theme/ThemeContext';
 
 const WIDTH = Dimensions.get('window').width + 80;
-const {height: screenHeight} = Dimensions.get('window');
+const { height: screenHeight } = Dimensions.get('window');
 const modalHeight = screenHeight / 2.5;
 
 const isIpad = WIDTH >= 768;
@@ -18,8 +18,8 @@ if (isIpad) {
   ITEM_WIDTH = Math.round(WIDTH * 0.7);
 }
 
-const ModalExchange = ({visible, hideModal, navigation, reset}) => {
-  const {theme} = useContext(ThemeContext);
+const ModalExchange = ({ visible, hideModal, navigation, reset }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const containerStyle = {
@@ -42,7 +42,7 @@ const ModalExchange = ({visible, hideModal, navigation, reset}) => {
           amount that will be used as gas fees for the conversion.
         </Text>
         <TouchableOpacity
-          style={{...styles.button, ...styles.shadow}}
+          style={{ ...styles.button, ...styles.shadow }}
           onPress={() => {
             hideModal(false);
             reset();

@@ -1,19 +1,19 @@
-import React, {useContext, useEffect} from 'react';
-import {View, Text, TouchableOpacity, FlatList} from 'react-native';
+import React, { useContext, useEffect } from 'react';
+import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 
-import {useSelector} from 'react-redux';
-import {ThemeContext} from 'theme/ThemeContext';
+import { useSelector } from 'react-redux';
+import { ThemeContext } from '../../theme/ThemeContext';
 import myStyles from './VerifyCreateStyles';
-import {selectCurrentWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
-import {useIsFocused} from '@react-navigation/native';
+import { selectCurrentWallet } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { DokSafeAreaView } from '../../components/DokSafeAreaView';
+import { useIsFocused } from '@react-navigation/native';
 import {
   disabledPreventScreenshot,
   enablePreventScreenshot,
-} from 'utils/screenshot';
+} from '../../utils/screenshot';
 
-export const VerifyCreate = ({navigation, route}) => {
-  const {theme} = useContext(ThemeContext);
+export const VerifyCreate = ({ navigation, route }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const isHideNextButton = route?.params?.isHideNextButton;
 
@@ -22,16 +22,16 @@ export const VerifyCreate = ({navigation, route}) => {
 
   useEffect(() => {
     if (isFocused) {
-      enablePreventScreenshot().then(_ => {});
+      enablePreventScreenshot().then(_ => { });
     } else {
-      disabledPreventScreenshot().then(_ => {});
+      disabledPreventScreenshot().then(_ => { });
     }
   }, [isFocused]);
 
   if (!currentWallet?.phrase) {
     return;
   }
-  const words = currentWallet.phrase.split(' ').map(w => ({word: w}));
+  const words = currentWallet.phrase.split(' ').map(w => ({ word: w }));
 
   const HeaderComponent = () => {
     return (
@@ -83,7 +83,7 @@ export const VerifyCreate = ({navigation, route}) => {
             paddingHorizontal: 20,
             alignItems: 'center',
           }}
-          renderItem={({item, index}) => (
+          renderItem={({ item, index }) => (
             <View style={styles.wordsBox}>
               <Text style={styles.number}>{index + 1}</Text>
               <View style={styles.wordContainerIOS}>

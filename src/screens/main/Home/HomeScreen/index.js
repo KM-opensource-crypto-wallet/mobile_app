@@ -1,13 +1,13 @@
-import React, {useState, useEffect, useContext, useRef} from 'react';
-import {TouchableOpacity, View, Text} from 'react-native';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { TouchableOpacity, View, Text } from 'react-native';
 import myStyles from './HomeScreenStyles';
-import {Portal, Provider} from 'react-native-paper';
-import {ModalQR} from 'components/ModalQR';
-import {useSelector, useDispatch, shallowEqual} from 'react-redux';
+import { Portal, Provider } from 'react-native-paper';
+import { ModalQR } from '../../../../components/ModalQR';
+import { useSelector, useDispatch, shallowEqual } from 'react-redux';
 import isJson from 'dok-wallet-blockchain-networks/service/isJson';
 
-import {ErrorBoundary} from 'react-error-boundary';
-import {ThemeContext} from 'theme/ThemeContext';
+import { ErrorBoundary } from 'react-error-boundary';
+import { ThemeContext } from '../../../../theme/ThemeContext';
 
 import {
   foundCoinInCurrentWallet,
@@ -15,8 +15,8 @@ import {
   selectCurrentWallet,
   selectIsBackedUp,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {setCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {VerifyInfoModal} from 'components/VerifyInfo';
+import { setCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import { VerifyInfoModal } from '../../../../components/VerifyInfo';
 import {
   getNewsMessage,
   isAskedBackedUpModal,
@@ -33,44 +33,44 @@ import {
 import {
   triggerHapticFeedbackHeavy,
   triggerHapticFeedbackLight,
-} from 'utils/hapticFeedback';
-import QRCodeIcon from 'assets/images/sidebarIcons/QRCode.svg';
-import BurgerMenuIcon from 'assets/images/sidebarIcons/BurgerMenu.svg';
-import {MainNavigation} from 'utils/navigation';
-import {TabView, TabBar, SceneMap} from 'react-native-tab-view';
-import {IS_IOS, SCREEN_WIDTH} from 'utils/dimensions';
-import Coins from 'components/Coins';
-import NFTList from 'components/NFTList';
+} from '../../../../utils/hapticFeedback';
+import QRCodeIcon from '../../../../assets/images/sidebarIcons/QRCode.svg';
+import BurgerMenuIcon from '../../../../assets/images/sidebarIcons/BurgerMenu.svg';
+import { MainNavigation } from '../../../../utils/navigation';
+import { TabView, TabBar, SceneMap } from 'react-native-tab-view';
+import { IS_IOS, SCREEN_WIDTH } from '../../../../utils/dimensions';
+import Coins from '../../../../components/Coins';
+import NFTList from '../../../../components/NFTList';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import NewsBottomSheet from 'components/NewsBottomSheet';
-import MessageBubble from 'components/MessageBubble';
+import NewsBottomSheet from '../../../../components/NewsBottomSheet';
+import MessageBubble from '../../../../components/MessageBubble';
 import {
   addConversation,
   addMessagesToConversation,
   getConversation,
   setSelectedConversation,
 } from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
-import {XMTP} from 'utils/xmtp';
-import {showToast} from 'utils/toast';
-import {getCustomizePublicAddress} from 'dok-wallet-blockchain-networks/helper';
+import { XMTP } from '../../../../utils/xmtp';
+import { showToast } from '../../../../utils/toast';
+import { getCustomizePublicAddress } from 'dok-wallet-blockchain-networks/helper';
 import {
   getConversationName,
   getConversations,
   getSelectedConversations,
 } from 'dok-wallet-blockchain-networks/redux/messages/messageSelector';
-import {setPaymentData} from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
+import { setPaymentData } from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
 import {
   getIsWalletConnectInitialized,
   getPaymentData,
   getWCUri,
 } from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
-import {isChatOptions} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import { isChatOptions } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Toast from 'react-native-toast-message';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
-import {createWalletConnection} from 'dok-wallet-blockchain-networks/service/walletconnect';
-import {IS_KIML_WALLET, LOGO_SINGLE, LOGO_SINGLE_DARK} from 'utils/wlData';
-import AddCoins from 'components/AddCoins';
+import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
+import { createWalletConnection } from 'dok-wallet-blockchain-networks/service/walletconnect';
+import { IS_KIML_WALLET, LOGO_SINGLE, LOGO_SINGLE_DARK } from '../../../../utils/wlData';
+import AddCoins from '../../../../components/AddCoins';
 
 const renderScene = SceneMap({
   coins: Coins,
@@ -78,7 +78,7 @@ const renderScene = SceneMap({
 });
 
 const RenderTabBar = props => {
-  const {styles} = props;
+  const { styles } = props;
   return (
     <TabBar
       {...props}
@@ -89,8 +89,8 @@ const RenderTabBar = props => {
   );
 };
 
-const HomeScreen = ({navigation, route}) => {
-  const {theme} = useContext(ThemeContext);
+const HomeScreen = ({ navigation, route }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const dispatch = useDispatch();
   const [modalVisible, setmodalVisible] = useState(false);
@@ -125,11 +125,11 @@ const HomeScreen = ({navigation, route}) => {
   const newDateToString = route.params?.newDateToString;
   const [routes] = React.useState(
     IS_IOS && IS_KIML_WALLET
-      ? [{key: 'coins', title: 'Coins'}]
+      ? [{ key: 'coins', title: 'Coins' }]
       : [
-          {key: 'coins', title: 'Coins'},
-          {key: 'nftlist', title: 'NFT'},
-        ],
+        { key: 'coins', title: 'Coins' },
+        { key: 'nftlist', title: 'NFT' },
+      ],
   );
   const [index, setIndex] = React.useState(0);
   const currentEthereumAddress = useRef(null);
@@ -150,7 +150,7 @@ const HomeScreen = ({navigation, route}) => {
 
   useEffect(() => {
     if (wcUri && isWalletConnectInitialized) {
-      createWalletConnection({uri: wcUri});
+      createWalletConnection({ uri: wcUri });
     }
   }, [wcUri, isWalletConnectInitialized]);
 
@@ -158,7 +158,7 @@ const HomeScreen = ({navigation, route}) => {
     setAddCoinModalVisible(false);
     if (paymentData?.address && paymentData?.currency) {
       setAddCoinModalVisible(true);
-      dispatch(searchAndAddCoins({currency: paymentData?.currency}))
+      dispatch(searchAndAddCoins({ currency: paymentData?.currency }))
         .unwrap()
         .then(() => {
           setAddCoinModalVisible(false);
@@ -241,10 +241,10 @@ const HomeScreen = ({navigation, route}) => {
               const peerAddress = message.senderAddress;
               const title =
                 conversationNameRef.current &&
-                Object.prototype.hasOwnProperty.call(
-                  conversationNameRef.current,
-                  peerAddress,
-                )
+                  Object.prototype.hasOwnProperty.call(
+                    conversationNameRef.current,
+                    peerAddress,
+                  )
                   ? conversationNameRef.current[peerAddress]
                   : getCustomizePublicAddress(peerAddress);
               showToast({
@@ -308,7 +308,7 @@ const HomeScreen = ({navigation, route}) => {
       if (foundCoin !== null) {
         dispatch(setCurrentCoin(foundCoin?._id));
         setTimeout(() => {
-          navigation.navigate('SendFunds', {qrAddress, qrAmount});
+          navigation.navigate('SendFunds', { qrAddress, qrAmount });
         }, 500);
       }
     }
@@ -334,7 +334,7 @@ const HomeScreen = ({navigation, route}) => {
                 <View style={styles.navigationHeader}>
                   <TouchableOpacity
                     activeOpacity={1}
-                    hitSlop={{top: 12, left: 12, right: 12, bottom: 12}}
+                    hitSlop={{ top: 12, left: 12, right: 12, bottom: 12 }}
                     onPress={() => {
                       navigation.toggleDrawer();
                     }}>
@@ -366,7 +366,7 @@ const HomeScreen = ({navigation, route}) => {
                     </TouchableOpacity>
                   </View>
                   <TouchableOpacity
-                    hitSlop={{top: 12, left: 12, right: 12, bottom: 12}}
+                    hitSlop={{ top: 12, left: 12, right: 12, bottom: 12 }}
                     activeOpacity={1}
                     onPress={() =>
                       navigation.navigate('Scanner', {
@@ -403,10 +403,10 @@ const HomeScreen = ({navigation, route}) => {
                   </View>
                 )}
                 <TabView
-                  navigationState={{index, routes}}
+                  navigationState={{ index, routes }}
                   renderScene={renderScene}
                   onIndexChange={setIndex}
-                  initialLayout={{width: SCREEN_WIDTH}}
+                  initialLayout={{ width: SCREEN_WIDTH }}
                   renderTabBar={props => (
                     <RenderTabBar {...props} styles={styles} />
                   )}

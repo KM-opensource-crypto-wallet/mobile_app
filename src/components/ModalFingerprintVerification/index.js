@@ -1,22 +1,22 @@
-import React, {useState, useContext} from 'react';
-import {Dimensions, TouchableOpacity, View} from 'react-native';
-import {Modal, Portal, Text, TextInput} from 'react-native-paper';
+import React, { useState, useContext } from 'react';
+import { Dimensions, TouchableOpacity, View } from 'react-native';
+import { Modal, Portal, Text, TextInput } from 'react-native-paper';
 import myStyles from './ModalFingerprintVerificationStyles';
-import CloseIcon from 'assets/images/icons/close.svg';
-import {Formik} from 'formik';
-import {getUserPassword} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
-import {useFloatingHeight} from 'utils/dimensions';
-import {validationSchemaFingerprintVerification} from 'utils/validationSchema';
-import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
-import {useSelector, useDispatch} from 'react-redux';
-import {updateFingerprint} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
-import {fingerprintAuthSuccess} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
-import {ThemeContext} from 'theme/ThemeContext';
-import {showToast} from 'utils/toast';
-import {getFingerprintName} from 'dok-wallet-blockchain-networks/helper';
+import CloseIcon from '../../assets/images/icons/close.svg';
+import { Formik } from 'formik';
+import { getUserPassword } from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
+import { useFloatingHeight } from '../../utils/dimensions';
+import { validationSchemaFingerprintVerification } from '../../utils/validationSchema';
+import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
+import { useSelector, useDispatch } from 'react-redux';
+import { updateFingerprint } from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
+import { fingerprintAuthSuccess } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
+import { ThemeContext } from '../../theme/ThemeContext';
+import { showToast } from '../../../src/utils/toast';
+import { getFingerprintName } from 'dok-wallet-blockchain-networks/helper';
 
 const WIDTH = Dimensions.get('window').width + 80;
-const {height: screenHeight} = Dimensions.get('window');
+const { height: screenHeight } = Dimensions.get('window');
 const modalMinHeight = screenHeight / 2.5;
 const modalMaxHeight = screenHeight / 3;
 
@@ -35,7 +35,7 @@ const ModalFingerprintVerification = ({
   hideModal,
   fingerprintEnabled,
 }) => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const floatingModalHeight = useFloatingHeight();
@@ -45,7 +45,7 @@ const ModalFingerprintVerification = ({
   const dispatch = useDispatch();
 
   const handleSubmit = values => {
-    const {currentPassword} = values;
+    const { currentPassword } = values;
     if (currentPassword === storePassword) {
       dispatch(fingerprintAuthSuccess(true));
       dispatch(updateFingerprint(true));

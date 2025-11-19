@@ -1,7 +1,7 @@
-import {StyleSheet, Dimensions} from 'react-native';
-import {SCREEN_WIDTH} from 'utils/dimensions';
+import { StyleSheet, Dimensions } from 'react-native';
+import { SCREEN_WIDTH } from '../../../../utils/dimensions';
 
-const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const marginBottomHeight = screenHeight / 10;
 
 const isIpad = screenWidth >= 768;

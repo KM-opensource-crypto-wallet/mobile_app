@@ -1,19 +1,19 @@
-import React, {useCallback, useContext} from 'react';
-import {FlatList, StyleSheet, View, Text, TouchableOpacity} from 'react-native';
-import {NFT_SUPPORTED_CHAIN} from 'dok-wallet-blockchain-networks/helper';
-import {ThemeContext} from 'theme/ThemeContext';
-import {getSelectedNftChain} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {shallowEqual, useDispatch, useSelector} from 'react-redux';
+import React, { useCallback, useContext } from 'react';
+import { FlatList, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { NFT_SUPPORTED_CHAIN } from 'dok-wallet-blockchain-networks/helper';
+import { ThemeContext } from '../theme/ThemeContext';
+import { getSelectedNftChain } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import {
   fetchNft,
   setNftSelectedChain,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 
-const NFTChainItem = ({item, styles, selectedChain, dispatch}) => {
+const NFTChainItem = ({ item, styles, selectedChain, dispatch }) => {
   const isSelected = item === selectedChain;
   const onPressSelectedChain = useCallback(() => {
     dispatch(setNftSelectedChain(item));
-    dispatch(fetchNft({selectedNftChain: item}));
+    dispatch(fetchNft({ selectedNftChain: item }));
   }, [dispatch, item]);
   return (
     <TouchableOpacity
@@ -25,7 +25,7 @@ const NFTChainItem = ({item, styles, selectedChain, dispatch}) => {
 };
 
 const NFTChainList = () => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const selectedChain = useSelector(getSelectedNftChain, shallowEqual);
   const dispatch = useDispatch();
@@ -36,7 +36,7 @@ const NFTChainList = () => {
         keyExtractor={item => 'chainlist_' + item}
         contentContainerStyle={styles.flatListContainer}
         data={NFT_SUPPORTED_CHAIN}
-        renderItem={({item}) => (
+        renderItem={({ item }) => (
           <NFTChainItem
             item={item}
             styles={styles}

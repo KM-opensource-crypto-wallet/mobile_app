@@ -14,23 +14,23 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import {TextInput} from 'react-native-paper';
-import {Formik} from 'formik';
-import ModalSend from 'components/ModalSend';
-import {useSelector, useDispatch} from 'react-redux';
-import {ModalQR} from 'components/ModalQR';
+import { TextInput } from 'react-native-paper';
+import { Formik } from 'formik';
+import ModalSend from '../../../../components/ModalSend';
+import { useSelector, useDispatch } from 'react-redux';
+import { ModalQR } from '../../../../components/ModalQR';
 import isJson from 'dok-wallet-blockchain-networks/service/isJson';
-import {Portal, Provider} from 'react-native-paper';
-import {validationSchemaSendFunds} from 'utils/validationSchema';
-import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import {IS_ANDROID, useFloatingHeight} from 'utils/dimensions';
-import {ThemeContext} from 'theme/ThemeContext';
+import { Portal, Provider } from 'react-native-paper';
+import { validationSchemaSendFunds } from '../../../../utils/validationSchema';
+import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import { IS_ANDROID, useFloatingHeight } from '../../../../utils/dimensions';
+import { ThemeContext } from '../../../../theme/ThemeContext';
 import {
   calculateEstimateFee,
   setCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {currencySymbol} from 'data/currency';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { currencySymbol } from '../../../../data/currency';
 import {
   selectCurrentCoin,
   selectCurrentWallet,
@@ -45,18 +45,18 @@ import {
   validateNumber,
   isEip7702SupportedChain,
 } from 'dok-wallet-blockchain-networks/helper';
-import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
-import {showToast} from 'utils/toast';
-import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
-import AddressBookPicker from 'components/AddressBookPicker';
-import {getTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSelector';
-import {isBitcoinChain} from 'dok-wallet-blockchain-networks/helper';
-import {parseBoolean} from 'utils/common';
-import {addBatchTransaction} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
-import {v4} from 'uuid';
+import { getChain } from 'dok-wallet-blockchain-networks/cryptoChain';
+import { showToast } from '../../../../../src/utils/toast';
+import { setExchangeSuccess } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
+import AddressBookPicker from '../../../../components/AddressBookPicker';
+import { getTransferData } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSelector';
+import { isBitcoinChain } from 'dok-wallet-blockchain-networks/helper';
+import { parseBoolean } from '../../../../../src/utils/common';
+import { addBatchTransaction } from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
+import { v4 } from 'uuid';
 
-const SendFunds = ({navigation, route}) => {
-  const {theme} = useContext(ThemeContext);
+const SendFunds = ({ navigation, route }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const currentCoin = useSelector(selectCurrentCoin);
   const qrAddress = route?.params?.qrAddress;
@@ -184,10 +184,10 @@ const SendFunds = ({navigation, route}) => {
   const addToBatch = useCallback(async () => {
     const values = formikRef.current.values;
     const currentChain = getChain(currentCoin?.chain_name);
-    const isValid = await currentChain.isValidAddress({address: values?.send});
+    const isValid = await currentChain.isValidAddress({ address: values?.send });
     let validAddress = null;
     if (!isValid && isNameSupportChain(currentCoin?.chain_name)) {
-      validAddress = await currentChain?.isValidName({name: values?.send});
+      validAddress = await currentChain?.isValidName({ name: values?.send });
     }
     if (isValid || validAddress) {
       dispatch(
@@ -267,10 +267,10 @@ const SendFunds = ({navigation, route}) => {
       return;
     }
     const currentChain = getChain(currentCoin?.chain_name);
-    const isValid = await currentChain.isValidAddress({address: values?.send});
+    const isValid = await currentChain.isValidAddress({ address: values?.send });
     let validAddress = null;
     if (!isValid && isNameSupportChain(currentCoin?.chain_name)) {
-      validAddress = await currentChain?.isValidName({name: values?.send});
+      validAddress = await currentChain?.isValidName({ name: values?.send });
     }
 
     if (isValid || validAddress) {
@@ -325,7 +325,7 @@ const SendFunds = ({navigation, route}) => {
           enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
+          {...(IS_ANDROID ? { extraScrollHeight: 30 } : {})}
           keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           contentContainerStyle={styles.contentContainerStyle}>
           <Formik
@@ -336,10 +336,10 @@ const SendFunds = ({navigation, route}) => {
               currencyAmount:
                 qrAmount || linkAmount
                   ? multiplyBNWithFixed(
-                      qrAmount || linkAmount,
-                      currentCoin?.currencyRate,
-                      2,
-                    )
+                    qrAmount || linkAmount,
+                    currentCoin?.currencyRate,
+                    2,
+                  )
                   : '',
               memo: linkMemo || '',
             }}
@@ -360,7 +360,7 @@ const SendFunds = ({navigation, route}) => {
                 onPress={() => {
                   Keyboard.dismiss();
                 }}>
-                <View style={{flex: 1}}>
+                <View style={{ flex: 1 }}>
                   <View
                     style={{
                       ...styles.container,
@@ -392,7 +392,7 @@ const SendFunds = ({navigation, route}) => {
                             <TextInput
                               style={[
                                 styles.addressInput,
-                                fieldDisable && {width: '100%'},
+                                fieldDisable && { width: '100%' },
                               ]}
                               editable={!fieldDisable}
                               label="Enter wallet adress or scan QR"
@@ -686,7 +686,7 @@ const SendFunds = ({navigation, route}) => {
                         <Text
                           style={[
                             styles.buttonTitle,
-                            isValid && {color: theme.background},
+                            isValid && { color: theme.background },
                           ]}>
                           Add to batch
                         </Text>

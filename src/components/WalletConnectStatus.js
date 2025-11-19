@@ -1,16 +1,16 @@
-import React, {useContext, useEffect, useMemo, useRef} from 'react';
-import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
-import {ThemeContext} from 'theme/ThemeContext';
-import {shallowEqual, useDispatch, useSelector} from 'react-redux';
+import React, { useContext, useEffect, useMemo, useRef } from 'react';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { ThemeContext } from '../theme/ThemeContext';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import {
   selectAllWalletConnectSessions,
   selectWalletConnectSessions,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {subscribeWalletConnect} from 'dok-wallet-blockchain-networks/service/walletconnect';
-import WalletConnectList from 'components/WalletConnectList';
+import { subscribeWalletConnect } from 'dok-wallet-blockchain-networks/service/walletconnect';
+import WalletConnectList from '../components/WalletConnectList';
 
 const WalletConnectStatus = () => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const sessions = useSelector(selectWalletConnectSessions, shallowEqual);
   const allSessions = useSelector(selectAllWalletConnectSessions, shallowEqual);
   const allSessionKeys = useMemo(() => {
@@ -35,14 +35,13 @@ const WalletConnectStatus = () => {
         bottomSheetRef={ref => (walletConnectListRef.current = ref)}
       />
       <TouchableOpacity
-        style={[styles.mainView, {zIndex: 1}]}
+        style={[styles.mainView, { zIndex: 1 }]}
         onPress={() => {
           walletConnectListRef.current.close();
           walletConnectListRef.current.present();
         }}>
-        <Text style={styles.textView}>{`${allSessionKeys.length} App${
-          allSessionKeys.length > 1 ? 's' : ''
-        } connected`}</Text>
+        <Text style={styles.textView}>{`${allSessionKeys.length} App${allSessionKeys.length > 1 ? 's' : ''
+          } connected`}</Text>
       </TouchableOpacity>
     </>
   ) : null;

@@ -1,10 +1,10 @@
-import React, {useContext} from 'react';
+import React, { useContext } from 'react';
 
-import {ThemeContext} from 'theme/ThemeContext';
-import {LOGO_SINGLE, LOGO_SINGLE_DARK} from 'utils/wlData';
+import { ThemeContext } from '../theme/ThemeContext';
+import { LOGO_SINGLE, LOGO_SINGLE_DARK } from '../utils/wlData';
 
-const DefaultDokWalletImage = ({height, width}) => {
-  const {theme} = useContext(ThemeContext);
+const DefaultDokWalletImage = ({ height, width }) => {
+  const { theme } = useContext(ThemeContext);
   return theme.backgroundColor === '#121212' ? (
     <LOGO_SINGLE_DARK width={height} height={width} />
   ) : (

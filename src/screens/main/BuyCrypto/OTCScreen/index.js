@@ -1,16 +1,16 @@
-import React, {useCallback, useContext, useRef} from 'react';
-import {TouchableOpacity, View, Text, Keyboard} from 'react-native';
-import {TextInput} from 'react-native-paper';
-import {Formik} from 'formik';
-import {validationSchemaOTC} from 'utils/validationSchema';
+import React, { useCallback, useContext, useRef } from 'react';
+import { TouchableOpacity, View, Text, Keyboard } from 'react-native';
+import { TextInput } from 'react-native-paper';
+import { Formik } from 'formik';
+import { validationSchemaOTC } from '../../../../utils/validationSchema';
 import myStyles from './OTCScreenStyles';
-import {ThemeContext} from 'theme/ThemeContext';
-import DokCountryPicker from 'components/DokCountryPicker';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {IS_ANDROID} from 'utils/dimensions';
+import { ThemeContext } from '../../../../theme/ThemeContext';
+import DokCountryPicker from '../../../../components/DokCountryPicker';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { IS_ANDROID } from '../../../../utils/dimensions';
 
-export const OTCScreen = ({navigation}) => {
-  const {theme} = useContext(ThemeContext);
+export const OTCScreen = ({ navigation }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const emailInputRef = useRef(null);
   const address1InputRef = useRef(null);
@@ -21,7 +21,7 @@ export const OTCScreen = ({navigation}) => {
   const onSubmit = useCallback(
     values => {
       Keyboard.dismiss();
-      navigation.navigate('OTC2', {data: values});
+      navigation.navigate('OTC2', { data: values });
     },
     [navigation],
   );
@@ -30,7 +30,7 @@ export const OTCScreen = ({navigation}) => {
     <KeyboardAwareScrollView
       enableOnAndroid={true}
       enableAutomaticScroll={true}
-      {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
+      {...(IS_ANDROID ? { extraScrollHeight: 30 } : {})}
       enableResetScrollToCoords={false}
       keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
       style={styles.container}

@@ -5,13 +5,13 @@ import React, {
   useRef,
   useCallback,
 } from 'react';
-import {Appearance} from 'react-native';
-import {getAsyncStorageData, storeAsyncStorageData} from 'utils/asyncStorage';
-import {wlName} from 'utils/wlData';
+import { Appearance } from 'react-native';
+import { getAsyncStorageData, storeAsyncStorageData } from '../utils/asyncStorage';
+import { wlName } from '../../src/utils/wlData';
 
 export const ThemeContext = createContext();
 
-export const ThemeProvider = ({children}) => {
+export const ThemeProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(
     Appearance.getColorScheme() === 'dark',
   );
@@ -42,7 +42,7 @@ export const ThemeProvider = ({children}) => {
       }
     });
     systemColorSchema.current = Appearance.getColorScheme();
-    const subscription = Appearance.addChangeListener(({colorScheme}) => {
+    const subscription = Appearance.addChangeListener(({ colorScheme }) => {
       if (selectedThemeRef.current === 'System Default') {
         setIsDarkMode(colorScheme === 'dark');
       }
@@ -58,7 +58,7 @@ export const ThemeProvider = ({children}) => {
 
   return (
     <ThemeContext.Provider
-      value={{theme, selectedTheme, onChangeSelectedTheme}}>
+      value={{ theme, selectedTheme, onChangeSelectedTheme }}>
       {children}
     </ThemeContext.Provider>
   );

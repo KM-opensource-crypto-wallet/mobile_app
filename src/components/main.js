@@ -5,42 +5,43 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {Platform, Linking, Text, TextInput, StatusBar} from 'react-native';
-import {shallowEqual, useDispatch, useSelector} from 'react-redux';
-import {NavigationContainer} from '@react-navigation/native';
-import {useRoute} from 'routers/router';
+import { Platform, Linking, Text, TextInput, StatusBar } from 'react-native';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { NavigationContainer } from '@react-navigation/native';
+import { useRoute } from '../routers/router';
 import {
   getLoading,
   getUserPassword,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
-import Spinner from 'components/Spinner';
-import {MainNavigation} from 'utils/navigation';
+import Spinner from '../components/Spinner';
+// import { MainNavigation } from '../../../src/utils/navigation';
+import { MainNavigation } from '../utils/navigation';
 import {
   checkNewCoinAvailable,
   checkNewsAvailable,
   fetchCurrencies,
 } from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
-import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {initWalletConnect} from 'dok-wallet-blockchain-networks/service/walletconnect';
-import {AppState} from 'react-native';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { initWalletConnect } from 'dok-wallet-blockchain-networks/service/walletconnect';
+import { AppState } from 'react-native';
 import {
   addMinutes,
   isAfterCurrentDate,
   isNewerVersion,
   safelyJsonParse,
 } from 'dok-wallet-blockchain-networks/helper';
-import {getLockTime} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import { getLockTime } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {
   createClientIdIfNotExist,
   createIfNotExistsMasterClientId,
   resetCoinsToDefaultAddressForPrivacyMode,
   resetNfts,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {isReduxStoreLoaded} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSelectors';
-import {selectWalletConnectSessions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {clearWalletConnectStorageCache} from 'utils/asyncStorage';
-import LoginModal from 'components/LoginModal';
+import { isReduxStoreLoaded } from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSelectors';
+import { selectWalletConnectSessions } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { clearWalletConnectStorageCache } from '../utils/asyncStorage';
+import LoginModal from '../components/LoginModal';
 import {
   compareRpcUrls,
   fetchRPCUrl,
@@ -54,23 +55,23 @@ import {
   getBundleId,
   getVersion,
 } from 'react-native-device-info';
-import {IS_ANDROID, IS_IOS} from 'utils/dimensions';
-import {getCountry} from 'react-native-localize';
-import {MenuProvider} from 'react-native-popup-menu';
+import { IS_ANDROID, IS_IOS } from '../utils/dimensions';
+import { getCountry } from 'react-native-localize';
+import { MenuProvider } from 'react-native-popup-menu';
 import {
   getQueryParams,
   parseJson,
   parseUrlQS,
   validatePaymentUrl,
   validateWCUrl,
-} from 'utils/common';
+} from '../../src/utils/common';
 import {
   setIsUpdateAvailable,
   setIsWalletConnectInitialized,
   setPaymentData,
   setWcUri,
 } from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
-import ModalAppUpdate from 'components/ModalAppUpdates';
+import ModalAppUpdate from '../components/ModalAppUpdates';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import {isTestFlight} from 'react-native-test-flight';
@@ -145,7 +146,7 @@ const Main = () => {
   }, []);
 
   const fetchFeesInfo = useCallback(() => {
-    getFeesInfo().then(_ => {});
+    getFeesInfo().then(_ => { });
   }, []);
 
   const initializeWalletConnect = useCallback(async () => {
@@ -293,10 +294,9 @@ const Main = () => {
       };
       unsubscribe = Linking.addEventListener('url', onUrlGet);
       dispatch(checkNewCoinAvailable());
-      const key = `${
-        IS_IOS ? 'ios' : 'android'
-      }_${getVersion()}_${getBuildNumber()}`;
-      dispatch(checkNewsAvailable({key}));
+      const key = `${IS_IOS ? 'ios' : 'android'
+        }_${getVersion()}_${getBuildNumber()}`;
+      dispatch(checkNewsAvailable({ key }));
       initializeWalletConnect();
     }
     return () => {
@@ -310,7 +310,7 @@ const Main = () => {
     const fromDevice = Platform.OS;
     const country = getCountry();
     dispatch(setCountry(country));
-    dispatch(fetchSupportedBuyCryptoCurrency({fromDevice, country}));
+    dispatch(fetchSupportedBuyCryptoCurrency({ fromDevice, country }));
     fetchAndCompareRpcUrls();
     fetchFeesInfo();
     dispatch(fetchCurrencies({}));
@@ -360,10 +360,10 @@ const Main = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
 
   return (
-    <GestureHandlerRootView style={{flex: 1}}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar
         backgroundColor={theme.backgroundColor}
         barStyle={

@@ -1,12 +1,12 @@
-import {View, Text, TouchableOpacity} from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import myStyles from './AboutScreenStyles';
-import {aboutList} from 'data/aboutList';
-import KeyboardArrow from 'assets/images/icons/keyboard-arrow-right.svg';
-import {ThemeContext} from 'theme/ThemeContext';
-import {useContext} from 'react';
+import { aboutList } from '../../../../data/aboutList';
+import KeyboardArrow from '../../../../assets/images/icons/keyboard-arrow-right.svg';
+import { ThemeContext } from '../../../../theme/ThemeContext';
+import { useContext } from 'react';
 
-const AboutScreen = ({navigation}) => {
-  const {theme} = useContext(ThemeContext);
+const AboutScreen = ({ navigation }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   return (

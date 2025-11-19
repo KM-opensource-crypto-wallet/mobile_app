@@ -1,14 +1,14 @@
-import React, {useCallback, useContext} from 'react';
-import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
+import React, { useCallback, useContext } from 'react';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {ThemeContext} from 'theme/ThemeContext';
+import { ThemeContext } from '../theme/ThemeContext';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
+import { triggerHapticFeedbackLight } from '../utils/hapticFeedback';
 import Toast from 'react-native-toast-message';
-import CopyIcon from 'assets/images/icons/copy.svg';
-import ChainItem from 'components/ChainItem';
-import {currencySymbol} from 'data/currency';
-import CoinIcon from 'components/CoinIcon/CoinIcon';
+import CopyIcon from '../assets/images/icons/copy.svg';
+import ChainItem from '../components/ChainItem';
+import { currencySymbol } from '../data/currency';
+import CoinIcon from '../components/CoinIcon/CoinIcon';
 
 const BatchTransactionItem = ({
   item,
@@ -17,7 +17,7 @@ const BatchTransactionItem = ({
   localCurrency,
   onToggleSelection,
 }) => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const onCopyAddress = useCallback(address => {

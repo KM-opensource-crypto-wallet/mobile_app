@@ -14,19 +14,19 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
-import CopyIcon from 'assets/images/icons/copy.svg';
+import CopyIcon from '../../../../assets/images/icons/copy.svg';
 import Share from 'react-native-share';
-import {CommonActions} from '@react-navigation/native';
-import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
+import { CommonActions } from '@react-navigation/native';
+import { useKeyboardHeight } from '../../../../hooks/useKeyboardHeight';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {useSelector} from 'react-redux';
+import { useSelector } from 'react-redux';
 
-import {ThemeContext} from 'theme/ThemeContext';
-import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { ThemeContext } from '../../../../theme/ThemeContext';
+import { selectCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-const RecieveFunds = ({navigation}) => {
-  const {theme} = useContext(ThemeContext);
+const RecieveFunds = ({ navigation }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const currentCoin = useSelector(selectCurrentCoin);
@@ -63,7 +63,7 @@ const RecieveFunds = ({navigation}) => {
   }, [currentCoin.address]);
 
   useEffect(() => {
-    navigation.dispatch(CommonActions.setParams({shareQR}));
+    navigation.dispatch(CommonActions.setParams({ shareQR }));
   }, [navigation, shareQR]);
 
   return (

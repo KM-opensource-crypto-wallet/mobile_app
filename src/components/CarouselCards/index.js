@@ -1,14 +1,14 @@
-import React, {useState, useRef, useContext} from 'react';
-import {View, Image, Text, TouchableOpacity} from 'react-native';
+import React, { useState, useRef, useContext } from 'react';
+import { View, Image, Text, TouchableOpacity } from 'react-native';
 import Swiper from 'react-native-swiper';
-import data from 'data/data';
+import data from '../../data/data';
 import myStyles from './CarouselCardsStyles';
-import {useFloatingHeight} from 'utils/dimensions';
-import {ThemeContext} from 'theme/ThemeContext';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import { useFloatingHeight } from '../../utils/dimensions';
+import { ThemeContext } from '../../theme/ThemeContext';
+import { DokSafeAreaView } from '../../components/DokSafeAreaView';
 
-export const CarouselCards = ({navigation}) => {
-  const {theme} = useContext(ThemeContext);
+export const CarouselCards = ({ navigation }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const floatingHeight = useFloatingHeight();
   const [index, setIndex] = useState(0);
@@ -50,14 +50,14 @@ export const CarouselCards = ({navigation}) => {
             index === data.length - 1
               ? styles.hidden
               : {
-                  ...styles.paginationContainer,
-                  marginBottom: floatingHeight > 400 ? 40 : 20,
-                }
+                ...styles.paginationContainer,
+                marginBottom: floatingHeight > 400 ? 40 : 20,
+              }
           }>
           <TouchableOpacity
             onPress={handleSkip}
-            hitSlop={{top: 12, left: 12, right: 12, bottom: 12}}>
-            <Text style={{...styles.btn}}>Skip</Text>
+            hitSlop={{ top: 12, left: 12, right: 12, bottom: 12 }}>
+            <Text style={{ ...styles.btn }}>Skip</Text>
           </TouchableOpacity>
 
           <View style={styles.paginationDotsContainer}>

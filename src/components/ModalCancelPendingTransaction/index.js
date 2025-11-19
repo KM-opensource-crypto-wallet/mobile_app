@@ -1,14 +1,14 @@
-import React, {useContext} from 'react';
+import React, { useContext } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Modal, Portal, Text} from 'react-native-paper';
-import {ThemeContext} from 'theme/ThemeContext';
+import { Modal, Portal, Text } from 'react-native-paper';
+import { ThemeContext } from '../../theme/ThemeContext';
 import myStyles from './ModalConfirmEnableChatModalStyles';
-import {currencySymbol} from 'data/currency';
+import { currencySymbol } from '../../data/currency';
 
 const WIDTH = Dimensions.get('window').width + 80;
 
@@ -31,10 +31,10 @@ const ModalCancelPendingTransactions = ({
   localCurrency,
   isCancelTransaction,
 }) => {
-  const {isLoading, fiatEstimateFee, transactionFee, success} =
+  const { isLoading, fiatEstimateFee, transactionFee, success } =
     pendingTransferData;
 
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   return (
@@ -50,13 +50,11 @@ const ModalCancelPendingTransactions = ({
         }}
         dismissable={false}>
         <View style={styles.infoList}>
-          <Text style={styles.titleInfo}>{`${
-            isCancelTransaction ? 'Cancel' : 'Speed Up'
-          } Transaction?`}</Text>
+          <Text style={styles.titleInfo}>{`${isCancelTransaction ? 'Cancel' : 'Speed Up'
+            } Transaction?`}</Text>
           <Text style={styles.info}>
-            {`Are you sure you want to ${
-              isCancelTransaction ? 'cancel' : 'speed up'
-            } the pending transaction? Please note that a fee may apply.`}
+            {`Are you sure you want to ${isCancelTransaction ? 'cancel' : 'speed up'
+              } the pending transaction? Please note that a fee may apply.`}
           </Text>
           <View style={styles.paddingView}>
             {isLoading ? (

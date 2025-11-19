@@ -13,33 +13,33 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import {TextInput} from 'react-native-paper';
-import {Formik} from 'formik';
-import {useSelector, useDispatch} from 'react-redux';
+import { TextInput } from 'react-native-paper';
+import { Formik } from 'formik';
+import { useSelector, useDispatch } from 'react-redux';
 import isJson from 'dok-wallet-blockchain-networks/service/isJson';
-import {Portal, Provider} from 'react-native-paper';
-import {validationSchemaSendNFT} from 'utils/validationSchema';
+import { Portal, Provider } from 'react-native-paper';
+import { validationSchemaSendNFT } from '../../../../utils/validationSchema';
 
-import {IS_ANDROID} from 'utils/dimensions';
+import { IS_ANDROID } from '../../../../utils/dimensions';
 
-import {ThemeContext} from 'theme/ThemeContext';
+import { ThemeContext } from '../../../../theme/ThemeContext';
 import {
   calculateEstimateFee,
   setCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {
   getSelectedNft,
   selectCurrentWallet,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import FastImage from '@d11/react-native-fast-image';
-import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
-import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
-import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
-import {isNameSupportChain} from 'dok-wallet-blockchain-networks/helper';
+import DefaultDokWalletImage from '../../../../components/DefaultDokWalletImage';
+import { getChain } from 'dok-wallet-blockchain-networks/cryptoChain';
+import { setExchangeSuccess } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
+import { isNameSupportChain } from 'dok-wallet-blockchain-networks/helper';
 
-const SendNFT = ({navigation, route}) => {
-  const {theme} = useContext(ThemeContext);
+const SendNFT = ({ navigation, route }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const selectedNft = useSelector(getSelectedNft);
   const selectedWallet = useSelector(selectCurrentWallet);
@@ -90,10 +90,10 @@ const SendNFT = ({navigation, route}) => {
   const handleSubmitForm = async values => {
     // setAmountInput(values.amount);
     const currentChain = getChain(selectedNft?.coin?.chain_name);
-    const isValid = await currentChain.isValidAddress({address: values?.send});
+    const isValid = await currentChain.isValidAddress({ address: values?.send });
     let validAddress = null;
     if (!isValid && isNameSupportChain(selectedNft?.coin?.chain_name)) {
-      validAddress = await currentChain?.isValidName({name: values?.send});
+      validAddress = await currentChain?.isValidName({ name: values?.send });
     }
     if (isValid || validAddress) {
       dispatch(
@@ -124,7 +124,7 @@ const SendNFT = ({navigation, route}) => {
         }),
       );
       dispatch(setExchangeSuccess(false));
-      navigation.navigate('Transfer', {fromScreen: 'SendNFT'});
+      navigation.navigate('Transfer', { fromScreen: 'SendNFT' });
     } else {
       formikRef?.current?.setFieldError('send', 'address is not valid');
     }
@@ -138,7 +138,7 @@ const SendNFT = ({navigation, route}) => {
           enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
+          {...(IS_ANDROID ? { extraScrollHeight: 30 } : {})}
           enableResetScrollToCoords={false}
           keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           contentContainerStyle={styles.contentContainerStyle}>
@@ -164,7 +164,7 @@ const SendNFT = ({navigation, route}) => {
                 onPress={() => {
                   Keyboard.dismiss();
                 }}>
-                <View style={{flex: 1}}>
+                <View style={{ flex: 1 }}>
                   <View style={styles.formInput}>
                     <View
                       style={{
@@ -213,7 +213,7 @@ const SendNFT = ({navigation, route}) => {
                       <View style={styles.nftMainView}>
                         {localImage ? (
                           <FastImage
-                            source={{uri: localImage}}
+                            source={{ uri: localImage }}
                             style={styles.imageStyle}
                             resizeMode={'contain'}
                             onError={e => {

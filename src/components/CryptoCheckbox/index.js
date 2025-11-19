@@ -1,8 +1,8 @@
-import React, {useState, useEffect, useContext} from 'react';
-import {View, Text, TouchableOpacity} from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 
-import {CheckBox} from '@rneui/themed';
-import {ThemeContext} from 'theme/ThemeContext';
+import { CheckBox } from '@rneui/themed';
+import { ThemeContext } from '../../theme/ThemeContext';
 import myStyles from './CryptoCheckboxStyles';
 
 const CryptoCheckbox = ({
@@ -13,7 +13,7 @@ const CryptoCheckbox = ({
   setInfoCheck,
   onPress,
 }) => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const [checked, setChecked] = useState(false);
@@ -57,7 +57,7 @@ const CryptoCheckbox = ({
           </Text>
         </Text>
       ) : (
-        <Text style={{...styles.text}} onPress={() => onPress && onPress()}>
+        <Text style={{ ...styles.text }} onPress={() => onPress && onPress()}>
           {title}
         </Text>
       )}

@@ -5,21 +5,21 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {TouchableOpacity, View, Text, ActivityIndicator} from 'react-native';
-import {TextInput} from 'react-native-paper';
-import {Formik} from 'formik';
+import { TouchableOpacity, View, Text, ActivityIndicator } from 'react-native';
+import { TextInput } from 'react-native-paper';
+import { Formik } from 'formik';
 import * as Yup from 'yup';
 import myStyles from './NewMessageStyles';
-import {ThemeContext} from 'theme/ThemeContext';
-import {IS_ANDROID} from 'utils/dimensions';
-import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
-import {XMTP} from 'utils/xmtp';
-import {showToast} from 'utils/toast';
-import {setSelectedConversation} from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
-import {useDispatch} from 'react-redux';
+import { ThemeContext } from '../../../../theme/ThemeContext';
+import { IS_ANDROID } from '../../../../utils/dimensions';
+import { getChain } from 'dok-wallet-blockchain-networks/cryptoChain';
+import { XMTP } from '../../../../utils/xmtp';
+import { showToast } from '../../../../../src/utils/toast';
+import { setSelectedConversation } from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
+import { useDispatch } from 'react-redux';
 
-const NewMessage = ({navigation, route}) => {
-  const {theme} = useContext(ThemeContext);
+const NewMessage = ({ navigation, route }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const formikRef = useRef();
   const data = route?.params?.data;
@@ -38,10 +38,10 @@ const NewMessage = ({navigation, route}) => {
         setIsSubmitting(true);
         const address = values?.address;
         const chain = getChain('ethereum');
-        const isValid = await chain.isValidAddress({address});
+        const isValid = await chain.isValidAddress({ address });
         let validAddress = null;
         if (!isValid) {
-          validAddress = await chain?.isValidName({name: address});
+          validAddress = await chain?.isValidName({ name: address });
         }
         if (isValid || validAddress) {
           const isExists = await XMTP.checkAccountExists({
@@ -91,7 +91,7 @@ const NewMessage = ({navigation, route}) => {
           Enter a ethereum address to create a new message conversation
         </Text>
         <Formik
-          initialValues={{address: ''}}
+          initialValues={{ address: '' }}
           innerRef={formikRef}
           validationSchema={Yup.object().shape({
             address: Yup.string().required('address is required'),
@@ -114,7 +114,7 @@ const NewMessage = ({navigation, route}) => {
                 textColor={theme.font}
                 autoComplete={'off'}
                 autoCorrect={false}
-                {...(IS_ANDROID ? {keyboardType: 'visible-password'} : {})}
+                {...(IS_ANDROID ? { keyboardType: 'visible-password' } : {})}
                 spellCheck={false}
                 label="Enter address"
                 theme={{

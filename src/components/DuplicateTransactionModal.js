@@ -1,10 +1,10 @@
-import React, {useContext} from 'react';
-import {Dimensions, StyleSheet, TouchableOpacity, View} from 'react-native';
-import {Modal, Portal, Text} from 'react-native-paper';
-import {ThemeContext} from 'theme/ThemeContext';
+import React, { useContext } from 'react';
+import { Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Modal, Portal, Text } from 'react-native-paper';
+import { ThemeContext } from '../theme/ThemeContext';
 
 const WIDTH = Dimensions.get('window').width + 80;
-const {height: screenHeight} = Dimensions.get('window');
+const { height: screenHeight } = Dimensions.get('window');
 const modalHeight = screenHeight / 1.6;
 
 const isIpad = WIDTH >= 768;
@@ -17,8 +17,8 @@ if (isIpad) {
   ITEM_WIDTH = Math.round(WIDTH * 0.75);
 }
 
-const DuplicateTransactionModal = ({visible, onClose}) => {
-  const {theme} = useContext(ThemeContext);
+const DuplicateTransactionModal = ({ visible, onClose }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   return (

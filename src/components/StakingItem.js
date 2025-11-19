@@ -1,17 +1,17 @@
-import React, {useContext} from 'react';
-import {Text, TouchableOpacity, View, StyleSheet} from 'react-native';
+import React, { useContext } from 'react';
+import { Text, TouchableOpacity, View, StyleSheet } from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
-import {currencySymbol} from 'data/currency';
-import KeyboardArrow from 'assets/images/icons/keyboard-arrow-right.svg';
-import {ThemeContext} from 'theme/ThemeContext';
-import {useNavigation} from '@react-navigation/native';
-import {useSelector} from 'react-redux';
-import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import { currencySymbol } from '../data/currency';
+import KeyboardArrow from '../assets/images/icons/keyboard-arrow-right.svg';
+import { ThemeContext } from '../theme/ThemeContext';
+import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
+import { selectCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import Toast from 'react-native-toast-message';
 
-const StakingItem = ({item, isWithdraw, estimateEpochTimestamp}) => {
-  const {theme} = useContext(ThemeContext);
+const StakingItem = ({ item, isWithdraw, estimateEpochTimestamp }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const navigation = useNavigation();
   const currentCoin = useSelector(selectCurrentCoin);
@@ -31,20 +31,20 @@ const StakingItem = ({item, isWithdraw, estimateEpochTimestamp}) => {
           navigation.navigate('WithdrawStaking', {
             selectedStake: item,
             ...(item?.status === 'inactive'
-              ? {isWithdrawStaking: true}
-              : {isDeactivateStaking: true}),
+              ? { isWithdrawStaking: true }
+              : { isDeactivateStaking: true }),
           });
         }
       }}>
       <View
         style={[
           styles.rowView,
-          !isWithdraw && {borderWidth: 0.5, borderRadius: 4},
+          !isWithdraw && { borderWidth: 0.5, borderRadius: 4 },
         ]}>
-        <View style={[styles.subRowView, {marginRight: 0}]}>
+        <View style={[styles.subRowView, { marginRight: 0 }]}>
           <View style={styles.subRowView}>
             <FastImage
-              source={{uri: item?.validatorInfo?.image}}
+              source={{ uri: item?.validatorInfo?.image }}
               style={styles.imageStyle}
             />
             <View style={styles.flex1}>
@@ -54,7 +54,7 @@ const StakingItem = ({item, isWithdraw, estimateEpochTimestamp}) => {
               <Text
                 style={[
                   styles.statusText,
-                  item?.status?.includes('ing') && {color: theme.gray},
+                  item?.status?.includes('ing') && { color: theme.gray },
                 ]}
                 numberOfLines={1}>
                 {item?.status}

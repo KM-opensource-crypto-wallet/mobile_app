@@ -1,13 +1,13 @@
-import React, {useContext} from 'react';
-import {Appearance, StyleSheet} from 'react-native';
+import React, { useContext } from 'react';
+import { Appearance, StyleSheet } from 'react-native';
 import CountryPicker, {
   DARK_THEME,
   DEFAULT_THEME,
 } from 'react-native-country-picker-modal';
-import {ThemeContext} from 'theme/ThemeContext';
+import { ThemeContext } from '../theme/ThemeContext';
 
-const DokCountryPicker = ({isVisible, onSelect, countryCode}) => {
-  const {theme} = useContext(ThemeContext);
+const DokCountryPicker = ({ isVisible, onSelect, countryCode }) => {
+  const { theme } = useContext(ThemeContext);
   const myStyles = styles(theme);
   return (
     <CountryPicker

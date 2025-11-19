@@ -1,5 +1,5 @@
 // Delete.js
-import React, {useCallback, useState} from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Linking,
   StyleSheet,
@@ -8,9 +8,9 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import ModalDeleteData from 'components/ModalDeteletData';
-import {CONTACT_DETAILS} from 'utils/wlData';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import ModalDeleteData from '../components/ModalDeteletData';
+import { CONTACT_DETAILS } from '../../src/utils/wlData';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ErrorComponent = () => {
   const [count, setCount] = useState(0);

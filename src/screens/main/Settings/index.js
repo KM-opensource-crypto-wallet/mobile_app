@@ -1,18 +1,18 @@
-import React, {useState, useEffect, useContext, useCallback} from 'react';
-import {View, Text, TouchableOpacity, ScrollView} from 'react-native';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import myStyles from './SettingsStyles';
-import LocalCurrency from 'assets/images/settings/local-currency.svg';
-import SetCurrency from 'assets/images/settings/set-currency.svg';
-import Notifications from 'assets/images/settings/notifications.svg';
-import Change from 'assets/images/settings/change-pass.svg';
-import ShowPhrase from 'assets/images/settings/show-phrase.svg';
-import Rate from 'assets/images/settings/rate.svg';
-import Privacy from 'assets/images/settings/privacy.svg';
-import Terms from 'assets/images/settings/mail.svg';
-import {Switch} from 'react-native-paper';
-import ModalFingerprint from 'components/ModalFingerprint';
-import ModalFingerprintVerification from 'components/ModalFingerprintVerification';
-import {useDispatch, useSelector} from 'react-redux';
+import LocalCurrency from '../../../assets/images/settings/local-currency.svg';
+import SetCurrency from '../../../assets/images/settings/set-currency.svg';
+import Notifications from '../../../assets/images/settings/notifications.svg';
+import Change from '../../../assets/images/settings/change-pass.svg';
+import ShowPhrase from '../../../assets/images/settings/show-phrase.svg';
+import Rate from '../../../assets/images/settings/rate.svg';
+import Privacy from '../../../assets/images/settings/privacy.svg';
+import Terms from '../../../assets/images/settings/mail.svg';
+import { Switch } from 'react-native-paper';
+import ModalFingerprint from '../../../components/ModalFingerprint';
+import ModalFingerprintVerification from '../../../components/ModalFingerprintVerification';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   getLocalCurrency,
   getLockTime,
@@ -32,21 +32,21 @@ import {
   setResetWallet,
 } from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
 import FingerprintScanner from 'react-native-fingerprint-scanner';
-import {fingerprintAuthOut} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
-import {ThemeContext} from 'theme/ThemeContext';
+import { fingerprintAuthOut } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
+import { ThemeContext } from '../../../theme/ThemeContext';
 import InAppReview from 'react-native-in-app-review';
-import AddIcon from 'assets/images/sidebarIcons/Add.svg';
+import AddIcon from '../../../assets/images/sidebarIcons/Add.svg';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
 import EntypeIcon from 'react-native-vector-icons/Entypo';
-import ModalConfirmEnableChatModal from 'components/ModalConfirmEnableChatModal';
+import ModalConfirmEnableChatModal from '../../../components/ModalConfirmEnableChatModal';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {getFingerprintName} from 'dok-wallet-blockchain-networks/helper';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import { getFingerprintName } from 'dok-wallet-blockchain-networks/helper';
+import { DokSafeAreaView } from '../../../components/DokSafeAreaView';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome6';
 
-const Settings = ({navigation}) => {
-  const {theme} = useContext(ThemeContext);
+const Settings = ({ navigation }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const isSwitchOn = useSelector(isFingerprint);
@@ -225,9 +225,9 @@ const Settings = ({navigation}) => {
               ...styles.btn,
               justifyContent: 'space-between',
             }}
-            // onPress={onToggleSwitch}
+          // onPress={onToggleSwitch}
           >
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Change width="24" height="22" fill={theme.font} />
               <View style={styles.box}>
                 <Text style={styles.btnTitle}>{`Login with ${getFingerprintName(
@@ -241,7 +241,7 @@ const Settings = ({navigation}) => {
             <Switch
               value={isSwitchOn}
               onValueChange={onToggleSwitch}
-              trackColor={{false: 'gray', true: '#E8E8E8'}}
+              trackColor={{ false: 'gray', true: '#E8E8E8' }}
               thumbColor={isSwitchOn ? theme.background : 'white'}
               ios_backgroundColor="#E8E8E8"
             />
@@ -299,7 +299,7 @@ const Settings = ({navigation}) => {
               size={24}
               color={theme.font}
             />
-            <View style={[{...styles.box, flex: 1}]}>
+            <View style={[{ ...styles.box, flex: 1 }]}>
               <Text style={styles.btnTitle}>Address Book</Text>
               <Text style={styles.btnText} numberOfLines={2}>
                 Save your address and use while sending crypto's
@@ -317,7 +317,7 @@ const Settings = ({navigation}) => {
               marginTop: 12,
             }}>
             <AddIcon width="25" height="25" stroke={theme.font} />
-            <View style={[{...styles.box, flex: 1}]}>
+            <View style={[{ ...styles.box, flex: 1 }]}>
               <Text style={styles.btnTitle}>EVM, SOL & TRX Addresses</Text>
               <Text style={styles.btnText} numberOfLines={2}>
                 Manage multiple addresses for EVM, SOL and TRX
@@ -350,7 +350,7 @@ const Settings = ({navigation}) => {
             <Switch
               value={feesOptions}
               onValueChange={onChangeFeesOptions}
-              trackColor={{false: 'gray', true: '#E8E8E8'}}
+              trackColor={{ false: 'gray', true: '#E8E8E8' }}
               thumbColor={feesOptions ? theme.background : 'white'}
               ios_backgroundColor="#E8E8E8"
             />
@@ -384,7 +384,7 @@ const Settings = ({navigation}) => {
             <Switch
               value={chatOptions}
               onValueChange={onChangeChatOptions}
-              trackColor={{false: 'gray', true: '#E8E8E8'}}
+              trackColor={{ false: 'gray', true: '#E8E8E8' }}
               thumbColor={chatOptions ? theme.background : 'white'}
               ios_backgroundColor="#E8E8E8"
             />
@@ -416,7 +416,7 @@ const Settings = ({navigation}) => {
             <Switch
               value={searchInHomeScreen}
               onValueChange={onChangeSearchOptionsHomeScreen}
-              trackColor={{false: 'gray', true: '#E8E8E8'}}
+              trackColor={{ false: 'gray', true: '#E8E8E8' }}
               thumbColor={searchInHomeScreen ? theme.background : 'white'}
               ios_backgroundColor="#E8E8E8"
             />
@@ -468,7 +468,7 @@ const Settings = ({navigation}) => {
               marginTop: 12,
             }}>
             <EntypeIcon name={'block'} size={24} color={theme.font} />
-            <View style={[{...styles.box, flex: 1}]}>
+            <View style={[{ ...styles.box, flex: 1 }]}>
               <Text style={styles.btnTitle}>Blockchain Chat Blocked</Text>
               <Text style={styles.btnText} numberOfLines={2}>
                 Manage blocked addresses for blockchain chat
@@ -488,7 +488,7 @@ const Settings = ({navigation}) => {
               color={theme.font}
               size={25}
             />
-            <View style={[{...styles.box, flex: 1}]}>
+            <View style={[{ ...styles.box, flex: 1 }]}>
               <Text style={styles.btnTitle}>Privacy Mode</Text>
               <Text style={styles.btnText} numberOfLines={2}>
                 Enhance privacy by auto-resetting addresses on app restart

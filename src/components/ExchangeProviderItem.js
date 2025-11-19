@@ -1,7 +1,7 @@
-import React, {useContext} from 'react';
-import {Text, StyleSheet, View, TouchableOpacity} from 'react-native';
+import React, { useContext } from 'react';
+import { Text, StyleSheet, View, TouchableOpacity } from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
-import {ThemeContext} from 'theme/ThemeContext';
+import { ThemeContext } from '../theme/ThemeContext';
 const ExchangeProviderItem = ({
   item,
   selectedToAsset,
@@ -9,7 +9,7 @@ const ExchangeProviderItem = ({
   selectedExchangeChain,
   onPressItem,
 }) => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   return (
@@ -22,7 +22,7 @@ const ExchangeProviderItem = ({
           borderWidth: 2,
         },
       ]}>
-      <FastImage source={{uri: item?.src}} style={styles.iconView} />
+      <FastImage source={{ uri: item?.src }} style={styles.iconView} />
       <View style={styles.rightView}>
         <Text style={styles.titleStyle} numberOfLines={1}>
           {item?.title}

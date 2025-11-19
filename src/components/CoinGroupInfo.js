@@ -1,4 +1,4 @@
-import React, {useRef, useContext, useMemo, useCallback} from 'react';
+import React, { useRef, useContext, useMemo, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import {ThemeContext} from 'theme/ThemeContext';
-import DokBottomSheetScrollView from 'components/BottomSheetScrollView';
+import { ThemeContext } from '../theme/ThemeContext';
+import DokBottomSheetScrollView from '../components/BottomSheetScrollView';
 import FastImage from '@d11/react-native-fast-image';
-import ChainItem from 'components/ChainItem';
+import ChainItem from '../components/ChainItem';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
-import {useGroupCoins} from 'hooks/useGroupCoins';
+import { useGroupCoins } from '../hooks/useGroupCoins';
 
 const CoinGroupInfo = ({
   groups,
@@ -23,14 +23,14 @@ const CoinGroupInfo = ({
   currentWallet,
   userCoins,
 }) => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = MyStyles(theme);
   const bottomRef = useRef();
   const selectedGroup = useMemo(() => {
     return groups.find(item => item?._id === selectedGroupId);
   }, [groups, selectedGroupId]);
 
-  const {isDisabledItem, isGroupCoinsAdded, isAdding} = useGroupCoins({
+  const { isDisabledItem, isGroupCoinsAdded, isAdding } = useGroupCoins({
     currentWallet,
     group: selectedGroup,
     isAddingGroup,
@@ -56,11 +56,11 @@ const CoinGroupInfo = ({
       <View style={styles.mainView}>
         <Text style={styles.title}>{selectedGroup?.name}</Text>
         <Text style={styles.description}>{selectedGroup?.description}</Text>
-        <Text style={[styles.title, {marginTop: 20}]}>{'Coins'}</Text>
+        <Text style={[styles.title, { marginTop: 20 }]}>{'Coins'}</Text>
         {coins?.map((coin, i) => (
           <View style={styles.chainRowView} key={'' + coin?._id + i}>
             <FastImage
-              source={{uri: coin?.icon}}
+              source={{ uri: coin?.icon }}
               style={styles.rowImageStyle}
             />
             <View style={styles.centerItemView}>

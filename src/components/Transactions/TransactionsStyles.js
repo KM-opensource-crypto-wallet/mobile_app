@@ -1,5 +1,5 @@
-import {StyleSheet, Dimensions} from 'react-native';
-import {SCREEN_WIDTH} from 'utils/dimensions';
+import { StyleSheet, Dimensions } from 'react-native';
+import { SCREEN_WIDTH } from '../../utils/dimensions';
 
 const WIDTH = Dimensions.get('window').width;
 const itemWidth = WIDTH / 1.2;

@@ -1,4 +1,4 @@
-import React, {useContext, useCallback, useRef, useEffect} from 'react';
+import React, { useContext, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,24 +7,24 @@ import {
   Platform,
   TouchableWithoutFeedback,
 } from 'react-native';
-import {Formik} from 'formik';
+import { Formik } from 'formik';
 import myStyles from './CryptoProvidersStyles';
-import {shallowEqual, useDispatch, useSelector} from 'react-redux';
-import {Portal, Provider, TextInput} from 'react-native-paper';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { Portal, Provider, TextInput } from 'react-native-paper';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {ThemeContext} from 'theme/ThemeContext';
-import {InAppBrowser} from 'react-native-inappbrowser-reborn';
-import {getUserCoinsOptions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { ThemeContext } from '../../theme/ThemeContext';
+import { InAppBrowser } from 'react-native-inappbrowser-reborn';
+import { getUserCoinsOptions } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import FastImage from '@d11/react-native-fast-image';
-import DokDropdown from 'components/DokDropdown';
-import CryptoCurrencyOptionItem from 'components/CryptoCurrencyOptionItem';
-import {amountValidation} from 'utils/validationSchema';
-import {currencySymbol} from 'data/currency';
-import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import CopyIcon from 'assets/images/icons/copy.svg';
-import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
+import DokDropdown from '../../components/DokDropdown';
+import CryptoCurrencyOptionItem from '../../components/CryptoCurrencyOptionItem';
+import { amountValidation } from '../../utils/validationSchema';
+import { currencySymbol } from '../../data/currency';
+import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import CopyIcon from '../../assets/images/icons/copy.svg';
+import { triggerHapticFeedbackLight } from '../../utils/hapticFeedback';
 import Toast from 'react-native-toast-message';
-import FiatCurrencyOptionItem from 'components/FiatCurrencyOptionItem';
+import FiatCurrencyOptionItem from '../../components/FiatCurrencyOptionItem';
 import {
   getCryptoProviders,
   getCryptoProvidersLoading,
@@ -35,8 +35,8 @@ import {
   fetchBuyCryptoQuote,
   setCryptoProviderLoading,
 } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProviderSlice';
-import Loading from 'components/Loading';
-import {APP_VERSION, inAppBrowserOptions} from 'utils/common';
+import Loading from '../../components/Loading';
+import { APP_VERSION, inAppBrowserOptions } from '../../utils/common';
 import {
   getBuyCryptoUrl,
   getIPAddress,
@@ -45,12 +45,12 @@ import {
   validateNumber,
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
-import {IS_ANDROID, IS_IOS} from 'utils/dimensions';
-import ModalAddCoins from 'components/ModalAddCoins';
-import PaymentOptionItem from 'components/PaymentOptionItem';
+import { IS_ANDROID, IS_IOS } from '../../utils/dimensions';
+import ModalAddCoins from '../../components/ModalAddCoins';
+import PaymentOptionItem from '../../components/PaymentOptionItem';
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {IS_KIML_WALLET} from 'utils/wlData';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { IS_KIML_WALLET } from '../../../src/utils/wlData';
 
 const currencyPicker = [
   {
@@ -83,7 +83,7 @@ const paymentOptions = [
 ];
 
 const CryptoProviders = () => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const localCurrency = useSelector(getLocalCurrency);
   const coinOptions = useSelector(getUserCoinsOptions, shallowEqual);
@@ -210,7 +210,7 @@ const CryptoProviders = () => {
           enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
+          {...(IS_ANDROID ? { extraScrollHeight: 30 } : {})}
           enableResetScrollToCoords={false}
           keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           contentContainerStyle={styles.contentContainerStyle}>
@@ -242,15 +242,15 @@ const CryptoProviders = () => {
                     {IS_IOS && IS_KIML_WALLET && (
                       <>
                         <DokDropdown
-                          titleStyle={{color: theme.primary}}
+                          titleStyle={{ color: theme.primary }}
                           placeholder={'Select payment method'}
                           title={'Select Payment Method'}
                           data={paymentOptions}
-                          dropdownStyle={{height: 70}}
+                          dropdownStyle={{ height: 70 }}
                           onChangeValue={item => {
                             setFieldValue('selectedPaymentMethod', item);
                             onSubmit(
-                              {...values, selectedPaymentMethod: item},
+                              { ...values, selectedPaymentMethod: item },
                               null,
                               true,
                               false,
@@ -282,11 +282,11 @@ const CryptoProviders = () => {
                       </>
                     )}
                     <DokDropdown
-                      titleStyle={{color: theme.primary}}
+                      titleStyle={{ color: theme.primary }}
                       placeholder={'Select Crypto'}
                       title={'Select Crypto'}
                       data={coinOptions}
-                      dropdownStyle={{height: 70}}
+                      dropdownStyle={{ height: 70 }}
                       search={true}
                       searchField={'value'}
                       keyboardAvoiding={true}
@@ -294,7 +294,7 @@ const CryptoProviders = () => {
                       onChangeValue={item => {
                         setFieldValue('selectedCoin', item);
                         onSubmit(
-                          {...values, selectedCoin: item},
+                          { ...values, selectedCoin: item },
                           null,
                           true,
                           false,
@@ -307,9 +307,9 @@ const CryptoProviders = () => {
                       renderLeftIcon={() =>
                         values.selectedCoin?.options?.icon && (
                           <FastImage
-                            source={{uri: values.selectedCoin?.options?.icon}}
+                            source={{ uri: values.selectedCoin?.options?.icon }}
                             resizeMode={'contain'}
-                            style={{height: 40, width: 40, marginRight: 8}}
+                            style={{ height: 40, width: 40, marginRight: 8 }}
                           />
                         )
                       }
@@ -323,7 +323,7 @@ const CryptoProviders = () => {
                     <Text style={styles.addCoinText}>
                       {'Looking for more coins?'}
                       <Text
-                        style={{color: theme.background}}
+                        style={{ color: theme.background }}
                         onPress={onPressAddMoreCoin}>
                         {' Click here for add coins on selected wallet'}
                       </Text>
@@ -337,14 +337,14 @@ const CryptoProviders = () => {
                           paddingLeft: 8,
                           marginTop: 20,
                         }}
-                        customSelectedTextStyle={{fontSize: 32}}
-                        contentContainerStyle={{width: 100}}
-                        titleStyle={{color: theme.primary}}
+                        customSelectedTextStyle={{ fontSize: 32 }}
+                        contentContainerStyle={{ width: 100 }}
+                        titleStyle={{ color: theme.primary }}
                         data={currencyPicker}
                         onChangeValue={item => {
                           setFieldValue('fiatCurrency', item.value);
                           onSubmit(
-                            {...values, fiatCurrency: item.value},
+                            { ...values, fiatCurrency: item.value },
                             null,
                             true,
                             false,
@@ -381,7 +381,7 @@ const CryptoProviders = () => {
                           );
                           setFieldValue('amount', tempValues);
                           onSubmit(
-                            {...values, amount: tempValues},
+                            { ...values, amount: tempValues },
                             null,
                             true,
                             true,
@@ -436,7 +436,7 @@ const CryptoProviders = () => {
                     ) : (
                       cryptoProviders?.map((item, index) =>
                         values?.selectedPaymentMethod?.value === 'apple_pay' &&
-                        item.title === 'Coinify' ? null : (
+                          item.title === 'Coinify' ? null : (
                           <TouchableOpacity
                             key={`cryptoProvider_${index}`}
                             style={styles.btn}
@@ -445,7 +445,7 @@ const CryptoProviders = () => {
                             }}>
                             <View style={styles.imageBox}>
                               <FastImage
-                                source={{uri: item.src}}
+                                source={{ uri: item.src }}
                                 style={styles.image}
                               />
                             </View>
@@ -453,13 +453,11 @@ const CryptoProviders = () => {
                               <Text style={styles.btnTitle}>{item.title}</Text>
                               <Text style={styles.btnCoins} numberOfLines={1}>
                                 {item?.fromAmount &&
-                                item?.toAmount &&
-                                values.selectedCoin
-                                  ? `${currencySymbol[values.fiatCurrency]}${
-                                      item.fromAmount
-                                    } ==> ${item.toAmount} ${
-                                      values.selectedCoin?.options?.symbol
-                                    }`
+                                  item?.toAmount &&
+                                  values.selectedCoin
+                                  ? `${currencySymbol[values.fiatCurrency]}${item.fromAmount
+                                  } ==> ${item.toAmount} ${values.selectedCoin?.options?.symbol
+                                  }`
                                   : ''}
                               </Text>
                             </View>

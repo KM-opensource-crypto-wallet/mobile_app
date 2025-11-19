@@ -13,23 +13,23 @@ import {
   RefreshControl,
 } from 'react-native';
 import myStyles from './StakingListStyles';
-import {useSelector, useDispatch} from 'react-redux';
-import {Provider, Portal} from 'react-native-paper';
+import { useSelector, useDispatch } from 'react-redux';
+import { Provider, Portal } from 'react-native-paper';
 
-import {ThemeContext} from 'theme/ThemeContext';
-import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import Loading from 'components/Loading';
-import StakingItem from 'components/StakingItem';
-import {refreshCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {setSelectedVotes} from 'dok-wallet-blockchain-networks/redux/staking/stakingSlice';
+import { ThemeContext } from '../../../../theme/ThemeContext';
+import { selectCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import Loading from '../../../../components/Loading';
+import StakingItem from '../../../../components/StakingItem';
+import { refreshCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import { setSelectedVotes } from 'dok-wallet-blockchain-networks/redux/staking/stakingSlice';
 import {
   isShowUnstakingButton,
   isShowVoteButton,
   isSupportEpochTime,
   multiplyBNWithFixed,
 } from 'dok-wallet-blockchain-networks/helper';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
-const StakingList = ({navigation}) => {
+import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
+const StakingList = ({ navigation }) => {
   const currentCoin = useSelector(selectCurrentCoin);
   const staking = Array.isArray(currentCoin?.staking)
     ? currentCoin?.staking
@@ -44,7 +44,7 @@ const StakingList = ({navigation}) => {
     return stakingInfo.find(item => item.label === 'disabled_unstaking')?.value;
   }, [stakingInfo]);
 
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -66,7 +66,7 @@ const StakingList = ({navigation}) => {
 
   useEffect(() => {
     if (currentCoin?.address) {
-      dispatch(refreshCurrentCoin({isFetchStaking: true}))
+      dispatch(refreshCurrentCoin({ isFetchStaking: true }))
         .unwrap()
         .then(() => {
           setIsLoading(false);
@@ -80,12 +80,12 @@ const StakingList = ({navigation}) => {
 
   const onRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    await dispatch(refreshCurrentCoin({isFetchStaking: true})).unwrap();
+    await dispatch(refreshCurrentCoin({ isFetchStaking: true })).unwrap();
     setIsRefreshing(false);
   }, [dispatch]);
 
   const renderItem = useCallback(
-    ({item}) => {
+    ({ item }) => {
       return (
         <StakingItem
           item={item}
@@ -110,8 +110,8 @@ const StakingList = ({navigation}) => {
           fiatAmount,
         },
         ...(buttonTitle === 'Withdraw'
-          ? {isWithdrawStaking: true}
-          : {isStakingRewards: true}),
+          ? { isWithdrawStaking: true }
+          : { isStakingRewards: true }),
         hideResource: true,
       });
     },

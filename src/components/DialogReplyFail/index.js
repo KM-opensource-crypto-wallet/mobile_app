@@ -1,12 +1,12 @@
 import React from 'react';
-import {Text, View, TouchableOpacity} from 'react-native';
+import { Text, View, TouchableOpacity } from 'react-native';
 import myStyles from './DialogReplyFail';
-import {Modal} from 'react-native-paper';
-import {useContext} from 'react';
-import {ThemeContext} from 'theme/ThemeContext';
+import { Modal } from 'react-native-paper';
+import { useContext } from 'react';
+import { ThemeContext } from '../../theme/ThemeContext';
 
-const DialogReplyFail = ({visible, hideDialog, message}) => {
-  const {theme} = useContext(ThemeContext);
+const DialogReplyFail = ({ visible, hideDialog, message }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const containerStyle = {

@@ -1,6 +1,6 @@
-import React, {useContext, useState} from 'react';
-import {StyleSheet, Dimensions, View, Text} from 'react-native';
-import {ThemeContext} from 'theme/ThemeContext';
+import React, { useContext, useState } from 'react';
+import { StyleSheet, Dimensions, View, Text } from 'react-native';
+import { ThemeContext } from '../../theme/ThemeContext';
 
 export const WIDTH = Dimensions.get('window').width + 80;
 const isIpad = WIDTH >= 768;
@@ -13,7 +13,7 @@ if (isIpad) {
 const HEIGHT = Dimensions.get('window').height;
 
 export const Learn = () => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   return (

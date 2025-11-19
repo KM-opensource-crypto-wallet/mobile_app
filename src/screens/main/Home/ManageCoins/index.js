@@ -6,21 +6,21 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import {TouchableOpacity, View, Text} from 'react-native';
+import { TouchableOpacity, View, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome6';
-import {useDispatch, useSelector} from 'react-redux';
-import {Searchbar} from 'react-native-paper';
+import { useDispatch, useSelector } from 'react-redux';
+import { Searchbar } from 'react-native-paper';
 import myStyles from './ManageCoinsStyles';
-import ModalAddToken from 'components/ModalAddToken';
-import ModalAddCoins from 'components/ModalAddCoins';
-import Pluscircleo from 'assets/images/icons/pluscircleo.svg';
-import {ThemeContext} from 'theme/ThemeContext';
+import ModalAddToken from '../../../../components/ModalAddToken';
+import ModalAddCoins from '../../../../components/ModalAddCoins';
+import Pluscircleo from '../../../../assets/images/icons/pluscircleo.svg';
+import { ThemeContext } from '../../../../theme/ThemeContext';
 import {
   selectCoinsForCurrentWallet,
   selectCurrentWallet,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import DraggableCryptoList from 'components/DraggableCryptoList';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import DraggableCryptoList from '../../../../components/DraggableCryptoList';
+import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
 import {
   Menu,
   MenuOption,
@@ -29,11 +29,11 @@ import {
 } from 'react-native-popup-menu';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import ModalConfirm from 'components/ModalConfirm';
-import {deleteCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import ModalConfirm from '../../../../components/ModalConfirm';
+import { deleteCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 
-const ManageCoins = ({navigation, route}) => {
-  const {theme} = useContext(ThemeContext);
+const ManageCoins = ({ navigation, route }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const [searchQuery, setSearchQuery] = useState('');
   const [modalAddTokenVisible, setModalAddTokenVisible] = useState(false);
@@ -84,7 +84,7 @@ const ManageCoins = ({navigation, route}) => {
         ) : (
           <Menu>
             <MenuTrigger>
-              <View style={{padding: 8}}>
+              <View style={{ padding: 8 }}>
                 <EntypoIcon
                   size={24}
                   name={'dots-three-vertical'}
@@ -114,10 +114,10 @@ const ManageCoins = ({navigation, route}) => {
                     name={'trash'}
                     resizeMode={'contain'}
                     size={20}
-                    style={{marginBottom: 2}}
+                    style={{ marginBottom: 2 }}
                     color={'red'}
                   />
-                  <Text style={[styles.optionText, {color: 'red'}]}>
+                  <Text style={[styles.optionText, { color: 'red' }]}>
                     {'Delete'}
                   </Text>
                 </View>

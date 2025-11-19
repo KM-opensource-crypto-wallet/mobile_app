@@ -13,18 +13,19 @@ import {
   TouchableWithoutFeedback,
   AppState,
 } from 'react-native';
-import {TextInput} from 'react-native-paper';
-import {Formik} from 'formik';
-import {useSelector, useDispatch} from 'react-redux';
+import { TextInput } from 'react-native-paper';
+import { Formik } from 'formik';
+import { useSelector, useDispatch } from 'react-redux';
 import {
   logInSuccess,
   fingerprintAuthSuccess,
   loadingOff,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
-import {getUserPassword} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
-import {validationSchemaLogin} from 'utils/validationSchema';
-import ModalReset from 'components/ModalReset';
-import {isFingerprint} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import { getUserPassword } from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
+// import { validationSchemaLogin } from 'utils/validationSchema';
+import { validationSchemaLogin } from '../../utils/validationSchema';
+import ModalReset from '../../components/ModalReset';
+import { isFingerprint } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import FingerprintScanner from 'react-native-fingerprint-scanner';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './LoginScreenStyles';
@@ -67,7 +68,7 @@ const LoginComponent = ({onClose, visible}) => {
     } else {
       navigation.reset({
         index: 0,
-        routes: [{name: 'Sidebar'}],
+        routes: [{ name: 'Sidebar' }],
       });
       dispatch(loadingOff());
     }
@@ -89,7 +90,7 @@ const LoginComponent = ({onClose, visible}) => {
         } else {
           navigation.reset({
             index: 0,
-            routes: [{name: 'ResetWallet', params: {isFromOnBoarding: true}}],
+            routes: [{ name: 'ResetWallet', params: { isFromOnBoarding: true } }],
           });
         }
       } catch (error) {
@@ -162,8 +163,10 @@ const LoginComponent = ({onClose, visible}) => {
         setWrong(true);
         dispatch(loadingOff());
       } else {
-        setWrong(true);
-        dispatch(loadingOff());
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'ResetWallet', params: { isFromOnBoarding: true } }],
+        });
       }
     },
     [
@@ -183,7 +186,7 @@ const LoginComponent = ({onClose, visible}) => {
             {theme.backgroundColor === '#121212' ? <LOGO_DARK /> : <LOGO />}
             <Text style={styles.title}>Sign in</Text>
             <Formik
-              initialValues={{password: ''}}
+              initialValues={{ password: '' }}
               validationSchema={validationSchemaLogin}
               onSubmit={handleSubmit}>
               {({

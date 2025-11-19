@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useMemo} from 'react';
+import React, { useCallback, useContext, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import {currencySymbol} from 'data/currency';
-import {CryptoList} from 'components/CryptoList';
-import WalletConnectStatus from 'components/WalletConnectStatus';
-import AddCircle from 'assets/images/icons/add-circle.svg';
-import {shallowEqual, useDispatch, useSelector} from 'react-redux';
+import { currencySymbol } from '../data/currency';
+import { CryptoList } from '../components/CryptoList';
+import WalletConnectStatus from '../components/WalletConnectStatus';
+import AddCircle from '../assets/images/icons/add-circle.svg';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import {
   getLocalCurrency,
   isSearchInHomeScreen,
@@ -21,20 +21,20 @@ import {
   selectCurrentWallet,
   selectUserCoins,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {useNavigation} from '@react-navigation/native';
-import {ThemeContext} from 'theme/ThemeContext';
-import {selectAllNewCoins} from 'dok-wallet-blockchain-networks/redux/currency/currencySelectors';
+import { useNavigation } from '@react-navigation/native';
+import { ThemeContext } from '../theme/ThemeContext';
+import { selectAllNewCoins } from 'dok-wallet-blockchain-networks/redux/currency/currencySelectors';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {setNewCoins} from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
-import {syncCoinsWithServer} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import BatchTransactionBanner from 'components/BatchTransactionBanner';
+import { setNewCoins } from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
+import { syncCoinsWithServer } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import BatchTransactionBanner from '../components/BatchTransactionBanner';
 
-const {width: screenWidth} = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get('window');
 
 let formWidth = screenWidth / 1.1;
 
 const Coins = () => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const localCurrency = useSelector(getLocalCurrency);
   const totalAssets = useSelector(countTotalAssets);
@@ -67,11 +67,9 @@ const Coins = () => {
       {!!coinsNames && !isImportWithPrivateKey && (
         <View style={styles.syncView}>
           <Text style={styles.syncTitle} numberOfLines={2}>
-            {`New ${
-              allNewCoins?.length === 1 ? 'cryptocurrency' : 'cryptocurrencies'
-            }, such as ${coinsNames} ${
-              allNewCoins?.length === 1 ? 'is' : 'are'
-            } now accessible.`}
+            {`New ${allNewCoins?.length === 1 ? 'cryptocurrency' : 'cryptocurrencies'
+              }, such as ${coinsNames} ${allNewCoins?.length === 1 ? 'is' : 'are'
+              } now accessible.`}
           </Text>
           <TouchableOpacity style={styles.syncButton} onPress={onPressSync}>
             <Text style={styles.syncButtonTitle}>Sync</Text>

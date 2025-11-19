@@ -13,30 +13,30 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from 'react-native';
-import {TextInput} from 'react-native-paper';
-import {Formik} from 'formik';
+import { TextInput } from 'react-native-paper';
+import { Formik } from 'formik';
 import myStyles from './AddAddressStyles';
-import {ThemeContext} from 'theme/ThemeContext';
-import {IS_ANDROID} from 'utils/dimensions';
-import SelectInput from 'components/SelectInput';
+import { ThemeContext } from '../../../../../theme/ThemeContext';
+import { IS_ANDROID } from '../../../../../utils/dimensions';
+import SelectInput from '../../../../../components/SelectInput';
 import {
   isEqualArray,
   isEVMChain,
   PrivateKeyList,
 } from 'dok-wallet-blockchain-networks/helper';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
-import {useDispatch, useSelector} from 'react-redux';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import WalletsPicker from 'components/WalletsPicker';
-import Checkbox from 'components/Checkbox';
-import {getAddressBook} from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSelector';
-import {v4} from 'uuid';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { getChain } from 'dok-wallet-blockchain-networks/cryptoChain';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectAllWallets } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import WalletsPicker from '../../../../../components/WalletsPicker';
+import Checkbox from '../../../../../components/Checkbox';
+import { getAddressBook } from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSelector';
+import { v4 } from 'uuid';
 import {
   addAddressBook,
   updateAddressBook,
 } from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSlice';
-import {string, object, array, boolean} from 'yup';
+import { string, object, array, boolean } from 'yup';
 
 const validationSchema = (previousObj, existedNames) => {
   return object().shape({
@@ -93,8 +93,8 @@ const validationSchema = (previousObj, existedNames) => {
   });
 };
 
-const AddAddress = ({navigation, route}) => {
-  const {theme} = useContext(ThemeContext);
+const AddAddress = ({ navigation, route }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const previousData = useMemo(() => {
     return {
@@ -162,7 +162,7 @@ const AddAddress = ({navigation, route}) => {
         const label = values?.label || '';
         if (chain_name && address && name) {
           const chain = getChain(chain_name);
-          const isValid = await chain.isValidAddress({address});
+          const isValid = await chain.isValidAddress({ address });
           if (isValid) {
             const payload = {
               id: previousData?.id || v4(),
@@ -185,7 +185,7 @@ const AddAddress = ({navigation, route}) => {
       } catch (err) {
         if (err.stack) {
           console.error(`in importWallet: ${JSON.stringify(err)}`);
-          formikRef.current?.setErrors({address: 'Invalid address'});
+          formikRef.current?.setErrors({ address: 'Invalid address' });
         }
       }
     },
@@ -198,7 +198,7 @@ const AddAddress = ({navigation, route}) => {
       'wallets',
       wallets.map(item => {
         if (item?.clientId === walletClientId) {
-          return {...item, isSelected: !item?.isSelected};
+          return { ...item, isSelected: !item?.isSelected };
         }
         return item;
       }),
@@ -210,7 +210,7 @@ const AddAddress = ({navigation, route}) => {
     formikRef?.current?.setFieldValue(
       'wallets',
       wallets.map(item => {
-        return {...item, isSelected};
+        return { ...item, isSelected };
       }),
     );
   }, []);
@@ -221,7 +221,7 @@ const AddAddress = ({navigation, route}) => {
       enableAutomaticScroll={true}
       bounces={false}
       keyboardShouldPersistTaps={'always'}
-      {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
+      {...(IS_ANDROID ? { extraScrollHeight: 30 } : {})}
       keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
       contentContainerStyle={styles.contentContainerStyle}>
       <TouchableWithoutFeedback
@@ -243,9 +243,9 @@ const AddAddress = ({navigation, route}) => {
               label: previousData?.label || '',
               networkInput: previousData?.chain_name
                 ? {
-                    label: previousData?.chain_display_name,
-                    value: previousData?.chain_name,
-                  }
+                  label: previousData?.chain_display_name,
+                  value: previousData?.chain_name,
+                }
                 : {},
               isEVMCheckbox:
                 typeof previousData?.isEVM === 'boolean'
@@ -302,7 +302,7 @@ const AddAddress = ({navigation, route}) => {
                             !values?.isEVMCheckbox,
                           );
                         }}
-                        customStyle={{marginBottom: 0}}
+                        customStyle={{ marginBottom: 0 }}
                       />
                       <Text style={styles.checkboxDesc}>
                         Available for all EVM chains
@@ -314,7 +314,7 @@ const AddAddress = ({navigation, route}) => {
                     textColor={theme.font}
                     autoComplete={'off'}
                     autoCorrect={false}
-                    {...(IS_ANDROID ? {keyboardType: 'visible-password'} : {})}
+                    {...(IS_ANDROID ? { keyboardType: 'visible-password' } : {})}
                     spellCheck={false}
                     label="Address"
                     placeholder={'Enter Address'}
@@ -357,7 +357,7 @@ const AddAddress = ({navigation, route}) => {
                     ref={inputNameRef}
                     style={styles.input}
                     textColor={theme.font}
-                    {...(IS_ANDROID ? {keyboardType: 'visible-password'} : {})}
+                    {...(IS_ANDROID ? { keyboardType: 'visible-password' } : {})}
                     label="Name"
                     placeholder={'Enter Name'}
                     theme={{
@@ -415,7 +415,7 @@ const AddAddress = ({navigation, route}) => {
                     onSelectAll={onSelectAll}
                   />
                   {!!errorWallets && (
-                    <Text style={[styles.textConfirm, {marginTop: 4}]}>
+                    <Text style={[styles.textConfirm, { marginTop: 4 }]}>
                       {errorWallets}
                     </Text>
                   )}

@@ -1,13 +1,13 @@
-import {View, Text} from 'react-native';
+import { View, Text } from 'react-native';
 import myStyles from './AboutAppStyles';
-import {ThemeContext} from 'theme/ThemeContext';
-import {useContext} from 'react';
+import { ThemeContext } from '../../../../theme/ThemeContext';
+import { useContext } from 'react';
 import RNDeviceInfo from 'react-native-device-info';
-import {IS_ANDROID} from 'utils/dimensions';
+import { IS_ANDROID } from '../../../../utils/dimensions';
 import dayjs from 'dayjs';
 
 const AboutApp = () => {
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   return (
     <>

@@ -1,18 +1,18 @@
-import React, {useContext} from 'react';
-import {View, StyleSheet} from 'react-native';
+import React, { useContext } from 'react';
+import { View, StyleSheet } from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
-import ChainIcon from 'components/ChainIcon/ChainIcon';
-import {ThemeContext} from 'theme/ThemeContext';
+import ChainIcon from '../../components/ChainIcon/ChainIcon';
+import { ThemeContext } from '../../theme/ThemeContext';
 
-const CoinIcon = ({item}) => {
-  const {theme} = useContext(ThemeContext);
+const CoinIcon = ({ item }) => {
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   return (
     <View style={styles.iconBox}>
       {item?.icon && (
         <FastImage
-          source={{uri: item?.icon}}
+          source={{ uri: item?.icon }}
           resizeMode={'contain'}
           style={styles.imageStyle}
         />
