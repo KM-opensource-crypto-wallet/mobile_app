@@ -231,6 +231,10 @@ const Main = () => {
           IS_ANDROID && IS_KIML_WALLET
             ? kimlWalletLatestVersion
             : await getLiveVersion();
+        if (!liveVersion) {
+          dispatch(setIsUpdateAvailable('no'));
+          return;
+        }
         const currentVersion = getVersion();
         if (isNewerVersion(liveVersion, currentVersion)) {
           setShowUpdateModal(true);
