@@ -63,12 +63,26 @@ workflows:
       - name: Set Android SDK location
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/android/local.properties"
+      - name: Build Dok Wallet Android release
+        script: |
+          export NODE_OPTIONS="--max-old-space-size=8192" && cd android
+          ./gradlew bundleDokwalletRelease \
+            -PversionCode=$DOKWALLET_ANDROID_BUILD_NUMBER \
+            -PversionName=$DOKWALLET_ANDROID_VERSION_NAME
       - name: Build KIML Wallet Android release
         script: |
           export NODE_OPTIONS="--max-old-space-size=8192" && cd android
           ./gradlew assembleKimlwalletRelease \
             -PversionCode=$KIMLWALLET_ANDROID_BUILD_NUMBER \
             -PversionName=$KIMLWALLET_ANDROID_VERSION_NAME
+      - name: Publish Dok Wallet
+        script: |
+          echo $DOKWALLET_GCLOUD_SERVICE_ACCOUNT_CREDENTIALS > dok_gcloud.json
+          google-play bundles publish \
+            --credentials @file:dok_gcloud.json \
+            --track "internal" \
+            --rollout 0.20 \
+            --bundle android/app/build/outputs/bundle/dokwalletRelease/app-dokwallet-release.aab
 
     artifacts:
       - android/app/build/outputs/**/*.aab
