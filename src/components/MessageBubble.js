@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useState } from 'react';
+import React, {useCallback, useContext, useState} from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -15,14 +15,14 @@ import Animated, {
   withTiming,
   useAnimatedStyle,
 } from 'react-native-reanimated';
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../utils/dimensions';
+import {SCREEN_HEIGHT, SCREEN_WIDTH} from 'utils/dimensions';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { ThemeContext } from '../theme/ThemeContext';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
-import { isFetchingConversations } from 'dok-wallet-blockchain-networks/redux/messages/messageSelector';
+import {ThemeContext} from 'theme/ThemeContext';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useNavigation} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
+import {isFetchingConversations} from 'dok-wallet-blockchain-networks/redux/messages/messageSelector';
 
 const BUBBLE_SIZE = 56;
 const PADDING = 25;
@@ -31,10 +31,10 @@ const ICON_SIZE = 32;
 const MessageBubble = () => {
   const positionX = useSharedValue(SCREEN_WIDTH - PADDING);
   const [isOpen, setIsOpen] = useState(false);
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const navigation = useNavigation();
-  const { bottom, top } = useSafeAreaInsets();
+  const {bottom, top} = useSafeAreaInsets();
   const positionY = useSharedValue(SCREEN_HEIGHT - bottom - BUBBLE_SIZE - 130);
   const lastPositionY = useSharedValue(
     SCREEN_HEIGHT - bottom - BUBBLE_SIZE - 130,
@@ -75,19 +75,19 @@ const MessageBubble = () => {
         tempPosition < 0
           ? 0
           : tempPosition > safeHeight
-            ? safeHeight
-            : tempPosition;
+          ? safeHeight
+          : tempPosition;
       lastPositionY.value = positionY.value;
     });
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: positionX.value }, { translateY: positionY.value }],
+    transform: [{translateX: positionX.value}, {translateY: positionY.value}],
   }));
   return (
     <>
       <GestureDetector gesture={panGesture}>
         <Animated.View
-          style={[styles.box, animatedStyle, isOpen && { paddingLeft: 12 }]}>
+          style={[styles.box, animatedStyle, isOpen && {paddingLeft: 12}]}>
           {isOpen ? (
             <>
               {isFetchingConv ? (

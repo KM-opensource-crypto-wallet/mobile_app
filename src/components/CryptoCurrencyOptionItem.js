@@ -1,30 +1,30 @@
-import React, { useContext } from 'react';
-import { View, StyleSheet, Text, Dimensions } from 'react-native';
-import ThemedIcon from '../components/ThemedIcon';
-import { ThemeContext } from '../theme/ThemeContext';
-const { width: screenWidth } = Dimensions.get('window');
+import React, {useContext} from 'react';
+import {View, StyleSheet, Text, Dimensions} from 'react-native';
+import ThemedIcon from 'components/ThemedIcon';
+import {ThemeContext} from 'theme/ThemeContext';
+const {width: screenWidth} = Dimensions.get('window');
 const itemWidth = screenWidth / 1.4;
 import FastImage from '@d11/react-native-fast-image';
-import ChainItem from '../components/ChainItem';
+import ChainItem from 'components/ChainItem';
 
-const CryptoCurrencyOptionItem = ({ item }) => {
-  const { theme } = useContext(ThemeContext);
+const CryptoCurrencyOptionItem = ({item}) => {
+  const {theme} = useContext(ThemeContext);
   const myStyles = styles(theme);
   return (
     <View style={myStyles.list}>
       <View style={myStyles.iconBox}>
         {item?.options?.icon && (
           <FastImage
-            source={{ uri: item?.options?.icon }}
+            source={{uri: item?.options?.icon}}
             resizeMode={'contain'}
-            style={{ height: '100%', width: '100%' }}
+            style={{height: '100%', width: '100%'}}
           />
         )}
       </View>
 
       <View style={myStyles.items}>
         <View
-          style={[myStyles.rowView, !item?.options?.title && { marginTop: 0 }]}>
+          style={[myStyles.rowView, !item?.options?.title && {marginTop: 0}]}>
           <Text style={[myStyles.titleAmount]}>{item?.options?.symbol}</Text>
           {item?.options?.chain_display_name && (
             <ChainItem chain_display_name={item?.options?.chain_display_name} />

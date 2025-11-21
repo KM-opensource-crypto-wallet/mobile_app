@@ -8,8 +8,8 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import ModalDeleteData from '../components/ModalDeteletData';
-import { CONTACT_DETAILS } from '../../src/utils/wlData';
+import ModalDeleteData from 'components/ModalDeteletData';
+import { CONTACT_DETAILS } from 'utils/wlData';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ErrorComponent = () => {

@@ -5,18 +5,18 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, FlatList } from 'react-native';
+import {View, StyleSheet, Text, TouchableOpacity, FlatList} from 'react-native';
 
-import { ThemeContext } from '../theme/ThemeContext';
-import ConversationItem from '../components/ConversationItem';
-import EmptyView from '../components/EmptyView';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
-import { getConversations } from 'dok-wallet-blockchain-networks/redux/messages/messageSelector';
-import { forwardMessages } from '../../dok-wallet-blockchain-networks/redux/messages/messageSlice';
-import { DokSafeAreaView } from '../components/DokSafeAreaView';
+import {ThemeContext} from 'theme/ThemeContext';
+import ConversationItem from 'components/ConversationItem';
+import EmptyView from 'components/EmptyView';
+import {shallowEqual, useDispatch, useSelector} from 'react-redux';
+import {getConversations} from 'dok-wallet-blockchain-networks/redux/messages/messageSelector';
+import {forwardMessages} from '../../dok-wallet-blockchain-networks/redux/messages/messageSlice';
+import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
-const ForwardMessage = ({ navigation, route }) => {
-  const { theme } = useContext(ThemeContext);
+const ForwardMessage = ({navigation, route}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const conversations = useSelector(getConversations, shallowEqual);
   const dispatch = useDispatch();
@@ -48,7 +48,7 @@ const ForwardMessage = ({ navigation, route }) => {
     currentConversation => {
       const conversationId = currentConversation?.topic;
       const isSelected = !!selectedConversation[conversationId];
-      const previousSelectedConversations = { ...selectedConversation };
+      const previousSelectedConversations = {...selectedConversation};
       if (isSelected) {
         delete previousSelectedConversations[conversationId];
       } else {
@@ -61,7 +61,7 @@ const ForwardMessage = ({ navigation, route }) => {
 
   const onPressForward = useCallback(() => {
     const selectedConversations = Object.values(selectedConversation);
-    dispatch(forwardMessages({ messages, conversations: selectedConversations }));
+    dispatch(forwardMessages({messages, conversations: selectedConversations}));
     navigation.navigate('MessageList');
   }, [dispatch, messages, navigation, selectedConversation]);
 
@@ -84,7 +84,7 @@ const ForwardMessage = ({ navigation, route }) => {
         <FlatList
           contentContainerStyle={styles.contentContainerStyle}
           data={filterConversations}
-          renderItem={({ item, index }) => (
+          renderItem={({item, index}) => (
             <ConversationItem
               item={item}
               index={index}

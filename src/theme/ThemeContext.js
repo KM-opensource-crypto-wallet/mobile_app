@@ -6,12 +6,69 @@ import React, {
   useCallback,
 } from 'react';
 import { Appearance } from 'react-native';
-import { getAsyncStorageData, storeAsyncStorageData } from '../utils/asyncStorage';
-import { wlName } from '../../src/utils/wlData';
+import { getAsyncStorageData, storeAsyncStorageData } from 'utils/asyncStorage';
+import { wlName } from 'utils/wlData';
 
-export const ThemeContext = createContext();
+const ThemeContext = createContext();
+const WL_COLORS = {
+  dokwallet: { background: '#F44D03' },
+  kimlwallet: { background: '#4F8DD8' },
+};
 
-export const ThemeProvider = ({ children }) => {
+const DYNAMIC_COLOR = WL_COLORS[wlName] ?? WL_COLORS.dokwallet;
+const lightTheme = {
+  ...DYNAMIC_COLOR,
+  font: '#000000',
+  primary: '#4D4A49',
+  lightBackground: '#F5F5F5',
+  disabledItem: '#DDDDDD',
+  backgroundColor: '#FFFFFF',
+  gray: '#999694',
+  whiteOutline: '#E6E2E1',
+  title: '#FFFFFF',
+  borderActiveColor: '#222',
+  carouselPoints: 'rgba(0,0,0,.2)',
+  secondaryBackgroundColor: '#FFFFFF',
+  fontSecondary: '#000000',
+  headerBorder: '#B7B7B7',
+  sidebarIcon: '#989898',
+  backdrop: 'rgba(0, 0, 0, 0.5)',
+  walletItemColor: '#EFEDF4',
+  toastBackground: '#232441',
+  progressBottom: '#2650F4',
+  leftToastBackground: '#191B26',
+  successBottom: '#71C441',
+  warningBottom: '#ffcc00',
+  blue: '#006ee6',
+};
+
+const darkTheme = {
+  ...DYNAMIC_COLOR,
+  font: '#FFFFFF',
+  primary: '#FFFFFF',
+  lightBackground: '#333333',
+  disabledItem: '#111111',
+  backgroundColor: '#121212',
+  gray: '#999694',
+  whiteOutline: '#333130',
+  title: '#FFFFFF',
+  borderActiveColor: '#FFFFFF',
+  carouselPoints: '#FFFFFF',
+  secondaryBackgroundColor: '#333130',
+  fontSecondary: '#000000',
+  headerBorder: '#B7B7B7',
+  sidebarIcon: '#FFFFFF',
+  backdrop: 'rgba(255, 255, 255, 0.1)',
+  walletItemColor: '#242428',
+  toastBackground: '#232441',
+  progressBottom: '#2650F4',
+  leftToastBackground: '#191B26',
+  successBottom: '#71C441',
+  warningBottom: '#ffcc00',
+  blue: '#006ee6',
+};
+
+const ThemeProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(
     Appearance.getColorScheme() === 'dark',
   );
@@ -64,69 +121,10 @@ export const ThemeProvider = ({ children }) => {
   );
 };
 
-const DOK_COLOR = {
-  background: '#F44D03',
-};
 
-const KIML_COLOR = {
-  background: '#4F8DD8',
-};
-
-const WL_COLORS = {
-  dokwallet: DOK_COLOR,
-  kimlwallet: KIML_COLOR,
-};
-
-const DYNAMIC_COLOR = WL_COLORS[wlName] || WL_COLORS.dokwallet;
-
-export const lightTheme = {
-  ...DYNAMIC_COLOR,
-  font: '#000000',
-  primary: '#4D4A49',
-  lightBackground: '#F5F5F5',
-  disabledItem: '#DDDDDD',
-  backgroundColor: '#FFFFFF',
-  gray: '#999694',
-  whiteOutline: '#E6E2E1',
-  title: '#FFFFFF',
-  borderActiveColor: '#222',
-  carouselPoints: 'rgba(0,0,0,.2)',
-  secondaryBackgroundColor: '#FFFFFF',
-  fontSecondary: '#000000',
-  headerBorder: '#B7B7B7',
-  sidebarIcon: '#989898',
-  backdrop: 'rgba(0, 0, 0, 0.5)',
-  walletItemColor: '#EFEDF4',
-  toastBackground: '#232441',
-  progressBottom: '#2650F4',
-  leftToastBackground: '#191B26',
-  successBottom: '#71C441',
-  warningBottom: '#ffcc00',
-  blue: '#006ee6',
-};
-
-export const darkTheme = {
-  ...DYNAMIC_COLOR,
-  font: '#FFFFFF',
-  primary: '#FFFFFF',
-  lightBackground: '#333333',
-  disabledItem: '#111111',
-  backgroundColor: '#121212',
-  gray: '#999694',
-  whiteOutline: '#333130',
-  title: '#FFFFFF',
-  borderActiveColor: '#FFFFFF',
-  carouselPoints: '#FFFFFF',
-  secondaryBackgroundColor: '#333130',
-  fontSecondary: '#000000',
-  headerBorder: '#B7B7B7',
-  sidebarIcon: '#FFFFFF',
-  backdrop: 'rgba(255, 255, 255, 0.1)',
-  walletItemColor: '#242428',
-  toastBackground: '#232441',
-  progressBottom: '#2650F4',
-  leftToastBackground: '#191B26',
-  successBottom: '#71C441',
-  warningBottom: '#ffcc00',
-  blue: '#006ee6',
-};
+export {
+  ThemeContext,
+  ThemeProvider,
+  darkTheme,
+  lightTheme
+}

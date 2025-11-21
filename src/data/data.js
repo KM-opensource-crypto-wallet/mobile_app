@@ -2,53 +2,49 @@ import {
   CARD,
   CARD_2,
   IS_DOK_WALLET,
-  ONBOARDING_1,
-  ONBOARDING_2,
-  ONBOARDING_3,
-  ONBOARDING_4,
-} from '../utils/wlData';
-
+} from 'utils/wlData';
+import { Icons } from "../assets/images"
 const data = IS_DOK_WALLET
   ? [
     {
       title: 'Multi-currency Support',
       body: 'Store, send, receive and exchange primary crypto currencies like BTC, LTC, ETH and more.',
-      src: ONBOARDING_1,
+      src: Icons.DokWalletOnboarding1,
     },
     {
       title: 'Buy Crypto',
       body: 'Buy crypto directly from the app with a credit/debit card!',
-      src: ONBOARDING_2,
+      src: Icons.DokWalletOnboarding2,
     },
     {
       title: 'Convenient biometric authentication login',
       body: 'Keep all your assets secure with our biometric authentication-based login.',
-      src: ONBOARDING_3,
+      src: Icons.DokWalletOnboarding3,
     },
     {
       title: 'The best place to store your crypto assets.',
       body: 'Store all your crypto assets in one place with our user-friendly wallet.',
-      src: ONBOARDING_4,
+      src: Icons.DokWalletOnboarding4,
     },
   ]
   : [
     {
       title: 'Multi-currency Support',
       body: 'send and receive primary crypto currencies like BTC, LTC, ETH and more.',
-      src: ONBOARDING_1,
+      src: Icons.KimlOnboarding1,
     },
 
     {
       title: 'Convenient biometric authentication login',
       body: 'Keep all your assets secure with our biometric authentication-based login.',
-      src: ONBOARDING_3,
+      src: Icons.KimlOnboarding2,
     },
   ];
 
 export default data;
 
-import CloudCheck from '../assets/images/icons/cloud-check.svg';
-import Edit from '../assets/images/icons/edit.svg';
+import CloudCheck from 'assets/images/icons/cloud-check.svg';
+import Edit from 'assets/images/icons/edit.svg';
 
 export const google = <CloudCheck height="30" width="30" />;
 export const manual = <Edit height="30" width="30" />;

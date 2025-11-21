@@ -6,27 +6,27 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Keyboard } from 'react-native';
+import {View, StyleSheet, Text, TouchableOpacity, Keyboard} from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { ThemeContext } from '../theme/ThemeContext';
-import { useSelector, useDispatch } from 'react-redux';
-import { getBatchTransactions } from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSelectors';
-import { selectCurrentWallet } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import { clearAllBatchTransactions } from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
-import ModalConfirm from '../components/ModalConfirm';
-import BatchTransactionSheet from '../components/BatchTransactionSheet';
+import {ThemeContext} from 'theme/ThemeContext';
+import {useSelector, useDispatch} from 'react-redux';
+import {getBatchTransactions} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSelectors';
+import {selectCurrentWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {clearAllBatchTransactions} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
+import ModalConfirm from 'components/ModalConfirm';
+import BatchTransactionSheet from 'components/BatchTransactionSheet';
 
 const BatchTransactionBanner = () => {
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const batchTransactions = useSelector(getBatchTransactions);
   const currentWallet = useSelector(selectCurrentWallet);
   const dispatch = useDispatch();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const walletSheetRef = useRef();
-  const { transactionCount, displayText, walletTransactions } = useMemo(() => {
+  const {transactionCount, displayText, walletTransactions} = useMemo(() => {
     if (!batchTransactions || !currentWallet?.clientId) {
-      return { transactionCount: 0, chainCount: 0, displayText: '' };
+      return {transactionCount: 0, chainCount: 0, displayText: ''};
     }
 
     const localWalletTransactions =
@@ -34,7 +34,7 @@ const BatchTransactionBanner = () => {
     const totalTransactions = localWalletTransactions.length || 0;
 
     if (totalTransactions === 0) {
-      return { transactionCount: 0, chainCount: 0, displayText: '' };
+      return {transactionCount: 0, chainCount: 0, displayText: ''};
     }
 
     // Get unique chains from transactions
@@ -50,8 +50,9 @@ const BatchTransactionBanner = () => {
       chainText = ` across ${chains.length} chains (${chains.join(', ')})`;
     }
 
-    const transactionText = `${totalTransactions} ${totalTransactions === 1 ? 'transaction' : 'transactions'
-      }`;
+    const transactionText = `${totalTransactions} ${
+      totalTransactions === 1 ? 'transaction' : 'transactions'
+    }`;
 
     return {
       transactionCount: totalTransactions,
@@ -67,7 +68,7 @@ const BatchTransactionBanner = () => {
 
   const handleConfirmDelete = useCallback(() => {
     setShowConfirmModal(false);
-    dispatch(clearAllBatchTransactions({ wallet_id: currentWallet?.clientId }));
+    dispatch(clearAllBatchTransactions({wallet_id: currentWallet?.clientId}));
   }, [dispatch, currentWallet?.clientId]);
 
   const handleCancelDelete = useCallback(() => {
@@ -117,8 +118,9 @@ const BatchTransactionBanner = () => {
       <ModalConfirm
         visible={showConfirmModal}
         title="Clear Batch Transactions"
-        description={`Are you sure you want to clear all ${transactionCount} pending batch ${transactionCount === 1 ? 'transaction' : 'transactions'
-          }? This action cannot be undone.`}
+        description={`Are you sure you want to clear all ${transactionCount} pending batch ${
+          transactionCount === 1 ? 'transaction' : 'transactions'
+        }? This action cannot be undone.`}
         onPressYes={handleConfirmDelete}
         onPressNo={handleCancelDelete}
         yesButtonTitle="Clear All"

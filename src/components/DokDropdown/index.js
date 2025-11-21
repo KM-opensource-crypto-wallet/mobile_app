@@ -1,9 +1,9 @@
-import React, { useContext } from 'react';
-import { View, Text } from 'react-native';
+import React, {useContext} from 'react';
+import {View, Text} from 'react-native';
 import myStyles from './DokDropdownStyles';
-import ArrowDown from '../../assets/images/buy/arrow-down.svg';
-import { Dropdown } from 'react-native-element-dropdown';
-import { ThemeContext } from '../../theme/ThemeContext';
+import ArrowDown from 'assets/images/buy/arrow-down.svg';
+import {Dropdown} from 'react-native-element-dropdown';
+import {ThemeContext} from 'theme/ThemeContext';
 
 const DokDropdown = ({
   title,
@@ -18,7 +18,7 @@ const DokDropdown = ({
   customSelectedTextStyle,
   ...props
 }) => {
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   return (
@@ -32,8 +32,8 @@ const DokDropdown = ({
           },
           !!contentContainerStyle && contentContainerStyle,
         ]}
-        itemTextStyle={{ color: theme.font }}
-        activeColor={{ backgroundColor: theme.secondaryBackgroundColor }}
+        itemTextStyle={{color: theme.font}}
+        activeColor={{backgroundColor: theme.secondaryBackgroundColor}}
         placeholderStyle={styles.placeholderStyle}
         selectedTextStyle={[
           styles.selectedTextStyle,
@@ -50,7 +50,7 @@ const DokDropdown = ({
         title
         onChange={onChangeValue}
         renderRightIcon={() => (
-          <ArrowDown height="30" width="30" style={{ fill: theme.gray }} />
+          <ArrowDown height="30" width="30" style={{fill: theme.gray}} />
         )}
         renderItem={renderItem}
         {...props}

@@ -1,19 +1,19 @@
-import React, { useCallback, useContext, useRef } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
-import DokBottomSheet from '../components/BottomSheet';
-import { ThemeContext } from '../theme/ThemeContext';
-import { TouchableOpacity } from '@gorhom/bottom-sheet';
+import React, {useCallback, useContext, useRef} from 'react';
+import {StyleSheet, View, Text} from 'react-native';
+import DokBottomSheet from 'components/BottomSheet';
+import {ThemeContext} from 'theme/ThemeContext';
+import {TouchableOpacity} from '@gorhom/bottom-sheet';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   refreshCurrentCoin,
   setSelectedDeriveAddress,
   updateCurrentCoin,
 } from '../../dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import { useDispatch, useSelector } from 'react-redux';
-import { selectCurrentCoin } from '../../dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {useDispatch, useSelector} from 'react-redux';
+import {selectCurrentCoin} from '../../dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import Clipboard from '@react-native-clipboard/clipboard';
-import { triggerHapticFeedbackLight } from '../utils/hapticFeedback';
+import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
 import Toast from 'react-native-toast-message';
 
 const DeriveAddressSheet = ({
@@ -22,12 +22,12 @@ const DeriveAddressSheet = ({
   selectedItem,
   onItemPress,
 }) => {
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const myStyles = styles(theme);
   const bottomRef = useRef();
   const dispatch = useDispatch();
   const currentCoin = useSelector(selectCurrentCoin);
-  const { bottom } = useSafeAreaInsets();
+  const {bottom} = useSafeAreaInsets();
 
   const onSelectAddress = useCallback(async () => {
     bottomRef.current?.close();
@@ -150,12 +150,12 @@ const DeriveAddressSheet = ({
           <TouchableOpacity style={myStyles.itemView} onPress={onPressDelete}>
             <Ionicons
               name={'trash'}
-              style={[myStyles.plusIcon, { marginBottom: 4 }]}
+              style={[myStyles.plusIcon, {marginBottom: 4}]}
               resizeMode={'contain'}
               size={24}
               color={'red'}
             />
-            <Text style={[myStyles.title, { color: 'red' }]}>{'Delete'}</Text>
+            <Text style={[myStyles.title, {color: 'red'}]}>{'Delete'}</Text>
           </TouchableOpacity>
         )}
       </View>

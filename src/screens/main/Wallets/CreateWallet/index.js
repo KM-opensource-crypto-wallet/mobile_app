@@ -14,19 +14,20 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { TextInput } from 'react-native-paper';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
-import { wallet } from '../../../../data/data';
+import { wallet } from 'data/data';
 import myStyles from './CreateWalletStyles';
 import { useSelector, shallowEqual, useDispatch } from 'react-redux';
-import Exclamationcircleo from '../../../../assets/images/icons/exclamationcircle.svg';
-import { isIpad, useFloatingHeight } from '../../../../utils/dimensions';
-import { ThemeContext } from '../../../../theme/ThemeContext';
-import ThemedIcon from '../../../../components/ThemedIcon';
+import Exclamationcircleo from 'assets/images/icons/exclamationcircle.svg';
+import { isIpad, useFloatingHeight } from 'utils/dimensions';
+import { ThemeContext } from 'theme/ThemeContext';
+import ThemedIcon from 'components/ThemedIcon';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import ModalDelete from '../../../../components/ModalDelete';
+import ModalDelete from 'components/ModalDelete';
 import {
   _currentWalletIndexSelector,
   selectAllWalletName,
@@ -36,10 +37,12 @@ import {
 import {
   createWallet,
   deleteWallet,
-  updateWalletName,
-} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import Spinner from '../../../../components/Spinner';
-import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
+  odupdateWalletName,
+} from '../../../../../dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import Spinner from 'components/Spinner';
+import { DokSafeAreaView } from 'components/DokSafeAreaView';
+// import { updateWalletName } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import { updateWalletName } from '../../../../../dok-wallet-blockchain-networks/redux/wallets/walletsSlice'
 
 // import { useNavigationState, CommonActions, StackActions } from "@react-navigation/native";
 
@@ -48,51 +51,35 @@ const CreateWallet = ({ navigation, route }) => {
   const styles = myStyles(theme);
   const formikRef = useRef(null);
   const dispatch = useDispatch();
-  const walletName = route?.params?.walletName;
-  const phrase = route?.params?.phrase;
-  const privateKey = route?.params?.privateKey;
-  const chain_name = route?.params?.chain_name;
-  const wallItem = route?.params?.item;
+  const { walletName, phrase, privateKey, chain_name, item: wallItem } = route?.params || {};
   const walletIndex = route?.params?.walletIndex?.toString();
-  const currentWallet = useSelector(selectCurrentWallet);
-  const currentWalletIndex = useSelector(_currentWalletIndexSelector);
-  const allWalletName = useSelector(selectAllWalletName, shallowEqual);
-  // const currentWalletIndex = useSelector(currentWalletIndexSelector);
-  const allWallets = useSelector(selectAllWallets);
+
+  const {
+    currentWallet,
+    currentWalletIndex,
+    allWalletName,
+    allWallets,
+  } = useSelector(
+    state => ({
+      currentWallet: selectCurrentWallet(state),
+      currentWalletIndex: _currentWalletIndexSelector(state),
+      allWalletName: selectAllWalletName(state),
+      allWallets: selectAllWallets(state),
+    }),
+    shallowEqual
+  );
+
   const finalAllWallets = useRef(
     allWalletName.filter(subItem => subItem !== walletName),
   );
-  // const [currentWalletName, setCurrentWalletName] = useState(walletName);
-  // const currentWalletName = currentWallet.name;
-  // const allCoins = useSelector(getAllCoins);
-  // const allWallets = useSelector(getWallets);
-  const defaultNewWalletName = currentWallet?.walletName; //`Wallet ${allWallets.length}`;
+
+  const defaultNewWalletName = currentWallet?.walletName;
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const floatingHeight = useFloatingHeight();
-  // const key = useSelector(getNewKey);
 
   const [wrong, setWrong] = useState(false);
   const isCurrentWallet = walletName === defaultNewWalletName;
-  //------------------ for goBack -------------------//
-  // const currentRoutes = useNavigationState((state) => state.routes);
-
-  // useEffect(() => {
-  //   navigation.dispatch((state) => {
-  //     const routes = state.routes.filter((r) => {
-  //       return r.name !== "Verify" && r.name !== "VerifyCreate";
-  //     });
-
-  //     const isHome = currentRoutes.find(({ name }) => name === "Sidebar");
-  //     isHome ? null : routes.unshift({ name: "Sidebar" });
-
-  //     return CommonActions.reset({
-  //       ...state,
-  //       routes,
-  //       wallet.service.js: routes.length - 1,
-  //     });
-  //   });
-  // }, [route]);
 
   useEffect(() => {
     if (!walletName) {
@@ -166,6 +153,7 @@ const CreateWallet = ({ navigation, route }) => {
   }, []);
 
   const handleSubmit = async values => {
+    Alert.alert('=>', walletName)
     if (walletName) {
       dispatch(
         updateWalletName({

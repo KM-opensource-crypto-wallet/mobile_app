@@ -2,34 +2,34 @@ import { persistStore, persistCombineReducers } from 'redux-persist';
 import createSensitiveStorage from 'redux-persist-sensitive-storage';
 import { configureStore } from '@reduxjs/toolkit';
 
-import { authSlice } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
-import { settingsSlice } from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
-import { walletsSlice } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import { currentTransferSlice } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import { currencySlice } from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
-import { exchangeSlice } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
+import { authSlice } from '../../dok-wallet-blockchain-networks/redux/auth/authSlice';
+import { settingsSlice } from '../../dok-wallet-blockchain-networks/redux/settings/settingsSlice';
+import { walletsSlice } from '../../dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import { currentTransferSlice } from '../../dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
+import { currencySlice } from '../../dok-wallet-blockchain-networks/redux/currency/currencySlice';
+import { exchangeSlice } from '../../dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import BootSplash from 'react-native-bootsplash';
 import {
   setReduxStoreLoaded,
   walletConnectSlice,
-} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSlice';
-import { stakingSlice } from 'dok-wallet-blockchain-networks/redux/staking/stakingSlice';
-import { cryptoProviderSlice } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProviderSlice';
-import { extraDataSlice } from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
-import { messageSlice } from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
-import { sellCryptoSlice } from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
-import { addressBookSlice } from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSlice';
+} from '../../dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSlice';
+import { stakingSlice } from '../../dok-wallet-blockchain-networks/redux/staking/stakingSlice';
+import { cryptoProviderSlice } from '../../dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProviderSlice';
+import { extraDataSlice } from '../../dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
+import { messageSlice } from '../../dok-wallet-blockchain-networks/redux/messages/messageSlice';
+import { sellCryptoSlice } from '../../dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
+import { addressBookSlice } from '../../dok-wallet-blockchain-networks/redux/addressBook/addressBookSlice';
 import { batchTransactionSlice } from '../../dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const storage = createSensitiveStorage({
   keychainService: process.env.REDUX_KEYCHAIN_NAME,
   sharedPreferencesName: process.env.REDUX_SHARED_PREFERENCE_NAME,
 });
 
-
 const config = {
   key: process.env.REDUX_KEY,
-  storage,
+  storage: AsyncStorage,
   blacklist: [
     currentTransferSlice.name,
     exchangeSlice.name,
@@ -67,7 +67,7 @@ const logger = storeAPI => next => action => {
   return result;
 };
 
-export const store = configureStore({
+const store = configureStore({
   reducer: rootReducer,
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
@@ -76,10 +76,11 @@ export const store = configureStore({
     }), // Add the logger to the middleware chain
 });
 
-export const persistor = persistStore(store, null, () => {
+let persistor = persistStore(store, null, () => {
   setTimeout(() => {
     store.dispatch(setReduxStoreLoaded(true));
     BootSplash.hide({ fade: true });
   }, 500);
 });
 
+export { persistor, store };

@@ -19,13 +19,12 @@ import { Formik } from 'formik';
 import * as Yup from 'yup';
 import myStyles from './EditConversation';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
-import { ThemeContext } from '../../../../theme/ThemeContext';
-// import Exclamationcircleo from 'assets/images/icons/exclamationcircle.svg';
-import Exclamationcircleo from '../../../../assets/images/icons/exclamationcircle.svg';
+import { ThemeContext } from 'theme/ThemeContext';
+import Exclamationcircleo from 'assets/images/icons/exclamationcircle.svg';
 import { addConversationsName } from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
 import { getSelectedConversations } from 'dok-wallet-blockchain-networks/redux/messages/messageSelector';
 import { getCustomizePublicAddress } from 'dok-wallet-blockchain-networks/helper';
-import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
+import { DokSafeAreaView } from 'components/DokSafeAreaView';
 
 const EditConversation = ({ navigation }) => {
   const { theme } = useContext(ThemeContext);

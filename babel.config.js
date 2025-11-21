@@ -22,10 +22,10 @@ module.exports = {
     [
       "module-resolver",
       {
-        root: ["."],
-        extensions: [".ios.js", ".android.js", ".js", ".ts", ".tsx", ".json"],
+        root: ['./src'],
         alias: {
-          src: ["./src/"],
+          crypto: 'react-native-quick-crypto',
+          'dok-wallet-blockchain-networks': './dok-wallet-blockchain-networks',
         },
       },
     ],

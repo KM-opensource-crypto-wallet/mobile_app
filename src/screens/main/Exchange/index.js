@@ -15,28 +15,28 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import { TextInput as TextField } from 'react-native-paper';
+import {TextInput as TextField} from 'react-native-paper';
 import structuredClone from '@ungap/structured-clone';
 
 import myStyles from './ExchangeStyles';
 
-import { shallowEqual, useSelector, useDispatch } from 'react-redux';
-import ArrIcon from '../../../assets/images/icons/ic_arrow_right.svg';
-import InfoIcon from '../../../assets/images/icons/info.svg';
-import ScurvedIcon from '../../../assets/images/icons/S-curved.svg';
+import {shallowEqual, useSelector, useDispatch} from 'react-redux';
+import ArrIcon from 'assets/images/icons/ic_arrow_right.svg';
+import InfoIcon from 'assets/images/icons/info.svg';
+import ScurvedIcon from 'assets/images/icons/S-curved.svg';
 
-import SelectInputExchange from '../../../components/SelectInputExchange';
+import SelectInputExchange from 'components/SelectInputExchange';
 
-import { ThemeContext } from '../../../theme/ThemeContext';
+import {ThemeContext} from 'theme/ThemeContext';
 import FastImage from '@d11/react-native-fast-image';
 
-import DokDropdown from '../../../components/DokDropdown';
+import DokDropdown from 'components/DokDropdown';
 import {
   _currentWalletIndexSelector,
   getCoinsOptions,
   selectAllWallets,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import { getExchange } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
+import {getExchange} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
 import {
   calculateExchange,
   setExchangeFields,
@@ -50,16 +50,16 @@ import {
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
 import Slider from '@react-native-community/slider';
-import { useKeyboardHeight } from '../../../hooks/useKeyboardHeight';
-import ModalAddCoins from '../../../components/ModalAddCoins';
-import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import { currencySymbol } from '../../../data/currency';
-import { useIsFocused } from '@react-navigation/native';
-import { setCurrentTransferSuccess } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import { getExchangeQuote } from 'dok-wallet-blockchain-networks/service/dokApi';
-import ExchangeProviderItem from '../../../components/ExchangeProviderItem';
-import { getExchangeProviders } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
-import { DokSafeAreaView } from '../../../components/DokSafeAreaView';
+import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
+import ModalAddCoins from 'components/ModalAddCoins';
+import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {currencySymbol} from 'data/currency';
+import {useIsFocused} from '@react-navigation/native';
+import {setCurrentTransferSuccess} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
+import {getExchangeQuote} from 'dok-wallet-blockchain-networks/service/dokApi';
+import ExchangeProviderItem from 'components/ExchangeProviderItem';
+import {getExchangeProviders} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
+import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
 const calculateEstimatePrice = async (
   selectedFromAsset,
@@ -120,8 +120,8 @@ const calculateEstimatePrice = async (
   callback?.();
 };
 
-const Exchange = ({ navigation }) => {
-  const { theme } = useContext(ThemeContext);
+const Exchange = ({navigation}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const exchangeProvidersText = useSelector(getExchangeProviders);
@@ -148,7 +148,7 @@ const Exchange = ({ navigation }) => {
 
   const keyboardHeight = useKeyboardHeight();
 
-  const [isFetching, setIsFetching] = useState({ from: false, to: false });
+  const [isFetching, setIsFetching] = useState({from: false, to: false});
 
   const minimumAmountRef = useRef({});
   const sliderRef = useRef();
@@ -184,7 +184,7 @@ const Exchange = ({ navigation }) => {
   const handleFromChange = useCallback(
     async (data, isNotUpdateSlider) => {
       if (selectedToAsset) {
-        setIsFetching({ from: false, to: true });
+        setIsFetching({from: false, to: true});
       }
       const tempValues = validateNumberInInput(
         data,
@@ -209,7 +209,7 @@ const Exchange = ({ navigation }) => {
         }
       } else {
         dispatch(
-          setExchangeFields({ amountFrom: tempValues, fiatPay: tempFiatPay }),
+          setExchangeFields({amountFrom: tempValues, fiatPay: tempFiatPay}),
         );
       }
       if (selectedFromAsset?.symbol && selectedToAsset?.symbol) {
@@ -219,7 +219,7 @@ const Exchange = ({ navigation }) => {
           tempValues,
           dispatch,
           () => {
-            setIsFetching({ from: false, to: false });
+            setIsFetching({from: false, to: false});
           },
         );
       }
@@ -229,7 +229,7 @@ const Exchange = ({ navigation }) => {
 
   const onSliderValueChange = useCallback(
     value => {
-      dispatch(setExchangeFields({ sliderValue: value }));
+      dispatch(setExchangeFields({sliderValue: value}));
       const balance = selectedFromAsset?.totalAmount;
       if (balance) {
         const balanceBN = new BigNumber(balance);
@@ -246,7 +246,7 @@ const Exchange = ({ navigation }) => {
 
   const handleSubmit = useCallback(async () => {
     dispatch(setCurrentTransferSuccess(false));
-    navigation.navigate('Transfer', { fromScreen: 'Exchange' });
+    navigation.navigate('Transfer', {fromScreen: 'Exchange'});
     dispatch(calculateExchange());
   }, [dispatch, navigation]);
 
@@ -260,7 +260,7 @@ const Exchange = ({ navigation }) => {
         const tempCoinDetails = tempWallet?.coins.find(
           item =>
             item?.symbol?.toUpperCase() ===
-            coinDetails?.options?.symbol?.toUpperCase() &&
+              coinDetails?.options?.symbol?.toUpperCase() &&
             item?.chain_name === coinDetails?.options?.chain_name,
         );
         if (tempCoinDetails?.chain_symbol === 'BNB') {
@@ -283,14 +283,14 @@ const Exchange = ({ navigation }) => {
           possibleCoinDetails.push(optionPayload);
         }
       }
-      return { selectedCoinDetails, possibleCoinDetails, selectedWalletDetails };
+      return {selectedCoinDetails, possibleCoinDetails, selectedWalletDetails};
     },
     [allWallets, currentWalletIndex],
   );
 
   const onChangeFromValues = useCallback(
     item => {
-      const { possibleCoinDetails, selectedCoinDetails, selectedWalletDetails } =
+      const {possibleCoinDetails, selectedCoinDetails, selectedWalletDetails} =
         getCoinDetails(item);
       const balance = selectedCoinDetails?.totalAmount;
       const tempSliderValue = calculateSliderValue(balance, amountFrom);
@@ -325,7 +325,7 @@ const Exchange = ({ navigation }) => {
         localSelectToAsset?.symbol &&
         (!minimumValue || fromAmountBN.gte(minimumValueBN))
       ) {
-        setIsFetching({ from: true, to: true });
+        setIsFetching({from: true, to: true});
         const payload = {
           coinFrom: fromSymbol,
           coinTo: localSelectToAsset?.symbol,
@@ -380,7 +380,7 @@ const Exchange = ({ navigation }) => {
             }),
           );
         }
-        setIsFetching({ from: false, to: false });
+        setIsFetching({from: false, to: false});
       }
     },
     [dispatch, selectedFromAsset?.currencyRate, selectedFromAsset?.totalAmount],
@@ -409,7 +409,7 @@ const Exchange = ({ navigation }) => {
 
   const onChangeToValues = useCallback(
     item => {
-      const { possibleCoinDetails, selectedCoinDetails } = getCoinDetails(item);
+      const {possibleCoinDetails, selectedCoinDetails} = getCoinDetails(item);
       const customPayload = {
         label: 'Custom',
         value: 'Custom',
@@ -444,7 +444,7 @@ const Exchange = ({ navigation }) => {
   const onSelectToAsset = useCallback(
     item => {
       if (item.value === 'Custom') {
-        dispatch(setExchangeFields({ customOption: item.value }));
+        dispatch(setExchangeFields({customOption: item.value}));
       } else {
         dispatch(
           setExchangeFields({
@@ -563,9 +563,10 @@ const Exchange = ({ navigation }) => {
                   <Text style={styles.amountAvailableText}>
                     Available amount: {balance}
                     {'0 '}
-                    {` ${selectedCoinFromOptions?.options?.symbol?.toUpperCase() ||
+                    {` ${
+                      selectedCoinFromOptions?.options?.symbol?.toUpperCase() ||
                       ''
-                      }`}
+                    }`}
                   </Text>
 
                   <InfoIcon width={24} height={24} stroke={theme.background} />
@@ -578,9 +579,9 @@ const Exchange = ({ navigation }) => {
                   {selectedCoinFromOptions?.options?.icon && (
                     <View style={styles.iconBox}>
                       <FastImage
-                        source={{ uri: selectedCoinFromOptions?.options?.icon }}
+                        source={{uri: selectedCoinFromOptions?.options?.icon}}
                         resizeMode={'contain'}
-                        style={{ height: '100%', width: '100%' }}
+                        style={{height: '100%', width: '100%'}}
                       />
                     </View>
                   )}
@@ -602,7 +603,7 @@ const Exchange = ({ navigation }) => {
                 <View
                   style={[
                     styles.select,
-                    { marginLeft: 20, flex: 1, justifyContent: 'flex-end' },
+                    {marginLeft: 20, flex: 1, justifyContent: 'flex-end'},
                   ]}>
                   {isFetching?.from ? (
                     <ActivityIndicator
@@ -665,14 +666,14 @@ const Exchange = ({ navigation }) => {
                     data={possibleFromCoin}
                     onChangeValue={onSelectFromAsset}
                     value={selectedFromAsset?.address}
-                    selectedTextProps={{ numberOfLines: 1 }}
+                    selectedTextProps={{numberOfLines: 1}}
                   />
                 </View>
               )}
               <View style={styles.scurvedIcon}>
                 <TouchableOpacity
                   onPress={onPressSwap}
-                  hitSlop={{ top: 10, left: 10, bottom: 10, right: 10 }}>
+                  hitSlop={{top: 10, left: 10, bottom: 10, right: 10}}>
                   <ScurvedIcon
                     width={25}
                     height={20}
@@ -690,9 +691,9 @@ const Exchange = ({ navigation }) => {
                   {selectedCoinToOptions?.options?.icon && (
                     <View style={styles.iconBox}>
                       <FastImage
-                        source={{ uri: selectedCoinToOptions?.options?.icon }}
+                        source={{uri: selectedCoinToOptions?.options?.icon}}
                         resizeMode={'contain'}
-                        style={{ height: '100%', width: '100%' }}
+                        style={{height: '100%', width: '100%'}}
                       />
                     </View>
                   )}
@@ -714,7 +715,7 @@ const Exchange = ({ navigation }) => {
                 <View
                   style={[
                     styles.select,
-                    { marginLeft: 20, flex: 1, justifyContent: 'flex-end' },
+                    {marginLeft: 20, flex: 1, justifyContent: 'flex-end'},
                   ]}>
                   {isFetching?.to ? (
                     <ActivityIndicator
@@ -723,7 +724,7 @@ const Exchange = ({ navigation }) => {
                     />
                   ) : (
                     <TextInput
-                      style={[styles.coinTitle, { flex: 1, textAlign: 'right' }]}
+                      style={[styles.coinTitle, {flex: 1, textAlign: 'right'}]}
                       value={amountTo}
                       placeholder="0.0"
                       keyboardType="numeric"
@@ -738,7 +739,7 @@ const Exchange = ({ navigation }) => {
               <Text style={styles.addCoinText}>
                 {'Looking for more coins?'}
                 <Text
-                  style={{ color: theme.background }}
+                  style={{color: theme.background}}
                   onPress={onPressAddMoreCoin}>
                   {' Click here for add coins on selected wallet'}
                 </Text>
@@ -751,7 +752,7 @@ const Exchange = ({ navigation }) => {
                     data={possibleToCoins}
                     onChangeValue={onSelectToAsset}
                     value={customOption || selectedToAsset?.address}
-                    selectedTextProps={{ numberOfLines: 1 }}
+                    selectedTextProps={{numberOfLines: 1}}
                   />
                 </View>
               )}
@@ -774,7 +775,7 @@ const Exchange = ({ navigation }) => {
                   name="To Address"
                   autoFocus={true}
                   onChangeText={text => {
-                    dispatch(setExchangeFields({ customAddress: text }));
+                    dispatch(setExchangeFields({customAddress: text}));
                   }}
                   value={customAddress}
                 />
@@ -797,31 +798,33 @@ const Exchange = ({ navigation }) => {
               <View style={styles.textContainer}>
                 <Text style={styles.text}>Minimum amount</Text>
                 <View style={styles.amountAvailable}>
-                  <Text style={styles.textValue}>{`${minimumValue || 0} ${selectedFromAsset?.symbol || ''
-                    }`}</Text>
+                  <Text style={styles.textValue}>{`${minimumValue || 0} ${
+                    selectedFromAsset?.symbol || ''
+                  }`}</Text>
                 </View>
               </View>
               <View style={styles.textContainer}>
-                <Text style={{ ...styles.text, fontFamily: 'Roboto-Bold' }}>
+                <Text style={{...styles.text, fontFamily: 'Roboto-Bold'}}>
                   You pay
                 </Text>
                 <View style={styles.amountAvailable}>
                   <Text
-                    style={{ ...styles.textValue, fontFamily: 'Roboto-Bold' }}>
+                    style={{...styles.textValue, fontFamily: 'Roboto-Bold'}}>
                     {amountFrom || '0.0'}
-                    {` ${selectedCoinFromOptions?.options?.symbol?.toUpperCase() ||
+                    {` ${
+                      selectedCoinFromOptions?.options?.symbol?.toUpperCase() ||
                       ''
-                      }`}
+                    }`}
                   </Text>
                 </View>
               </View>
               <View style={styles.textContainer}>
-                <Text style={{ ...styles.text, fontFamily: 'Roboto-Bold' }}>
+                <Text style={{...styles.text, fontFamily: 'Roboto-Bold'}}>
                   You pay in fiat
                 </Text>
                 <View style={styles.amountAvailable}>
                   <Text
-                    style={{ ...styles.textValue, fontFamily: 'Roboto-Bold' }}>
+                    style={{...styles.textValue, fontFamily: 'Roboto-Bold'}}>
                     {`${currencySymbol[localCurrency]}${fiatPay || '0.0'}`}
                   </Text>
                 </View>
@@ -850,7 +853,7 @@ const Exchange = ({ navigation }) => {
                   disabled={isButtonDisabled}>
                   <Text style={styles.buttonTitle}>Next</Text>
                 </TouchableOpacity>
-                <View style={{ height: keyboardHeight, width: '100%' }} />
+                <View style={{height: keyboardHeight, width: '100%'}} />
               </View>
             </View>
           </TouchableWithoutFeedback>

@@ -1,11 +1,11 @@
-import React, { useContext, useCallback } from 'react';
-import { Dimensions, TouchableOpacity, View } from 'react-native';
-import { Modal, Portal, Text } from 'react-native-paper';
-import { ThemeContext } from '../../theme/ThemeContext';
+import React, {useContext, useCallback} from 'react';
+import {Dimensions, TouchableOpacity, View} from 'react-native';
+import {Modal, Portal, Text} from 'react-native-paper';
+import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './ModalAdvanceCustomDerivationStyles';
 
 const WIDTH = Dimensions.get('window').width + 80;
-const { height: screenHeight } = Dimensions.get('window');
+const {height: screenHeight} = Dimensions.get('window');
 const modalHeight = screenHeight / 2.5;
 
 const isIpad = WIDTH >= 768;
@@ -18,8 +18,8 @@ if (isIpad) {
   ITEM_WIDTH = Math.round(WIDTH * 0.7);
 }
 
-const ModalAdvanceCustomDerivation = ({ visible, onPressYes, onPressNo }) => {
-  const { theme } = useContext(ThemeContext);
+const ModalAdvanceCustomDerivation = ({visible, onPressYes, onPressNo}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const handlerNo = useCallback(() => {

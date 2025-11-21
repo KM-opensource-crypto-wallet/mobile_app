@@ -6,19 +6,19 @@ import React, {
   memo,
   useRef,
 } from 'react';
-import { FlatList, Keyboard, View } from 'react-native';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import {FlatList, Keyboard, View} from 'react-native';
+import {BottomSheetFlatList} from '@gorhom/bottom-sheet';
 import myStyles from './CryptoListStyles';
-import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import { useSelector, useDispatch } from 'react-redux';
-import { ThemeContext } from '../../theme/ThemeContext';
-import { refreshCoins } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {useSelector, useDispatch} from 'react-redux';
+import {ThemeContext} from 'theme/ThemeContext';
+import {refreshCoins} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {
   fetchAllCoins,
   fetchAllSearchCoins,
 } from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
-import CoinItem from '../../components/CoinItem/CoinItem';
-import { Searchbar } from 'react-native-paper';
+import CoinItem from 'components/CoinItem/CoinItem';
+import {Searchbar} from 'react-native-paper';
 
 export const CryptoList = ({
   number,
@@ -32,7 +32,7 @@ export const CryptoList = ({
   showSearch,
   contentContainerStyle,
 }) => {
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const localCurrency = useSelector(getLocalCurrency);
@@ -102,7 +102,7 @@ export const CryptoList = ({
     onRefresh: onRefresh,
     refreshing: isRefreshing,
     onEndReached: onEndReached,
-    renderItem: ({ item, index }) => {
+    renderItem: ({item, index}) => {
       return (
         <CoinItem
           item={item}
@@ -119,15 +119,15 @@ export const CryptoList = ({
     },
     ...(number === 1 &&
       showSearch && {
-      ListHeaderComponent: (
-        <SearchComponent
-          handleSearch={handleSearch}
-          searchQuery={searchQuery}
-        />
-      ),
-      keyboardShouldPersistTaps: 'always',
-      onScrollBeginDrag: onScrollBeginDrag,
-    }),
+        ListHeaderComponent: (
+          <SearchComponent
+            handleSearch={handleSearch}
+            searchQuery={searchQuery}
+          />
+        ),
+        keyboardShouldPersistTaps: 'always',
+        onScrollBeginDrag: onScrollBeginDrag,
+      }),
   };
 
   return number === 3 ? (
@@ -137,8 +137,8 @@ export const CryptoList = ({
   );
 };
 
-const SearchComponent = memo(({ searchQuery, handleSearch }) => {
-  const { theme } = useContext(ThemeContext);
+const SearchComponent = memo(({searchQuery, handleSearch}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   return (
     <View style={styles.searchContainer}>

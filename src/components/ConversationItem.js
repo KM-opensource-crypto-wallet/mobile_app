@@ -1,15 +1,15 @@
-import React, { memo, useCallback, useContext, useMemo } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
-import { setSelectedConversation } from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
+import React, {memo, useCallback, useContext, useMemo} from 'react';
+import {Text, TouchableOpacity, View} from 'react-native';
+import {setSelectedConversation} from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
 import {
   getCustomizePublicAddress,
   getTimeOrDateAsPerToday,
 } from 'dok-wallet-blockchain-networks/helper';
-import KeyboardArrow from '../assets/images/icons/keyboard-arrow-right.svg';
-import { useNavigation } from '@react-navigation/native';
-import { useDispatch } from 'react-redux';
-import { ThemeContext } from '../theme/ThemeContext';
-import Checkbox from '../components/Checkbox';
+import KeyboardArrow from 'assets/images/icons/keyboard-arrow-right.svg';
+import {useNavigation} from '@react-navigation/native';
+import {useDispatch} from 'react-redux';
+import {ThemeContext} from 'theme/ThemeContext';
+import Checkbox from 'components/Checkbox';
 
 const ConversationItem = ({
   item,
@@ -20,7 +20,7 @@ const ConversationItem = ({
   const lastMessage = item?.lastMessage;
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const title = useMemo(() => {
     return item?.name || getCustomizePublicAddress(item?.peerAddress);
@@ -63,8 +63,8 @@ const ConversationItem = ({
           <Text style={styles.date}>
             {lastMessage?.createdAt || item?.createdAt
               ? getTimeOrDateAsPerToday(
-                lastMessage?.createdAt || item?.createdAt,
-              )
+                  lastMessage?.createdAt || item?.createdAt,
+                )
               : ''}
           </Text>
         </View>
@@ -131,6 +131,6 @@ export default memo(ConversationItem, (prevProps, nextProps) => {
     prevProps.item.name === nextProps.item.name &&
     prevProps.item?.lastMessage?.text === nextProps.item.lastMessage?.text &&
     JSON.stringify(prevProps.selectedConversation) ===
-    JSON.stringify(nextProps.selectedConversation)
+      JSON.stringify(nextProps.selectedConversation)
   );
 });

@@ -1,13 +1,13 @@
-import { CheckBox } from '@rneui/themed';
-import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
-import Loading from '../../../../components/Loading';
-import { getCustomizePublicAddress } from 'dok-wallet-blockchain-networks/helper';
+import {CheckBox} from '@rneui/themed';
+import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import Loading from 'components/Loading';
+import {getCustomizePublicAddress} from 'dok-wallet-blockchain-networks/helper';
 import {
   clearSelectedUTXOs,
   setCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import { selectCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import { refreshCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {refreshCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import React, {
   useCallback,
   useContext,
@@ -24,14 +24,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { ThemeContext } from '../../../../theme/ThemeContext';
+import {useDispatch, useSelector} from 'react-redux';
+import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './SelectUTXOsScreenStyles';
 
-const SelectUTXOsScreen = ({ navigation }) => {
+const SelectUTXOsScreen = ({navigation}) => {
   const dispatch = useDispatch();
   const currentCoin = useSelector(selectCurrentCoin);
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const [allUTXOs, setAllUTXOs] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -67,7 +67,7 @@ const SelectUTXOsScreen = ({ navigation }) => {
 
   useEffect(() => {
     if (currentCoin?.address) {
-      dispatch(refreshCurrentCoin({ fetchUTXOs: true }))
+      dispatch(refreshCurrentCoin({fetchUTXOs: true}))
         .unwrap()
         .then(() => {
           setIsLoading(false);
@@ -81,7 +81,7 @@ const SelectUTXOsScreen = ({ navigation }) => {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await dispatch(refreshCurrentCoin({ fetchUTXOs: true })).unwrap();
+    await dispatch(refreshCurrentCoin({fetchUTXOs: true})).unwrap();
     setRefreshing(false);
   }, [dispatch]);
 
@@ -92,7 +92,7 @@ const SelectUTXOsScreen = ({ navigation }) => {
       return prev.map(item => ({
         ...item,
         isSelected: newValue,
-        data: item.data.map(tx => ({ ...tx, isSelected: newValue })),
+        data: item.data.map(tx => ({...tx, isSelected: newValue})),
       }));
     });
   }, [setAllUTXOs]);
@@ -108,12 +108,12 @@ const SelectUTXOsScreen = ({ navigation }) => {
           return {
             ...item,
             isSelected: toggled,
-            data: item.data.map(tx => ({ ...tx, isSelected: toggled })),
+            data: item.data.map(tx => ({...tx, isSelected: toggled})),
           };
         }
         const updatedData = item.data.map(tx =>
           tx.vout === +vout && tx.txid === txid
-            ? { ...tx, isSelected: !tx.isSelected }
+            ? {...tx, isSelected: !tx.isSelected}
             : tx,
         );
         const isSelected = updatedData.some(tx => tx.isSelected);
@@ -129,7 +129,7 @@ const SelectUTXOsScreen = ({ navigation }) => {
   useLayoutEffect(() => {
     if (allUTXOs.length > 0) {
       const headerRight = () => (
-        <View style={{ marginRight: 8 }}>
+        <View style={{marginRight: 8}}>
           <TouchableOpacity
             style={styles.optionMenu}
             onPress={() => onSelectAll()}>
@@ -141,7 +141,7 @@ const SelectUTXOsScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       );
-      navigation.setOptions({ headerRight });
+      navigation.setOptions({headerRight});
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -167,7 +167,7 @@ const SelectUTXOsScreen = ({ navigation }) => {
               <SectionList
                 sections={allUTXOs}
                 keyExtractor={item => item.txid + item.vout}
-                ListHeaderComponent={<View style={{ height: 14 }} />}
+                ListHeaderComponent={<View style={{height: 14}} />}
                 contentContainerStyle={
                   styles.sectionListContainerContainerStyle
                 }
@@ -176,7 +176,7 @@ const SelectUTXOsScreen = ({ navigation }) => {
                     <Text style={styles.emptyText}>{'No UTXOs available'}</Text>
                   </View>
                 }
-                renderSectionHeader={({ section }) => (
+                renderSectionHeader={({section}) => (
                   <TouchableOpacity
                     style={styles.sectionHeader}
                     onPress={() => onSelectChange(section.label)}>
@@ -200,7 +200,7 @@ const SelectUTXOsScreen = ({ navigation }) => {
                     </Text>
                   </TouchableOpacity>
                 )}
-                renderItem={({ item, section }) => (
+                renderItem={({item, section}) => (
                   <TouchableOpacity
                     style={styles.rowView}
                     onPress={() =>

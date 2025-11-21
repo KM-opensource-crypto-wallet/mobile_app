@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import {
   TouchableOpacity,
   View,
@@ -6,18 +6,18 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import { TextInput } from 'react-native-paper';
-import { Formik } from 'formik';
-import { useSelector, useDispatch } from 'react-redux';
-import { changePasswordSuccess } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
-import { getUserPassword } from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
+import {TextInput} from 'react-native-paper';
+import {Formik} from 'formik';
+import {useSelector, useDispatch} from 'react-redux';
+import {changePasswordSuccess} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
+import {getUserPassword} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 import myStyles from './ChangePasswordStyles';
-import { useFloatingHeight } from '../../../utils/dimensions';
-import { validationSchemaChangePassword } from '../../../utils/validationSchema';
-import { ThemeContext } from '../../../theme/ThemeContext';
+import {useFloatingHeight} from 'utils/dimensions';
+import {validationSchemaChangePassword} from 'utils/validationSchema';
+import {ThemeContext} from 'theme/ThemeContext';
 
-const ChangePassword = ({ navigation }) => {
-  const { theme } = useContext(ThemeContext);
+const ChangePassword = ({navigation}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const dispatch = useDispatch();

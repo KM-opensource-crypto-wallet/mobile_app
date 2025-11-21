@@ -1,18 +1,18 @@
-import React, { useCallback, useContext, useMemo } from 'react';
-import { FlatList, View, StyleSheet } from 'react-native';
-import { ThemeContext } from '../theme/ThemeContext';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import React, {useCallback, useContext, useMemo} from 'react';
+import {FlatList, View, StyleSheet} from 'react-native';
+import {ThemeContext} from 'theme/ThemeContext';
+import {shallowEqual, useDispatch, useSelector} from 'react-redux';
 import {
   getConversations,
   isFetchingConversations,
 } from 'dok-wallet-blockchain-networks/redux/messages/messageSelector';
-import ConversationItem from '../components/ConversationItem';
-import { getConversation } from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
-import EmptyView from '../components/EmptyView';
-import { DokSafeAreaView } from '../components/DokSafeAreaView';
+import ConversationItem from 'components/ConversationItem';
+import {getConversation} from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
+import EmptyView from 'components/EmptyView';
+import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
-const Conversations = ({ isRequest }) => {
-  const { theme } = useContext(ThemeContext);
+const Conversations = ({isRequest}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const conversations = useSelector(getConversations, shallowEqual);
   const isFetchingConv = useSelector(isFetchingConversations);
@@ -36,7 +36,7 @@ const Conversations = ({ isRequest }) => {
         <FlatList
           contentContainerStyle={styles.contentContainerStyle}
           data={filterConversations}
-          renderItem={({ item, index }) => (
+          renderItem={({item, index}) => (
             <ConversationItem item={item} index={index} />
           )}
           initialNumToRender={10}

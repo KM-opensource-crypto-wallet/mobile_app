@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, {useContext} from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -7,15 +7,15 @@ import {
   View,
   Text,
 } from 'react-native';
-import { ThemeContext } from '../../theme/ThemeContext';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {ThemeContext} from 'theme/ThemeContext';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import PropTypes from 'prop-types';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
-const Spinner = ({ isShownTransactionText }) => {
-  const { theme } = useContext(ThemeContext);
-  const { bottom } = useSafeAreaInsets();
+const Spinner = ({isShownTransactionText}) => {
+  const {theme} = useContext(ThemeContext);
+  const {bottom} = useSafeAreaInsets();
   const styles = myStyles(theme, bottom || 0);
   return (
     <Modal style={styles.flex1} visible={true} transparent={true}>

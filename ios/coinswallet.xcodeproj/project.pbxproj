@@ -7,11 +7,21 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0C80B921A6F3F58F76C31292 /* libPods-coinswallet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-coinswallet.a */; };
+		0C80B921A6F3F58F76C31292 /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		61EF4877CF54A69556563FF1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		9DC1CB2B2ECEFEF9001FE7D7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
+		9DC1CB2F2ECEFEF9001FE7D7 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		9DC1CB302ECEFEF9001FE7D7 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		9DC1CB312ECEFEF9001FE7D7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		9DC1CB3D2ECF00D1001FE7D7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
+		9DC1CB412ECF00D1001FE7D7 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		9DC1CB422ECF00D1001FE7D7 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		9DC1CB432ECF00D1001FE7D7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		BE503FE9C2CB3B43C29DFCE9 /* BuildFile in Frameworks */ = {isa = PBXBuildFile; };
+		FC4326747702919FCEE75E08 /* libPods-coinswallet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 439CD52BFCA852828D4E1D09 /* libPods-coinswallet.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,11 +29,15 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = coinswallet/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = coinswallet/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = coinswallet/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		3B4392A12AC88292D35C810B /* Pods-coinswallet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswallet.debug.xcconfig"; path = "Target Support Files/Pods-coinswallet/Pods-coinswallet.debug.xcconfig"; sourceTree = "<group>"; };
-		5709B34CF0A7D63546082F79 /* Pods-coinswallet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswallet.release.xcconfig"; path = "Target Support Files/Pods-coinswallet/Pods-coinswallet.release.xcconfig"; sourceTree = "<group>"; };
-		5DCACB8F33CDC322A6C60F78 /* libPods-coinswallet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-coinswallet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		17CC7E8E94AA91335D8CA72B /* Pods-coinswallet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswallet.debug.xcconfig"; path = "Target Support Files/Pods-coinswallet/Pods-coinswallet.debug.xcconfig"; sourceTree = "<group>"; };
+		439CD52BFCA852828D4E1D09 /* libPods-coinswallet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-coinswallet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5C9F1943847744E854248A1A /* Pods-coinswallet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswallet.release.xcconfig"; path = "Target Support Files/Pods-coinswallet/Pods-coinswallet.release.xcconfig"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = coinswallet/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = coinswallet/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		9DC1CB382ECEFEF9001FE7D7 /* dokwallet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = dokwallet.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9DC1CB392ECEFEF9001FE7D7 /* coinswallet copy2-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "coinswallet copy2-Info.plist"; path = "/Users/swatantrakumargoswami/Projects/coinswallet/ios/coinswallet copy2-Info.plist"; sourceTree = "<absolute>"; };
+		9DC1CB4A2ECF00D1001FE7D7 /* kimlwallet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = kimlwallet.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9DC1CB4B2ECF00D1001FE7D7 /* dokwallet copy2-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "dokwallet copy2-Info.plist"; path = "/Users/swatantrakumargoswami/Projects/coinswallet/ios/dokwallet copy2-Info.plist"; sourceTree = "<absolute>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -32,7 +46,23 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0C80B921A6F3F58F76C31292 /* libPods-coinswallet.a in Frameworks */,
+				0C80B921A6F3F58F76C31292 /* BuildFile in Frameworks */,
+				BE503FE9C2CB3B43C29DFCE9 /* BuildFile in Frameworks */,
+				FC4326747702919FCEE75E08 /* libPods-coinswallet.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9DC1CB2C2ECEFEF9001FE7D7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9DC1CB3E2ECF00D1001FE7D7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -55,7 +85,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				5DCACB8F33CDC322A6C60F78 /* libPods-coinswallet.a */,
+				439CD52BFCA852828D4E1D09 /* libPods-coinswallet.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -75,6 +105,8 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				9DC1CB392ECEFEF9001FE7D7 /* coinswallet copy2-Info.plist */,
+				9DC1CB4B2ECF00D1001FE7D7 /* dokwallet copy2-Info.plist */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -85,6 +117,8 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* coinswallet.app */,
+				9DC1CB382ECEFEF9001FE7D7 /* dokwallet.app */,
+				9DC1CB4A2ECF00D1001FE7D7 /* kimlwallet.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -92,8 +126,8 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				3B4392A12AC88292D35C810B /* Pods-coinswallet.debug.xcconfig */,
-				5709B34CF0A7D63546082F79 /* Pods-coinswallet.release.xcconfig */,
+				17CC7E8E94AA91335D8CA72B /* Pods-coinswallet.debug.xcconfig */,
+				5C9F1943847744E854248A1A /* Pods-coinswallet.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -120,6 +154,42 @@
 			name = coinswallet;
 			productName = coinswallet;
 			productReference = 13B07F961A680F5B00A75B9A /* coinswallet.app */;
+			productType = "com.apple.product-type.application";
+		};
+		9DC1CB282ECEFEF9001FE7D7 /* dokwallet */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9DC1CB352ECEFEF9001FE7D7 /* Build configuration list for PBXNativeTarget "dokwallet" */;
+			buildPhases = (
+				9DC1CB2A2ECEFEF9001FE7D7 /* Sources */,
+				9DC1CB2C2ECEFEF9001FE7D7 /* Frameworks */,
+				9DC1CB2E2ECEFEF9001FE7D7 /* Resources */,
+				9DC1CB322ECEFEF9001FE7D7 /* Bundle React Native code and images */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = dokwallet;
+			productName = coinswallet;
+			productReference = 9DC1CB382ECEFEF9001FE7D7 /* dokwallet.app */;
+			productType = "com.apple.product-type.application";
+		};
+		9DC1CB3A2ECF00D1001FE7D7 /* kimlwallet */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9DC1CB472ECF00D1001FE7D7 /* Build configuration list for PBXNativeTarget "kimlwallet" */;
+			buildPhases = (
+				9DC1CB3C2ECF00D1001FE7D7 /* Sources */,
+				9DC1CB3E2ECF00D1001FE7D7 /* Frameworks */,
+				9DC1CB402ECF00D1001FE7D7 /* Resources */,
+				9DC1CB442ECF00D1001FE7D7 /* Bundle React Native code and images */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = kimlwallet;
+			productName = coinswallet;
+			productReference = 9DC1CB4A2ECF00D1001FE7D7 /* kimlwallet.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -149,6 +219,8 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* coinswallet */,
+				9DC1CB282ECEFEF9001FE7D7 /* dokwallet */,
+				9DC1CB3A2ECF00D1001FE7D7 /* kimlwallet */,
 			);
 		};
 /* End PBXProject section */
@@ -161,6 +233,26 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				61EF4877CF54A69556563FF1 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9DC1CB2E2ECEFEF9001FE7D7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9DC1CB2F2ECEFEF9001FE7D7 /* LaunchScreen.storyboard in Resources */,
+				9DC1CB302ECEFEF9001FE7D7 /* Images.xcassets in Resources */,
+				9DC1CB312ECEFEF9001FE7D7 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9DC1CB402ECF00D1001FE7D7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9DC1CB412ECF00D1001FE7D7 /* LaunchScreen.storyboard in Resources */,
+				9DC1CB422ECF00D1001FE7D7 /* Images.xcassets in Resources */,
+				9DC1CB432ECF00D1001FE7D7 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -199,6 +291,38 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-coinswallet/Pods-coinswallet-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		9DC1CB322ECEFEF9001FE7D7 /* Bundle React Native code and images */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/.xcode.env",
+			);
+			name = "Bundle React Native code and images";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
+		};
+		9DC1CB442ECF00D1001FE7D7 /* Bundle React Native code and images */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/.xcode.env",
+			);
+			name = "Bundle React Native code and images";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
 		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -250,12 +374,28 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9DC1CB2A2ECEFEF9001FE7D7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9DC1CB2B2ECEFEF9001FE7D7 /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9DC1CB3C2ECF00D1001FE7D7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9DC1CB3D2ECF00D1001FE7D7 /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-coinswallet.debug.xcconfig */;
+			baseConfigurationReference = 17CC7E8E94AA91335D8CA72B /* Pods-coinswallet.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -283,7 +423,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-coinswallet.release.xcconfig */;
+			baseConfigurationReference = 5C9F1943847744E854248A1A /* Pods-coinswallet.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -451,6 +591,114 @@
 			};
 			name = Release;
 		};
+		9DC1CB362ECEFEF9001FE7D7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_BITCODE = NO;
+				INFOPLIST_FILE = dokwallet/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = com.dok.wallet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		9DC1CB372ECEFEF9001FE7D7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = dokwallet/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = com.dok.wallet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		9DC1CB482ECF00D1001FE7D7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_BITCODE = NO;
+				INFOPLIST_FILE = kimlwallet/info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = com.kimlwallet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		9DC1CB492ECF00D1001FE7D7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = kimlwallet/info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=iphoneos*]" = com.kimlwallet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -468,6 +716,24 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9DC1CB352ECEFEF9001FE7D7 /* Build configuration list for PBXNativeTarget "dokwallet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9DC1CB362ECEFEF9001FE7D7 /* Debug */,
+				9DC1CB372ECEFEF9001FE7D7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9DC1CB472ECF00D1001FE7D7 /* Build configuration list for PBXNativeTarget "kimlwallet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9DC1CB482ECF00D1001FE7D7 /* Debug */,
+				9DC1CB492ECF00D1001FE7D7 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

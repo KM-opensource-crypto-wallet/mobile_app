@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef, useMemo } from 'react';
+import React, {useState, useEffect, useContext, useRef, useMemo} from 'react';
 import myStyles from './CreateStakingStyle';
 import {
   TouchableOpacity,
@@ -7,22 +7,22 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import { TextInput } from 'react-native-paper';
-import { Formik } from 'formik';
-import { useSelector, useDispatch, shallowEqual } from 'react-redux';
-import { Portal, Provider } from 'react-native-paper';
-import { getValidationSchemaForCreateStaking } from '../../../../utils/validationSchema';
-import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import { IS_ANDROID, useFloatingHeight } from '../../../../utils/dimensions';
-import { ThemeContext } from '../../../../theme/ThemeContext';
+import {TextInput} from 'react-native-paper';
+import {Formik} from 'formik';
+import {useSelector, useDispatch, shallowEqual} from 'react-redux';
+import {Portal, Provider} from 'react-native-paper';
+import {getValidationSchemaForCreateStaking} from 'utils/validationSchema';
+import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {IS_ANDROID, useFloatingHeight} from 'utils/dimensions';
+import {ThemeContext} from 'theme/ThemeContext';
 
 import {
   calculateEstimateFee,
   setCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { currencySymbol } from '../../../../data/currency';
-import { selectCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {currencySymbol} from 'data/currency';
+import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import BigNumber from 'bignumber.js';
 import {
   isHaveResourceTypeInCreateStakingScreen,
@@ -32,8 +32,8 @@ import {
   validateBigNumberStr,
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
-import DokDropdown from '../../../../components/DokDropdown';
-import ValidatorOptionItem from '../../../../components/ValidatorOptionItem';
+import DokDropdown from 'components/DokDropdown';
+import ValidatorOptionItem from 'components/ValidatorOptionItem';
 import {
   fetchValidatorByChain,
   setStakingLoading,
@@ -42,11 +42,11 @@ import {
   getStakingLoading,
   getStakingValidatorsByChain,
 } from 'dok-wallet-blockchain-networks/redux/staking/stakingSelectors';
-import Loading from '../../../../components/Loading';
-import { setExchangeSuccess } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
+import Loading from 'components/Loading';
+import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 
-const CreateStaking = ({ navigation }) => {
-  const { theme } = useContext(ThemeContext);
+const CreateStaking = ({navigation}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const currentCoin = useSelector(selectCurrentCoin);
   const localCurrency = useSelector(getLocalCurrency);
@@ -106,7 +106,7 @@ const CreateStaking = ({ navigation }) => {
 
   useEffect(() => {
     if (isValidatorSupport) {
-      dispatch(fetchValidatorByChain({ chain_name: currentCoin?.chain_name }));
+      dispatch(fetchValidatorByChain({chain_name: currentCoin?.chain_name}));
     } else {
       dispatch(setStakingLoading(false));
     }
@@ -153,7 +153,7 @@ const CreateStaking = ({ navigation }) => {
           enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? { extraScrollHeight: 30 } : {})}
+          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
           enableResetScrollToCoords={false}
           keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           contentContainerStyle={styles.contentContainerStyle}>
@@ -183,7 +183,7 @@ const CreateStaking = ({ navigation }) => {
                 onPress={() => {
                   Keyboard.dismiss();
                 }}>
-                <View style={{ flex: 1 }}>
+                <View style={{flex: 1}}>
                   <View
                     style={{
                       ...styles.container,
@@ -346,7 +346,7 @@ const CreateStaking = ({ navigation }) => {
                           <View style={styles.boxInput}>
                             <Text style={styles.listTitle}>Validator</Text>
                             <DokDropdown
-                              titleStyle={{ color: theme.primary }}
+                              titleStyle={{color: theme.primary}}
                               placeholder={'Select validator'}
                               title={''}
                               search={true}
@@ -372,7 +372,7 @@ const CreateStaking = ({ navigation }) => {
                               {'Resource Type'}
                             </Text>
                             <DokDropdown
-                              titleStyle={{ color: theme.primary }}
+                              titleStyle={{color: theme.primary}}
                               placeholder={'Resource Type'}
                               title={''}
                               data={resourceData}

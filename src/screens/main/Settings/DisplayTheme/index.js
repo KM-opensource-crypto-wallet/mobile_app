@@ -1,19 +1,19 @@
-import React, { useContext } from 'react';
-import { View } from 'react-native';
+import React, {useContext} from 'react';
+import {View} from 'react-native';
 import myStyles from './DisplayThemeStyles';
-import { ThemeContext } from '../../../../theme/ThemeContext';
+import {ThemeContext} from 'theme/ThemeContext';
 
-import DokRadioButton from '../../../../components/DokRadioButton';
-import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
+import DokRadioButton from 'components/DokRadioButton';
+import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
 const themeList = [
-  { label: 'System Default' },
-  { label: 'Light Theme' },
-  { label: 'Dark Theme' },
+  {label: 'System Default'},
+  {label: 'Light Theme'},
+  {label: 'Dark Theme'},
 ];
 
 const DisplayTheme = () => {
-  const { theme, onChangeSelectedTheme, selectedTheme } =
+  const {theme, onChangeSelectedTheme, selectedTheme} =
     useContext(ThemeContext);
   const styles = myStyles(theme);
 

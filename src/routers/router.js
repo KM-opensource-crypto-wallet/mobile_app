@@ -2,76 +2,77 @@ import React, { useContext } from 'react';
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
 
 import { useSelector } from 'react-redux';
-import { IS_IOS, SCREEN_WIDTH } from '../utils/dimensions';
+import { IS_IOS, SCREEN_WIDTH } from 'utils/dimensions';
 
 const Stack = createStackNavigator();
-import { RegistrationScreen } from '../screens/auth/RegistrationScreen';
-import { LoginScreen } from '../screens/auth/LoginScreen';
-import { CarouselCards } from '../components/CarouselCards';
-import { Learn } from '../components/VerifyInfo/Learn';
-import { VerifyCreate } from '../components/VerifyCreate';
-import { Verify } from '../components/Verify';
-import Sidebar from '../components/Sidebar';
-import Scanner from '../screens/main/Scanner';
+import { RegistrationScreen } from 'screens/auth/RegistrationScreen';
+import { LoginScreen } from 'screens/auth/LoginScreen';
+import { CarouselCards } from 'components/CarouselCards';
+import { Learn } from 'components/VerifyInfo/Learn';
+import { VerifyCreate } from 'components/VerifyCreate';
+import { Verify } from 'components/Verify';
+import Sidebar from 'components/Sidebar';
+import Scanner from 'screens/main/Scanner';
 import { Keyboard, StatusBar, StyleSheet, TouchableOpacity } from 'react-native';
-import Back from '../assets/images/sidebarIcons/Back.svg';
-import ShareIcon from '../assets/images/icons/share.svg';
-import CreateWallet from '../screens/main/Wallets/CreateWallet';
-import ManageCoins from '../screens/main/Home/ManageCoins';
+import Back from 'assets/images/sidebarIcons/Back.svg';
+import ShareIcon from 'assets/images/icons/share.svg';
+import CreateWallet from 'screens/main/Wallets/CreateWallet';
+import ManageCoins from 'screens/main/Home/ManageCoins';
 // ////////////////////////reset////////////////////////////////////////
-import ResetWallet from '../screens/main/ResetWallet';
-import LearnReset from '../screens/main/ResetWallet/LearnReset';
-import ImportWallet from '../screens/main/ResetWallet/ImportWallet';
+import ResetWallet from 'screens/main/ResetWallet';
+import LearnReset from 'screens/main/ResetWallet/LearnReset';
+import ImportWallet from 'screens/main/ResetWallet/ImportWallet';
 // ////////////////////////send////////////////////////////////////////
-import SendScreen from '../screens/main/Home/SendScreen';
-import SelectUTXOsScreen from '../screens/main/Home/SelectUTXOsScreen';
-import SortTransactions from '../components/SortTransactions';
-import RecieveFunds from '../screens/main/Home/RecieveFunds';
-import SendFunds from '../screens/main/Home/SendFunds';
+import SendScreen from 'screens/main/Home/SendScreen';
+import SelectUTXOsScreen from 'screens/main/Home/SelectUTXOsScreen';
+import SortTransactions from 'components/SortTransactions';
+import RecieveFunds from 'screens/main/Home/RecieveFunds';
+import SendFunds from 'screens/main/Home/SendFunds';
 ///////////////////////////////////////////////////////////////
 // import CryptoInfo from 'screens/main/BuyCrypto/CryptoInfo';
 // import CryptoOptions from 'screens/main/BuyCrypto/CryptoProviders';
-import LocalCurrency from '../screens/main/Settings/LocalCurrency';
-import Notifications from '../screens/main/Settings/Notifications';
-import Check from '../assets/images/settings/check.svg';
-import ChangePassword from '../screens/auth/ChangePassword';
+import LocalCurrency from 'screens/main/Settings/LocalCurrency';
+import Notifications from 'screens/main/Settings/Notifications';
+import Check from 'assets/images/settings/check.svg';
+import ChangePassword from 'screens/auth/ChangePassword';
 import { LogBox } from 'react-native';
-import AboutApp from '../screens/main/About/AboutApp';
-import TermsConditions from '../screens/main/About/TermsConditions';
-import PrivacyPolicy from '../screens/main/About/PrivacyPolicy';
-import { ThemeContext } from '../theme/ThemeContext';
-import { VerifyLoginScreen } from '../screens/auth/VerifyLoginScreen';
-import Transfer from '../screens/main/Home/Transfer';
-import { OTCScreen } from '../screens/main/BuyCrypto/OTCScreen';
-import { OTC2Screen } from '../screens/main/BuyCrypto/OTC2Screen';
+import AboutApp from 'screens/main/About/AboutApp';
+import TermsConditions from 'screens/main/About/TermsConditions';
+import PrivacyPolicy from 'screens/main/About/PrivacyPolicy';
+import { ThemeContext } from 'theme/ThemeContext';
+import { VerifyLoginScreen } from 'screens/auth/VerifyLoginScreen';
+import Transfer from 'screens/main/Home/Transfer';
+import { OTCScreen } from 'screens/main/BuyCrypto/OTCScreen';
+import { OTC2Screen } from 'screens/main/BuyCrypto/OTC2Screen';
 import { selectCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import DisplayTheme from '../screens/main/Settings/DisplayTheme';
-import WalletConnectRequestModal from '../components/WalletConnectRequestModal';
-import WalletConnectTransactionModal from '../components/WalletConnectTransactionModal';
-import AutoLock from '../screens/main/Settings/AutoLock';
-import SendNFT from '../screens/main/Home/SendNFT';
-import ImportWalletByPrivateKey from '../screens/main/ResetWallet/ImportWalletByPrivateKey';
-import EVMWalletDerivation from '../screens/main/Settings/EVMWalletDerivation';
-import TransactionList from '../screens/main/Home/TransactionList';
-import StakingList from '../screens/main/Home/StakingList';
-import CreateStaking from '../screens/main/Home/CreateStaking';
-import WithdrawStaking from '../screens/main/Home/WithdrawStaking';
-import BuyCrypto from '../screens/main/BuyCrypto';
-import MessageList from '../screens/main/Home/MessageList';
-import NewMessage from '../screens/main/Home/NewMessage';
-import Message from '../screens/main/Home/Message';
-import { CustomDerivation } from '../screens/main/Home/CustomDerivation';
-import VoteStaking from '../screens/main/Home/VoteStaking';
-import BlockedConversations from '../screens/main/Settings/BlockedConvervastions';
-import UpdateTransaction from '../screens/main/Home/UpdateTransaction';
-import EditConversation from '../screens/main/Home/EditConversation';
-import ForwardMessage from '../components/ForwardMessage';
-import PrivacyMode from '../screens/main/Settings/PrivacyMode';
-import SellCrypto from '../screens/main/SellCrypto';
-import AddAddress from '../screens/main/Settings/AddressBook/AddAddress';
-import AddressBook from '../components/AddressBook';
-import AddIcon from '../assets/images/sidebarIcons/Add.svg';
+import DisplayTheme from 'screens/main/Settings/DisplayTheme';
+import WalletConnectRequestModal from 'components/WalletConnectRequestModal';
+import WalletConnectTransactionModal from 'components/WalletConnectTransactionModal';
+import AutoLock from 'screens/main/Settings/AutoLock';
+import SendNFT from 'screens/main/Home/SendNFT';
+import ImportWalletByPrivateKey from 'screens/main/ResetWallet/ImportWalletByPrivateKey';
+import EVMWalletDerivation from 'screens/main/Settings/EVMWalletDerivation';
+import TransactionList from 'screens/main/Home/TransactionList';
+import StakingList from 'screens/main/Home/StakingList';
+import CreateStaking from 'screens/main/Home/CreateStaking';
+import WithdrawStaking from 'screens/main/Home/WithdrawStaking';
+import BuyCrypto from 'screens/main/BuyCrypto';
+import MessageList from 'screens/main/Home/MessageList';
+import NewMessage from 'screens/main/Home/NewMessage';
+import Message from 'screens/main/Home/Message';
+import { CustomDerivation } from 'screens/main/Home/CustomDerivation';
+import VoteStaking from 'screens/main/Home/VoteStaking';
+import BlockedConversations from 'screens/main/Settings/BlockedConvervastions';
+import UpdateTransaction from 'screens/main/Home/UpdateTransaction';
+import EditConversation from 'screens/main/Home/EditConversation';
+import ForwardMessage from 'components/ForwardMessage';
+import PrivacyMode from 'screens/main/Settings/PrivacyMode';
+import SellCrypto from 'screens/main/SellCrypto';
+import AddAddress from 'screens/main/Settings/AddressBook/AddAddress';
+import AddressBook from 'components/AddressBook';
+import AddIcon from 'assets/images/sidebarIcons/Add.svg';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import LoginComponent from 'components/LoginComponent';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -113,7 +114,7 @@ export const useRoute = isAuth => {
             <Stack.Screen name="Registration" component={RegistrationScreen} />
           </>
         )}
-        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Login" component={LoginComponent} />
       </Stack.Group>
       {/* Modal screens */}
       {/* {!hasWallet && ( */}

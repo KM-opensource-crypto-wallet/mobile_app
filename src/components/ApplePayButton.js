@@ -1,10 +1,10 @@
-import React, { useContext } from 'react';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { ThemeContext } from '../theme/ThemeContext';
-import ApplePayIcon from '../assets/images/buy/apple_icon.svg';
+import React, {useContext} from 'react';
+import {StyleSheet, Text, TouchableOpacity} from 'react-native';
+import {ThemeContext} from 'theme/ThemeContext';
+import ApplePayIcon from 'assets/images/buy/apple_icon.svg';
 
-const ApplePayButton = ({ onPress }) => {
-  const { theme } = useContext(ThemeContext);
+const ApplePayButton = ({onPress}) => {
+  const {theme} = useContext(ThemeContext);
   const style = myStyles(theme);
   return (
     <TouchableOpacity style={style.mainView} onPress={onPress}>

@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
-import { Dimensions, TouchableOpacity, View } from 'react-native';
-import { Modal, Portal, Text, TextInput } from 'react-native-paper';
+import React, {useState, useEffect, useContext, useCallback} from 'react';
+import {Dimensions, TouchableOpacity, View} from 'react-native';
+import {Modal, Portal, Text, TextInput} from 'react-native-paper';
 import myStyles from './ModalConfirmTransactionStyles';
-import CloseIcon from '../../assets/images/icons/close.svg';
-import { Formik } from 'formik';
-import { getUserPassword } from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
-import { IS_IOS, useFloatingHeight } from '../../utils/dimensions';
-import { validationSchemaFingerprintVerification } from '../../utils/validationSchema';
-import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
-import { useSelector } from 'react-redux';
-import { ThemeContext } from '../../theme/ThemeContext';
-import { isFingerprint } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import CloseIcon from 'assets/images/icons/close.svg';
+import {Formik} from 'formik';
+import {getUserPassword} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
+import {IS_IOS, useFloatingHeight} from 'utils/dimensions';
+import {validationSchemaFingerprintVerification} from 'utils/validationSchema';
+import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
+import {useSelector} from 'react-redux';
+import {ThemeContext} from 'theme/ThemeContext';
+import {isFingerprint} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import FingerprintScanner from 'react-native-fingerprint-scanner';
-import { WL_APP_NAME } from '../../../src/utils/wlData';
+import {WL_APP_NAME} from 'utils/wlData';
 
 const WIDTH = Dimensions.get('window').width + 80;
-const { height: screenHeight } = Dimensions.get('window');
+const {height: screenHeight} = Dimensions.get('window');
 const modalMinHeight = screenHeight / 2.5;
 const modalMaxHeight = screenHeight / 3;
 
@@ -29,8 +29,8 @@ if (isIpad) {
   ITEM_WIDTH = Math.round(WIDTH * 0.7);
 }
 
-const ModalConfirmTransaction = ({ visible, hideModal, onSuccess }) => {
-  const { theme } = useContext(ThemeContext);
+const ModalConfirmTransaction = ({visible, hideModal, onSuccess}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const floatingModalHeight = useFloatingHeight();
@@ -68,7 +68,7 @@ const ModalConfirmTransaction = ({ visible, hideModal, onSuccess }) => {
   }, [handleFingerprintAuth, visible]);
 
   const onSubmit = values => {
-    const { currentPassword } = values;
+    const {currentPassword} = values;
     if (currentPassword === storePassword) {
       onSuccess && onSuccess();
     } else {

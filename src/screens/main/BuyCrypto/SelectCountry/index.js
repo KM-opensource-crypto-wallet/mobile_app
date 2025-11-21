@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, {useCallback, useEffect, useRef} from 'react';
 import {
   View,
   TouchableOpacity,
@@ -8,28 +8,28 @@ import {
   Platform,
 } from 'react-native';
 import myStyles from './SelectCountryStyles';
-import { useContext } from 'react';
-import { ThemeContext } from '../../../../theme/ThemeContext';
-import { useDispatch, useSelector } from 'react-redux';
+import {useContext} from 'react';
+import {ThemeContext} from 'theme/ThemeContext';
+import {useDispatch, useSelector} from 'react-redux';
 import {
   getFetchProvider,
   getSelectedCountry,
 } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
-import DokCountryPicker from '../../../../components/DokCountryPicker';
+import DokCountryPicker from 'components/DokCountryPicker';
 import {
   fetchSupportedBuyCryptoCurrency,
   setCountry,
 } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProviderSlice';
 
-const SelectCountry = ({ navigation, route }) => {
-  const { theme } = useContext(ThemeContext);
+const SelectCountry = ({navigation, route}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const selectedCountry = useSelector(getSelectedCountry);
   const fetchProvider = useSelector(getFetchProvider);
   const dispatch = useDispatch();
   const isButtonClick = useRef(false);
 
-  const { isSellCrypto } = route.params || {};
+  const {isSellCrypto} = route.params || {};
 
   useEffect(() => {
     if (!fetchProvider && isButtonClick.current) {
@@ -41,7 +41,7 @@ const SelectCountry = ({ navigation, route }) => {
   const onPressNext = useCallback(() => {
     isButtonClick.current = true;
     const fromDevice = Platform.OS;
-    dispatch(fetchSupportedBuyCryptoCurrency({ fromDevice }));
+    dispatch(fetchSupportedBuyCryptoCurrency({fromDevice}));
   }, [dispatch]);
 
   return (

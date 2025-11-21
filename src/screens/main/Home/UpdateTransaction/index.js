@@ -14,16 +14,16 @@ import {
   Keyboard,
 } from 'react-native';
 import myStyles from './UpdateTransactionStyles';
-import { useSelector, useDispatch } from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
 
-import { ThemeContext } from '../../../../theme/ThemeContext';
-import { selectCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {ThemeContext} from 'theme/ThemeContext';
+import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 
-import { updateTransactionValidation } from '../../../../utils/validationSchema';
-import { TextInput } from 'react-native-paper';
-import { Formik } from 'formik';
-import Exclamationcircleo from '../../../../assets/images/icons/exclamationcircle.svg';
-import { getUpdateTransactionData } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSelector';
+import {updateTransactionValidation} from 'utils/validationSchema';
+import {TextInput} from 'react-native-paper';
+import {Formik} from 'formik';
+import Exclamationcircleo from 'assets/images/icons/exclamationcircle.svg';
+import {getUpdateTransactionData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSelector';
 import {
   fetchTransactionData,
   resetUpdateTransactionData,
@@ -32,17 +32,17 @@ import {
   getCustomizePublicAddress,
   isCustomAddressNotSupportedChain,
 } from 'dok-wallet-blockchain-networks/helper';
-import Loading from '../../../../components/Loading';
-import ModalConfirmTransaction from '../../../../components/ModalConfirmTransaction';
-import { sendPendingTransactions } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import { useNavigation } from '@react-navigation/native';
-import Spinner from '../../../../components/Spinner';
-import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
+import Loading from 'components/Loading';
+import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
+import {sendPendingTransactions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {useNavigation} from '@react-navigation/native';
+import Spinner from 'components/Spinner';
+import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
 const UpdateTransaction = () => {
   const currentCoin = useSelector(selectCurrentCoin);
   const transactionData = useSelector(getUpdateTransactionData);
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const dispatch = useDispatch();
   const isLoading = transactionData?.isLoading;
@@ -61,7 +61,7 @@ const UpdateTransaction = () => {
   const onSubmit = useCallback(
     values => {
       Keyboard.dismiss();
-      dispatch(fetchTransactionData({ txHash: values?.tx }));
+      dispatch(fetchTransactionData({txHash: values?.tx}));
     },
     [dispatch],
   );
@@ -114,27 +114,31 @@ const UpdateTransaction = () => {
           </View>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'Amount'}</Text>
-            <Text style={styles.boxBalance}>{`${tx?.amount} ${contractDetails?.symbol || currentCoin?.symbol
-              }`}</Text>
+            <Text style={styles.boxBalance}>{`${tx?.amount} ${
+              contractDetails?.symbol || currentCoin?.symbol
+            }`}</Text>
           </View>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'Asset'}</Text>
-            <Text style={styles.boxBalance}>{`${contractDetails?.name || currentCoin?.name
-              } (${contractDetails?.symbol || currentCoin?.symbol})`}</Text>
+            <Text style={styles.boxBalance}>{`${
+              contractDetails?.name || currentCoin?.name
+            } (${contractDetails?.symbol || currentCoin?.symbol})`}</Text>
           </View>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'From'}</Text>
-            <Text style={styles.boxBalance}>{`${isCustomAddressNotSupportedChain(currentCoin?.chain_name)
-              ? tx.from
-              : getCustomizePublicAddress(tx?.from)
-              }`}</Text>
+            <Text style={styles.boxBalance}>{`${
+              isCustomAddressNotSupportedChain(currentCoin?.chain_name)
+                ? tx.from
+                : getCustomizePublicAddress(tx?.from)
+            }`}</Text>
           </View>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'To'}</Text>
-            <Text style={styles.boxBalance}>{`${isCustomAddressNotSupportedChain(currentCoin?.chain_name)
-              ? tx?.to
-              : getCustomizePublicAddress(tx?.to)
-              }`}</Text>
+            <Text style={styles.boxBalance}>{`${
+              isCustomAddressNotSupportedChain(currentCoin?.chain_name)
+                ? tx?.to
+                : getCustomizePublicAddress(tx?.to)
+            }`}</Text>
           </View>
         </View>
         <View style={styles.box}>
@@ -236,7 +240,7 @@ const UpdateTransaction = () => {
                         disabled={isDisabledButton}
                         style={[
                           styles.button,
-                          isDisabledButton && { backgroundColor: theme.gray },
+                          isDisabledButton && {backgroundColor: theme.gray},
                         ]}
                         onPress={handleSubmit}>
                         <Text style={styles.buttonTitle}>

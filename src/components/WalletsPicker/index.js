@@ -1,11 +1,11 @@
-import React, { useCallback, useContext, useMemo, useRef } from 'react';
-import { Text, TouchableOpacity } from 'react-native';
-import { ThemeContext } from '../../theme/ThemeContext';
+import React, {useCallback, useContext, useMemo, useRef} from 'react';
+import {Text, TouchableOpacity} from 'react-native';
+import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './WalletsPickerStyles';
-import ArrowDown from '../../assets/images/buy/arrow-down.svg';
-import WalletsPickerSheet from '../../components/WalletsPickerSheet';
+import ArrowDown from 'assets/images/buy/arrow-down.svg';
+import WalletsPickerSheet from 'components/WalletsPickerSheet';
 
-const WalletsPicker = ({ wallets, onChange, onSelectAll }) => {
+const WalletsPicker = ({wallets, onChange, onSelectAll}) => {
   const isAllSelected = useMemo(() => {
     return wallets?.length && wallets?.every(wallet => wallet?.isSelected);
   }, [wallets]);
@@ -17,7 +17,7 @@ const WalletsPicker = ({ wallets, onChange, onSelectAll }) => {
       ?.map(wallet => wallet?.walletName);
   }, [wallets]);
 
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const onDismissSheet = useCallback(() => {
@@ -36,15 +36,15 @@ const WalletsPicker = ({ wallets, onChange, onSelectAll }) => {
           numberOfLines={2}
           style={[
             styles.textStyle,
-            !isWalletSelected && { color: theme.gray, fontWeight: '500' },
+            !isWalletSelected && {color: theme.gray, fontWeight: '500'},
           ]}>
           {isAllSelected
             ? 'All Wallets'
             : isWalletSelected
-              ? selectedWalletsName?.join(', ')
-              : 'Select Wallet'}
+            ? selectedWalletsName?.join(', ')
+            : 'Select Wallet'}
         </Text>
-        <ArrowDown height="30" width="30" style={{ fill: theme.gray }} />
+        <ArrowDown height="30" width="30" style={{fill: theme.gray}} />
       </TouchableOpacity>
       <WalletsPickerSheet
         onChange={onChange}

@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Text, View, TouchableOpacity, Dimensions } from 'react-native';
-import { Modal } from 'react-native-paper';
+import React, {useState, useEffect, useContext} from 'react';
+import {Text, View, TouchableOpacity, Dimensions} from 'react-native';
+import {Modal} from 'react-native-paper';
 import myStyles from './ModaSendStyles';
-import { useSelector } from 'react-redux';
-import { ThemeContext } from '../../theme/ThemeContext';
-import { selectCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {useSelector} from 'react-redux';
+import {ThemeContext} from 'theme/ThemeContext';
+import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 
 const WIDTH = Dimensions.get('window').width;
 const HEIGHT = Dimensions.get('window').height;
 
-const ModalSend = ({ visible, hideModal, navigation }) => {
-  const { theme } = useContext(ThemeContext);
+const ModalSend = ({visible, hideModal, navigation}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   // const handleClose = () => {
   //   hideModal(false);
@@ -44,7 +44,7 @@ const ModalSend = ({ visible, hideModal, navigation }) => {
         {/* </View> */}
         <View style={styles.listbtn}>
           <TouchableOpacity
-            style={{ ...styles.button, ...styles.shadow }}
+            style={{...styles.button, ...styles.shadow}}
             onPress={() =>
               navigation.navigate('Sidebar', {
                 screen: 'BuyCrypto',
@@ -53,7 +53,7 @@ const ModalSend = ({ visible, hideModal, navigation }) => {
             <Text style={styles.btnBuy}>Buy {currentCoin?.name}</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={{ ...styles.button, ...styles.shadow }}
+            style={{...styles.button, ...styles.shadow}}
             // onPress={() => {
             //   console.log('click:', 'click');
             // }}

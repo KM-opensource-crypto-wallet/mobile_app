@@ -1,19 +1,19 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import {View, Text, TouchableOpacity} from 'react-native';
 import myStyles from './LocalCurrencyStyles';
-import { localCurrencyList } from '../../../../data/currency';
-import { CheckBox } from '@rneui/themed';
-import RadioOn from '../../../../assets/images/icons/radio-button-on.svg';
-import { useSelector, useDispatch } from 'react-redux';
-import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import { setLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
-import { useContext, useEffect, useRef, useState } from 'react';
-import { ThemeContext } from '../../../../theme/ThemeContext';
+import {localCurrencyList} from 'data/currency';
+import {CheckBox} from '@rneui/themed';
+import RadioOn from 'assets/images/icons/radio-button-on.svg';
+import {useSelector, useDispatch} from 'react-redux';
+import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {setLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
+import {useContext, useEffect, useRef, useState} from 'react';
+import {ThemeContext} from 'theme/ThemeContext';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import ThemedIcon from '../../../../components/ThemedIcon';
-import { refreshCoins } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import ThemedIcon from 'components/ThemedIcon';
+import {refreshCoins} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 
 const LocalCurrency = () => {
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const localCurrency = useSelector(getLocalCurrency);

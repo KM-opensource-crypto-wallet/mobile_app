@@ -1,15 +1,15 @@
-import React, { useContext } from 'react';
-import { View, StyleSheet, Text, Dimensions } from 'react-native';
-import ThemedIcon from '../components/ThemedIcon';
-import { ThemeContext } from '../theme/ThemeContext';
-import { useSelector } from 'react-redux';
-import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import { currencyIcon } from '../data/currency';
-const { width: screenWidth } = Dimensions.get('window');
+import React, {useContext} from 'react';
+import {View, StyleSheet, Text, Dimensions} from 'react-native';
+import ThemedIcon from 'components/ThemedIcon';
+import {ThemeContext} from 'theme/ThemeContext';
+import {useSelector} from 'react-redux';
+import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {currencyIcon} from 'data/currency';
+const {width: screenWidth} = Dimensions.get('window');
 const itemWidth = screenWidth / 1.4;
 
-const CurrencyOptionItem = ({ item }) => {
-  const { theme } = useContext(ThemeContext);
+const CurrencyOptionItem = ({item}) => {
+  const {theme} = useContext(ThemeContext);
   const myStyles = styles(theme);
   const localCurrency = useSelector(getLocalCurrency);
   return (

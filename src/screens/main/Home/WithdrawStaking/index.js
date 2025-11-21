@@ -1,4 +1,4 @@
-import React, { useState, useContext, useMemo, useLayoutEffect } from 'react';
+import React, {useState, useContext, useMemo, useLayoutEffect} from 'react';
 import myStyles from './WithdrawStakingStyle';
 import {
   TouchableOpacity,
@@ -7,19 +7,19 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import { TextInput } from 'react-native-paper';
-import { useSelector, useDispatch } from 'react-redux';
-import { Portal, Provider } from 'react-native-paper';
-import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import { IS_ANDROID, useFloatingHeight } from '../../../../utils/dimensions';
-import { ThemeContext } from '../../../../theme/ThemeContext';
+import {TextInput} from 'react-native-paper';
+import {useSelector, useDispatch} from 'react-redux';
+import {Portal, Provider} from 'react-native-paper';
+import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {IS_ANDROID, useFloatingHeight} from 'utils/dimensions';
+import {ThemeContext} from 'theme/ThemeContext';
 import {
   calculateEstimateFee,
   setCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { currencySymbol } from '../../../../data/currency';
-import { selectCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {currencySymbol} from 'data/currency';
+import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import BigNumber from 'bignumber.js';
 import {
   isHaveResourceTypeInCreateStakingScreen,
@@ -30,17 +30,17 @@ import {
   validateNumber,
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
-import StakingItem from '../../../../components/StakingItem';
-import DokDropdown from '../../../../components/DokDropdown';
-import { setExchangeSuccess } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
+import StakingItem from 'components/StakingItem';
+import DokDropdown from 'components/DokDropdown';
+import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 
 const disableTextInputChain = ['solana'];
 
 const isDisableTextInput = chain_name =>
   disableTextInputChain.includes(chain_name);
 
-const WithdrawStaking = ({ navigation, route }) => {
-  const { theme } = useContext(ThemeContext);
+const WithdrawStaking = ({navigation, route}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const selectedStake = route?.params?.selectedStake;
@@ -70,13 +70,13 @@ const WithdrawStaking = ({ navigation, route }) => {
     currencyAmount: selectedStake?.fiatAmount || '0',
     errors: {},
   });
-  const { amount, currencyAmount, errors, resourceType } = state;
+  const {amount, currencyAmount, errors, resourceType} = state;
   const availableAmount = useMemo(() => {
     return selectedStake?.amount?.toString()
       ? selectedStake?.amount?.toString()
       : state?.resourceType?.value === 'ENERGY'
-        ? currentCoin?.energyBalance
-        : currentCoin?.bandwidthBalance;
+      ? currentCoin?.energyBalance
+      : currentCoin?.bandwidthBalance;
   }, [
     currentCoin?.bandwidthBalance,
     currentCoin?.energyBalance,
@@ -218,7 +218,7 @@ const WithdrawStaking = ({ navigation, route }) => {
           enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? { extraScrollHeight: 30 } : {})}
+          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
           enableResetScrollToCoords={false}
           keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           contentContainerStyle={styles.contentContainerStyle}>
@@ -226,7 +226,7 @@ const WithdrawStaking = ({ navigation, route }) => {
             onPress={() => {
               Keyboard.dismiss();
             }}>
-            <View style={{ flex: 1 }}>
+            <View style={{flex: 1}}>
               <View
                 style={{
                   ...styles.container,
@@ -406,12 +406,12 @@ const WithdrawStaking = ({ navigation, route }) => {
                       <View style={styles.boxInput}>
                         <Text style={styles.listTitle}>{'Resource Type'}</Text>
                         <DokDropdown
-                          titleStyle={{ color: theme.primary }}
+                          titleStyle={{color: theme.primary}}
                           placeholder={'Resource Type'}
                           title={''}
                           data={resourceData}
                           onChangeValue={item => {
-                            setState({ ...state, resourceType: item });
+                            setState({...state, resourceType: item});
                           }}
                           value={resourceType?.value}
                         />

@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SCREEN_WIDTH } from '../utils/dimensions';
+import React, {useCallback, useEffect, useState} from 'react';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {SCREEN_WIDTH} from 'utils/dimensions';
 import FastImage from '@d11/react-native-fast-image';
-import DefaultDokWalletImage from '../components/DefaultDokWalletImage';
-import { setSelectedNft } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
+import {setSelectedNft} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 
-const NFTMainChainItem = ({ item, theme, dispatch, navigation }) => {
+const NFTMainChainItem = ({item, theme, dispatch, navigation}) => {
   const styles = myStyles(theme);
   const [localImage, setLocalImage] = useState(item?.metadata?.image);
 
@@ -25,7 +25,7 @@ const NFTMainChainItem = ({ item, theme, dispatch, navigation }) => {
       <View style={styles.mainImageView}>
         {localImage ? (
           <FastImage
-            source={{ uri: localImage }}
+            source={{uri: localImage}}
             style={styles.imageStyle}
             resizeMode={'contain'}
             onError={e => {

@@ -1,19 +1,19 @@
 import React from 'react';
-import { View, ScrollView, Text } from 'react-native';
+import {View, ScrollView, Text} from 'react-native';
 import myStyles from './BuyCryptoStyles';
-import { useContext } from 'react';
-import { ThemeContext } from '../../../theme/ThemeContext';
-import { useSelector } from 'react-redux';
+import {useContext} from 'react';
+import {ThemeContext} from 'theme/ThemeContext';
+import {useSelector} from 'react-redux';
 import {
   getCryptoProviders,
   getCryptoProvidersOTC,
   getSelectedCountry,
 } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
-import { getName } from 'country-list';
-import CryptoProviders from '../../../components/CryptoProviders';
+import {getName} from 'country-list';
+import CryptoProviders from 'components/CryptoProviders';
 
-const BuyCrypto = ({ navigation }) => {
-  const { theme } = useContext(ThemeContext);
+const BuyCrypto = ({navigation}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const providers = useSelector(getCryptoProviders);
   const shownOTC = useSelector(getCryptoProvidersOTC);
@@ -27,8 +27,8 @@ const BuyCrypto = ({ navigation }) => {
               style={
                 styles.title
               }>{`No providers are available for selected country '${getName(
-                country,
-              )}'.`}</Text>
+              country,
+            )}'.`}</Text>
           </View>
         </ScrollView>
       </View>

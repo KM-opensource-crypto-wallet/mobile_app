@@ -2,7 +2,13 @@ apply plugin: "com.android.application"
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
+apply plugin: 'kotlin-android'
+apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 
+project.ext.react = [
+        nodeExecutableAndArgs: ["node", "--max_old_space_size=8192"]
+];
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -73,18 +79,45 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+def getMyVersionCode = {
+    return project.hasProperty('versionCode') ? versionCode.toInteger() : 10218
+}
+
+// get version name from the specified property argument `-PversionName` during the build call
+def getMyVersionName = {
+    return project.hasProperty('versionName') ? versionName : "2.9"
+}
+
 android {
+    def keystorePropertiesFile = rootProject.file("keystore.properties")
+    def keystoreProperties = new Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+    packagingOptions {
+        pickFirst 'lib/x86/libcrypto.so'
+        pickFirst 'lib/x86_64/libcrypto.so'
+        pickFirst 'lib/armeabi-v7a/libcrypto.so'
+        pickFirst 'lib/arm64-v8a/libcrypto.so'
+    }
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
-
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
     namespace "com.coinswallet"
     defaultConfig {
-        applicationId "com.coinswallet"
+        applicationId "com.dok.wallet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode getMyVersionCode()
+        versionName getMyVersionName()
+        resValue "string", "build_config_package", "com.coinswallet"
     }
     signingConfigs {
         debug {

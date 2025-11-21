@@ -1,12 +1,12 @@
-import React, { useRef, useContext } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { ThemeContext } from '../theme/ThemeContext';
-import DokBottomSheetScrollView from '../components/BottomSheetScrollView';
+import React, {useRef, useContext} from 'react';
+import {View, StyleSheet} from 'react-native';
+import {ThemeContext} from 'theme/ThemeContext';
+import DokBottomSheetScrollView from 'components/BottomSheetScrollView';
 
-import WalletConnectItem from '../components/WalletConnectItem';
+import WalletConnectItem from 'components/WalletConnectItem';
 
-const WalletConnectList = ({ bottomSheetRef, onDismiss }) => {
-  const { theme } = useContext(ThemeContext);
+const WalletConnectList = ({bottomSheetRef, onDismiss}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = MyStyles(theme);
   const bottomRef = useRef();
 

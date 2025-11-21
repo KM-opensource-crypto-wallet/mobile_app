@@ -1,10 +1,10 @@
-import React, { useRef, useContext } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
-import { ThemeContext } from '../theme/ThemeContext';
-import DokBottomSheetScrollView from '../components/BottomSheetScrollView';
+import React, {useRef, useContext} from 'react';
+import {View, StyleSheet, Text} from 'react-native';
+import {ThemeContext} from 'theme/ThemeContext';
+import DokBottomSheetScrollView from 'components/BottomSheetScrollView';
 
-const NewsBottomSheet = ({ bottomSheetRef, onDismiss, message }) => {
-  const { theme } = useContext(ThemeContext);
+const NewsBottomSheet = ({bottomSheetRef, onDismiss, message}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = MyStyles(theme);
   const bottomRef = useRef();
 

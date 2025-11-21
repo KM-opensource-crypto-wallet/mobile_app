@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useMemo, useEffect } from 'react';
+import React, {useCallback, useContext, useMemo, useEffect} from 'react';
 import {
   View,
   StyleSheet,
@@ -8,20 +8,20 @@ import {
   BackHandler,
 } from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
-import { getWalletConnect } from 'dok-wallet-blockchain-networks/service/walletconnect';
+import {shallowEqual, useDispatch, useSelector} from 'react-redux';
+import {getWalletConnect} from 'dok-wallet-blockchain-networks/service/walletconnect';
 
-import { ThemeContext } from '../theme/ThemeContext';
-import { selectWalletConnectTransactionData } from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSelectors';
-import { SCREEN_WIDTH } from '../utils/dimensions';
-import { selectWalletConnectData } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import WalletConnect from '../assets/images/WalletConnect.png';
+import {ThemeContext} from 'theme/ThemeContext';
+import {selectWalletConnectTransactionData} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSelectors';
+import {SCREEN_WIDTH} from 'utils/dimensions';
+import {selectWalletConnectData} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import WalletConnect from 'assets/images/WalletConnect.png';
 import {
   ETH_SIGN,
   isWalletConnectTransaction,
   PERSONAL_SIGN,
 } from 'dok-wallet-blockchain-networks/service/etherWalletConnect';
-import { ethers } from 'ethers';
+import {ethers} from 'ethers';
 import {
   convertHexToUtf8IfPossible,
   decodeSolMessage,
@@ -29,12 +29,12 @@ import {
   isValidBigInt,
   safelyJsonStringify,
 } from 'dok-wallet-blockchain-networks/helper';
-import { createWalletConnectTransaction } from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectActions';
-import { currencySymbol } from '../data/currency';
+import {createWalletConnectTransaction} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectActions';
+import {currencySymbol} from 'data/currency';
 import BigNumber from 'bignumber.js';
-import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import { setWalletConnectTransactionModal } from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSlice';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
+import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {setWalletConnectTransactionModal} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSlice';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {
   TRON_SIGN_MESSAGE,
   TRON_SIGN_TRANSACTION,
@@ -45,7 +45,7 @@ import {
   SOLANA_SIGN_MESSAGE,
   SOLANA_SIGN_TRANSACTION,
 } from 'dok-wallet-blockchain-networks/service/solanaWalletConnect';
-import { DokSafeAreaView } from '../components/DokSafeAreaView';
+import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
 const displayMessage = (method, message) => {
   switch (method) {
@@ -215,11 +215,11 @@ const WalletConnectTransactionModal = props => {
           message: 'User rejected.',
         },
       };
-      connector.respondSessionRequest({ topic, response });
+      connector.respondSessionRequest({topic, response});
     }
   }, [id, navigation, topic]);
 
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
 
   const styles = myStyles(theme);
 
@@ -227,8 +227,8 @@ const WalletConnectTransactionModal = props => {
     const signTypeData = getTransactionRequestData?.signTypeData;
     const message = displayMessage(method, signTypeData);
     return (
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.chainTitle, { marginLeft: 0 }]}>{'Message'}</Text>
+      <View style={{flex: 1}}>
+        <Text style={[styles.chainTitle, {marginLeft: 0}]}>{'Message'}</Text>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainerStyle}>
@@ -260,14 +260,15 @@ const WalletConnectTransactionModal = props => {
       <View style={styles.mainView}>
         <FastImage source={WalletConnect} style={styles.mainImageStyle} />
         <View style={styles.borderView} />
-        {image && <FastImage source={{ uri: image }} style={styles.imageStyle} />}
+        {image && <FastImage source={{uri: image}} style={styles.imageStyle} />}
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.url}>{url}</Text>
-        <View style={[styles.borderView, { marginTop: 12 }]} />
+        <View style={[styles.borderView, {marginTop: 12}]} />
         {isWalletConnectTransaction(method) ? (
           <View style={styles.formInput}>
-            <Text style={styles.amountTitle}>{`-${amount || 0} ${walletData?.symbol || ''
-              }`}</Text>
+            <Text style={styles.amountTitle}>{`-${amount || 0} ${
+              walletData?.symbol || ''
+            }`}</Text>
             <Text style={styles.boxBalance}>
               {currencySymbol[localCurrency] || ''}
               {priceValue?.toFixed(2) || '0'}
@@ -312,8 +313,9 @@ const WalletConnectTransactionModal = props => {
               )}
               <View style={styles.transferItemView}>
                 <Text style={styles.transferTitle}>{'Max Total'}</Text>
-                <Text style={styles.boxBalance}>{`${currencySymbol[localCurrency]
-                  }${totalValue || 0}`}</Text>
+                <Text style={styles.boxBalance}>{`${
+                  currencySymbol[localCurrency]
+                }${totalValue || 0}`}</Text>
               </View>
             </View>
           </View>

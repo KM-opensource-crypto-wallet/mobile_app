@@ -7,16 +7,16 @@ import React, {
   useState,
   useEffect,
 } from 'react';
-import { Keyboard, Text, TouchableOpacity, View } from 'react-native';
+import {Keyboard, Text, TouchableOpacity, View} from 'react-native';
 import myStyles from './WalletsStyles';
-import { useSelector, useDispatch } from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome6';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
 import AntIcon from 'react-native-vector-icons/AntDesign';
 
-import { ThemeContext } from '../../../theme/ThemeContext';
-import CreateWalletSheet from '../../../components/CreateWalletSheet';
-import AddIcon from '../../../assets/images/sidebarIcons/Add.svg';
+import {ThemeContext} from 'theme/ThemeContext';
+import CreateWalletSheet from 'components/CreateWalletSheet';
+import AddIcon from 'assets/images/sidebarIcons/Add.svg';
 import {
   getCurrentWalletIndex,
   selectAllWallets,
@@ -30,11 +30,11 @@ import {
 import DraggableFlatList, {
   ScaleDecorator,
 } from 'react-native-draggable-flatlist';
-import { Searchbar } from 'react-native-paper';
-import { useIsFocused } from '@react-navigation/native';
-import { DokSafeAreaView } from '../../../components/DokSafeAreaView';
+import {Searchbar} from 'react-native-paper';
+import {useIsFocused} from '@react-navigation/native';
+import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
-const Wallets = ({ navigation }) => {
+const Wallets = ({navigation}) => {
   const currentWalletName = useSelector(selectCurrentWallet)?.walletName;
   const allWallets = useSelector(selectAllWallets);
   const currentWalletIndex = useSelector(getCurrentWalletIndex);
@@ -42,7 +42,7 @@ const Wallets = ({ navigation }) => {
   const allWalletsLength = useMemo(() => {
     return allWallets.length;
   }, [allWallets]);
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const dispatch = useDispatch();
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,14 +59,14 @@ const Wallets = ({ navigation }) => {
     navigation.setOptions({
       headerRight: () => (
         <TouchableOpacity
-          style={{ padding: 15, paddingRight: 15 }}
+          style={{padding: 15, paddingRight: 15}}
           activeOpacity={0.5}
           onPress={() => {
             Keyboard.dismiss();
             walletSheetRef.current && walletSheetRef.current.close();
             walletSheetRef.current && walletSheetRef.current?.present();
           }}>
-          <AddIcon stroke={theme.font} style={{ width: 20, height: 20 }} />
+          <AddIcon stroke={theme.font} style={{width: 20, height: 20}} />
         </TouchableOpacity>
       ),
     });
@@ -74,7 +74,7 @@ const Wallets = ({ navigation }) => {
 
   const onPressMove = useCallback(
     (index, isMoveUp) => {
-      dispatch(setWalletPosition({ index, isMoveUp }));
+      dispatch(setWalletPosition({index, isMoveUp}));
     },
     [dispatch],
   );
@@ -97,7 +97,7 @@ const Wallets = ({ navigation }) => {
   );
 
   const onDragEnd = useCallback(
-    ({ data, from, to }) => {
+    ({data, from, to}) => {
       const isMoveDown = to > from;
       dispatch(
         rearrangeWallet({
@@ -109,12 +109,12 @@ const Wallets = ({ navigation }) => {
               : isMoveDown &&
                 to >= currentWalletIndex &&
                 from < currentWalletIndex
-                ? currentWalletIndex - 1
-                : !isMoveDown &&
-                  to <= currentWalletIndex &&
-                  from > currentWalletIndex
-                  ? currentWalletIndex + 1
-                  : undefined,
+              ? currentWalletIndex - 1
+              : !isMoveDown &&
+                to <= currentWalletIndex &&
+                from > currentWalletIndex
+              ? currentWalletIndex + 1
+              : undefined,
         }),
       );
     },
@@ -130,19 +130,19 @@ const Wallets = ({ navigation }) => {
           style={styles.input}
           onChangeText={handleSearch}
           autoFocus={false}
-          inputStyle={{ minHeight: 0 }}
+          inputStyle={{minHeight: 0}}
         />
         <View style={styles.container}>
           <DraggableFlatList
             keyboardShouldPersistTaps={'always'}
             data={searchQuery ? searchWallets : allWallets}
-            contentContainerStyle={{ flexGrow: 1 }}
+            contentContainerStyle={{flexGrow: 1}}
             keyExtractor={item => item.walletName}
             onDragBegin={() => {
               Keyboard.dismiss();
             }}
             onDragEnd={onDragEnd}
-            renderItem={({ item, drag, isActive, getIndex }) => {
+            renderItem={({item, drag, isActive, getIndex}) => {
               const index = getIndex();
               const isSelectedWallet = item.walletName === currentWalletName;
               return (
@@ -167,7 +167,7 @@ const Wallets = ({ navigation }) => {
                         <TouchableOpacity
                           onLongPress={drag}
                           disabled={isActive}
-                          hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}>
+                          hitSlop={{top: 12, right: 12, bottom: 12, left: 12}}>
                           <FontAwesomeIcon
                             name={'grip-vertical'}
                             size={24}
@@ -202,8 +202,9 @@ const Wallets = ({ navigation }) => {
                           ]}
                           numberOfLines={1}>
                           {item?.isImportWalletWithPrivateKey
-                            ? `${item?.coins?.[0]?.chain_display_name || ''
-                            } Wallet`
+                            ? `${
+                                item?.coins?.[0]?.chain_display_name || ''
+                              } Wallet`
                             : 'Multi - Coin Wallet'}
                         </Text>
                       </View>

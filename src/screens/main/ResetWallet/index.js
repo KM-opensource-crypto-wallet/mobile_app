@@ -1,12 +1,14 @@
 import myStyles from './ResetWalletStyles';
 import React, { useContext } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { ThemeContext } from '../../../theme/ThemeContext';
-import { DokSafeAreaView } from '../../../components/DokSafeAreaView';
-import { CREATE_WALLET, IMPORT_WALLET } from '../../../../src/utils/wlData';
+import { ThemeContext } from 'theme/ThemeContext';
+import { DokSafeAreaView } from 'components/DokSafeAreaView';
+import { useThemeContext } from 'hooks/useThemeContext';
+import { Icons } from "../../../assets/images"
 
 const ResetWallet = ({ navigation, route }) => {
-  const { theme } = useContext(ThemeContext);
+  // const { theme } = useContext(ThemeContext);
+  const { theme } = useThemeContext();
   const styles = myStyles(theme);
   const isFromOnBoarding = route?.params?.isFromOnBoarding;
 
@@ -26,7 +28,8 @@ const ResetWallet = ({ navigation, route }) => {
             consisting of 12 unique words. It is very important that you store
             your seed phrase in a safe place.
           </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('LearnReset')}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('LearnReset')}>
             <Text style={styles.learnText}>Learn more</Text>
           </TouchableOpacity>
           <View style={styles.btnList}>
@@ -39,9 +42,12 @@ const ResetWallet = ({ navigation, route }) => {
                 ...styles.btn,
                 ...styles.shadow,
               }}>
-              <CREATE_WALLET height={150} width={150} />
+              <Icons.KimlSvgCreateWalletLogo height={150} width={150} />
               <View style={styles.textBox}>
-                <Text style={{ ...styles.textBtn, color: theme.font }}>
+                <Text style={{
+                  ...styles.textBtn, color:
+                    theme.font
+                }}>
                   Create
                 </Text>
                 <Text
@@ -56,14 +62,14 @@ const ResetWallet = ({ navigation, route }) => {
 
             <TouchableOpacity
               activeOpacity={1}
-              onPress={() =>
-                navigation.navigate('ImportWallet', { isAdd: !!isFromOnBoarding })
-              }
+              // onPress={() =>
+              //   navigation.navigate('ImportWallet', { isAdd: !!isFromOnBoarding })
+              // }
               style={{
                 ...styles.btn,
                 ...styles.shadow,
               }}>
-              <IMPORT_WALLET height={150} width={150} />
+              <Icons.KimlSvgImportWalletLogo height={150} width={150} />
               <View style={styles.textBox2}>
                 <Text
                   style={{

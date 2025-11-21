@@ -1,9 +1,8 @@
-import { IS_ANDROID } from '../utils/dimensions'
-import { sha256 } from 'react-native-sha256';
+import { IS_ANDROID } from 'utils/dimensions';
+import { sha256 } from "js-sha256";
 import { getBuildNumber, getVersion } from 'react-native-device-info';
 import crypto from 'react-native-quick-crypto';
 import { Linking } from 'react-native';
-import * as Crypto from 'expo-crypto';
 
 export const inAppBrowserOptions = IS_ANDROID
   ? {
@@ -35,10 +34,7 @@ export async function generateSHA256ForCoins(coins, isEVMChain) {
         coinNames.push(str);
       }
     }
-    return Promise.all(coinNames.map(item => Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      item
-    )));
+    return Promise.all(coinNames.map(item => Promise.resolve(sha256(item))));
   }
   return [];
 }

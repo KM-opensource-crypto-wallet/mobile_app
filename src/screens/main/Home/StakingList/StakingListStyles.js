@@ -1,5 +1,5 @@
-import { Platform, StyleSheet } from 'react-native';
-import { SCREEN_WIDTH } from '../../../../utils/dimensions';
+import {Platform, StyleSheet} from 'react-native';
+import {SCREEN_WIDTH} from 'utils/dimensions';
 
 const myStyles = theme =>
   StyleSheet.create({
@@ -25,7 +25,7 @@ const myStyles = theme =>
       ...Platform.select({
         ios: {
           shadowColor: '#C0C0C0',
-          shadowOffset: { width: 0, height: 5 },
+          shadowOffset: {width: 0, height: 5},
           shadowOpacity: 1,
           shadowRadius: 5,
         },

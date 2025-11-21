@@ -1,9 +1,9 @@
-import React, { useContext, useCallback } from 'react';
-import { Dimensions, TouchableOpacity, View } from 'react-native';
-import { Modal, Portal, Text } from 'react-native-paper';
-import { ThemeContext } from '../../theme/ThemeContext';
+import React, {useContext, useCallback} from 'react';
+import {Dimensions, TouchableOpacity, View} from 'react-native';
+import {Modal, Portal, Text} from 'react-native-paper';
+import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './ModalConfirmEnableChatModalStyles';
-import { WL_APP_NAME } from '../../../src/utils/wlData';
+import {WL_APP_NAME} from 'utils/wlData';
 
 const WIDTH = Dimensions.get('window').width + 80;
 
@@ -17,8 +17,8 @@ if (isIpad) {
   ITEM_WIDTH = Math.round(WIDTH * 0.7);
 }
 
-const ModalConfirmEnableChatModal = ({ visible, onPressYes, onPressNo }) => {
-  const { theme } = useContext(ThemeContext);
+const ModalConfirmEnableChatModal = ({visible, onPressYes, onPressNo}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const handlerNo = useCallback(() => {

@@ -1,11 +1,10 @@
-import React, { useContext } from 'react';
-import { ThemeContext } from '../theme/ThemeContext';
-import { View, Text, TouchableOpacity, Platform } from 'react-native';
-// import {SCREEN_WIDTH} from '../utils/dimensions';
-import { SCREEN_WIDTH } from '../utils/dimensions';
+import React, {useContext} from 'react';
+import {ThemeContext} from 'theme/ThemeContext';
+import {View, Text, TouchableOpacity, Platform} from 'react-native';
+import {SCREEN_WIDTH} from 'utils/dimensions';
 
-const EmptyView = ({ text, buttonText, onPressButton }) => {
-  const { theme } = useContext(ThemeContext);
+const EmptyView = ({text, buttonText, onPressButton}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   return (
     <View style={styles.container}>
@@ -48,7 +47,7 @@ const myStyles = theme => ({
     ...Platform.select({
       ios: {
         shadowColor: '#C0C0C0',
-        shadowOffset: { width: 0, height: 5 },
+        shadowOffset: {width: 0, height: 5},
         shadowOpacity: 1,
         shadowRadius: 5,
       },

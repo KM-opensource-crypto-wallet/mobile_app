@@ -1,9 +1,9 @@
-import React, { useCallback } from 'react';
-import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSelector } from 'react-redux';
-import { getDisableMessage } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
-import { CONTACT_DETAILS } from '../../src/utils/wlData';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, {useCallback} from 'react';
+import {Linking, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {useSelector} from 'react-redux';
+import {getDisableMessage} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
+import {CONTACT_DETAILS} from 'utils/wlData';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const DisableComponent = () => {
   const disableMessage = useSelector(getDisableMessage);
@@ -48,7 +48,7 @@ const DisableComponent = () => {
           </View>
         </View>
       </SafeAreaView>
-      <SafeAreaView style={{ backgroundColor: 'lightgray' }} />
+      <SafeAreaView style={{backgroundColor: 'lightgray'}} />
     </>
   );
 };

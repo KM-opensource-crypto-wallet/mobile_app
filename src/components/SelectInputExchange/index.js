@@ -1,9 +1,9 @@
 import React from 'react';
-import { Dropdown } from 'react-native-element-dropdown';
+import {Dropdown} from 'react-native-element-dropdown';
 import myStyles from './SelectInputExchangeStyles';
-import { useContext } from 'react';
-import { ThemeContext } from '../../theme/ThemeContext';
-import CryptoCurrencyOptionItem from '../../components/CryptoCurrencyOptionItem';
+import {useContext} from 'react';
+import {ThemeContext} from 'theme/ThemeContext';
+import CryptoCurrencyOptionItem from 'components/CryptoCurrencyOptionItem';
 
 const SelectInputExchange = ({
   listData,
@@ -12,7 +12,7 @@ const SelectInputExchange = ({
   onValueChange,
   customStyle = {},
 }) => {
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const renderItem = item => {
@@ -24,7 +24,7 @@ const SelectInputExchange = ({
       containerStyle={{
         backgroundColor: theme.secondaryBackgroundColor,
       }}
-      activeColor={{ backgroundColor: theme.secondaryBackgroundColor }}
+      activeColor={{backgroundColor: theme.secondaryBackgroundColor}}
       ref={selectRef}
       style={[styles.dropdown, customStyle]}
       placeholderStyle={styles.placeholderStyle}

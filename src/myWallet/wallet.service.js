@@ -1,6 +1,6 @@
-import {NativeModules} from 'react-native';
+import { NativeModules } from 'react-native';
 
-let {NativeKeygen} = NativeModules;
+let { NativeKeygen } = NativeModules;
 
 if (!NativeKeygen) {
   NativeKeygen = NativeModules.CustomMethods;
@@ -8,6 +8,7 @@ if (!NativeKeygen) {
 
 export const generateMnemonics = async () => {
   try {
+    console.log("NativeKeygen=>", NativeKeygen)
     const phrase = await NativeKeygen.generateMnemonic();
     return {
       mnemonic: {

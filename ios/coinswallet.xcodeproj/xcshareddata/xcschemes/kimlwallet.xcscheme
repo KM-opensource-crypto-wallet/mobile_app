@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1600"
+   LastUpgradeVersion = "2610"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -15,8 +15,8 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "D2E7E5A12DC8CB0E00A414F5"
-               BuildableName = "KIML Wallet.app"
+               BlueprintIdentifier = "9DC1CB3A2ECF00D1001FE7D7"
+               BuildableName = "kimlwallet.app"
                BlueprintName = "kimlwallet"
                ReferencedContainer = "container:coinswallet.xcodeproj">
             </BuildableReference>
@@ -44,8 +44,8 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "D2E7E5A12DC8CB0E00A414F5"
-            BuildableName = "KIML Wallet.app"
+            BlueprintIdentifier = "9DC1CB3A2ECF00D1001FE7D7"
+            BuildableName = "kimlwallet.app"
             BlueprintName = "kimlwallet"
             ReferencedContainer = "container:coinswallet.xcodeproj">
          </BuildableReference>
@@ -61,8 +61,8 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "D2E7E5A12DC8CB0E00A414F5"
-            BuildableName = "KIML Wallet.app"
+            BlueprintIdentifier = "9DC1CB3A2ECF00D1001FE7D7"
+            BuildableName = "kimlwallet.app"
             BlueprintName = "kimlwallet"
             ReferencedContainer = "container:coinswallet.xcodeproj">
          </BuildableReference>

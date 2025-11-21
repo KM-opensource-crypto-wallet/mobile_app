@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from 'react';
+import React, {useContext, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
   Linking,
@@ -7,28 +7,28 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import { ThemeContext } from '../../theme/ThemeContext';
+import {useDispatch, useSelector} from 'react-redux';
+import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './AddCoinsStyles';
 
-import { useNavigation } from '@react-navigation/native';
-import CoinItem from '../../components/CoinItem/CoinItem';
-import Loading from '../../components/Loading';
+import {useNavigation} from '@react-navigation/native';
+import CoinItem from 'components/CoinItem/CoinItem';
+import Loading from 'components/Loading';
 import {
   getCurrencyLoading,
   getMissingCoins,
 } from 'dok-wallet-blockchain-networks/redux/currency/currencySelectors';
-import { setMissingCoins } from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
-import { setPaymentData } from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
-import { getPaymentData } from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
-import { addOrToggleCoinInWallet } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import { refreshCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import { setCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {setMissingCoins} from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
+import {setPaymentData} from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
+import {getPaymentData} from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
+import {addOrToggleCoinInWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {refreshCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {setCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 
-const AddCoins = ({ visible, hideModal }) => {
+const AddCoins = ({visible, hideModal}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const paymentData = useSelector(getPaymentData);
@@ -54,14 +54,14 @@ const AddCoins = ({ visible, hideModal }) => {
         if (coin?.isInWallet) {
           dispatch(setCurrentCoin(coin._id));
         } else {
-          const { newCoin, existingCoinId } = await dispatch(
+          const {newCoin, existingCoinId} = await dispatch(
             addOrToggleCoinInWallet(coin),
           ).unwrap();
           if (existingCoinId) {
             dispatch(setCurrentCoin(existingCoinId));
           }
           if (newCoin) {
-            await dispatch(refreshCurrentCoin({ currentCoin: newCoin }));
+            await dispatch(refreshCurrentCoin({currentCoin: newCoin}));
             dispatch(setCurrentCoin(newCoin?._id));
           }
         }
@@ -106,7 +106,7 @@ const AddCoins = ({ visible, hideModal }) => {
           <View style={styles.modalView}>
             <View style={styles.infoList}>
               <Text style={styles.titleInfo}>Add Coins</Text>
-              <Text style={[styles.titleInfo, { fontSize: 14 }]}>
+              <Text style={[styles.titleInfo, {fontSize: 14}]}>
                 This coin is not added in your wallet, would you like to add it
                 ?
               </Text>
@@ -128,13 +128,13 @@ const AddCoins = ({ visible, hideModal }) => {
             <View style={styles.btnList}>
               <TouchableOpacity
                 disabled={adding}
-                style={[styles.button, adding && { backgroundColor: theme.gray }]}
+                style={[styles.button, adding && {backgroundColor: theme.gray}]}
                 onPress={handleDismiss}>
                 <Text style={styles.buttonTitle}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 disabled={adding}
-                style={[styles.button, adding && { backgroundColor: theme.gray }]}
+                style={[styles.button, adding && {backgroundColor: theme.gray}]}
                 onPress={
                   filteredMissingCoins.length > 0
                     ? handleAddAndContinue

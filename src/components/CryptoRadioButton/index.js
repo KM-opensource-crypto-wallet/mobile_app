@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { View, Text } from 'react-native';
+import React, {useState, useEffect, useContext} from 'react';
+import {View, Text} from 'react-native';
 import myStyles from './CryptoRadioButtonStyles';
-import { CheckBox } from '@rneui/themed';
-import { ThemeContext } from '../../theme/ThemeContext';
+import {CheckBox} from '@rneui/themed';
+import {ThemeContext} from 'theme/ThemeContext';
 
 const cryptoList = [
-  { label: 'Employment' },
-  { label: 'Investment' },
-  { label: 'Other' },
+  {label: 'Employment'},
+  {label: 'Investment'},
+  {label: 'Other'},
 ];
 
-const CryptoRadioButton = ({ setValueRadioBtn }) => {
-  const { theme } = useContext(ThemeContext);
+const CryptoRadioButton = ({setValueRadioBtn}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const [checked, setChecked] = useState('Employment');

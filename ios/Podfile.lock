@@ -1862,7 +1862,7 @@ PODS:
     - Yoga
   - react-native-in-app-review (4.4.2):
     - React-Core
-  - react-native-keyboard-controller (1.19.5):
+  - react-native-keyboard-controller (1.19.6):
     - boost
     - DoubleConversion
     - fast_float
@@ -1880,7 +1880,7 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-keyboard-controller/common (= 1.19.5)
+    - react-native-keyboard-controller/common (= 1.19.6)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -1891,7 +1891,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-keyboard-controller/common (1.19.5):
+  - react-native-keyboard-controller/common (1.19.6):
     - boost
     - DoubleConversion
     - fast_float
@@ -3639,7 +3639,7 @@ SPEC CHECKSUMS:
   react-native-fingerprint-scanner: 91bf6825709dd7bd3abc4588a4772eb097a2b2d8
   react-native-get-random-values: e2acf4070fe4b7325705a05af047449637a27a21
   react-native-in-app-review: 1516ba69d60d58053b7eb3aaaf8d2a5a74af8b57
-  react-native-keyboard-controller: 14c7dd082f9d73b0bf82a45fef2bc198f1bed41c
+  react-native-keyboard-controller: 68ef492814f125fb67dbebbe8aadc9b3e459e821
   react-native-pager-view: a0516effb17ca5120ac2113bfd21b91130ad5748
   react-native-quick-crypto: dac9db2adb0a61b4881909b6db7c51eaaada66a8
   react-native-randombytes: 4eeddad82d1fd57adda1cd5beffe67d041c9d6de

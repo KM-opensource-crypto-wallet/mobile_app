@@ -1,9 +1,9 @@
-import React, { useContext } from 'react';
-import { CheckBox } from '@rneui/themed';
-import { ThemeContext } from '../../theme/ThemeContext';
+import React, {useContext} from 'react';
+import {CheckBox} from '@rneui/themed';
+import {ThemeContext} from 'theme/ThemeContext';
 
-const Checkbox = ({ checked, onChange, customStyle }) => {
-  const { theme } = useContext(ThemeContext);
+const Checkbox = ({checked, onChange, customStyle}) => {
+  const {theme} = useContext(ThemeContext);
   return (
     <CheckBox
       containerStyle={[

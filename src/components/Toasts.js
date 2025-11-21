@@ -7,10 +7,11 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import { ThemeContext } from '../theme/ThemeContext';
+import { ThemeContext } from 'theme/ThemeContext';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useThemeContext } from 'hooks/useThemeContext';
 
 const toastConfig = theme => {
   const myStyles = styles(theme);
@@ -158,7 +159,7 @@ const toastConfig = theme => {
 };
 
 const Toasts = () => {
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useThemeContext();
   const { top } = useSafeAreaInsets();
   return (
     <Toast config={toastConfig(theme)} position={'bottom'} topOffset={top} />

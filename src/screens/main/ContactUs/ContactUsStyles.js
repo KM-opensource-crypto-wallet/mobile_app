@@ -1,5 +1,5 @@
-import { StyleSheet } from 'react-native';
-import { SCREEN_WIDTH } from '../../../utils/dimensions';
+import {StyleSheet} from 'react-native';
+import {SCREEN_WIDTH} from 'utils/dimensions';
 
 const myStyles = theme =>
   StyleSheet.create({

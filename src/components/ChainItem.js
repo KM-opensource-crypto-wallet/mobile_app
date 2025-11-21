@@ -1,10 +1,10 @@
-import React, { useContext } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
-import { ThemeContext } from '../theme/ThemeContext';
-import { capitalizeFirstLetter } from 'dok-wallet-blockchain-networks/helper';
+import React, {useContext} from 'react';
+import {View, StyleSheet, Text} from 'react-native';
+import {ThemeContext} from 'theme/ThemeContext';
+import {capitalizeFirstLetter} from 'dok-wallet-blockchain-networks/helper';
 
-const ChainItem = ({ chain_display_name }) => {
-  const { theme } = useContext(ThemeContext);
+const ChainItem = ({chain_display_name}) => {
+  const {theme} = useContext(ThemeContext);
   const style = myStyles(theme);
   return (
     <View style={style.mainView}>

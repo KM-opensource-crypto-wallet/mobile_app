@@ -1,7 +1,7 @@
-import React, { useContext, useCallback } from 'react';
-import { Dimensions, TouchableOpacity, View } from 'react-native';
-import { Modal, Portal, Text } from 'react-native-paper';
-import { ThemeContext } from '../../theme/ThemeContext';
+import React, {useContext, useCallback} from 'react';
+import {Dimensions, TouchableOpacity, View} from 'react-native';
+import {Modal, Portal, Text} from 'react-native-paper';
+import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './ModalConfirmEnableChatModalStyles';
 
 const WIDTH = Dimensions.get('window').width + 80;
@@ -25,7 +25,7 @@ const ModalConfirm = ({
   noButtonTitle,
   yesButtonTitle,
 }) => {
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const handlerNo = useCallback(() => {

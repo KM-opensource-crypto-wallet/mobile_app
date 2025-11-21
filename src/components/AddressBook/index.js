@@ -1,24 +1,24 @@
-import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
-import { View, FlatList } from 'react-native';
-import { ThemeContext } from '../../theme/ThemeContext';
+import React, {useCallback, useContext, useMemo, useRef, useState} from 'react';
+import {View, FlatList} from 'react-native';
+import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './AddressBookStyles';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import KeyboardHeightView from '../../components/KeyboardHeightView';
-import { useDispatch, useSelector } from 'react-redux';
-import { getAddressBook } from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSelector';
-import { Searchbar } from 'react-native-paper';
-import AddressBookItem from '../../components/AddressBookItem';
-import ModalConfirm from '../../components/ModalConfirm';
-import { deleteAddressBook } from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSlice';
-import EmptyView from '../../components/EmptyView';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import KeyboardHeightView from 'components/KeyboardHeightView';
+import {useDispatch, useSelector} from 'react-redux';
+import {getAddressBook} from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSelector';
+import {Searchbar} from 'react-native-paper';
+import AddressBookItem from 'components/AddressBookItem';
+import ModalConfirm from 'components/ModalConfirm';
+import {deleteAddressBook} from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSlice';
+import EmptyView from 'components/EmptyView';
 
 const getItemHeight = item => {
   return item.label ? 101 : 80;
 };
 
-const AddressBook = ({ navigation }) => {
-  const { theme } = useContext(ThemeContext);
-  const { bottom } = useSafeAreaInsets();
+const AddressBook = ({navigation}) => {
+  const {theme} = useContext(ThemeContext);
+  const {bottom} = useSafeAreaInsets();
   const styles = myStyles(theme, bottom);
   const addressBook = useSelector(getAddressBook);
   const [searchText, setSearchText] = useState('');
@@ -28,11 +28,11 @@ const AddressBook = ({ navigation }) => {
   const data = useMemo(() => {
     return searchText
       ? addressBook?.filter(
-        item =>
-          item.name?.toLowerCase()?.includes(searchText?.toLowerCase()) ||
-          item.address?.toLowerCase()?.includes(searchText?.toLowerCase()) ||
-          item.label?.toLowerCase()?.includes(searchText?.toLowerCase()),
-      )
+          item =>
+            item.name?.toLowerCase()?.includes(searchText?.toLowerCase()) ||
+            item.address?.toLowerCase()?.includes(searchText?.toLowerCase()) ||
+            item.label?.toLowerCase()?.includes(searchText?.toLowerCase()),
+        )
       : addressBook;
   }, [searchText, addressBook]);
 
@@ -45,7 +45,7 @@ const AddressBook = ({ navigation }) => {
       offset += getItemHeight(fdata[i]);
     }
     const length = getItemHeight(fdata[index]);
-    return { length, offset, index };
+    return {length, offset, index};
   }, []);
 
   const onPressYes = useCallback(() => {
@@ -74,7 +74,7 @@ const AddressBook = ({ navigation }) => {
   );
 
   const renderItem = useCallback(
-    ({ item }) => (
+    ({item}) => (
       <AddressBookItem
         item={item}
         onPressDelete={onPressDelete}
@@ -93,7 +93,7 @@ const AddressBook = ({ navigation }) => {
           style={styles.input}
           onChangeText={setSearchText}
           autoFocus={false}
-          inputStyle={{ minHeight: 0 }}
+          inputStyle={{minHeight: 0}}
         />
       </View>
       <FlatList

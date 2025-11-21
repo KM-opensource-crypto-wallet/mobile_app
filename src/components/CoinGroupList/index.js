@@ -1,20 +1,20 @@
-import React, { useCallback, useContext, useRef, useState } from 'react';
-import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import React, {useCallback, useContext, useRef, useState} from 'react';
+import {BottomSheetFlatList} from '@gorhom/bottom-sheet';
 import myStyles from './CoinGroupListStyles';
-import { useSelector, useDispatch, shallowEqual } from 'react-redux';
-import { ThemeContext } from '../../theme/ThemeContext';
-import CoinGroupItem from '../../components/CoinGroupItem/CoinGroupItem';
+import {useSelector, useDispatch, shallowEqual} from 'react-redux';
+import {ThemeContext} from 'theme/ThemeContext';
+import CoinGroupItem from 'components/CoinGroupItem/CoinGroupItem';
 import {
   selectCurrentWallet,
   selectUserCoins,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import CoinGroupInfo from '../../components/CoinGroupInfo';
-import { addCoinGroup } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import { isAddingGroup } from 'dok-wallet-blockchain-networks/redux/currency/currencySelectors';
+import CoinGroupInfo from 'components/CoinGroupInfo';
+import {addCoinGroup} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {isAddingGroup} from 'dok-wallet-blockchain-networks/redux/currency/currencySelectors';
 
-export const CoinsGroupList = ({ list, onEndReached, contentContainerStyle }) => {
+export const CoinsGroupList = ({list, onEndReached, contentContainerStyle}) => {
   const bottomSheetRef = useRef();
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const userCoins = useSelector(selectUserCoins, shallowEqual);
   const currentWallet = useSelector(selectCurrentWallet);
@@ -62,7 +62,7 @@ export const CoinsGroupList = ({ list, onEndReached, contentContainerStyle }) =>
         onEndReached={() => {
           onEndReached?.();
         }}
-        renderItem={({ item, index }) => {
+        renderItem={({item, index}) => {
           return (
             <CoinGroupItem
               item={item}

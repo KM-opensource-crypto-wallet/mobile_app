@@ -1,4 +1,4 @@
-import React, { useContext, useCallback } from 'react';
+import React, {useContext, useCallback} from 'react';
 import {
   ScrollView,
   Text,
@@ -8,17 +8,17 @@ import {
   ImageBackground,
 } from 'react-native';
 import myStyles from './ContactUsStyles';
-import { ThemeContext } from '../../../theme/ThemeContext';
-import WalletConnectItem from '../../../components/WalletConnectItem';
-import { DokSafeAreaView } from '../../../components/DokSafeAreaView';
-import { CARD_2, CONTACT_DETAILS } from '../../../utils/wlData';
-import { useSelector } from 'react-redux';
-import { getCryptoProvidersOTC } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
-import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import { currencySymbol } from '../../../data/currency';
+import {ThemeContext} from 'theme/ThemeContext';
+import WalletConnectItem from 'components/WalletConnectItem';
+import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import {CARD_2, CONTACT_DETAILS} from 'utils/wlData';
+import {useSelector} from 'react-redux';
+import {getCryptoProvidersOTC} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
+import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {currencySymbol} from 'data/currency';
 
-const ContactUs = ({ navigation }) => {
-  const { theme } = useContext(ThemeContext);
+const ContactUs = ({navigation}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const shownOTC = useSelector(getCryptoProvidersOTC);
   const localCurrency = useSelector(getLocalCurrency);

@@ -1,23 +1,23 @@
 import React from 'react';
-import { View, Text, FlatList } from 'react-native';
+import {View, Text, FlatList} from 'react-native';
 import myStyles from './EVMWalletDerivationStyles';
 
-import { useSelector, useDispatch } from 'react-redux';
-import { useContext } from 'react';
-import { ThemeContext } from '../../../../theme/ThemeContext';
+import {useSelector, useDispatch} from 'react-redux';
+import {useContext} from 'react';
+import {ThemeContext} from 'theme/ThemeContext';
 
 import {
   addEVMAndTronDeriveAddresses,
   removeEVMDeriveAddresses,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import { selectAllWallets } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import { Avatar, Switch } from 'react-native-paper';
-import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
+import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {Avatar, Switch} from 'react-native-paper';
+import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
 const EVMWalletDerivation = () => {
   const allWallets = useSelector(selectAllWallets);
 
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const dispatch = useDispatch();
@@ -32,7 +32,7 @@ const EVMWalletDerivation = () => {
           data={allWallets}
           contentContainerStyle={styles.contentContainerStyle}
           keyExtractor={item => item.walletName}
-          renderItem={({ item, index }) =>
+          renderItem={({item, index}) =>
             item?.isImportWalletWithPrivateKey ? null : (
               <View style={styles.walletBox}>
                 <View style={styles.rowView}>
@@ -40,7 +40,7 @@ const EVMWalletDerivation = () => {
                     <Avatar.Image
                       style={styles.avatarAvatar}
                       size={54}
-                      source={require('../../../../assets/images/Mark.png')}
+                      source={require('assets/images/Mark.png')}
                     />
                   </View>
                   <View style={styles.textContainer}>
@@ -52,13 +52,13 @@ const EVMWalletDerivation = () => {
                   onValueChange={value => {
                     if (value) {
                       dispatch(
-                        addEVMAndTronDeriveAddresses({ index, wallet: item }),
+                        addEVMAndTronDeriveAddresses({index, wallet: item}),
                       );
                     } else {
-                      dispatch(removeEVMDeriveAddresses({ index }));
+                      dispatch(removeEVMDeriveAddresses({index}));
                     }
                   }}
-                  trackColor={{ false: 'gray', true: '#E8E8E8' }}
+                  trackColor={{false: 'gray', true: '#E8E8E8'}}
                   thumbColor={
                     item.isEVMAddressesAdded ? theme.background : 'white'
                   }

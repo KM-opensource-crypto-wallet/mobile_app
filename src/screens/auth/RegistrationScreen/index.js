@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { TouchableOpacity, View, Text, Keyboard } from 'react-native';
+import { TouchableOpacity, View, Text, Keyboard, Alert } from 'react-native';
 import { TextInput } from 'react-native-paper';
 import { Formik } from 'formik';
 import {
@@ -7,12 +7,13 @@ import {
   signUpSuccess,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 // import styles from './RegistrationScreenStyles';
-import { validationSchemaRegistration } from '../../../utils/validationSchema';
-import { IS_IOS, useFloatingHeight } from '../../../utils/dimensions';
+import { validationSchemaRegistration } from 'utils/validationSchema';
+import { IS_IOS, useFloatingHeight } from 'utils/dimensions';
 import myStyles from './RegistrationScreenStyles';
-import { ThemeContext } from '../../../theme/ThemeContext';
+import { ThemeContext } from 'theme/ThemeContext';
 import { useDispatch } from 'react-redux';
-import { DokSafeAreaView } from '../../../components/DokSafeAreaView';
+import { DokSafeAreaView } from 'components/DokSafeAreaView';
+import { loadingOff } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 
 export const RegistrationScreen = ({ navigation }) => {
   const { theme } = useContext(ThemeContext);

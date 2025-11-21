@@ -5,11 +5,11 @@ import React, {
   useRef,
   useCallback,
 } from 'react';
-import { View } from 'react-native';
+import {View} from 'react-native';
 import myStyles from './TabAddCoinsGroupStyles';
-import { useDispatch, useSelector } from 'react-redux';
-import { Searchbar } from 'react-native-paper';
-import { ThemeContext } from '../../theme/ThemeContext';
+import {useDispatch, useSelector} from 'react-redux';
+import {Searchbar} from 'react-native-paper';
+import {ThemeContext} from 'theme/ThemeContext';
 
 import {
   fetchAllSearchCoinsGroup,
@@ -25,12 +25,12 @@ import {
   selectAllCoinsGroup,
   selectSearchAllCoinsGroup,
 } from 'dok-wallet-blockchain-networks/redux/currency/currencySelectors';
-import Loading from '../../components/Loading';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CoinsGroupList } from '../../components/CoinGroupList';
+import Loading from 'components/Loading';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {CoinsGroupList} from 'components/CoinGroupList';
 
 const TabAddCoinGroups = () => {
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const [searchQuery, setSearchQuery] = useState('');
   const allCoinGroups = useSelector(selectAllCoinsGroup);
@@ -42,7 +42,7 @@ const TabAddCoinGroups = () => {
   const isAllCoinLoading = useSelector(isGroupCoinsLoading);
   const isSearchAllGroupCoinLoading = useSelector(isSearchAllGroupCoinsLoading);
   const dispatch = useDispatch();
-  const { bottom } = useSafeAreaInsets();
+  const {bottom} = useSafeAreaInsets();
   const queryPayload = useRef({
     limit: 20,
     orderBy: 'order',
@@ -123,7 +123,7 @@ const TabAddCoinGroups = () => {
               page: 1,
             };
           }}
-          contentContainerStyle={{ paddingBottom: bottom }}
+          contentContainerStyle={{paddingBottom: bottom}}
         />
       )}
     </View>

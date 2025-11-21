@@ -1,15 +1,15 @@
-import React, { useContext, useRef } from 'react';
-import { StyleSheet, View, Text, Image } from 'react-native';
-import DokBottomSheet from '../components/BottomSheet';
-import { ThemeContext } from '../theme/ThemeContext';
-import DOWNLOAD_ICON from '../assets/images/icons/download.png';
-import PLUS_ICON from '../assets/images/icons/plus-icon.png';
-import { useNavigation } from '@react-navigation/native';
-import { TouchableOpacity } from '@gorhom/bottom-sheet';
+import React, {useContext, useRef} from 'react';
+import {StyleSheet, View, Text, Image} from 'react-native';
+import DokBottomSheet from 'components/BottomSheet';
+import {ThemeContext} from 'theme/ThemeContext';
+import DOWNLOAD_ICON from 'assets/images/icons/download.png';
+import PLUS_ICON from 'assets/images/icons/plus-icon.png';
+import {useNavigation} from '@react-navigation/native';
+import {TouchableOpacity} from '@gorhom/bottom-sheet';
 
-const CreateWalletSheet = ({ bottomSheetRef, onDismiss }) => {
+const CreateWalletSheet = ({bottomSheetRef, onDismiss}) => {
   const navigation = useNavigation();
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const myStyles = styles(theme);
   const bottomRef = useRef();
   return (
@@ -42,7 +42,7 @@ const CreateWalletSheet = ({ bottomSheetRef, onDismiss }) => {
           style={myStyles.itemView}
           onPress={() => {
             bottomRef.current?.close();
-            navigation.navigate('ImportWallet', { isAdd: true });
+            navigation.navigate('ImportWallet', {isAdd: true});
           }}>
           <Image
             source={DOWNLOAD_ICON}

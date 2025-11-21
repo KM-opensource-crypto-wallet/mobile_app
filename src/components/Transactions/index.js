@@ -6,35 +6,35 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import KeyboardArrow from '../../assets/images/icons/keyboard-arrow-right.svg';
-import { useDispatch, useSelector } from 'react-redux';
-import TransactionsIcon from '../../assets/images/send//trans.svg';
+import {View, Text, ScrollView, TouchableOpacity} from 'react-native';
+import KeyboardArrow from 'assets/images/icons/keyboard-arrow-right.svg';
+import {useDispatch, useSelector} from 'react-redux';
+import TransactionsIcon from 'assets/images/send//trans.svg';
 import myStyles from './TransactionsStyles';
-import { ThemeContext } from '../../theme/ThemeContext';
-import { getLocalCurrency } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import { currencySymbol } from '../../data/currency';
+import {ThemeContext} from 'theme/ThemeContext';
+import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {currencySymbol} from 'data/currency';
 import {
   getPendingTransactions,
   selectCurrentCoin,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import dayjs from 'dayjs';
-import { InAppBrowser } from 'react-native-inappbrowser-reborn';
-import { inAppBrowserOptions } from '../../utils/common';
+import {InAppBrowser} from 'react-native-inappbrowser-reborn';
+import {inAppBrowserOptions} from 'utils/common';
 import {
   isPendingTransactionSupportedChain,
   isTransactionListNotSupported,
 } from 'dok-wallet-blockchain-networks/helper';
 import IoniconIcon from 'react-native-vector-icons/Ionicons';
-import ModalCancelPendingTransactions from '../../components/ModalCancelPendingTransaction';
-import { calculateEstimateFeeForPendingTransaction } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import { getPendingTransferData } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSelector';
-import { sendPendingTransactions } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import { useNavigation } from '@react-navigation/native';
-import Spinner from '../../components/Spinner';
+import ModalCancelPendingTransactions from 'components/ModalCancelPendingTransaction';
+import {calculateEstimateFeeForPendingTransaction} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
+import {getPendingTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSelector';
+import {sendPendingTransactions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {useNavigation} from '@react-navigation/native';
+import Spinner from 'components/Spinner';
 
-const Transactions = ({ renderList, selectedAddress }) => {
-  const { theme } = useContext(ThemeContext);
+const Transactions = ({renderList, selectedAddress}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const dispatch = useDispatch();
   const pendingTransferData = useSelector(getPendingTransferData);
@@ -115,7 +115,7 @@ const Transactions = ({ renderList, selectedAddress }) => {
     <>
       <ScrollView>
         {list?.length === 0 ? (
-          <View style={{ ...styles.section, marginTop: 40 }}>
+          <View style={{...styles.section, marginTop: 40}}>
             <TransactionsIcon height="114" width="114" />
             <Text style={styles.info}>
               {isTransactionNotSuppoted
@@ -148,7 +148,7 @@ const Transactions = ({ renderList, selectedAddress }) => {
                       <View style={styles.box}>
                         <View style={styles.item}>
                           <Text style={styles.title}>{item.link}</Text>
-                          <View style={{ flexDirection: 'row' }}>
+                          <View style={{flexDirection: 'row'}}>
                             <Text style={styles.text}>
                               {dayjs(item.date).format('DD.MM.YYYY')}
                             </Text>
@@ -158,7 +158,7 @@ const Transactions = ({ renderList, selectedAddress }) => {
                         </View>
 
                         <View style={styles.itemNumber}>
-                          <View style={{ flexDirection: 'row' }}>
+                          <View style={{flexDirection: 'row'}}>
                             <Text
                               style={{
                                 ...styles.text,

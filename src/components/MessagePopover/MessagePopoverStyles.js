@@ -1,5 +1,5 @@
-import { StyleSheet } from 'react-native';
-import { SCREEN_WIDTH } from '../../utils/dimensions';
+import {StyleSheet} from 'react-native';
+import {SCREEN_WIDTH} from 'utils/dimensions';
 
 const PopoverWidth = 180;
 const myStyles = theme =>
@@ -40,7 +40,7 @@ const myStyles = theme =>
       marginLeft: SCREEN_WIDTH - PopoverWidth - 16,
       shadowColor: 'black',
       shadowOpacity: 0.3,
-      shadowOffset: { width: 0, height: 0 },
+      shadowOffset: {width: 0, height: 0},
       shadowRadius: 5,
       borderRadius: 10,
     },

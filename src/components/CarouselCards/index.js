@@ -1,14 +1,14 @@
 import React, { useState, useRef, useContext } from 'react';
 import { View, Image, Text, TouchableOpacity } from 'react-native';
 import Swiper from 'react-native-swiper';
-import data from '../../data/data';
+import data from 'data/data';
 import myStyles from './CarouselCardsStyles';
-import { useFloatingHeight } from '../../utils/dimensions';
-import { ThemeContext } from '../../theme/ThemeContext';
-import { DokSafeAreaView } from '../../components/DokSafeAreaView';
+import { useFloatingHeight } from 'utils/dimensions';
+import { DokSafeAreaView } from 'components/DokSafeAreaView';
+import { useThemeContext } from 'hooks/useThemeContext';
 
 export const CarouselCards = ({ navigation }) => {
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useThemeContext();
   const styles = myStyles(theme);
   const floatingHeight = useFloatingHeight();
   const [index, setIndex] = useState(0);

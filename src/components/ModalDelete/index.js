@@ -1,14 +1,14 @@
-import React, { useContext, useCallback } from 'react';
-import { Dimensions, TouchableOpacity, View } from 'react-native';
-import { Modal, Text } from 'react-native-paper';
-import { ThemeContext } from '../../theme/ThemeContext';
+import React, {useContext, useCallback} from 'react';
+import {Dimensions, TouchableOpacity, View} from 'react-native';
+import {Modal, Text} from 'react-native-paper';
+import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './ModalDeleteStyles';
-import { isIpad } from '../../utils/dimensions';
+import {isIpad} from 'utils/dimensions';
 
 // import {getLoading} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 
 const WIDTH = Dimensions.get('window').width + 80;
-const { height: screenHeight } = Dimensions.get('window');
+const {height: screenHeight} = Dimensions.get('window');
 const modalHeight = screenHeight / 2.5;
 
 let ITEM_WIDTH;
@@ -19,8 +19,8 @@ if (isIpad) {
   ITEM_WIDTH = Math.round(WIDTH * 0.7);
 }
 
-const ModalDelete = ({ visible, onPressYes, onPressNo, walletName }) => {
-  const { theme } = useContext(ThemeContext);
+const ModalDelete = ({visible, onPressYes, onPressNo, walletName}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const handlerYes = useCallback(() => {

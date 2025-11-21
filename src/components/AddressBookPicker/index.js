@@ -1,14 +1,14 @@
-import React, { useCallback, useContext, useRef } from 'react';
-import { TouchableOpacity } from 'react-native';
-import { ThemeContext } from '../../theme/ThemeContext';
+import React, {useCallback, useContext, useRef} from 'react';
+import {TouchableOpacity} from 'react-native';
+import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './AddressBookPickerStyles';
 
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import AddressPickerSheet from '../../components/AddressPickerSheet';
+import AddressPickerSheet from 'components/AddressPickerSheet';
 
-const AddressBookPicker = ({ chain_name, walletId, onSelectAddress }) => {
+const AddressBookPicker = ({chain_name, walletId, onSelectAddress}) => {
   const bottomSheetRef = useRef();
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const onDismissSheet = useCallback(() => {

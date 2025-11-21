@@ -4,7 +4,7 @@ import { Text, TouchableOpacity, Dimensions, View } from 'react-native';
 // import QRCodeScanner from 'react-native-qrcode-scanner';
 import * as Animatable from 'react-native-animatable';
 import myStyles from './ScannerStyles';
-import { ThemeContext } from '../../../theme/ThemeContext';
+import { ThemeContext } from 'theme/ThemeContext';
 import { parseCryptoQrCodeString } from 'dok-wallet-blockchain-networks/helper';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { selectUserCoins } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
@@ -189,63 +189,61 @@ const Scanner = ({ navigation, route }) => {
       </View>
     );
   }
-
   return (
-    <>
-      {/* NOTE: update camera library  */}
-      {/* <QRCodeScanner
-      onRead={onSuccess}
-      // flashMode={RNCamera.Constants.FlashMode.torch}
-      showMarker={true}
-      cameraStyle={{ height: SCREEN_HEIGHT * 0.711 }}
-      bottomViewStyle={styles.bottomStyle}
-      topViewStyle={styles.bottomStyle}
-      //   bottomContent={
-      //     <View style={styles.btnContainer}>
-      //       <TouchableOpacity
-      //         onPress={() => {
-      //           navigation.navigate('Home', {showModal: false});
-      //         }}>
-      //         <Text style={styles.btn}>CANCEL</Text>
-      //       </TouchableOpacity>
-      //     </View>
-      //   }
-      customMarker={
-        <View style={styles.rectangleContainer}>
-          <View style={styles.topOverlay} />
-          <View style={{ flexDirection: 'row' }}>
-            <View style={styles.leftAndRightOverlay} />
+    <Text>Hi there</Text>
+  )
+  // return (
+  //   <QRCodeScanner
+  //     onRead={onSuccess}
+  //     // flashMode={RNCamera.Constants.FlashMode.torch}
+  //     showMarker={true}
+  //     cameraStyle={{ height: SCREEN_HEIGHT * 0.711 }}
+  //     bottomViewStyle={styles.bottomStyle}
+  //     topViewStyle={styles.bottomStyle}
+  //     //   bottomContent={
+  //     //     <View style={styles.btnContainer}>
+  //     //       <TouchableOpacity
+  //     //         onPress={() => {
+  //     //           navigation.navigate('Home', {showModal: false});
+  //     //         }}>
+  //     //         <Text style={styles.btn}>CANCEL</Text>
+  //     //       </TouchableOpacity>
+  //     //     </View>
+  //     //   }
+  //     customMarker={
+  //       <View style={styles.rectangleContainer}>
+  //         <View style={styles.topOverlay} />
+  //         <View style={{ flexDirection: 'row' }}>
+  //           <View style={styles.leftAndRightOverlay} />
 
-            <View style={styles.rectangle}>
-              <Animatable.View
-                style={styles.scanBar}
-                direction="alternate-reverse"
-                iterationCount="infinite"
-                duration={1700}
-                easing="linear"
-                animation={makeSlideOutTranslation(
-                  'translateY',
-                  SCREEN_WIDTH * 0.2,
-                )}
-              />
-            </View>
-            <View style={styles.leftAndRightOverlay} />
-          </View>
-          <View style={styles.bottomOverlay} />
-          <View style={styles.btnContainer}>
-            <TouchableOpacity
-              onPress={() => {
-                navigation.navigate(page, { showModal: false });
-              }}>
-              <Text style={styles.btn}>CANCEL</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      }
-    /> */}
-    </>
-
-  );
+  //           <View style={styles.rectangle}>
+  //             <Animatable.View
+  //               style={styles.scanBar}
+  //               direction="alternate-reverse"
+  //               iterationCount="infinite"
+  //               duration={1700}
+  //               easing="linear"
+  //               animation={makeSlideOutTranslation(
+  //                 'translateY',
+  //                 SCREEN_WIDTH * 0.2,
+  //               )}
+  //             />
+  //           </View>
+  //           <View style={styles.leftAndRightOverlay} />
+  //         </View>
+  //         <View style={styles.bottomOverlay} />
+  //         <View style={styles.btnContainer}>
+  //           <TouchableOpacity
+  //             onPress={() => {
+  //               navigation.navigate(page, { showModal: false });
+  //             }}>
+  //             <Text style={styles.btn}>CANCEL</Text>
+  //           </TouchableOpacity>
+  //         </View>
+  //       </View>
+  //     }
+  //   />
+  // );
 };
 
 export default Scanner;

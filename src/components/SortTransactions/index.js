@@ -1,21 +1,21 @@
-import React, { useState, useContext, useCallback } from 'react';
-import { View, TouchableOpacity, Dimensions, Text } from 'react-native';
+import React, {useState, useContext, useCallback} from 'react';
+import {View, TouchableOpacity, Dimensions, Text} from 'react-native';
 import myStyles from './SortTransactionsStyles';
-import { Modal } from 'react-native-paper';
-import { CheckBox } from '@rneui/themed';
-import RadioOn from '../../assets/images/icons/radio-button-on.svg';
-import { ThemeContext } from '../../theme/ThemeContext';
+import {Modal} from 'react-native-paper';
+import {CheckBox} from '@rneui/themed';
+import RadioOn from 'assets/images/icons/radio-button-on.svg';
+import {ThemeContext} from 'theme/ThemeContext';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { useDispatch, useSelector } from 'react-redux';
-import { selectCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import { createPendingTransactionKey } from 'dok-wallet-blockchain-networks/helper';
+import {useDispatch, useSelector} from 'react-redux';
+import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {createPendingTransactionKey} from 'dok-wallet-blockchain-networks/helper';
 import {
   refreshCurrentCoin,
   setPendingTransactions,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 
 const WIDTH = Dimensions.get('window').width + 80;
-const { height: screenHeight } = Dimensions.get('window');
+const {height: screenHeight} = Dimensions.get('window');
 const modalHeight = screenHeight / 1.6;
 const isIpad = WIDTH >= 768;
 
@@ -27,8 +27,8 @@ if (isIpad) {
   ITEM_WIDTH = Math.round(WIDTH * 0.7);
 }
 
-const SortTransactions = ({ visible, hideModal, onPressAppy }) => {
-  const { theme } = useContext(ThemeContext);
+const SortTransactions = ({visible, hideModal, onPressAppy}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const currentCoin = useSelector(selectCurrentCoin);
   const dispatch = useDispatch();
@@ -42,17 +42,17 @@ const SortTransactions = ({ visible, hideModal, onPressAppy }) => {
   };
 
   const sortList = [
-    { label: 'Date Ascending' },
-    { label: 'Date Descending' },
-    { label: 'Amount Ascending' },
-    { label: 'Amount Descending' },
+    {label: 'Date Ascending'},
+    {label: 'Date Descending'},
+    {label: 'Amount Ascending'},
+    {label: 'Amount Descending'},
   ];
 
   const filterList = [
-    { label: 'None' },
-    { label: 'Send' },
-    { label: 'Received' },
-    { label: 'Pending' },
+    {label: 'None'},
+    {label: 'Send'},
+    {label: 'Received'},
+    {label: 'Pending'},
   ];
 
   const containerStyle = {
@@ -71,8 +71,8 @@ const SortTransactions = ({ visible, hideModal, onPressAppy }) => {
       symbol: currentCoin?.symbol,
       address: currentCoin?.address,
     });
-    dispatch(setPendingTransactions({ key, value: [] }));
-    dispatch(refreshCurrentCoin({ fetchTransaction: true }));
+    dispatch(setPendingTransactions({key, value: []}));
+    dispatch(refreshCurrentCoin({fetchTransaction: true}));
   }, [
     currentCoin?.address,
     currentCoin?.chain_name,
@@ -140,7 +140,7 @@ const SortTransactions = ({ visible, hideModal, onPressAppy }) => {
         ))}
 
         {/* //////////////////filter/////////////////////////////////////////// */}
-        <Text style={{ ...styles.titleItem, marginVertical: 10 }}>Filter</Text>
+        <Text style={{...styles.titleItem, marginVertical: 10}}>Filter</Text>
 
         {filterList?.map((el, index) => (
           <View style={styles.itembox} key={index}>

@@ -1,12 +1,12 @@
-import React, { useContext } from 'react';
-import { Dimensions, TouchableOpacity, View } from 'react-native';
-import { Modal, Portal, Text } from 'react-native-paper';
+import React, {useContext} from 'react';
+import {Dimensions, TouchableOpacity, View} from 'react-native';
+import {Modal, Portal, Text} from 'react-native-paper';
 import myStyles from './ModalFingerprintStyles';
-import { ThemeContext } from '../../theme/ThemeContext';
-import { getFingerprintName } from 'dok-wallet-blockchain-networks/helper';
+import {ThemeContext} from 'theme/ThemeContext';
+import {getFingerprintName} from 'dok-wallet-blockchain-networks/helper';
 
 const WIDTH = Dimensions.get('window').width + 80;
-const { height: screenHeight } = Dimensions.get('window');
+const {height: screenHeight} = Dimensions.get('window');
 const modalHeight = screenHeight / 3;
 
 const isIpad = WIDTH >= 768;
@@ -19,8 +19,8 @@ if (isIpad) {
   ITEM_WIDTH = Math.round(WIDTH * 0.7);
 }
 
-const ModalFingerprint = ({ visible, hideModal, fingerprintEnabled }) => {
-  const { theme } = useContext(ThemeContext);
+const ModalFingerprint = ({visible, hideModal, fingerprintEnabled}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const containerStyle = {

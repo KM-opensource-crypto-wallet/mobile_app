@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, {useState, useEffect, useContext, useRef} from 'react';
 import {
   View,
   Text,
@@ -6,29 +6,29 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from 'react-native';
-import { TextInput } from 'react-native-paper';
-import { CheckBox } from '@rneui/themed';
-import { Formik } from 'formik';
+import {TextInput} from 'react-native-paper';
+import {CheckBox} from '@rneui/themed';
+import {Formik} from 'formik';
 import crypto from 'react-native-quick-crypto';
 
-import Castle from '../../assets/images/verify/сastle.svg';
-import Cross from '../../assets/images/verify/cross.svg';
-import Check from '../../assets/images/verify/check.svg';
-import { IS_ANDROID, useFloatingHeight } from '../../utils/dimensions';
-import { ThemeContext } from '../../theme/ThemeContext';
+import Castle from 'assets/images/verify/сastle.svg';
+import Cross from 'assets/images/verify/cross.svg';
+import Check from 'assets/images/verify/check.svg';
+import {IS_ANDROID, useFloatingHeight} from 'utils/dimensions';
+import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './VerifyStyles';
-import { useFloatingWidth } from '../../hooks/useFloatingWidth';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
-import { SCREEN_HEIGHT } from '@gorhom/bottom-sheet';
-import { useDispatch } from 'react-redux';
-import { setIsAskedBackupModal } from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
-import { setBackedUp } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {useFloatingWidth} from 'hooks/useFloatingWidth';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
+import {SCREEN_HEIGHT} from '@gorhom/bottom-sheet';
+import {useDispatch} from 'react-redux';
+import {setIsAskedBackupModal} from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
+import {setBackedUp} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 
-export const Verify = ({ route, navigation }) => {
-  const { theme } = useContext(ThemeContext);
+export const Verify = ({route, navigation}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-  const { random } = route.params;
+  const {random} = route.params;
   const [list, setList] = useState([]);
   const [checked, setChecked] = useState(false);
   const [textInputEnabled, setTextInputEnabled] = useState(true);
@@ -75,7 +75,7 @@ export const Verify = ({ route, navigation }) => {
           dispatch(setBackedUp());
           navigation.reset({
             index: 0,
-            routes: [{ name: 'Sidebar' }],
+            routes: [{name: 'Sidebar'}],
           });
         }
       } else {
@@ -97,7 +97,7 @@ export const Verify = ({ route, navigation }) => {
       bounces={false}
       extraScrollHeight={-SCREEN_HEIGHT * 0.15}
       style={styles.container}
-      contentContainerStyle={{ flexGrow: 1 }}>
+      contentContainerStyle={{flexGrow: 1}}>
       <View
         style={{
           ...styles.container,
@@ -112,7 +112,7 @@ export const Verify = ({ route, navigation }) => {
           <Text style={styles.text}>
             Enter the correct words of you seed phrase below.
           </Text>
-          <View style={{ ...styles.wordsList, marginTop: isIpad ? 50 : 0 }}>
+          <View style={{...styles.wordsList, marginTop: isIpad ? 50 : 0}}>
             {list.map((item, index) => (
               <TouchableOpacity
                 style={{
@@ -140,14 +140,14 @@ export const Verify = ({ route, navigation }) => {
                           item.audit === true
                             ? theme.background
                             : item.audit === false
-                              ? '#CCC8C6'
-                              : '#FFF7E5',
+                            ? '#CCC8C6'
+                            : '#FFF7E5',
                         color:
                           item.audit === true
                             ? '#fff'
                             : item.audit === false
-                              ? theme.background
-                              : '#FF647C',
+                            ? theme.background
+                            : '#FF647C',
                       }}>
                       {item.id}
                     </Text>
@@ -175,21 +175,22 @@ export const Verify = ({ route, navigation }) => {
         <View
           style={[
             styles.formInput,
-            keyboardHeight && { justifyContent: 'flex-start' },
+            keyboardHeight && {justifyContent: 'flex-start'},
           ]}>
           <Text style={styles.info}>
-            {`Enter the ${selected}${selected === 1
-              ? 'st'
-              : selected === 2
+            {`Enter the ${selected}${
+              selected === 1
+                ? 'st'
+                : selected === 2
                 ? 'nd'
                 : selected === 3
-                  ? 'rd'
-                  : 'th'
-              } word`}
+                ? 'rd'
+                : 'th'
+            } word`}
           </Text>
           <Formik
             innerRef={formikRef}
-            initialValues={{ word: '' }}
+            initialValues={{word: ''}}
             onSubmit={handleSubmit}>
             {({
               handleChange,
@@ -213,7 +214,7 @@ export const Verify = ({ route, navigation }) => {
                   }}
                   autoComplete={'off'}
                   autoCorrect={false}
-                  {...(IS_ANDROID ? { keyboardType: 'visible-password' } : {})}
+                  {...(IS_ANDROID ? {keyboardType: 'visible-password'} : {})}
                   spellCheck={false}
                   outlineColor={
                     selectedItem?.audit === false ? 'red' : '#989898'
@@ -223,8 +224,8 @@ export const Verify = ({ route, navigation }) => {
                     selectedItem?.audit === false
                       ? 'red'
                       : textInputEnabled
-                        ? theme.borderActiveColor
-                        : theme.headerBorder
+                      ? theme.borderActiveColor
+                      : theme.headerBorder
                   }
                   autoCapitalize="none"
                   returnKeyType="next"

@@ -4,7 +4,7 @@ import {Provider as PaperProvider} from 'react-native-paper';
 import LoginComponent from 'components/LoginComponent';
 import Toasts from 'components/Toasts';
 
-const LoginModal = ({ visible, onClose }) => {
+const LoginModal = ({visible, onClose}) => {
   return (
     <Modal
       visible={visible}

@@ -13,28 +13,28 @@ import {
   RefreshControl,
 } from 'react-native';
 import myStyles from './TransactionListStyles';
-import { useSelector, useDispatch } from 'react-redux';
-import Transactions from '../../../../components/Transactions';
-import SortTransactions from '../../../../components/SortTransactions';
-import { Provider, Portal } from 'react-native-paper';
-import FilterIcon from '../../../../assets/images/icons/filter-list.svg';
+import {useSelector, useDispatch} from 'react-redux';
+import Transactions from 'components/Transactions';
+import SortTransactions from 'components/SortTransactions';
+import {Provider, Portal} from 'react-native-paper';
+import FilterIcon from 'assets/images/icons/filter-list.svg';
 
-import { ThemeContext } from '../../../../theme/ThemeContext';
-import { selectCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import { refreshCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {ThemeContext} from 'theme/ThemeContext';
+import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {refreshCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {
   getAddressDetailsUrl,
   isPendingTransactionSupportedChain,
 } from 'dok-wallet-blockchain-networks/helper';
-import { InAppBrowser } from 'react-native-inappbrowser-reborn';
-import Loading from '../../../../components/Loading';
-import { inAppBrowserOptions } from '../../../../utils/common';
-import { useNavigation } from '@react-navigation/native';
-import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
+import {InAppBrowser} from 'react-native-inappbrowser-reborn';
+import Loading from 'components/Loading';
+import {inAppBrowserOptions} from 'utils/common';
+import {useNavigation} from '@react-navigation/native';
+import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
 const TransactionList = () => {
   const currentCoin = useSelector(selectCurrentCoin);
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const allTransactions = currentCoin?.transactions;
   const [modalVisible, setModalVisible] = useState(false);
@@ -60,7 +60,7 @@ const TransactionList = () => {
 
   useEffect(() => {
     if (currentCoin?.address) {
-      dispatch(refreshCurrentCoin({ fetchTransaction: true }))
+      dispatch(refreshCurrentCoin({fetchTransaction: true}))
         .unwrap()
         .then(() => {
           setIsLoading(false);
@@ -135,7 +135,7 @@ const TransactionList = () => {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await dispatch(refreshCurrentCoin({ fetchTransaction: true })).unwrap();
+    await dispatch(refreshCurrentCoin({fetchTransaction: true})).unwrap();
     setRefreshing(false);
   }, [dispatch]);
 

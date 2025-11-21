@@ -1,11 +1,11 @@
-import React, { memo, useCallback, useContext, useMemo } from 'react';
+import React, {memo, useCallback, useContext, useMemo} from 'react';
 
-import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import {ActivityIndicator, Text, TouchableOpacity, View} from 'react-native';
 import myStyles from './CoinGroupItemStyles';
-import { ThemeContext } from '../../theme/ThemeContext';
-import CoinIcons from '../../components/CoinIcons';
+import {ThemeContext} from 'theme/ThemeContext';
+import CoinIcons from 'components/CoinIcons';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
-import { useGroupCoins } from '../../hooks/useGroupCoins';
+import {useGroupCoins} from 'hooks/useGroupCoins';
 
 const CoinGroupItem = ({
   currentWallet,
@@ -20,10 +20,10 @@ const CoinGroupItem = ({
     return item?.coins?.map(subItem => subItem?.icon);
   }, [item?.coins]);
 
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
-  const { isDisabledItem, isGroupCoinsAdded, isAdding } = useGroupCoins({
+  const {isDisabledItem, isGroupCoinsAdded, isAdding} = useGroupCoins({
     currentWallet,
     group: item,
     isAddingGroup,

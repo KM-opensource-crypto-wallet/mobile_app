@@ -1,7 +1,7 @@
-import React, { useContext } from 'react';
-import { View, Text } from 'react-native';
+import React, {useContext} from 'react';
+import {View, Text} from 'react-native';
 import myStyles from './MessagePopoverStyles';
-import { ThemeContext } from '../../theme/ThemeContext';
+import {ThemeContext} from 'theme/ThemeContext';
 import {
   Menu,
   MenuOption,
@@ -9,7 +9,7 @@ import {
   MenuTrigger,
 } from 'react-native-popup-menu';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
-import CopyIcon from '../../assets/images/icons/copy.svg';
+import CopyIcon from 'assets/images/icons/copy.svg';
 
 const MessagePopover = ({
   onRef,
@@ -18,7 +18,7 @@ const MessagePopover = ({
   onPressSingleForward,
   onPressSingleReply,
 }) => {
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   return (
@@ -27,7 +27,7 @@ const MessagePopover = ({
       <MenuOptions
         optionsContainerStyle={[
           styles.optionsContainer,
-          isLeft && { marginLeft: 0 },
+          isLeft && {marginLeft: 0},
         ]}>
         <MessageOption
           icon={
@@ -66,7 +66,7 @@ const MessagePopover = ({
   );
 };
 
-const MessageOption = ({ icon, text, onSelect, styles }) => (
+const MessageOption = ({icon, text, onSelect, styles}) => (
   <MenuOption onSelect={onSelect} style={styles.menuOption}>
     <View
       style={styles.optionMenu}

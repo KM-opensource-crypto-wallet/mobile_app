@@ -13,24 +13,24 @@ import {
   ScrollView,
   Keyboard,
 } from 'react-native';
-import { v4 as UUIDV4 } from 'uuid';
-import { TextInput } from 'react-native-paper';
-import { useSelector, useDispatch } from 'react-redux';
-import CloseIcon from '../../assets/images/icons/close.svg';
-import QRCodeIcon from '../../assets/images/sidebarIcons/QRCode.svg';
+import {v4 as UUIDV4} from 'uuid';
+import {TextInput} from 'react-native-paper';
+import {useSelector, useDispatch} from 'react-redux';
+import CloseIcon from 'assets/images/icons/close.svg';
+import QRCodeIcon from 'assets/images/sidebarIcons/QRCode.svg';
 
 import myStyles from './ModalAddTokenStyles';
-import SelectInput from '../../components/SelectInput';
-import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
+import SelectInput from 'components/SelectInput';
+import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
 import {
   ModalAddTokenList,
   isEVMChain,
 } from 'dok-wallet-blockchain-networks/helper';
-import { addToken } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import { selectWalletChainName } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import { getChain } from 'dok-wallet-blockchain-networks/cryptoChain';
-import { ThemeContext } from '../../theme/ThemeContext';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {addToken} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {selectWalletChainName} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
+import {ThemeContext} from 'theme/ThemeContext';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const ModalAddToken = ({
   navigation,
@@ -39,8 +39,8 @@ const ModalAddToken = ({
   contractAddress,
   selectedNetwork,
 }) => {
-  const { bottom } = useSafeAreaInsets();
-  const { theme } = useContext(ThemeContext);
+  const {bottom} = useSafeAreaInsets();
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme, bottom);
 
   const [tokenForm, setTokenForm] = useState({
@@ -52,7 +52,7 @@ const ModalAddToken = ({
     icon: '',
   });
   const [errors, setErrors] = useState({});
-  const { contract_address, decimal, icon, name, networkInput, symbol } =
+  const {contract_address, decimal, icon, name, networkInput, symbol} =
     tokenForm;
   const [possibleChain, setPossibleChain] = useState(ModalAddTokenList);
 
@@ -74,7 +74,7 @@ const ModalAddToken = ({
 
   useEffect(() => {
     if (visible && networkInput && contractAddress) {
-      checkAddressData(contractAddress).then(() => { });
+      checkAddressData(contractAddress).then(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -142,7 +142,7 @@ const ModalAddToken = ({
           contractAddress: localContractAddress,
         });
         if (resp?.name) {
-          setTokenForm(prevState => ({ ...prevState, name: resp?.name }));
+          setTokenForm(prevState => ({...prevState, name: resp?.name}));
           setErrors({});
         } else {
           showAddressError();
@@ -154,10 +154,10 @@ const ModalAddToken = ({
           }));
         }
         if (resp?.symbol) {
-          setTokenForm(prevState => ({ ...prevState, symbol: resp?.symbol }));
+          setTokenForm(prevState => ({...prevState, symbol: resp?.symbol}));
         }
         if (resp?.icon) {
-          setTokenForm(prevState => ({ ...prevState, icon: resp?.icon }));
+          setTokenForm(prevState => ({...prevState, icon: resp?.icon}));
         }
       } else {
         showAddressError();
@@ -182,7 +182,7 @@ const ModalAddToken = ({
 
   const onChangeNetwork = useCallback(value => {
     if (value?.value) {
-      setTokenForm(prevState => ({ ...prevState, networkInput: value }));
+      setTokenForm(prevState => ({...prevState, networkInput: value}));
     }
   }, []);
 
@@ -227,7 +227,7 @@ const ModalAddToken = ({
                 />
                 <View style={styles.qrContainer}>
                   <TextInput
-                    style={{ ...styles.input, width: '85%' }}
+                    style={{...styles.input, width: '85%'}}
                     label="Address"
                     textColor={theme.font}
                     theme={{
@@ -251,7 +251,7 @@ const ModalAddToken = ({
                         ...prevState,
                         contract_address: value,
                       }));
-                      checkAddressData(value).then(_ => { });
+                      checkAddressData(value).then(_ => {});
                     }}
                     value={contract_address}
                   />
@@ -273,7 +273,7 @@ const ModalAddToken = ({
                   </Text>
                 )}
                 <TextInput
-                  style={{ ...styles.input, marginBottom: 20 }}
+                  style={{...styles.input, marginBottom: 20}}
                   label="Name"
                   editable={false}
                   theme={{
@@ -287,9 +287,9 @@ const ModalAddToken = ({
                   name="name"
                   value={name}
                 />
-                <View style={{ ...styles.qrContainer, marginBottom: 20 }}>
+                <View style={{...styles.qrContainer, marginBottom: 20}}>
                   <TextInput
-                    style={{ ...styles.input, width: '45%' }}
+                    style={{...styles.input, width: '45%'}}
                     label="Symbol"
                     editable={false}
                     theme={{

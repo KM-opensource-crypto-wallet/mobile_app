@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import {
   StyleSheet,
   Dimensions,
@@ -15,15 +15,15 @@ import {
   Checkbox,
 } from 'react-native-paper';
 import myStyles from './ModalQRStyles';
-import { ThemeContext } from '../../theme/ThemeContext';
+import {ThemeContext} from 'theme/ThemeContext';
 
-export const ModalQR = ({ navigation, visible, hideModal, data, qrScheme }) => {
-  const { theme } = useContext(ThemeContext);
+export const ModalQR = ({navigation, visible, hideModal, data, qrScheme}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const WIDTH = Dimensions.get('window').width + 80;
   const ITEM_WIDTH = Math.round(WIDTH * 0.7);
-  const { height: screenHeight } = Dimensions.get('window');
+  const {height: screenHeight} = Dimensions.get('window');
   const modalHeight = data ? screenHeight / 2.2 : screenHeight / 8;
 
   // const [visible, setVisible] = useState(true);
@@ -80,8 +80,9 @@ export const ModalQR = ({ navigation, visible, hideModal, data, qrScheme }) => {
         </View>
       ) : qrScheme ? (
         <View>
-          <Text style={styles.info2}>{`Currently we are not supporting "${typeof qrScheme === 'string' ? qrScheme?.toUpperCase() : 'not known'
-            }" chain`}</Text>
+          <Text style={styles.info2}>{`Currently we are not supporting "${
+            typeof qrScheme === 'string' ? qrScheme?.toUpperCase() : 'not known'
+          }" chain`}</Text>
         </View>
       ) : (
         <View>

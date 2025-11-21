@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Dimensions, TouchableOpacity, View } from 'react-native';
-import { Modal, Text } from 'react-native-paper';
+import React, {useState, useEffect, useContext} from 'react';
+import {Dimensions, TouchableOpacity, View} from 'react-native';
+import {Modal, Text} from 'react-native-paper';
 import myStyles from './ModalBuyCryptoStyles';
-import { ThemeContext } from '../../theme/ThemeContext';
-import { source } from 'deprecated-react-native-prop-types/DeprecatedImagePropType';
-import { InAppBrowser } from 'react-native-inappbrowser-reborn';
-import { inAppBrowserOptions } from '../../utils/common';
-import { WL_APP_NAME } from '../../../src/utils/wlData';
+import {ThemeContext} from 'theme/ThemeContext';
+import {source} from 'deprecated-react-native-prop-types/DeprecatedImagePropType';
+import {InAppBrowser} from 'react-native-inappbrowser-reborn';
+import {inAppBrowserOptions} from 'utils/common';
+import {WL_APP_NAME} from 'utils/wlData';
 
 const WIDTH = Dimensions.get('window').width + 80;
 const ITEM_WIDTH = Math.round(WIDTH * 0.7);
-const { height: screenHeight } = Dimensions.get('window');
+const {height: screenHeight} = Dimensions.get('window');
 const modalHeight = screenHeight / 3;
 
-const ModalBuyCrypto = ({ visible, hideModal, navigation, cryptoProvider }) => {
-  const { theme } = useContext(ThemeContext);
+const ModalBuyCrypto = ({visible, hideModal, navigation, cryptoProvider}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const containerStyle = {

@@ -1,12 +1,12 @@
-import React, { useContext } from 'react';
-import { View, Text, Linking, TouchableOpacity } from 'react-native';
+import React, {useContext} from 'react';
+import {View, Text, Linking, TouchableOpacity} from 'react-native';
 import myStyles from './LearnResetStyles';
-import { ThemeContext } from '../../../../theme/ThemeContext';
-import { InAppBrowser } from 'react-native-inappbrowser-reborn';
-import { inAppBrowserOptions } from '../../../../utils/common';
+import {ThemeContext} from 'theme/ThemeContext';
+import {InAppBrowser} from 'react-native-inappbrowser-reborn';
+import {inAppBrowserOptions} from 'utils/common';
 
 const LearnReset = () => {
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   return (

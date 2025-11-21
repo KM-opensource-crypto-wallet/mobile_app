@@ -1,18 +1,18 @@
 import React from 'react';
-import { View } from 'react-native';
+import {View} from 'react-native';
 import myStyles from './AutoLockStyles';
 
-import { useSelector, useDispatch } from 'react-redux';
-import { getLockTimeDisplay } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import { updateLockTime } from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
-import { useCallback, useContext } from 'react';
-import { ThemeContext } from '../../../../theme/ThemeContext';
-import DokRadioButton from '../../../../components/DokRadioButton';
-import { AUTO_LOCK } from 'dok-wallet-blockchain-networks/helper';
-import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
+import {useSelector, useDispatch} from 'react-redux';
+import {getLockTimeDisplay} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {updateLockTime} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
+import {useCallback, useContext} from 'react';
+import {ThemeContext} from 'theme/ThemeContext';
+import DokRadioButton from 'components/DokRadioButton';
+import {AUTO_LOCK} from 'dok-wallet-blockchain-networks/helper';
+import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
 const AutoLock = () => {
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const lockTimeDisplay = useSelector(getLockTimeDisplay);

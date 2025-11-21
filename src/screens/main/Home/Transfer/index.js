@@ -17,14 +17,14 @@ import {
   Linking,
 } from 'react-native';
 
-import { useDispatch, useSelector } from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {
   getLocalCurrency,
   isFeesOptions,
 } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import { IS_ANDROID, SCREEN_WIDTH, useFloatingHeight } from '../../../../utils/dimensions';
-import { sendFunds } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import { ThemeContext } from '../../../../theme/ThemeContext';
+import {IS_ANDROID, SCREEN_WIDTH, useFloatingHeight} from 'utils/dimensions';
+import {sendFunds} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {ThemeContext} from 'theme/ThemeContext';
 import {
   getTransferData,
   getTransferDataCustomError,
@@ -43,37 +43,37 @@ import {
   isFeesOptionChain,
   GAS_CURRENCY,
 } from 'dok-wallet-blockchain-networks/helper';
-import ModalConfirmTransaction from '../../../../components/ModalConfirmTransaction';
-import Spinner from '../../../../components/Spinner';
-import { currencySymbol } from '../../../../data/currency';
+import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
+import Spinner from 'components/Spinner';
+import {currencySymbol} from 'data/currency';
 import {
   getBalanceForNativeCoin,
   getCurrentWalletPhrase,
   getFailedTransaction,
   selectCurrentWallet,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import Loading from '../../../../components/Loading';
+import Loading from 'components/Loading';
 import BigNumber from 'bignumber.js';
 import {
   calculateEstimateFee,
   updateFees,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import ScurvedIcon from '../../../../assets/images/icons/S-curved.svg';
-import { getExchange } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
+import ScurvedIcon from 'assets/images/icons/S-curved.svg';
+import {getExchange} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
 import FastImage from '@d11/react-native-fast-image';
-import DefaultDokWalletImage from '../../../../components/DefaultDokWalletImage';
-import ValidatorItem from '../../../../components/ValidatorItem';
-import { TextInput } from 'react-native-paper';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { getSellCryptoRequestDetails } from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
-import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
-import { handleTransferRedirect } from '../../src/utils/common';
-import BatchTransactionItem from '../../../../components/BatchTransactionItem';
-import DuplicateTransactionModal from '../../../../components/DuplicateTransactionModal';
+import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
+import ValidatorItem from 'components/ValidatorItem';
+import {TextInput} from 'react-native-paper';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {getSellCryptoRequestDetails} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
+import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import {handleTransferRedirect} from 'utils/common';
+import BatchTransactionItem from 'components/BatchTransactionItem';
+import DuplicateTransactionModal from 'components/DuplicateTransactionModal';
 import dayjs from 'dayjs';
 
-const Transfer = ({ navigation, route }) => {
-  const { theme } = useContext(ThemeContext);
+const Transfer = ({navigation, route}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const localCurrency = useSelector(getLocalCurrency);
   const transferData = useSelector(getTransferData);
@@ -163,24 +163,24 @@ const Transfer = ({ navigation, route }) => {
       title: isSendFundScreen
         ? 'Transfer'
         : isExchangeScreen
-          ? 'Swap Confirm'
-          : isSellCryptoScreen
-            ? 'Sell Crypto Confirm'
-            : isSendNFT
-              ? 'Transfer NFT'
-              : isCreateStaking
-                ? 'Confirm Staking'
-                : isCreateVote
-                  ? 'Confirm Validators'
-                  : isWithdrawStaking
-                    ? 'Confirm Withdraw Staking'
-                    : isDeactivateStaking
-                      ? 'Confirm Deactivate Staking'
-                      : isStakingRewards
-                        ? 'Confirm Staking Rewards'
-                        : isBatchTransaction
-                          ? 'Confirm Batch Transaction'
-                          : '',
+        ? 'Swap Confirm'
+        : isSellCryptoScreen
+        ? 'Sell Crypto Confirm'
+        : isSendNFT
+        ? 'Transfer NFT'
+        : isCreateStaking
+        ? 'Confirm Staking'
+        : isCreateVote
+        ? 'Confirm Validators'
+        : isWithdrawStaking
+        ? 'Confirm Withdraw Staking'
+        : isDeactivateStaking
+        ? 'Confirm Deactivate Staking'
+        : isStakingRewards
+        ? 'Confirm Staking Rewards'
+        : isBatchTransaction
+        ? 'Confirm Batch Transaction'
+        : '',
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -209,36 +209,36 @@ const Transfer = ({ navigation, route }) => {
               existingNonce: transferData?.nonce,
               fromAddress:
                 isSendFundScreen ||
-                  isStakingScreen ||
-                  isSellCryptoScreen ||
-                  isBatchTransaction
+                isStakingScreen ||
+                isSellCryptoScreen ||
+                isBatchTransaction
                   ? transferData?.currentCoin?.address
                   : isExchangeScreen
-                    ? selectedFromAsset?.address
-                    : transferData?.selectedNFT?.coin?.address,
+                  ? selectedFromAsset?.address
+                  : transferData?.selectedNFT?.coin?.address,
               toAddress: transferData.toAddress,
               memo: transferData.memo,
               amount:
                 isSendFundScreen || isStakingScreen || isSellCryptoScreen
                   ? transferData?.amount
                   : isExchangeScreen
-                    ? amountFrom
-                    : null,
+                  ? amountFrom
+                  : null,
               contractAddress: isSendNFT
                 ? transferData?.selectedNFT?.token_address ||
-                transferData?.selectedNFT?.associatedTokenAddress
+                  transferData?.selectedNFT?.associatedTokenAddress
                 : transferData?.currentCoin?.contractAddress,
               balance: transferData?.currentCoin?.totalAmount,
               selectedWallet: isExchangeScreen
                 ? selectedFromWallet
                 : isSendNFT
-                  ? currentWallet
-                  : null,
+                ? currentWallet
+                : null,
               selectedCoin: isExchangeScreen
                 ? selectedFromAsset
                 : isSendNFT
-                  ? transferData?.currentCoin
-                  : null,
+                ? transferData?.currentCoin
+                : null,
               contract_type: isSendNFT
                 ? transferData?.selectedNFT?.contract_type
                 : null,
@@ -302,23 +302,23 @@ const Transfer = ({ navigation, route }) => {
       ) {
         const currentFrom =
           isSendFundScreen ||
-            isStakingScreen ||
-            isSellCryptoScreen ||
-            isBatchTransaction
+          isStakingScreen ||
+          isSellCryptoScreen ||
+          isBatchTransaction
             ? transferData?.currentCoin?.address
             : isExchangeScreen
-              ? selectedFromAsset?.address
-              : transferData?.selectedNFT?.coin?.address;
+            ? selectedFromAsset?.address
+            : transferData?.selectedNFT?.coin?.address;
         const currentTo = transferData.toAddress;
         const currentAmount =
           isSendFundScreen || isStakingScreen || isSellCryptoScreen
             ? transferData?.amount
             : isExchangeScreen
-              ? amountFrom
-              : '0';
+            ? amountFrom
+            : '0';
         const currentContractAddress = isSendNFT
           ? transferData?.selectedNFT?.token_address ||
-          transferData?.selectedNFT?.associatedTokenAddress
+            transferData?.selectedNFT?.associatedTokenAddress
           : transferData?.currentCoin?.contractAddress;
 
         const currentChainName = transferData?.currentCoin?.chain_name;
@@ -350,14 +350,14 @@ const Transfer = ({ navigation, route }) => {
           isSendFundScreen || isStakingScreen || isSellCryptoScreen
             ? transferData?.amount
             : isExchangeScreen
-              ? amountFrom
-              : '0',
+            ? amountFrom
+            : '0',
         currentCoin: transferData?.currentCoin,
         currentWallet: isExchangeScreen
           ? selectedFromWallet
           : isSendNFT
-            ? currentWallet
-            : null,
+          ? currentWallet
+          : null,
         balance: transferData?.currentCoin?.totalAmount,
         isExchange: isExchangeScreen,
         contract_type: isSendNFT
@@ -367,7 +367,7 @@ const Transfer = ({ navigation, route }) => {
         tokenAmount: isSendNFT ? transferData?.selectedNFT?.amount : null,
         contractAddress: isSendNFT
           ? transferData?.selectedNFT?.token_address ||
-          transferData?.selectedNFT?.associatedTokenAddress
+            transferData?.selectedNFT?.associatedTokenAddress
           : null,
         mint: isSendNFT ? transferData?.selectedNFT?.mint : null,
         isNFT: isSendNFT,
@@ -378,10 +378,10 @@ const Transfer = ({ navigation, route }) => {
           : null,
         from:
           isStakingScreen ||
-            isSendNFT ||
-            isVoteStakingScreen ||
-            isSellCryptoScreen ||
-            isBatchTransaction
+          isSendNFT ||
+          isVoteStakingScreen ||
+          isSellCryptoScreen ||
+          isBatchTransaction
             ? transferData?.currentCoin?.address
             : null,
         validatorPubKey: isStakingScreen ? transferData?.validatorPubKey : null,
@@ -442,7 +442,7 @@ const Transfer = ({ navigation, route }) => {
   const onSuccess = useCallback(async () => {
     setShowConfirmModal(false);
     await delay(300);
-    const { tx_hash, status } = await submitTransferData();
+    const {tx_hash, status} = await submitTransferData();
     if (redirect_url && tx_hash) {
       try {
         await handleTransferRedirect(redirect_url, tx_hash, status, meta);
@@ -462,8 +462,8 @@ const Transfer = ({ navigation, route }) => {
     isExchangeScreen && selectedFromAsset?.type === 'coin'
       ? amountFrom
       : isBatchTransaction
-        ? nativeBalanceForBatchTransactions
-        : null,
+      ? nativeBalanceForBatchTransactions
+      : null,
   );
 
   const onChangeCustomFees = text => {
@@ -472,21 +472,21 @@ const Transfer = ({ navigation, route }) => {
       transferData?.currentCoin?.decimal,
     );
     setCustomFees(tempValues || '0');
-    dispatch(updateFees({ gasPrice: tempValues || '0', convertedChainName }));
+    dispatch(updateFees({gasPrice: tempValues || '0', convertedChainName}));
   };
 
   const currencyRate =
     (isSendFundScreen || isStakingScreen
       ? transferData?.currentCoin?.currencyRate
       : isExchangeScreen
-        ? selectedFromAsset?.currencyRate
-        : '0') || '0';
+      ? selectedFromAsset?.currencyRate
+      : '0') || '0';
   const amount =
     (isSendFundScreen || isStakingScreen || isSellCryptoScreen
       ? transferData?.amount
       : isExchangeScreen
-        ? amountFrom
-        : '0') || '0';
+      ? amountFrom
+      : '0') || '0';
   const currentRateBN = new BigNumber(currencyRate);
   const amountBN = new BigNumber(amount);
   const priceValue = currentRateBN.multipliedBy(amountBN);
@@ -497,8 +497,9 @@ const Transfer = ({ navigation, route }) => {
   const renderSendFundUI = () => {
     return (
       <View style={styles.formInput}>
-        <Text style={styles.amountTitle}>{`-${transferData?.amount || 0} ${transferData?.currentCoin?.symbol || ''
-          }`}</Text>
+        <Text style={styles.amountTitle}>{`-${transferData?.amount || 0} ${
+          transferData?.currentCoin?.symbol || ''
+        }`}</Text>
         <Text style={styles.boxBalance}>
           {currencySymbol[localCurrency] || ''}
           {priceValue?.toFixed(2) || '0'}
@@ -519,17 +520,19 @@ const Transfer = ({ navigation, route }) => {
           </View>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'From'}</Text>
-            <Text style={styles.boxBalance}>{`${isCustomAddressNotSupportedChain(chainName)
-              ? transferData?.currentCoin?.address
-              : getCustomizePublicAddress(transferData?.currentCoin?.address)
-              }`}</Text>
+            <Text style={styles.boxBalance}>{`${
+              isCustomAddressNotSupportedChain(chainName)
+                ? transferData?.currentCoin?.address
+                : getCustomizePublicAddress(transferData?.currentCoin?.address)
+            }`}</Text>
           </View>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'To'}</Text>
-            <Text style={styles.boxBalance}>{`${isCustomAddressNotSupportedChain(chainName)
-              ? transferData?.toAddress
-              : getCustomizePublicAddress(transferData?.toAddress)
-              }`}</Text>
+            <Text style={styles.boxBalance}>{`${
+              isCustomAddressNotSupportedChain(chainName)
+                ? transferData?.toAddress
+                : getCustomizePublicAddress(transferData?.toAddress)
+            }`}</Text>
           </View>
           {!!transferData?.validName && (
             <View style={styles.itemView}>
@@ -550,14 +553,16 @@ const Transfer = ({ navigation, route }) => {
             <Text style={styles.boxBalance}>
               {isFetchingFeesAgain
                 ? 'Refreshing'
-                : `${transferData?.transactionFee || '0'} ${transferData?.currentCoin?.chain_symbol
-                }`}
+                : `${transferData?.transactionFee || '0'} ${
+                    transferData?.currentCoin?.chain_symbol
+                  }`}
             </Text>
           </View>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'Max Total'}</Text>
-            <Text style={styles.boxBalance}>{`${currencySymbol[localCurrency]}${totalValue || 0
-              }`}</Text>
+            <Text style={styles.boxBalance}>{`${currencySymbol[localCurrency]}${
+              totalValue || 0
+            }`}</Text>
           </View>
         </View>
       </View>
@@ -567,8 +572,9 @@ const Transfer = ({ navigation, route }) => {
   const renderSellCryptoUI = () => {
     return (
       <View style={styles.formInput}>
-        <Text style={styles.amountTitle}>{`-${transferData?.amount || 0} ${transferData?.currentCoin?.symbol || ''
-          }`}</Text>
+        <Text style={styles.amountTitle}>{`-${transferData?.amount || 0} ${
+          transferData?.currentCoin?.symbol || ''
+        }`}</Text>
         <View style={styles.box}>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'Chain'}</Text>
@@ -585,17 +591,19 @@ const Transfer = ({ navigation, route }) => {
           </View>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'From'}</Text>
-            <Text style={styles.boxBalance}>{`${isCustomAddressNotSupportedChain(chainName)
-              ? transferData?.currentCoin?.address
-              : getCustomizePublicAddress(transferData?.currentCoin?.address)
-              }`}</Text>
+            <Text style={styles.boxBalance}>{`${
+              isCustomAddressNotSupportedChain(chainName)
+                ? transferData?.currentCoin?.address
+                : getCustomizePublicAddress(transferData?.currentCoin?.address)
+            }`}</Text>
           </View>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'To'}</Text>
-            <Text style={styles.boxBalance}>{`${isCustomAddressNotSupportedChain(chainName)
-              ? transferData?.toAddress
-              : getCustomizePublicAddress(transferData?.toAddress)
-              }`}</Text>
+            <Text style={styles.boxBalance}>{`${
+              isCustomAddressNotSupportedChain(chainName)
+                ? transferData?.toAddress
+                : getCustomizePublicAddress(transferData?.toAddress)
+            }`}</Text>
           </View>
           {!!transferData?.validName && (
             <View style={styles.itemView}>
@@ -622,14 +630,16 @@ const Transfer = ({ navigation, route }) => {
             <Text style={styles.boxBalance}>
               {isFetchingFeesAgain
                 ? 'Refreshing'
-                : `${transferData?.transactionFee || '0'} ${transferData?.currentCoin?.chain_symbol
-                }`}
+                : `${transferData?.transactionFee || '0'} ${
+                    transferData?.currentCoin?.chain_symbol
+                  }`}
             </Text>
           </View>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'Max Total'}</Text>
-            <Text style={styles.boxBalance}>{`${currencySymbol[localCurrency]}${totalValue || 0
-              }`}</Text>
+            <Text style={styles.boxBalance}>{`${currencySymbol[localCurrency]}${
+              totalValue || 0
+            }`}</Text>
           </View>
         </View>
       </View>
@@ -671,7 +681,7 @@ const Transfer = ({ navigation, route }) => {
         <View style={styles.iconView}>
           <ScurvedIcon width={25} height={20} stroke={theme.background} />
         </View>
-        <View style={[styles.box, { marginTop: 0 }]}>
+        <View style={[styles.box, {marginTop: 0}]}>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'Asset'}</Text>
             <Text
@@ -710,7 +720,7 @@ const Transfer = ({ navigation, route }) => {
           {!!selectedExchangeChain?.providerName && (
             <View style={styles.itemView}>
               <Text style={styles.title}>{'Exchange Provider'}</Text>
-              <Text style={[styles.boxBalance, { textTransform: 'capitalize' }]}>
+              <Text style={[styles.boxBalance, {textTransform: 'capitalize'}]}>
                 {selectedExchangeChain?.providerName}
               </Text>
             </View>
@@ -720,14 +730,16 @@ const Transfer = ({ navigation, route }) => {
             <Text style={styles.boxBalance}>
               {isFetchingFeesAgain
                 ? 'Refreshing'
-                : `${transferData?.transactionFee || '0'} ${selectedFromAsset?.chain_symbol
-                }`}
+                : `${transferData?.transactionFee || '0'} ${
+                    selectedFromAsset?.chain_symbol
+                  }`}
             </Text>
           </View>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'Max Total'}</Text>
-            <Text style={styles.boxBalance}>{`${currencySymbol[localCurrency]}${totalValue || 0
-              }`}</Text>
+            <Text style={styles.boxBalance}>{`${currencySymbol[localCurrency]}${
+              totalValue || 0
+            }`}</Text>
           </View>
         </View>
       </View>
@@ -740,7 +752,7 @@ const Transfer = ({ navigation, route }) => {
         <View style={styles.centerView}>
           {localImage ? (
             <FastImage
-              source={{ uri: localImage }}
+              source={{uri: localImage}}
               style={styles.imageStyle}
               resizeMode={'contain'}
               onError={() => {
@@ -754,12 +766,14 @@ const Transfer = ({ navigation, route }) => {
         <View style={styles.box}>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'Name'}</Text>
-            <Text style={styles.boxBalance}>{`${transferData?.selectedNFT?.name ||
+            <Text style={styles.boxBalance}>{`${
+              transferData?.selectedNFT?.name ||
               transferData?.selectedNFT?.symbol
-              } ${transferData?.selectedNFT?.token_id
+            } ${
+              transferData?.selectedNFT?.token_id
                 ? `(${transferData?.selectedNFT?.token_id})`
                 : ''
-              }`}</Text>
+            }`}</Text>
           </View>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'Chain'}</Text>
@@ -792,8 +806,9 @@ const Transfer = ({ navigation, route }) => {
             <Text style={styles.boxBalance}>
               {isFetchingFeesAgain
                 ? 'Refreshing'
-                : `${transferData?.transactionFee || '0'} ${transferData?.currentCoin?.chain_symbol
-                }`}
+                : `${transferData?.transactionFee || '0'} ${
+                    transferData?.currentCoin?.chain_symbol
+                  }`}
             </Text>
           </View>
         </View>
@@ -804,8 +819,9 @@ const Transfer = ({ navigation, route }) => {
   const renderStakingUI = () => {
     return (
       <View style={styles.formInput}>
-        <Text style={styles.amountTitle}>{`-${transferData?.amount || 0} ${transferData?.currentCoin?.symbol || ''
-          }`}</Text>
+        <Text style={styles.amountTitle}>{`-${transferData?.amount || 0} ${
+          transferData?.currentCoin?.symbol || ''
+        }`}</Text>
         <Text style={styles.boxBalance}>
           {currencySymbol[localCurrency] || ''}
           {priceValue?.toFixed(2) || '0'}
@@ -863,14 +879,16 @@ const Transfer = ({ navigation, route }) => {
             <Text style={styles.boxBalance}>
               {isFetchingFeesAgain
                 ? 'Refreshing'
-                : `${transferData?.transactionFee || '0'} ${transferData?.currentCoin?.chain_symbol
-                }`}
+                : `${transferData?.transactionFee || '0'} ${
+                    transferData?.currentCoin?.chain_symbol
+                  }`}
             </Text>
           </View>
           <View style={styles.itemView}>
             <Text style={styles.title}>{'Max Total'}</Text>
-            <Text style={styles.boxBalance}>{`${currencySymbol[localCurrency]}${totalValue || 0
-              }`}</Text>
+            <Text style={styles.boxBalance}>{`${currencySymbol[localCurrency]}${
+              totalValue || 0
+            }`}</Text>
           </View>
         </View>
       </View>
@@ -889,7 +907,7 @@ const Transfer = ({ navigation, route }) => {
             item={item}
             hideInput={true}
             key={item.validatorAddress}
-            containerStyle={{ marginHorizontal: 0, width: SCREEN_WIDTH - 40 }}
+            containerStyle={{marginHorizontal: 0, width: SCREEN_WIDTH - 40}}
           />
         ))}
         <View style={styles.box}>
@@ -898,8 +916,9 @@ const Transfer = ({ navigation, route }) => {
             <Text style={styles.boxBalance}>
               {isFetchingFeesAgain
                 ? 'Refreshing'
-                : `${transferData?.transactionFee || '0'} ${transferData?.currentCoin?.chain_symbol
-                }`}
+                : `${transferData?.transactionFee || '0'} ${
+                    transferData?.currentCoin?.chain_symbol
+                  }`}
             </Text>
           </View>
         </View>
@@ -929,8 +948,9 @@ const Transfer = ({ navigation, route }) => {
             <Text style={styles.boxBalance}>
               {isFetchingFeesAgain
                 ? 'Refreshing'
-                : `${transferData?.transactionFee || '0'} ${transferData?.currentCoin?.chain_symbol
-                }`}
+                : `${transferData?.transactionFee || '0'} ${
+                    transferData?.currentCoin?.chain_symbol
+                  }`}
             </Text>
           </View>
         </View>
@@ -949,7 +969,7 @@ const Transfer = ({ navigation, route }) => {
           enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? { extraScrollHeight: 30 } : {})}
+          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
           // enableResetScrollToCoords={false}
           keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           contentContainerStyle={styles.contentContainerStyle}>
@@ -962,16 +982,16 @@ const Transfer = ({ navigation, route }) => {
               {isSendFundScreen
                 ? renderSendFundUI()
                 : isExchangeScreen
-                  ? renderExchangeUI()
-                  : isSellCryptoScreen
-                    ? renderSellCryptoUI()
-                    : isSendNFT
-                      ? renderSendNFTUI()
-                      : isStakingScreen
-                        ? renderStakingUI()
-                        : isBatchTransaction
-                          ? renderBatchTransactionUI()
-                          : renderVotingUI()}
+                ? renderExchangeUI()
+                : isSellCryptoScreen
+                ? renderSellCryptoUI()
+                : isSendNFT
+                ? renderSendNFTUI()
+                : isStakingScreen
+                ? renderStakingUI()
+                : isBatchTransaction
+                ? renderBatchTransactionUI()
+                : renderVotingUI()}
               {isFeesOptionsEnabled &&
                 isFeesOptionChain(convertedChainName) &&
                 !!feesOptions?.length &&
@@ -993,7 +1013,7 @@ const Transfer = ({ navigation, route }) => {
                         style={[
                           styles.feesOptionsItem,
                           selectedFeesType?.toLowerCase() ===
-                          feesOptions?.[0]?.title?.toLowerCase() && {
+                            feesOptions?.[0]?.title?.toLowerCase() && {
                             borderColor: theme.background,
                             borderWidth: 3,
                           },
@@ -1009,7 +1029,7 @@ const Transfer = ({ navigation, route }) => {
                         style={[
                           styles.feesOptionsItem,
                           selectedFeesType?.toLowerCase() ===
-                          feesOptions?.[1]?.title?.toLowerCase() && {
+                            feesOptions?.[1]?.title?.toLowerCase() && {
                             borderColor: theme.background,
                             borderWidth: 3,
                           },

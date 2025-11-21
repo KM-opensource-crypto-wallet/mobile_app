@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useContext } from 'react';
+import React, {memo, useCallback, useContext} from 'react';
 import {
   Keyboard,
   StyleSheet,
@@ -8,11 +8,11 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import { ThemeContext } from '../theme/ThemeContext';
-import { SCREEN_WIDTH } from '../utils/dimensions';
-import AddIcon from '../assets/images/icons/add-icon.svg';
-import MinusIcon from '../assets/images/icons/minus-icon.svg';
-import { validateNumber } from '../../dok-wallet-blockchain-networks/helper';
+import {ThemeContext} from 'theme/ThemeContext';
+import {SCREEN_WIDTH} from 'utils/dimensions';
+import AddIcon from 'assets/images/icons/add-icon.svg';
+import MinusIcon from 'assets/images/icons/minus-icon.svg';
+import {validateNumber} from '../../dok-wallet-blockchain-networks/helper';
 
 const ValidatorItem = ({
   item,
@@ -23,7 +23,7 @@ const ValidatorItem = ({
   hideInput,
   containerStyle,
 }) => {
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const closeKeyboard = useCallback(() => {
     Keyboard.dismiss();
@@ -49,7 +49,7 @@ const ValidatorItem = ({
       <View
         style={[
           styles.itemView,
-          isHaveVote && { borderColor: theme.background },
+          isHaveVote && {borderColor: theme.background},
           containerStyle && containerStyle,
         ]}>
         <View style={styles.leftView}>

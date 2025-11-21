@@ -7,17 +7,17 @@ import React, {
   useState,
 } from 'react';
 import myStyles from './VoteStakingStyle';
-import { Keyboard, Text, TouchableOpacity, View } from 'react-native';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
-import { IS_ANDROID } from '../../../../utils/dimensions';
-import { ThemeContext } from '../../../../theme/ThemeContext';
+import {Keyboard, Text, TouchableOpacity, View} from 'react-native';
+import {shallowEqual, useDispatch, useSelector} from 'react-redux';
+import {IS_ANDROID} from 'utils/dimensions';
+import {ThemeContext} from 'theme/ThemeContext';
 
 import {
   calculateEstimateFee,
   setCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import { KeyboardAwareFlatList } from 'react-native-keyboard-aware-scroll-view';
-import { selectCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {KeyboardAwareFlatList} from 'react-native-keyboard-aware-scroll-view';
+import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
   isValidObject,
   validateNumber,
@@ -34,16 +34,16 @@ import {
   getStakingLoading,
   getStakingValidatorsByChain,
 } from 'dok-wallet-blockchain-networks/redux/staking/stakingSelectors';
-import Loading from '../../../../components/Loading';
-import { setExchangeSuccess } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
-import ValidatorItem from '../../../../components/ValidatorItem';
-import { Searchbar } from 'react-native-paper';
-import Animated, { useSharedValue, withTiming } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { DokSafeAreaView } from '../../../../components/DokSafeAreaView';
+import Loading from 'components/Loading';
+import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
+import ValidatorItem from 'components/ValidatorItem';
+import {Searchbar} from 'react-native-paper';
+import Animated, {useSharedValue, withTiming} from 'react-native-reanimated';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
-const VoteStaking = ({ navigation }) => {
-  const { theme } = useContext(ThemeContext);
+const VoteStaking = ({navigation}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const currentCoin = useSelector(selectCurrentCoin);
   const validators = useSelector(getStakingValidatorsByChain, shallowEqual);
@@ -60,7 +60,7 @@ const VoteStaking = ({ navigation }) => {
     return 0;
   }, [currentCoin]);
   const bottomValue = useSharedValue(0);
-  const { bottom } = useSafeAreaInsets();
+  const {bottom} = useSafeAreaInsets();
   const isMountedRef = useRef(false);
   const initialSelectedVotes = useRef(null);
 
@@ -96,7 +96,7 @@ const VoteStaking = ({ navigation }) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchValidatorByChain({ chain_name: currentCoin?.chain_name }));
+    dispatch(fetchValidatorByChain({chain_name: currentCoin?.chain_name}));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
 
@@ -178,27 +178,27 @@ const VoteStaking = ({ navigation }) => {
 
   const onPressAdd = useCallback(
     address => {
-      dispatch(onAddVotes({ address }));
+      dispatch(onAddVotes({address}));
     },
     [dispatch],
   );
 
   const onPressMinus = useCallback(
     address => {
-      dispatch(onMinusVotes({ address }));
+      dispatch(onMinusVotes({address}));
     },
     [dispatch],
   );
 
   const onChangeText = useCallback(
     (address, value) => {
-      dispatch(onChangeVotes({ address, value }));
+      dispatch(onChangeVotes({address, value}));
     },
     [dispatch],
   );
 
   const renderItem = useCallback(
-    ({ item }) => (
+    ({item}) => (
       <ValidatorItem
         item={item}
         selectedVotes={selectedVotes}
@@ -217,7 +217,7 @@ const VoteStaking = ({ navigation }) => {
   const isValid =
     availableAmount >= selectedTotal &&
     JSON.stringify(initialSelectedVotes.current) !==
-    JSON.stringify(selectedVotes) &&
+      JSON.stringify(selectedVotes) &&
     selectedTotal > 0;
 
   return (
@@ -232,7 +232,7 @@ const VoteStaking = ({ navigation }) => {
         <KeyboardAwareFlatList
           style={styles.flatlistStyle}
           enableOnAndroid={true}
-          {...(IS_ANDROID ? { extraScrollHeight: 30 } : {})}
+          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
           keyboardShouldPersistTaps={'always'}
           keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           keyExtractor={item => item.validatorAddress}

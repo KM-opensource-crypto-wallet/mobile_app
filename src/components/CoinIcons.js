@@ -1,13 +1,13 @@
-import React, { useContext } from 'react';
+import React, {useContext} from 'react';
 
-import { View, Text, StyleSheet } from 'react-native';
-import { ThemeContext } from '../theme/ThemeContext';
+import {View, Text, StyleSheet} from 'react-native';
+import {ThemeContext} from 'theme/ThemeContext';
 import FastImage from '@d11/react-native-fast-image';
 
 const maxDisplay = 5;
-const CoinIcons = ({ icons }) => {
-  const { theme } = useContext(ThemeContext);
-  const { iconContainer, countImageView, iconImg, iconWrapper, counterText } =
+const CoinIcons = ({icons}) => {
+  const {theme} = useContext(ThemeContext);
+  const {iconContainer, countImageView, iconImg, iconWrapper, counterText} =
     styles(theme);
 
   return (
@@ -26,7 +26,7 @@ const CoinIcons = ({ icons }) => {
               key={'crypto_icon' + item + index}>
               {item ? (
                 <FastImage
-                  source={{ uri: item }}
+                  source={{uri: item}}
                   style={iconImg}
                   resizeMode={'cover'}
                 />
@@ -44,8 +44,9 @@ const CoinIcons = ({ icons }) => {
               ]}
               key={'crypto_icon' + item + index}>
               <View style={countImageView}>
-                <Text style={counterText}>{`+${icons.length - maxDisplay
-                  }`}</Text>
+                <Text style={counterText}>{`+${
+                  icons.length - maxDisplay
+                }`}</Text>
               </View>
             </View>
           );

@@ -90,7 +90,7 @@ const myStyles = theme =>
       justifyContent: 'center',
       alignItems: 'center',
       height: 60,
-      backgroundColor: theme.primary || '#4CAF50',
+      backgroundColor: theme.background,
     },
     buttonContent: {
       flexDirection: 'row',

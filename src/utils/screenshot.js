@@ -1,5 +1,5 @@
 import ScreenGuardModule from 'react-native-screenguard';
-import screen_prevent from '../assets/images/screenshot_prevent.png';
+import screen_prevent from 'assets/images/screenshot_prevent.png';
 
 export const enablePreventScreenshot = async () => {
   try {

@@ -4,7 +4,7 @@ import {createStackNavigator} from '@react-navigation/stack';
 import HomeScreen from 'screens/main/Home/HomeScreen';
 import TempScreen from './TempScreen';
 import Exchange from 'screens/main/Exchange';
-import BuyCrypto from '../../screens/main/BuyCrypto';
+import BuyCrypto from 'screens/main/BuyCrypto';
 import ChangePassword from 'screens/auth/ChangePassword';
 import Settings from 'screens/main/Settings';
 

@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { CheckBox } from '@rneui/themed';
-import { ThemeContext } from '../theme/ThemeContext';
+import React, {useState, useEffect, useContext} from 'react';
+import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {CheckBox} from '@rneui/themed';
+import {ThemeContext} from 'theme/ThemeContext';
 
-const DokRadioButton = ({ title, options, setChecked, checked }) => {
-  const { theme } = useContext(ThemeContext);
+const DokRadioButton = ({title, options, setChecked, checked}) => {
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   return (

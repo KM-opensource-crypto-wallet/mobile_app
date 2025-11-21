@@ -1,23 +1,23 @@
-import React, { useCallback, useContext, useMemo, useState } from 'react';
-import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
+import React, {useCallback, useContext, useMemo, useState} from 'react';
+import {View, StyleSheet, Text, ActivityIndicator} from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
-import { TouchableOpacity } from '@gorhom/bottom-sheet';
-import { getWalletConnect } from 'dok-wallet-blockchain-networks/service/walletconnect';
-import { getSdkError } from '@walletconnect/utils';
-import { resetWalletConnect } from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSlice';
+import {TouchableOpacity} from '@gorhom/bottom-sheet';
+import {getWalletConnect} from 'dok-wallet-blockchain-networks/service/walletconnect';
+import {getSdkError} from '@walletconnect/utils';
+import {resetWalletConnect} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSlice';
 import {
   removeAllWalletConnectSession,
   removeWalletConnectSession,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import {shallowEqual, useDispatch, useSelector} from 'react-redux';
 import {
   selectWalletConnectData,
   selectWalletConnectSessions,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import { ThemeContext } from '../theme/ThemeContext';
-import { clearWalletConnectStorageCache } from '../utils/asyncStorage';
+import {ThemeContext} from 'theme/ThemeContext';
+import {clearWalletConnectStorageCache} from 'utils/asyncStorage';
 
-const WalletConnectItem = ({ onClose }) => {
+const WalletConnectItem = ({onClose}) => {
   const sessions = useSelector(selectWalletConnectSessions, shallowEqual);
   const walletData = useSelector(selectWalletConnectData, shallowEqual);
   const [deletingSession, setDeletingSession] = useState([]);
@@ -26,13 +26,13 @@ const WalletConnectItem = ({ onClose }) => {
     let finalData = [];
     sessionKeys.forEach(item => {
       let tempSession = sessions[item];
-      tempSession = { ...tempSession, chainData: walletData[item] };
+      tempSession = {...tempSession, chainData: walletData[item]};
       finalData.push(tempSession);
     });
     return finalData;
   }, [sessions, walletData]);
 
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = MyStyles(theme);
   const dispatch = useDispatch();
 
@@ -79,7 +79,7 @@ const WalletConnectItem = ({ onClose }) => {
     return (
       <View style={styles.itemView} key={'' + item.key + index}>
         <View style={styles.rowView}>
-          <FastImage source={{ uri: icon }} style={styles.rowImageStyle} />
+          <FastImage source={{uri: icon}} style={styles.rowImageStyle} />
           <View style={styles.centerItemView}>
             <Text style={styles.title}>{`${metadata?.name}`}</Text>
             <Text numberOfLines={1} style={styles.url}>
@@ -87,11 +87,11 @@ const WalletConnectItem = ({ onClose }) => {
             </Text>
           </View>
         </View>
-        <Text style={[styles.title, { marginTop: 20 }]}>{'Chains'}</Text>
+        <Text style={[styles.title, {marginTop: 20}]}>{'Chains'}</Text>
         {chainData?.map((chain, i) => (
           <View style={styles.chainRowView} key={'' + chain?._id + i}>
             <FastImage
-              source={{ uri: chain?.icon }}
+              source={{uri: chain?.icon}}
               style={styles.rowImageStyle}
             />
             <View style={styles.centerItemView}>

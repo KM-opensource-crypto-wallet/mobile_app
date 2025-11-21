@@ -22,31 +22,30 @@ import {
   loadingOff,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import { getUserPassword } from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
-// import { validationSchemaLogin } from 'utils/validationSchema';
-import { validationSchemaLogin } from '../../utils/validationSchema';
-import ModalReset from '../../components/ModalReset';
+import { validationSchemaLogin } from 'utils/validationSchema';
+import ModalReset from 'components/ModalReset';
 import { isFingerprint } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import FingerprintScanner from 'react-native-fingerprint-scanner';
-import {ThemeContext} from 'theme/ThemeContext';
+import { ThemeContext } from 'theme/ThemeContext';
 import myStyles from './LoginScreenStyles';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {isNoUpdateAvailable} from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
-import {LOGO, LOGO_DARK, WL_APP_NAME} from 'utils/wlData';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import { selectAllWallets } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { isNoUpdateAvailable } from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
+import { LOGO, LOGO_DARK, WL_APP_NAME } from 'utils/wlData';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import ModalInfo from 'components/ModalInfo';
-import {Constants} from 'utils/common';
-import {isWalletReset} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import { Constants } from 'utils/common';
+import { isWalletReset } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {
   resetAttempts,
   handleAttempts,
   setLastAttempt,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
-import {getLastAttempt} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
-import {useNavigation} from '@react-navigation/native';
+import { getLastAttempt } from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
+import { useNavigation } from '@react-navigation/native';
 
-const LoginComponent = ({onClose, visible}) => {
+const LoginComponent = ({ onClose, visible }) => {
   const navigation = useNavigation();
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const dispatch = useDispatch();
@@ -150,23 +149,21 @@ const LoginComponent = ({onClose, visible}) => {
             routes: [
               {
                 name: 'ResetWallet',
-                params: {isFromOnBoarding: true},
+                params: { isFromOnBoarding: true },
               },
             ],
           });
         }
       } else if (rateLimitCheck) {
-        const resp = await dispatch(handleAttempts({navigation})).unwrap();
+        const resp = await dispatch(handleAttempts({ navigation })).unwrap();
         if (resp?.successful_deleted) {
           onClose?.();
         }
         setWrong(true);
         dispatch(loadingOff());
       } else {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'ResetWallet', params: { isFromOnBoarding: true } }],
-        });
+        setWrong(true);
+        dispatch(loadingOff());
       }
     },
     [
