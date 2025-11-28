@@ -160,7 +160,10 @@ const HomeScreen = ({navigation, route}) => {
       setAddCoinModalVisible(true);
       dispatch(searchAndAddCoins({currency: paymentData?.currency}))
         .unwrap()
-        .then(() => {
+        .then(data => {
+          if (data?.coinId) {
+            dispatch(setCurrentCoin(data?.coinId));
+          }
           setAddCoinModalVisible(false);
           setTimeout(() => {
             navigation.navigate('SendFunds', {

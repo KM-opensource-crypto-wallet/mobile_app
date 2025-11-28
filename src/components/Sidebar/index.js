@@ -187,7 +187,7 @@ export default function Sidebar({navigation, route}) {
             ),
           })}
         />
-        {IS_IOS ? (
+        {IS_IOS && IS_DOK_WALLET ? (
           <Drawer.Screen
             name="SelectCountry"
             component={SelectCountry}
@@ -220,7 +220,7 @@ export default function Sidebar({navigation, route}) {
               ),
             })}
           />
-        ) : (
+        ) : IS_DOK_WALLET || IS_ANDROID ? (
           <Drawer.Screen
             name="BuyCrypto"
             component={BuyCrypto}
@@ -253,7 +253,7 @@ export default function Sidebar({navigation, route}) {
               ),
             })}
           />
-        )}
+        ) : null}
         {!HIDE_SWAP_COUNTRIES.includes(deviceCountry) &&
           (IS_ANDROID || IS_DOK_WALLET) && (
             <Drawer.Screen
