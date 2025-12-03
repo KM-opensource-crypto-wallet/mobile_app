@@ -1,8 +1,12 @@
 const path = require('path');
+<<<<<<< HEAD
 const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+=======
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+>>>>>>> e99c21f (rn version upgrade)
 
 const defaultConfig = getDefaultConfig(__dirname);
-const {assetExts, sourceExts} = defaultConfig.resolver;
+const { assetExts, sourceExts } = defaultConfig.resolver;
 /**
  * Metro configuration
  * https://reactnative.dev/docs/metro

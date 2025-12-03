@@ -7,10 +7,11 @@ module.exports = {
   },
   plugins: [
     ['module:react-native-dotenv'],
+    ['react-native-reanimated/plugin'],
     '@babel/plugin-proposal-export-namespace-from',
     '@babel/plugin-transform-class-static-block',
     [
-      require.resolve('babel-plugin-module-resolver'),
+      'module-resolver',
       {
         root: ['./src'],
         alias: {
@@ -21,15 +22,5 @@ module.exports = {
     ],
     ['react-native-paper/babel'],
     'react-native-worklets/plugin',
-  ],
-  overrides: [
-    {
-      test: './node_modules/ethers',
-      plugins: [
-        '@babel/plugin-proposal-private-property-in-object',
-        '@babel/plugin-proposal-class-properties',
-        '@babel/plugin-proposal-private-methods',
-      ],
-    },
   ],
 };

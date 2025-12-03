@@ -3595,13 +3595,10 @@ DEPENDENCIES:
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-quick-crypto (from `../node_modules/react-native-quick-crypto`)
-  - react-native-randombytes (from `../node_modules/react-native-randombytes`)
-  - react-native-render-html (from `../node_modules/react-native-render-html`)
   - react-native-restart (from `../node_modules/react-native-restart`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-screenguard (from `../node_modules/react-native-screenguard`)
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
-  - react-native-view-shot (from `../node_modules/react-native-view-shot`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-networking (from `../node_modules/react-native/ReactCommon/react/networking`)
@@ -3785,10 +3782,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-pager-view"
   react-native-quick-crypto:
     :path: "../node_modules/react-native-quick-crypto"
-  react-native-randombytes:
-    :path: "../node_modules/react-native-randombytes"
-  react-native-render-html:
-    :path: "../node_modules/react-native-render-html"
   react-native-restart:
     :path: "../node_modules/react-native-restart"
   react-native-safe-area-context:
@@ -3797,8 +3790,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-screenguard"
   react-native-slider:
     :path: "../node_modules/@react-native-community/slider"
-  react-native-view-shot:
-    :path: "../node_modules/react-native-view-shot"
   react-native-webview:
     :path: "../node_modules/react-native-webview"
   React-NativeModulesApple:
@@ -4042,4 +4033,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: d2ef081972b432d3aa62abc36772ce3d3f5910c7
 
-COCOAPODS: 1.14.3
+COCOAPODS: 1.16.2

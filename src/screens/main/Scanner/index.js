@@ -11,11 +11,11 @@ import {Text, TouchableOpacity, Dimensions, View} from 'react-native';
 // import QRCodeScanner from 'react-native-qrcode-scanner';
 import * as Animatable from 'react-native-animatable';
 import myStyles from './ScannerStyles';
-import {ThemeContext} from 'theme/ThemeContext';
-import {parseCryptoQrCodeString} from 'dok-wallet-blockchain-networks/helper';
-import {shallowEqual, useDispatch, useSelector} from 'react-redux';
-import {selectUserCoins} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {setCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import { ThemeContext } from 'theme/ThemeContext';
+import { parseCryptoQrCodeString } from 'dok-wallet-blockchain-networks/helper';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { selectUserCoins } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { setCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import DeviceInfo from 'react-native-device-info';
 import {TextInput} from 'react-native-paper';
 import {createWalletConnection} from 'dok-wallet-blockchain-networks/service/walletconnect';
@@ -256,7 +256,7 @@ const Scanner = ({navigation, route}) => {
         {/* Overlay structure */}
         <View style={styles.overlayContainer}>
           <View style={styles.topOverlay} />
-          <View style={{flexDirection: 'row'}}>
+          <View style={{ flexDirection: 'row' }}>
             <View style={styles.leftAndRightOverlay} />
 
             <View style={styles.rectangle}>
