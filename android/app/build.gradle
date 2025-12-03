@@ -1,4 +1,5 @@
 apply plugin: "com.android.application"
+apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
@@ -8,21 +9,21 @@ apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.grad
 project.ext.react = [
         nodeExecutableAndArgs: ["node", "--max_old_space_size=8192"]
 ];
-
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
  */
 react {
+
     /* Folders */
-    //   The root of your project, i.e. where "package.json" lives. Default is '..'
-    // root = file("../")
-    //   The folder where the react-native NPM package is. Default is ../node_modules/react-native
-    // reactNativeDir = file("../node_modules/react-native")
-    //   The folder where the react-native Codegen package is. Default is ../node_modules/@react-native/codegen
-    // codegenDir = file("../node_modules/@react-native/codegen")
-    //   The cli.js file which is the React Native CLI entrypoint. Default is ../node_modules/react-native/cli.js
-    // cliFile = file("../node_modules/react-native/cli.js")
+    //   The root of your project, i.e. where "package.json" lives. Default is '../..'
+    // root = file("../../")
+    //   The folder where the react-native NPM package is. Default is ../../node_modules/react-native
+    // reactNativeDir = file("../../node_modules/react-native")
+    //   The folder where the react-native Codegen package is. Default is ../../node_modules/@react-native/codegen
+    // codegenDir = file("../../node_modules/@react-native/codegen")
+    //   The cli.js file which is the React Native CLI entrypoint. Default is ../../node_modules/react-native/cli.js
+    // cliFile = file("../../node_modules/react-native/cli.js")
 
     /* Variants */
     //   The list of variants to that are debuggable. For those we're going to
@@ -56,14 +57,10 @@ react {
     //
     //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
     // hermesFlags = ["-O", "-output-source-map"]
-    //
-    // Added by install-expo-modules
-    entryFile = file(["node", "-e", "require('expo/scripts/resolveAppEntry')", rootDir.getAbsoluteFile().getParentFile().getAbsolutePath(), "android", "absolute"].execute(null, rootDir).text.trim())
-    cliFile = new File(["node", "--print", "require.resolve('@expo/cli')"].execute(null, rootDir).text.trim())
-    bundleCommand = "export:embed"
-}
 
-def enableSeparateBuildPerCPUArchitecture = false
+    /* Autolinking */
+    autolinkLibrariesWithApp()
+}
 
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
@@ -74,24 +71,23 @@ def enableProguardInReleaseBuilds = false
  * The preferred build flavor of JavaScriptCore (JSC)
  *
  * For example, to use the international variant, you can use:
- * `def jscFlavor = 'org.webkit:android-jsc-intl:+'`
+ * `def jscFlavor = io.github.react-native-community:jsc-android-intl:2026004.+`
  *
  * The international variant includes ICU i18n library and necessary data
  * allowing to use e.g. `Date.toLocaleString` and `String.localeCompare` that
  * give correct results when using with locales other than en-US. Note that
  * this variant is about 6MiB larger per architecture than default.
  */
-def jscFlavor = 'org.webkit:android-jsc:+'
+def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
-def getMyVersionCode = { ->
+def getMyVersionCode = {
     return project.hasProperty('versionCode') ? versionCode.toInteger() : 10218
 }
 
 // get version name from the specified property argument `-PversionName` during the build call
-def getMyVersionName = { ->
+def getMyVersionName = {
     return project.hasProperty('versionName') ? versionName : "2.9"
 }
-
 
 android {
     def keystorePropertiesFile = rootProject.file("keystore.properties")
@@ -110,10 +106,8 @@ android {
         pickFirst 'lib/arm64-v8a/libcrypto.so'
     }
     ndkVersion rootProject.ext.ndkVersion
-
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
-
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
@@ -124,7 +118,6 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode getMyVersionCode()
         versionName getMyVersionName()
-        missingDimensionStrategy 'react-native-camera', 'general'
         resValue "string", "build_config_package", "com.coinswallet"
     }
     signingConfigs {
@@ -134,7 +127,7 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
-        dokwalletRelease {
+         dokwalletRelease {
             // Uncomment this if you make build locally.
             if (System.getenv()["CI"]) { // CI=true is exported by Codemagic
                 storeFile file(System.getenv()["CM_DOKWALLET_STORE_FILE"])
@@ -183,29 +176,22 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
-            manifestPlaceholders = [usesCleartextTraffic:"true"]
-            matchingFallbacks = ['debug', 'release']
         }
         release {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
+            signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-            manifestPlaceholders = [usesCleartextTraffic:"false"]
         }
     }
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.0"
-    // implementation 'com.github.WalletConnect:walletconnectv2:0.2.0'
-    implementation 'com.walletconnect:android-core:1.18.0'
-    implementation 'com.walletconnect:web3wallet:1.11.0'
-    implementation fileTree(dir: 'libs', include: ['*.aar'])
-    // implementation(name: 'wallet-core-debug', ext: 'aar')
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
-    // implementation 'org.bitcoinj:bitcoinj-core:0.15.10'
+    implementation fileTree(dir: 'libs', include: ['*.aar'])
+    implementation 'org.bouncycastle:bcprov-jdk15to18:1.78.1'// NOTE: Remove this
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
@@ -213,5 +199,3 @@ dependencies {
         implementation jscFlavor
     }
 }
-
-apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)

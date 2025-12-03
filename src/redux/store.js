@@ -20,6 +20,7 @@ import {messageSlice} from 'dok-wallet-blockchain-networks/redux/messages/messag
 import {sellCryptoSlice} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
 import {addressBookSlice} from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSlice';
 import {batchTransactionSlice} from '../../dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const storage = createSensitiveStorage({
   keychainService: process.env.REDUX_KEYCHAIN_NAME,
@@ -28,7 +29,7 @@ const storage = createSensitiveStorage({
 
 const config = {
   key: process.env.REDUX_KEY,
-  storage,
+  storage: AsyncStorage,
   blacklist: [
     currentTransferSlice.name,
     exchangeSlice.name,

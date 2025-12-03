@@ -72,6 +72,28 @@ const myStyles = theme =>
       fontFamily: 'Roboto-Regular',
       fontWeight: '600',
     },
+     btn: {
+      alignSelf: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
+      position: 'absolute',
+      zIndex: 8888,
+      bottom: 25,
+      backgroundColor: theme.whiteOutline,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 8,
+    },
+    circle: {
+      fill: theme.background,
+    },
+    btnText: {
+      color: theme.font,
+      fontSize: 16,
+      fontFamily: 'Roboto-Regular',
+      marginRight: 10,
+      marginLeft: 4,
+    },
   });
 
 export default myStyles;

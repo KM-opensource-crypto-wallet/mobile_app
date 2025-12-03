@@ -58,6 +58,8 @@
 	<string>DokWallet needs to access your camera for scan QR code</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>DokWallet needs to access you photos for QR code</string>
+	<key>RCTNewArchEnabled</key>
+	<true/>
 	<key>UIAppFonts</key>
 	<array>
 		<string>fonts/Roboto-Bold.ttf</string>

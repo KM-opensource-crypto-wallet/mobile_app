@@ -1,20 +1,27 @@
-import React, {useContext, useEffect, useMemo, useState} from 'react';
-import {Text, TouchableOpacity, Dimensions, View} from 'react-native';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Text, TouchableOpacity, Dimensions, View, StyleSheet, BackHandler, Button, Linking, PermissionsAndroid } from 'react-native';
 
-import QRCodeScanner from 'react-native-qrcode-scanner';
+// import QRCodeScanner from 'react-native-qrcode-scanner';
 import * as Animatable from 'react-native-animatable';
 import myStyles from './ScannerStyles';
-import {ThemeContext} from 'theme/ThemeContext';
-import {parseCryptoQrCodeString} from 'dok-wallet-blockchain-networks/helper';
-import {shallowEqual, useDispatch, useSelector} from 'react-redux';
-import {selectUserCoins} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {setCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import { ThemeContext } from 'theme/ThemeContext';
+import { parseCryptoQrCodeString } from 'dok-wallet-blockchain-networks/helper';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { selectUserCoins } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import { setCurrentCoin } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import DeviceInfo from 'react-native-device-info';
-import {TextInput} from 'react-native-paper';
-import {createWalletConnection} from 'dok-wallet-blockchain-networks/service/walletconnect';
+import { TextInput } from 'react-native-paper';
+import { createWalletConnection } from 'dok-wallet-blockchain-networks/service/walletconnect';
+import {
+  Camera,
+  useCameraDevice,
+  useCameraFormat,
+  useCameraPermission,
+  useCodeScanner,
+} from "react-native-vision-camera";
 
-const SCREEN_HEIGHT = Dimensions.get('window').height;
-const SCREEN_WIDTH = Dimensions.get('window').width;
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const screenAspectRatio = SCREEN_HEIGHT / SCREEN_WIDTH;
 
 console.disableYellowBox = true;
 
@@ -37,8 +44,9 @@ console.disableYellowBox = true;
 //   });
 // }
 
-const Scanner = ({navigation, route}) => {
-  const {theme} = useContext(ThemeContext);
+const Scanner = ({ navigation, route }) => {
+  console.log("navigation=>", navigation)
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const page = route.params.page;
   const walletConnect = route.params.walletConnect;
@@ -53,6 +61,16 @@ const Scanner = ({navigation, route}) => {
     });
     return obj;
   }, [allUserCoins]);
+  const { hasPermission, requestPermission } = useCameraPermission();
+  const device = useCameraDevice("back");
+  const format = useCameraFormat(device, [
+    { fps: 60 },
+    { videoAspectRatio: screenAspectRatio },
+    { videoResolution: "max" },
+    { photoAspectRatio: screenAspectRatio },
+    { photoResolution: "max" },
+  ]);
+  const processingQR = useRef(false);
 
   useEffect(() => {
     // const init = async () => {
@@ -65,19 +83,13 @@ const Scanner = ({navigation, route}) => {
     });
   }, []);
 
-  // console.log('route on scanner', route);
-  const onSuccess = ({data}) => {
-    // Linking.openURL(e.data).catch(err =>
-    //   console.error('An error occured', err),
-    // );
-    // route.params.setAddressToSetInput(data);
+  const onSuccess = ({ data }) => {
     if (
       typeof data === 'string' &&
       data?.slice(0, 2) === 'wc' &&
       walletConnect
     ) {
-      createWalletConnection({uri: data}).then();
-      navigation.navigate('Home');
+      createWalletConnection({ uri: data }).then();
     } else if (page === 'ImportWalletByPrivateKey' || page === 'NewMessage') {
       navigation.navigate({
         name: page,
@@ -159,6 +171,29 @@ const Scanner = ({navigation, route}) => {
     };
   };
 
+  const onCodeScanned = useCallback(
+    async (codes) => {
+      const value = codes[0]?.value;
+      if (value && !processingQR.current) {
+        processingQR.current = true;
+        onSuccess({
+          data: value
+        })
+        processingQR.current = false;
+      }
+    },
+    [],
+  );
+
+  const codeScanner = useCodeScanner({
+    codeTypes: ["qr"],
+    onCodeScanned,
+  });
+
+  useEffect(() => {
+    requestPermission()
+  }, [requestPermission]);
+
   if (isSimulator) {
     return (
       <View style={{flex: 1, paddingTop: 100}}>
@@ -191,27 +226,22 @@ const Scanner = ({navigation, route}) => {
   }
 
   return (
-    <QRCodeScanner
-      onRead={onSuccess}
-      // flashMode={RNCamera.Constants.FlashMode.torch}
-      showMarker={true}
-      cameraStyle={{height: SCREEN_HEIGHT * 0.711}}
-      bottomViewStyle={styles.bottomStyle}
-      topViewStyle={styles.bottomStyle}
-      //   bottomContent={
-      //     <View style={styles.btnContainer}>
-      //       <TouchableOpacity
-      //         onPress={() => {
-      //           navigation.navigate('Home', {showModal: false});
-      //         }}>
-      //         <Text style={styles.btn}>CANCEL</Text>
-      //       </TouchableOpacity>
-      //     </View>
-      //   }
-      customMarker={
-        <View style={styles.rectangleContainer}>
+    <>
+      <View style={{ flex: 1 }}>
+        {hasPermission && device && (
+          <Camera
+            codeScanner={codeScanner}
+            format={format}
+            device={device}
+            isActive={true}
+            style={StyleSheet.absoluteFill}   // 👈 Fill whole screen
+          />
+        )}
+
+        {/* Overlay on top of camera */}
+        <View style={styles.overlayContainer}>
           <View style={styles.topOverlay} />
-          <View style={{flexDirection: 'row'}}>
+          <View style={{ flexDirection: 'row' }}>
             <View style={styles.leftAndRightOverlay} />
 
             <View style={styles.rectangle}>
@@ -227,20 +257,22 @@ const Scanner = ({navigation, route}) => {
                 )}
               />
             </View>
+
             <View style={styles.leftAndRightOverlay} />
           </View>
+
           <View style={styles.bottomOverlay} />
+
           <View style={styles.btnContainer}>
             <TouchableOpacity
-              onPress={() => {
-                navigation.navigate(page, {showModal: false});
-              }}>
+              onPress={() => navigation.navigate(page, { showModal: false })}
+            >
               <Text style={styles.btn}>CANCEL</Text>
             </TouchableOpacity>
           </View>
         </View>
-      }
-    />
+      </View>
+    </>
   );
 };
 

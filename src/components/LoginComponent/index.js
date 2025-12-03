@@ -12,6 +12,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   AppState,
+  Image,
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {Formik} from 'formik';
@@ -42,6 +43,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {getLastAttempt} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 import {useNavigation} from '@react-navigation/native';
+import { DokSafeAreaView } from 'components/DokSafeAreaView';
 
 const LoginComponent = ({onClose, visible}) => {
   const navigation = useNavigation();
@@ -176,7 +178,7 @@ const LoginComponent = ({onClose, visible}) => {
     ],
   );
   return (
-    <SafeAreaView style={styles.safeAreaView}>
+    <DokSafeAreaView style={styles.safeAreaView}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           <View style={styles.formInput}>
@@ -275,7 +277,7 @@ const LoginComponent = ({onClose, visible}) => {
         navigation={navigation}
         page={'Forgot'}
       />
-    </SafeAreaView>
+    </DokSafeAreaView>
   );
 };
 export default LoginComponent;

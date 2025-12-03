@@ -1,12 +1,23 @@
 module.exports = {
-  presets: ['babel-preset-expo'],
+  presets: [
+    [
+      'module:@react-native/babel-preset',
+      { unstable_transformProfile: 'hermes-stable' },
+    ],
+  ],
+  env: {
+    production: {
+      plugins: ['react-native-paper/babel'],
+    },
+  },
   plugins: [
     ['module:react-native-dotenv'],
+    ['react-native-reanimated/plugin'],
     '@babel/plugin-proposal-export-namespace-from',
     '@babel/plugin-transform-class-static-block',
-    'react-native-reanimated/plugin',
+    ['@babel/plugin-transform-export-namespace-from', { corejs: 3 }],
     [
-      require.resolve('babel-plugin-module-resolver'),
+      'module-resolver',
       {
         root: ['./src'],
         alias: {
@@ -16,15 +27,5 @@ module.exports = {
       },
     ],
     ['react-native-paper/babel'],
-  ],
-  overrides: [
-    {
-      test: './node_modules/ethers',
-      plugins: [
-        '@babel/plugin-proposal-private-property-in-object',
-        '@babel/plugin-proposal-class-properties',
-        '@babel/plugin-proposal-private-methods',
-      ],
-    },
   ],
 };

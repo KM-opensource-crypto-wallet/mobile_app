@@ -1,4 +1,4 @@
-import {StyleSheet, Dimensions} from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -13,6 +13,11 @@ const scanBarColor = 'green';
 
 const myStyles = theme =>
   StyleSheet.create({
+    overlayContainer: {
+      ...StyleSheet.absoluteFillObject, // overlay sits on top of camera
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
     rectangleContainer: {
       flex: 1,
       alignItems: 'center',

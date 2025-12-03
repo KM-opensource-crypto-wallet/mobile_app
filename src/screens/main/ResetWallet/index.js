@@ -39,8 +39,10 @@ const ResetWallet = ({navigation, route}) => {
                 ...styles.btn,
                 ...styles.shadow,
               }}>
-              <CREATE_WALLET height={150} width={150} />
-              <View style={styles.textBox}>
+                <View pointerEvents="none">
+                  <CREATE_WALLET height={150} width={150} />
+                </View>              
+                <View style={styles.textBox}>
                 <Text style={{...styles.textBtn, color: theme.font}}>
                   Create
                 </Text>
@@ -63,7 +65,9 @@ const ResetWallet = ({navigation, route}) => {
                 ...styles.btn,
                 ...styles.shadow,
               }}>
-              <IMPORT_WALLET height={150} width={150} />
+              <View pointerEvents="none">
+                <IMPORT_WALLET height={150} width={150} />
+              </View>
               <View style={styles.textBox2}>
                 <Text
                   style={{

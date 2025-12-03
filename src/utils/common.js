@@ -1,6 +1,7 @@
 import {IS_ANDROID} from 'utils/dimensions';
-import {sha256} from 'react-native-sha256';
-import {getBuildNumber, getVersion} from 'react-native-device-info';
+// import {sha256} from 'react-native-sha256';
+import { sha256 } from 'js-sha256';
+import { getBuildNumber, getVersion } from 'react-native-device-info';
 import crypto from 'react-native-quick-crypto';
 import {Linking} from 'react-native';
 

@@ -4,6 +4,8 @@
 
 
     <application
+        android:theme="@style/AppTheme"
+        tools:replace="android:theme"
         android:usesCleartextTraffic="${usesCleartextTraffic}"
         tools:targetApi="28"
         tools:ignore="GoogleAppIndexingWarning" />

@@ -62,6 +62,8 @@ const Coins = () => {
   }, [dispatch]);
 
   return (
+    <>
+
     <View style={styles.mainView}>
       <BatchTransactionBanner />
       {!!coinsNames && !isImportWithPrivateKey && (
@@ -99,13 +101,14 @@ const Coins = () => {
         currentWallet={currentWallet}
       />
       <WalletConnectStatus />
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.btn}
         onPress={() => navigation.navigate('ManageCoins')}>
         <AddCircle height="25" width="25" style={styles.circle} />
         <Text style={styles.btnText}>More Coins</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
+    </>
   );
 };
 const myStyles = theme =>

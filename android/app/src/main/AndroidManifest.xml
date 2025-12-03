@@ -4,30 +4,18 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
-
-    <queries>
-        <!-- Allow querying kimlwallet app -->
-        <package android:name="com.kimlcards" />
-
-        <!-- Allow querying custom scheme -->
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <category android:name="android.intent.category.BROWSABLE" />
-            <data android:scheme="kimlcards" />
-        </intent>
-    </queries>
-
+    <uses-permission android:name="android.permission.CAMERA" />
+    
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"
       android:icon="@mipmap/ic_launcher"
       android:roundIcon="@mipmap/ic_launcher_round"
-      android:usesCleartextTraffic="${usesCleartextTraffic}"
       android:allowBackup="false"
-      android:theme="@style/BootTheme"
-      android:supportsRtl="true"
-        >
-        <activity
+      android:theme="@style/AppTheme"
+      android:usesCleartextTraffic="${usesCleartextTraffic}"
+      android:supportsRtl="true">
+      <activity
             android:name=".LaunchActivity"
             android:label="@string/app_name"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
@@ -46,7 +34,7 @@
         android:launchMode="singleTask"
         android:windowSoftInputMode="adjustResize"
         android:exported="true">
-          <intent-filter android:autoVerify="true">
+        <intent-filter android:autoVerify="true">
               <action android:name="android.intent.action.VIEW" />
               <category android:name="android.intent.category.DEFAULT" />
               <category android:name="android.intent.category.BROWSABLE" />

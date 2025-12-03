@@ -1,5 +1,5 @@
 import React, {useContext} from 'react';
-import {View, StyleSheet} from 'react-native';
+import {View, StyleSheet, Image} from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
 import ChainIcon from 'components/ChainIcon/ChainIcon';
 import {ThemeContext} from 'theme/ThemeContext';
@@ -7,12 +7,13 @@ import {ThemeContext} from 'theme/ThemeContext';
 const CoinIcon = ({item}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-
+  // NOTE: FASTImage is not taking the images in ios
   return (
     <View style={styles.iconBox}>
       {item?.icon && (
-        <FastImage
+        <Image
           source={{uri: item?.icon}}
+          // source={{uri: "https://fastly.picsum.photos/id/1/400/400.jpg?hmac=lOytrN6lDOH_Yx7NwwGIaCtxp6pyuH2V4hD6Eac-VI0"}}
           resizeMode={'contain'}
           style={styles.imageStyle}
         />

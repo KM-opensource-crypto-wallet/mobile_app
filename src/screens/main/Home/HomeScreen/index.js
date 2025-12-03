@@ -71,6 +71,7 @@ import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {createWalletConnection} from 'dok-wallet-blockchain-networks/service/walletconnect';
 import {IS_KIML_WALLET, LOGO_SINGLE, LOGO_SINGLE_DARK} from 'utils/wlData';
 import AddCoins from 'components/AddCoins';
+import AddCircle from 'assets/images/icons/add-circle.svg';
 
 const renderScene = SceneMap({
   coins: Coins,
@@ -415,6 +416,12 @@ const HomeScreen = ({navigation, route}) => {
                   )}
                   lazy={true}
                 />
+                <TouchableOpacity
+                  style={styles.btn}
+                  onPress={() => navigation.navigate('ManageCoins')}>
+                  <AddCircle height="25" width="25" style={styles.circle} />
+                  <Text style={styles.btnText}>More Coins</Text>
+                </TouchableOpacity>
               </View>
             </DokSafeAreaView>
             <ModalQR
