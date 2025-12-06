@@ -26,7 +26,7 @@ export function DokSafeAreaView({children, ...rest}) {
   }
   return (
     <SafeAreaView 
-    // {...{edges}}
+    {...{edges}}
      {...rest}
     >
       {children}

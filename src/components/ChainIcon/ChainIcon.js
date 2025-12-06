@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, StyleSheet, Image} from 'react-native';
+import {View, StyleSheet} from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
 
 const chainLogoMap = {
@@ -44,7 +44,7 @@ const ChainIcon = ({chainName, itemType, size = 20}) => {
 
   return (
     <View style={[styles.container, {width: size, height: size}]}>
-      <Image
+      <FastImage
         source={chainLogo}
         resizeMode="contain"
         style={[styles.chainIcon, {width: size, height: size}]}

@@ -12,7 +12,6 @@ module.exports = {
   },
   plugins: [
     ['module:react-native-dotenv'],
-    ['react-native-reanimated/plugin'],
     '@babel/plugin-proposal-export-namespace-from',
     '@babel/plugin-transform-class-static-block',
     ['@babel/plugin-transform-export-namespace-from', { corejs: 3 }],
@@ -27,5 +26,6 @@ module.exports = {
       },
     ],
     ['react-native-paper/babel'],
+    'react-native-worklets/plugin',
   ],
 };
