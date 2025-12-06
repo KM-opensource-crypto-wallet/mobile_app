@@ -538,6 +538,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9D0BDB832EE3088A00EAA2B9 /* AppDelegate.swift in Sources */,
 				6BAFDDE92DCA48BA00A5C1C0 /* FilecoinCoin.swift in Sources */,
 				3F1834F72A4F0A1A004B7D37 /* CustomMethods.swift in Sources */,
 				D2057C2D2BC514C000E14112 /* PolkadotCoin.swift in Sources */,
@@ -568,6 +569,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9D0BDB822EE3088A00EAA2B9 /* AppDelegate.swift in Sources */,
 				D2E7E5A52DC8CB0E00A414F5 /* CustomMethods.swift in Sources */,
 				D2E7E5A62DC8CB0E00A414F5 /* PolkadotCoin.swift in Sources */,
 				D229AF4F2F04015E0058CE88 /* AppDelegate.swift in Sources */,

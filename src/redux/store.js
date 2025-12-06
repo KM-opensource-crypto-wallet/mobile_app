@@ -30,7 +30,7 @@ const storage = createSensitiveStorage({
 
 const config = {
   key: process.env.REDUX_KEY,
-  storage: AsyncStorage,
+  storage,
   blacklist: [
     currentTransferSlice.name,
     exchangeSlice.name,
@@ -83,5 +83,5 @@ let persistor = persistStore(store, null, () => {
     BootSplash.hide({fade: true});
   }, 500);
 });
-
+// persistor.purge()
 export {persistor, store};

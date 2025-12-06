@@ -10,9 +10,8 @@ const CoinIcon = ({item}) => {
   return (
     <View style={styles.iconBox}>
       {item?.icon && (
-        <Image
+        <FastImage
           source={{uri: item?.icon}}
-          // source={{uri: "https://fastly.picsum.photos/id/1/400/400.jpg?hmac=lOytrN6lDOH_Yx7NwwGIaCtxp6pyuH2V4hD6Eac-VI0"}}
           resizeMode={'contain'}
           style={styles.imageStyle}
         />

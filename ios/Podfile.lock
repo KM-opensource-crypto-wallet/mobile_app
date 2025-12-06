@@ -3129,7 +3129,11 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+<<<<<<< HEAD
   - RNReanimated (4.2.1):
+=======
+  - RNReanimated (4.2.0):
+>>>>>>> 076d33a (fix navigation issue, bootsplash and upgrade helper review)
     - boost
     - DoubleConversion
     - fast_float
@@ -3156,11 +3160,19 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
+<<<<<<< HEAD
     - RNReanimated/reanimated (= 4.2.1)
     - RNWorklets
     - SocketRocket
     - Yoga
   - RNReanimated/reanimated (4.2.1):
+=======
+    - RNReanimated/reanimated (= 4.2.0)
+    - RNWorklets
+    - SocketRocket
+    - Yoga
+  - RNReanimated/reanimated (4.2.0):
+>>>>>>> 076d33a (fix navigation issue, bootsplash and upgrade helper review)
     - boost
     - DoubleConversion
     - fast_float
@@ -3187,11 +3199,19 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
+<<<<<<< HEAD
     - RNReanimated/reanimated/apple (= 4.2.1)
     - RNWorklets
     - SocketRocket
     - Yoga
   - RNReanimated/reanimated/apple (4.2.1):
+=======
+    - RNReanimated/reanimated/apple (= 4.2.0)
+    - RNWorklets
+    - SocketRocket
+    - Yoga
+  - RNReanimated/reanimated/apple (4.2.0):
+>>>>>>> 076d33a (fix navigation issue, bootsplash and upgrade helper review)
     - boost
     - DoubleConversion
     - fast_float
@@ -3221,7 +3241,11 @@ PODS:
     - RNWorklets
     - SocketRocket
     - Yoga
+<<<<<<< HEAD
   - RNScreens (4.19.0):
+=======
+  - RNScreens (4.18.0):
+>>>>>>> 076d33a (fix navigation issue, bootsplash and upgrade helper review)
     - boost
     - DoubleConversion
     - fast_float
@@ -3248,10 +3272,17 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
+<<<<<<< HEAD
     - RNScreens/common (= 4.19.0)
     - SocketRocket
     - Yoga
   - RNScreens/common (4.19.0):
+=======
+    - RNScreens/common (= 4.18.0)
+    - SocketRocket
+    - Yoga
+  - RNScreens/common (4.18.0):
+>>>>>>> 076d33a (fix navigation issue, bootsplash and upgrade helper review)
     - boost
     - DoubleConversion
     - fast_float
@@ -3923,6 +3954,7 @@ SPEC CHECKSUMS:
   React: 4bc1f928568ad4bcfd147260f907b4ea5873a03b
   React-callinvoker: 87f8728235a0dc62e9dc19b3851c829d9347d015
   React-Codegen: 4b8b4817cea7a54b83851d4c1f91f79aa73de30a
+<<<<<<< HEAD
   React-Core: 19e0183e28d7a6613ecacebd7525fe6650efa3b6
   React-CoreModules: 73cc86f2a0ff84b93d6325073ad2e4874d21ad40
   React-cxxreact: 4bf734645c77c9b86e2f3e933e0411cf2f14d1ba
@@ -4020,6 +4052,98 @@ SPEC CHECKSUMS:
   RNTestFlight: 3419178faa8527ecfe803607fd338a3803f1fb0d
   RNVectorIcons: 6acc19c833be864e9c70894e101a587fe491150a
   RNWorklets: b94f5c1b61a985c309dcc0092aacf41515cc39d6
+=======
+  React-Core: 956ac86b4d9b0c0fd9a14b9cc533aa297bb501c0
+  React-CoreModules: 3a8d39778cf9eeca40e419814e875da1a8e29855
+  React-cxxreact: db275765e1eb08f038599fb44114cf57ee0d18cd
+  React-debug: 1dfa1d1cbd93bdaffa3b140190829f9fd9e27985
+  React-defaultsnativemodule: 35f353ba06901fb5e374bc56e750fde05cbb05b9
+  React-domnativemodule: cf9e1b1b520ce0e66396c2744b3eb6d419711c13
+  React-Fabric: c0b0c1ad70476d354b3da9fef96094f7b37804da
+  React-FabricComponents: 8c6861c5233cf0d5685cee301a979313090e2f57
+  React-FabricImage: cef8883d2fb6c892003fefcad261d2898adbe926
+  React-featureflags: 0e2b969019c2b118de64a6d4c55ef7c05f2b0f1d
+  React-featureflagsnativemodule: e1ef619d14fe0a68d4783b32293309dbb13ef2a5
+  React-graphics: 0fc6b7acaff7161bda05bf8bffceacc2b0b4e38d
+  React-hermes: b454b9352bc26e638704d103009f659a125b86d3
+  React-idlecallbacksnativemodule: 35ab292f8404c469744db5a5dd5f0f27f95e5ebf
+  React-ImageManager: 3312c550ebcf6b7d911d9993082adcb3e1407ce8
+  React-jserrorhandler: 2a7f2d94566f05f8cb82288afd46bc0fd8b2ffc7
+  React-jsi: 7aa265cf8372d8385ccc7935729e76d27e694dfe
+  React-jsiexecutor: 8dd53bebfb3bc12f0541282aa4c858a433914e37
+  React-jsinspector: f89b9ae62a4e2f6035b452442ef20a7f98f9cb27
+  React-jsinspectorcdp: 44e46c1473a8deecf7b188389ed409be83fb3cc7
+  React-jsinspectornetwork: dc9524f6e3d7694b1b6f4bd22dedad8ccc2c0a80
+  React-jsinspectortracing: 0166ebbdfb125936a5d231895de3c11a19521dfc
+  React-jsitooling: 34692514ec8d8735938eda3677808a58f41c925b
+  React-jsitracing: a598dae84a87f8013635d09c5e7884023bda8501
+  React-logger: 500f2fa5697d224e63c33d913c8a4765319e19bf
+  React-Mapbuffer: 06d59c448da7e34eb05b3fb2189e12f6a30fec57
+  React-microtasksnativemodule: d1ee999dc9052e23f6488b730fa2d383a4ea40e5
+  react-native-config: 2249b7e68644c86ea68358f5a0d746d1c648f900
+  react-native-fast-pbkdf2: 329e89b9929a51ed4d9ba88bf355a266f13d9d93
+  react-native-fingerprint-scanner: 91bf6825709dd7bd3abc4588a4772eb097a2b2d8
+  react-native-get-random-values: e2acf4070fe4b7325705a05af047449637a27a21
+  react-native-in-app-review: 1516ba69d60d58053b7eb3aaaf8d2a5a74af8b57
+  react-native-keyboard-controller: 346cf9a0fd479d0a7088d581d374a6d98ee3cbfc
+  react-native-pager-view: a0516effb17ca5120ac2113bfd21b91130ad5748
+  react-native-quick-crypto: dac9db2adb0a61b4881909b6db7c51eaaada66a8
+  react-native-restart: 0bc732f4461709022a742bb29bcccf6bbc5b4863
+  react-native-safe-area-context: c00143b4823773bba23f2f19f85663ae89ceb460
+  react-native-screenguard: 4cdef4ef526bba6728917e4d188b1e8083081953
+  react-native-slider: 3492743c54a83913920aa81bb949de57a915125c
+  react-native-webview: 654f794a7686b47491cf43aa67f7f428bea00eed
+  React-NativeModulesApple: 46690a0fe94ec28fc6fc686ec797b911d251ded0
+  React-oscompat: 95875e81f5d4b3c7b2c888d5bd2c9d83450d8bdb
+  React-perflogger: 2e229bf33e42c094fd64516d89ec1187a2b79b5b
+  React-performancecdpmetrics: 05ba4bd83f36acf192071bb5d9c8f45faf04d140
+  React-performancetimeline: bfc96fcd2b79f7489dd54e3df4cba186dd8dd141
+  React-RCTActionSheet: 2399bb6cc8adaef2e5850878102fea2ad1788a0e
+  React-RCTAnimation: d1deb6946e83e22a795a7d0148b94faad8851644
+  React-RCTAppDelegate: 10b35d5cec3f8653f6de843ae800b3ba8050b801
+  React-RCTBlob: 85150378edc42862d7c13ff2502693f32b174f91
+  React-RCTFabric: 736f9da3ad57e2cef5fa4c132999933a89bb8378
+  React-RCTFBReactNativeSpec: 705ec584758966950a31fa235539b57523059837
+  React-RCTImage: bb6cbdc22698b3afc8eb8d81ef03ee840d24c6f6
+  React-RCTLinking: e8b006d101c45651925de3e82189f03449eedfe7
+  React-RCTNetwork: 7999731af05ec8f591cbc6ad4e29d79e209c581a
+  React-RCTRuntime: 99d8a2a17747866fb972561cdb205afe9b26d369
+  React-RCTSettings: 839f334abb92e917bc24322036081ffe15c84086
+  React-RCTText: 272f60e9a5dbfd14c348c85881ee7d5c7749a67c
+  React-RCTVibration: 1ffa30a21e2227be3afe28d657ac8e6616c91bae
+  React-rendererconsistency: 3c3e198aba0255524ed7126aa812d22ce750d217
+  React-renderercss: 6b3ce3dfadf991937ae3229112be843ef1438c32
+  React-rendererdebug: baf9e1daa07ac7f9aca379555126d29f963ba38b
+  React-RuntimeApple: 4136aee89257894955ef09e9f9ef74f0c27596be
+  React-RuntimeCore: e9a743d7de4bbd741b16e10b26078d815d6513ab
+  React-runtimeexecutor: 781e292362066af82fa2478d95c6b0e374421844
+  React-RuntimeHermes: 6ab3c2847516769fc860d711814f1735859cad74
+  React-runtimescheduler: 824c83a5fd68b35396de6d4f2f9ae995daac861b
+  React-timing: 1ebc7102dd52a3edcc63534686bb156e12648411
+  React-utils: abf37b162f560cd0e3e5d037af30bb796512246d
+  React-webperformancenativemodule: 50a57c713a90d27ae3ab947a6c9c8859bcb49709
+  ReactAppDependencyProvider: a45ef34bb22dc1c9b2ac1f74167d9a28af961176
+  ReactCodegen: 878add6c7d8ff8cea87697c44d29c03b79b6f2d9
+  ReactCommon: 804dc80944fa90b86800b43c871742ec005ca424
+  RNBootSplash: 98a34471966945e8dacd1da8f0c2f87cbc2e2df7
+  RnBugfender: 4a6bc1e852c3a18c9f5abbb177f407aaef7136ab
+  RNCAsyncStorage: 29f0230e1a25f36c20b05f65e2eb8958d6526e82
+  RNCClipboard: 4b58c780f63676367640f23c8e114e9bd0cf86ac
+  RNDeviceInfo: 36d7f232bfe7c9b5c494cb7793230424ed32c388
+  RNFastImage: b076a6378b1ce90debc27a927a437db3652bef14
+  RNGestureHandler: e1cf8ef3f11045536eed6bd4f132b003ef5f9a5f
+  RNInAppBrowser: 6d3eb68d471b9834335c664704719b8be1bfdb20
+  RNLocalize: ccce7d4abfbd268a9c47c9089ef6a8d587e9a1e6
+  RNPermissions: e5dd84f29e7a3871451f88efa83dfa6227806b51
+  RNReactNativeHapticFeedback: be4f1b4bf0398c30b59b76ed92ecb0a2ff3a69c6
+  RNReanimated: f1868b36f4b2b52a0ed00062cfda69506f75eaee
+  RNScreens: d821082c6dd1cb397cc0c98b026eeafaa68be479
+  RNShare: 70ae97841ace4522b91cf4b54281493ba3ae16e0
+  RNSVG: 1bbfeab22b26db18b73d2e36b37a0f02a1180838
+  RNTestFlight: b81078855c2739e90458ad2686a514ee5dcc60de
+  RNVectorIcons: 791f13226ec4a3fd13062eda9e892159f0981fae
+  RNWorklets: d9c050940f140af5d8b611d937eab1cbfce5e9a5
+>>>>>>> 076d33a (fix navigation issue, bootsplash and upgrade helper review)
   SDWebImage: f84b0feeb08d2d11e6a9b843cb06d75ebf5b8868
   SDWebImageAVIFCoder: afe194a084e851f70228e4be35ef651df0fc5c57
   SDWebImageSVGCoder: 15a300a97ec1c8ac958f009c02220ac0402e936c
@@ -4031,6 +4155,10 @@ SPEC CHECKSUMS:
   VisionCamera: 3ea10c46a5c612f5f89fb46a54bef4a0de8b58a7
   Yoga: 5456bb010373068fc92221140921b09d126b116e
 
+<<<<<<< HEAD
 PODFILE CHECKSUM: d2ef081972b432d3aa62abc36772ce3d3f5910c7
+=======
+PODFILE CHECKSUM: 5ac3eff51c6bc257f9bb868a2eb20e8b7bb14b7a
+>>>>>>> 076d33a (fix navigation issue, bootsplash and upgrade helper review)
 
 COCOAPODS: 1.16.2
