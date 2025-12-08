@@ -45,7 +45,6 @@ console.disableYellowBox = true;
 // }
 
 const Scanner = ({ navigation, route }) => {
-  console.log("navigation=>", navigation)
   const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const page = route.params.page;

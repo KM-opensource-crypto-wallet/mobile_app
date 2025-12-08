@@ -7,7 +7,6 @@ import {ThemeContext} from 'theme/ThemeContext';
 const CoinIcon = ({item}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-  // NOTE: FASTImage is not taking the images in ios
   return (
     <View style={styles.iconBox}>
       {item?.icon && (

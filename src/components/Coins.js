@@ -63,7 +63,6 @@ const Coins = () => {
 
   return (
     <>
-
     <View style={styles.mainView}>
       <BatchTransactionBanner />
       {!!coinsNames && !isImportWithPrivateKey && (
