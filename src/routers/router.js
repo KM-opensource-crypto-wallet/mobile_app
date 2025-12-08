@@ -107,13 +107,13 @@ export const useRoute = isAuth => {
         headerTitleAlign: 'center',
       }}>
       <Stack.Group screenOptions={{headerShown: false}}>
-        {!isAuth ? (
+       {!isAuth && (
           <>
             <Stack.Screen name="CarouselCards" component={CarouselCards} />
             <Stack.Screen name="Registration" component={RegistrationScreen} />
           </>
-        ):(<Stack.Screen name="Login" component={LoginScreen} />
         )}
+        <Stack.Screen name="Login" component={LoginScreen} />
       </Stack.Group>
       {/* Modal screens */}
       {/* {!hasWallet && ( */}
