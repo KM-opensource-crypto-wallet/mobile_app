@@ -89,6 +89,9 @@ const Scanner = ({ navigation, route }) => {
       walletConnect
     ) {
       createWalletConnection({ uri: data }).then();
+       navigation.navigate('Sidebar', {
+        screen: 'Home',
+      });
     } else if (page === 'ImportWalletByPrivateKey' || page === 'NewMessage') {
       navigation.navigate({
         name: page,
@@ -181,7 +184,7 @@ const Scanner = ({ navigation, route }) => {
         processingQR.current = false;
       }
     },
-    [],
+    [onSuccess],
   );
 
   const codeScanner = useCodeScanner({

@@ -15,12 +15,12 @@ const myStyles = theme =>
     },
     formInput: {
       flex: 1,
-      paddingTop: 20,
+      // paddingTop: 20,
     },
     brand: {
       color: theme.font,
       fontSize: 16,
-      marginBottom: 10,
+      // marginBottom: 10,
       textAlign: 'left',
       fontFamily: 'Roboto-Regular',
       fontWeight: 'bold',

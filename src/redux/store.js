@@ -24,6 +24,7 @@ import {batchTransactionSlice} from '../../dok-wallet-blockchain-networks/redux/
 const storage = createSensitiveStorage({
   keychainService: process.env.REDUX_KEYCHAIN_NAME,
   sharedPreferencesName: process.env.REDUX_SHARED_PREFERENCE_NAME,
+  accessControl: 'none',
 });
 
 const config = {
@@ -81,5 +82,5 @@ let persistor = persistStore(store, null, () => {
     BootSplash.hide({fade: true});
   }, 500);
 });
-
+// persistor.purge()
 export {persistor, store};
