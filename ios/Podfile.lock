@@ -4242,9 +4242,13 @@ SPEC CHECKSUMS:
 >>>>>>> f7d9c8a (refactor)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 PODFILE CHECKSUM: d2ef081972b432d3aa62abc36772ce3d3f5910c7
 =======
 PODFILE CHECKSUM: 5ac3eff51c6bc257f9bb868a2eb20e8b7bb14b7a
 >>>>>>> 076d33a (fix navigation issue, bootsplash and upgrade helper review)
+=======
+PODFILE CHECKSUM: d2ef081972b432d3aa62abc36772ce3d3f5910c7
+>>>>>>> 3d78e12 (fix storage and go back issue)
 
 COCOAPODS: 1.16.2

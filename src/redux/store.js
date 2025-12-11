@@ -82,5 +82,5 @@ let persistor = persistStore(store, null, () => {
     BootSplash.hide({fade: true});
   }, 500);
 });
-
+// persistor.purge()
 export {persistor, store};
