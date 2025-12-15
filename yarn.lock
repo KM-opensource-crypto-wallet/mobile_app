@@ -14255,6 +14255,7 @@ __metadata:
   linkType: hard
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 "@walletconnect/jsonrpc-types@npm:1.0.4, @walletconnect/jsonrpc-types@npm:^1.0.2, @walletconnect/jsonrpc-types@npm:^1.0.3":
   version: 1.0.4
   resolution: "@walletconnect/jsonrpc-types@npm:1.0.4"
@@ -14263,6 +14264,20 @@ __metadata:
   version "2.17.3"
   resolved "https://registry.yarnpkg.com/@walletconnect/react-native-compat/-/react-native-compat-2.17.3.tgz#e26d3f584176d3111f247dfaeea14687e8c2c195"
   integrity sha512-lHKwXKoB0rdDH1ukxUx7o86xosWbttWIHYMZ8tgAQC1k9VH3CZZCoBcHOAAX8iBzyb0n0UP3/9zRrOcJE5nz7Q==
+=======
+"@walletconnect/logger@3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@walletconnect/logger/-/logger-3.0.1.tgz#2e3fda0a99c80aec1787c8f96bb1946cd7a6e136"
+  integrity sha512-O8lXGMZO1+e5NtHhBSjsAih/I9KC+1BxNhGNGD+SIWTqWd0zsbT5wJtNnJ+LnSXTRE7XZRxFUlvZgkER3vlhFA==
+  dependencies:
+    "@walletconnect/safe-json" "^1.0.2"
+    pino "10.0.0"
+
+"@walletconnect/react-native-compat@^2.23.1":
+  version "2.23.1"
+  resolved "https://registry.yarnpkg.com/@walletconnect/react-native-compat/-/react-native-compat-2.23.1.tgz#e7315bae3c3a60b10590452e9e5f55cbf367ca69"
+  integrity sha512-iLm9pbGhjcXDIoa7wiMfBv66FyOjWv8XP7BbcwDt+K+34rW/gj6j5sz/KpSHiPxGGYc32BfqqnA9Wg2r2aWchg==
+>>>>>>> d05cc5c (fix does not support 16 kb page size)
   dependencies:
     events "3.3.0"
     fast-text-encoding "1.0.6"
@@ -14355,11 +14370,15 @@ __metadata:
   linkType: hard
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 "@walletconnect/relay-auth@npm:1.1.0":
   version: 1.1.0
   resolution: "@walletconnect/relay-auth@npm:1.1.0"
 =======
 "@walletconnect/types@2.23.0", "@walletconnect/types@^2.17.3":
+=======
+"@walletconnect/types@2.23.0":
+>>>>>>> d05cc5c (fix does not support 16 kb page size)
   version "2.23.0"
   resolved "https://registry.yarnpkg.com/@walletconnect/types/-/types-2.23.0.tgz#4e49bdcc0e7f77f3aae9f0a8189ad7322687fcde"
   integrity sha512-9ZEOJyx/kNVCRncDHh3Qr9eH7Ih1dXBFB4k1J8iEudkv3t4GhYpXhqIt2kNdQWluPb1BBB4wEuckAT96yKuA8g==
@@ -14374,9 +14393,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+<<<<<<< HEAD
 "@walletconnect/safe-json@npm:1.0.2, @walletconnect/safe-json@npm:^1.0.1, @walletconnect/safe-json@npm:^1.0.2":
   version: 1.0.2
   resolution: "@walletconnect/safe-json@npm:1.0.2"
+=======
+"@walletconnect/types@^2.23.1":
+  version "2.23.1"
+  resolved "https://registry.yarnpkg.com/@walletconnect/types/-/types-2.23.1.tgz#51b253af742d82c751fec4d38ba194c1bbb22240"
+  integrity sha512-sbWOM9oCuzSbz/187rKWnSB3sy7FCFcbTQYeIJMc9+HTMTG2TUPftPCn8NnkfvmXbIeyLw00Y0KNvXoCV/eIeQ==
+  dependencies:
+    "@walletconnect/events" "1.0.1"
+    "@walletconnect/heartbeat" "1.2.2"
+    "@walletconnect/jsonrpc-types" "1.0.4"
+    "@walletconnect/keyvaluestorage" "1.1.1"
+    "@walletconnect/logger" "3.0.1"
+    events "3.3.0"
+
+"@walletconnect/utils@2.23.0":
+  version "2.23.0"
+  resolved "https://registry.yarnpkg.com/@walletconnect/utils/-/utils-2.23.0.tgz#58f05d9fd5ada294b9404e32babd762633097ba8"
+  integrity sha512-bVyv4Hl+/wVGueZ6rEO0eYgDy5deSBA4JjpJHAMOdaNoYs05NTE1HymV2lfPQQHuqc7suYexo9jwuW7i3JLuAA==
+>>>>>>> d05cc5c (fix does not support 16 kb page size)
   dependencies:
     tslib: 1.14.1
   checksum: fee03fcc70adb5635ab9419ea6ec6555aa2467bef650ad3b9526451c3a5cf247836db0f3ae3bb435d2e585d99e50c2ebe7dc9c429cfa3df900cf3fe4bd06d37f
@@ -29100,6 +29138,7 @@ react-native-keyboard-aware-scroll-view@^0.9.5:
   linkType: hard
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 "react-native-qrcode-svg@npm:^6.3.12":
   version: 6.3.15
   resolution: "react-native-qrcode-svg@npm:6.3.15"
@@ -29109,6 +29148,8 @@ react-native-permissions@^3.8.0:
   resolved "https://registry.yarnpkg.com/react-native-permissions/-/react-native-permissions-3.10.1.tgz#cb0171c8d12113869deaabbdfb979aad1a44752b"
   integrity sha512-Gc5BxxpjZn4QNUDiVeHOO0vXh3AH7ToolmwTJozqC6DsxV7NAf3ttap+8BSmzDR8WxuAM3Cror+YNiBhHJx7/w==
 
+=======
+>>>>>>> d05cc5c (fix does not support 16 kb page size)
 react-native-permissions@^5.4.4:
   version "5.4.4"
   resolved "https://registry.yarnpkg.com/react-native-permissions/-/react-native-permissions-5.4.4.tgz#8a63b001fc0f9e88426c36b21a6fe379c4533b04"
