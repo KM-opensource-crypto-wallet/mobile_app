@@ -1,13 +1,11 @@
 /**
  * @format
  */
-
+import './shim';
 import 'node-libs-react-native/globals';
-import 'text-encoding-polyfill';
 import 'react-native-get-random-values';
 import 'react-native-url-polyfill/auto';
 import '@ethersproject/shims';
-import './shim';
 import {AppRegistry, Platform} from 'react-native';
 import App from './App';
 import {name as coinswallet} from './app.json';

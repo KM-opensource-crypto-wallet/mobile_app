@@ -15,6 +15,7 @@ import myStyles from './ChangePasswordStyles';
 import {useFloatingHeight} from 'utils/dimensions';
 import {validationSchemaChangePassword} from 'utils/validationSchema';
 import {ThemeContext} from 'theme/ThemeContext';
+import {DokSafeAreaView} from "components/DokSafeAreaView";
 
 const ChangePassword = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -42,6 +43,7 @@ const ChangePassword = ({navigation}) => {
   };
 
   return (
+      <DokSafeAreaView style={styles.container}>
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View
         style={{
@@ -213,6 +215,7 @@ const ChangePassword = ({navigation}) => {
         </View>
       </View>
     </TouchableWithoutFeedback>
+      </DokSafeAreaView>
   );
 };
 

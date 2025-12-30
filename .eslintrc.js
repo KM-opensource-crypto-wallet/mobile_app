@@ -11,7 +11,11 @@ module.exports = {
     '@react-native',
     'plugin:redux-saga/recommended',
     'plugin:react-redux/recommended',
+    'plugin:prettier/recommended',
   ],
+  rules: {
+    'prettier/prettier': 'error',
+  },
   root: true,
   parser: '@babel/eslint-parser',
 };

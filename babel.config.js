@@ -1,10 +1,5 @@
 module.exports = {
-  presets: [
-    [
-      'module:@react-native/babel-preset',
-      { unstable_transformProfile: 'hermes-stable' },
-    ],
-  ],
+  presets: ['babel-preset-expo'],
   env: {
     production: {
       plugins: ['react-native-paper/babel'],
@@ -14,7 +9,7 @@ module.exports = {
     ['module:react-native-dotenv'],
     '@babel/plugin-proposal-export-namespace-from',
     '@babel/plugin-transform-class-static-block',
-    ['@babel/plugin-transform-export-namespace-from', { corejs: 3 }],
+    ['@babel/plugin-transform-export-namespace-from', {corejs: 3}],
     [
       'module-resolver',
       {

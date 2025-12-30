@@ -170,13 +170,15 @@ const CoinItem = ({
           </>
         )}
         {!!showSwitch && !isSortSelected && !showDeleteMode && (
-          <Switch
-            onValueChange={() => {
-              onChangeValue(item);
-            }}
-            value={isCoinInWallet}
-            disabled={isDisabledItem}
-          />
+          <View>
+            <Switch
+              onValueChange={() => {
+                onChangeValue(item);
+              }}
+              value={isCoinInWallet}
+              disabled={isDisabledItem}
+            />
+          </View>
         )}
         {showDeleteMode && (
           <TouchableOpacity onPress={onDelete}>

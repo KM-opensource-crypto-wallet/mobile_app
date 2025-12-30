@@ -2,16 +2,16 @@ export const MainNavigation = {
   navigationRef: null,
   setNavigationObject: tempNav => {
     if (tempNav) {
-      this.navigationRef = tempNav;
+      MainNavigation.navigationRef = tempNav;
     }
   },
   navigate: navigateData => {
-    this.navigationRef?.navigate(navigateData);
+    MainNavigation.navigationRef?.navigate(navigateData);
   },
   reset: navigateData => {
-    this.navigationRef?.reset(navigateData);
+    MainNavigation.navigationRef?.reset(navigateData);
   },
   getCurrentRouteName: () => {
-    return this.navigationRef?.getCurrentRoute?.()?.name;
+    return MainNavigation.navigationRef?.getCurrentRoute?.()?.name;
   },
 };
