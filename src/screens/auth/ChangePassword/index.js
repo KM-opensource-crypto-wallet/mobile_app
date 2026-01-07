@@ -16,6 +16,7 @@ import {useFloatingHeight} from 'utils/dimensions';
 import {validationSchemaChangePassword} from 'utils/validationSchema';
 import {ThemeContext} from 'theme/ThemeContext';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import {showToast} from 'utils/toast';
 
 const ChangePassword = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -37,9 +38,13 @@ const ChangePassword = ({navigation}) => {
   };
 
   const handleSubmit = values => {
-    // console.log('values:', values);
     dispatch(changePasswordSuccess(values.newPassword));
-    // navigation.navigate('VerifyInfoModal');
+    showToast({
+      type: 'successToast',
+      title: 'Password updated',
+      message: 'Your password has been updated successfully!.',
+    });
+    navigation.goBack();
   };
 
   return (
