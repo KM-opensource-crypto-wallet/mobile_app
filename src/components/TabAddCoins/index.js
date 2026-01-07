@@ -57,9 +57,31 @@ const TabAddCoins = () => {
   });
   const isFetching = useRef(false);
   const isSearchFetching = useRef(false);
+  const searchQueryRef = useRef('');
+  const isAvailableRef = useRef(false);
+  const isSearchCoinsAvailableRef = useRef(false);
+  const lastCallTime = useRef(0);
+  const isMounted = useRef(false);
+
+  useEffect(() => {
+    searchQueryRef.current = searchQuery;
+  }, [searchQuery]);
+
+  useEffect(() => {
+    isAvailableRef.current = isAvailable;
+  }, [isAvailable]);
+
+  useEffect(() => {
+    isSearchCoinsAvailableRef.current = isSearchCoinsAvailable;
+  }, [isSearchCoinsAvailable]);
 
   useEffect(() => {
     dispatch(fetchAllCoins(queryPayload.current));
+    // Mark as mounted after a short delay to prevent initial onEndReached calls
+    const timer = setTimeout(() => {
+      isMounted.current = true;
+    }, 500);
+    return () => clearTimeout(timer);
   }, [dispatch]);
 
   const handleSearch = query => {
@@ -76,7 +98,20 @@ const TabAddCoins = () => {
   };
 
   const onEndReached = useCallback(async () => {
-    if (!isFetching.current && isAvailable && !searchQuery?.trim()) {
+    // Prevent initial calls and debounce rapid calls
+    const now = Date.now();
+    if (!isMounted.current || now - lastCallTime.current < 1000) {
+      console.log('onEndReached ignored - too soon or not mounted');
+      return;
+    }
+
+    lastCallTime.current = now;
+
+    if (
+      !isFetching.current &&
+      isAvailableRef.current &&
+      !searchQueryRef.current?.trim()
+    ) {
       isFetching.current = true;
       queryPayload.current = {
         ...queryPayload.current,
@@ -86,19 +121,19 @@ const TabAddCoins = () => {
       isFetching.current = false;
     } else if (
       !isSearchFetching.current &&
-      isSearchCoinsAvailable &&
-      searchQuery?.trim()
+      isSearchCoinsAvailableRef.current &&
+      searchQueryRef.current?.trim()
     ) {
       isSearchFetching.current = true;
       searchQueryPayload.current = {
         ...searchQueryPayload.current,
         page: searchQueryPayload.current.page + 1,
-        search: searchQuery.trim(),
+        search: searchQueryRef.current.trim(),
       };
       await dispatch(fetchAllSearchCoins(searchQueryPayload.current)).unwrap();
       isSearchFetching.current = false;
     }
-  }, [dispatch, isAvailable, isSearchCoinsAvailable, searchQuery]);
+  }, [dispatch]);
 
   return (
     <View style={styles.modalView}>

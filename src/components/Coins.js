@@ -63,50 +63,52 @@ const Coins = () => {
 
   return (
     <>
-    <View style={styles.mainView}>
-      <BatchTransactionBanner />
-      {!!coinsNames && !isImportWithPrivateKey && (
-        <View style={styles.syncView}>
-          <Text style={styles.syncTitle} numberOfLines={2}>
-            {`New ${
-              allNewCoins?.length === 1 ? 'cryptocurrency' : 'cryptocurrencies'
-            }, such as ${coinsNames} ${
-              allNewCoins?.length === 1 ? 'is' : 'are'
-            } now accessible.`}
+      <View style={styles.mainView}>
+        <BatchTransactionBanner />
+        {!!coinsNames && !isImportWithPrivateKey && (
+          <View style={styles.syncView}>
+            <Text style={styles.syncTitle} numberOfLines={2}>
+              {`New ${
+                allNewCoins?.length === 1
+                  ? 'cryptocurrency'
+                  : 'cryptocurrencies'
+              }, such as ${coinsNames} ${
+                allNewCoins?.length === 1 ? 'is' : 'are'
+              } now accessible.`}
+            </Text>
+            <TouchableOpacity style={styles.syncButton} onPress={onPressSync}>
+              <Text style={styles.syncButtonTitle}>Sync</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={onPressClose}>
+              <MaterialCommunityIcons
+                name={'close'}
+                size={24}
+                color={theme.font}
+              />
+            </TouchableOpacity>
+          </View>
+        )}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Total Assets</Text>
+          <Text style={styles.headerNumber}>
+            {currencySymbol[localCurrency] + totalAssets}
           </Text>
-          <TouchableOpacity style={styles.syncButton} onPress={onPressSync}>
-            <Text style={styles.syncButtonTitle}>Sync</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onPressClose}>
-            <MaterialCommunityIcons
-              name={'close'}
-              size={24}
-              color={theme.font}
-            />
-          </TouchableOpacity>
         </View>
-      )}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Total Assets</Text>
-        <Text style={styles.headerNumber}>
-          {currencySymbol[localCurrency] + totalAssets}
-        </Text>
-      </View>
-      <CryptoList
-        number={1}
-        list={userCoins}
-        navigation={navigation}
-        showSearch={searchInHomeScreen}
-        currentWallet={currentWallet}
-      />
-      <WalletConnectStatus />
-      {/* <TouchableOpacity
+        <CryptoList
+          number={1}
+          list={userCoins}
+          navigation={navigation}
+          showSearch={searchInHomeScreen}
+          currentWallet={currentWallet}
+        />
+        <WalletConnectStatus />
+        {/* <TouchableOpacity
         style={styles.btn}
         onPress={() => navigation.navigate('ManageCoins')}>
         <AddCircle height="25" width="25" style={styles.circle} />
         <Text style={styles.btnText}>More Coins</Text>
       </TouchableOpacity> */}
-    </View>
+      </View>
     </>
   );
 };

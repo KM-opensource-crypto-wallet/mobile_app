@@ -1,4 +1,4 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import {StyleSheet, Dimensions} from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -11,7 +11,7 @@ const scanBarWidth = SCREEN_WIDTH * 0.6; // this is equivalent to 180 from a 393
 const scanBarHeight = SCREEN_WIDTH * 0.0025; //this is equivalent to 1 from a 393 device width
 const scanBarColor = 'green';
 
-const myStyles = theme =>
+const myStyles = (theme, bottom) =>
   StyleSheet.create({
     overlayContainer: {
       ...StyleSheet.absoluteFillObject, // overlay sits on top of camera
@@ -68,6 +68,7 @@ const myStyles = theme =>
       width: SCREEN_WIDTH,
       backgroundColor: overlayColor,
       alignItems: 'center',
+      marginBottom: bottom + 20,
     },
     btn: {
       color: theme.background,

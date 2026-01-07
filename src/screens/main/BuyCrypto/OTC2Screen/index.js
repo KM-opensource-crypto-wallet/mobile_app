@@ -3,7 +3,6 @@ import {
   TouchableOpacity,
   View,
   Text,
-  Linking,
   Alert,
   ActivityIndicator,
 } from 'react-native';
@@ -107,7 +106,7 @@ export const OTC2Screen = ({navigation, route}) => {
         setIsSubmitting(false);
         if (resp?.status === 200) {
           Alert.alert('Your OTC request was submitted.');
-          navigation.navigate('Sidebar', {
+          navigation.popTo('Sidebar', {
             screen: 'Home',
           });
         }
