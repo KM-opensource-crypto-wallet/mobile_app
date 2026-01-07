@@ -72,7 +72,7 @@ const myStyles = theme =>
       fontFamily: 'Roboto-Regular',
       fontWeight: '600',
     },
-     btn: {
+    btn: {
       alignSelf: 'center',
       flexDirection: 'row',
       alignItems: 'center',

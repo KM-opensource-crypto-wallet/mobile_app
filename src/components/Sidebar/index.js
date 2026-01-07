@@ -61,17 +61,16 @@ export default function Sidebar({navigation, route}) {
     return getCountry()?.toUpperCase();
   }, []);
 
- useEffect(() => {
-  const parent = navigation.getParent();
+  useEffect(() => {
+    const parent = navigation.getParent();
 
-  if (modal === false) {
-    parent?.dispatch(DrawerActions.closeDrawer());
-  }
-  if (modal === true) {
-    parent?.dispatch(DrawerActions.openDrawer());
-  }
-}, [modal, navigation]);
-
+    if (modal === false) {
+      parent?.dispatch(DrawerActions.closeDrawer());
+    }
+    if (modal === true) {
+      parent?.dispatch(DrawerActions.openDrawer());
+    }
+  }, [modal, navigation]);
 
   function CustomDrawerContent(props) {
     return (
@@ -380,7 +379,7 @@ export default function Sidebar({navigation, route}) {
         <Drawer.Screen
           name="ReceivePaymentUrl"
           component={ReceivePaymentUrl}
-          options={({navigation}) =>({
+          options={({navigation}) => ({
             headerTitleAlign: 'center',
             headerTitle: 'Request Crypto',
             drawerLabel: 'Request Crypto',
@@ -410,7 +409,7 @@ export default function Sidebar({navigation, route}) {
         <Drawer.Screen
           name="About"
           component={AboutScreen}
-          options={({navigation}) =>({
+          options={({navigation}) => ({
             headerTitleAlign: 'center',
             headerLeft: () => (
               <TouchableOpacity
@@ -462,7 +461,7 @@ export default function Sidebar({navigation, route}) {
         <Drawer.Screen
           name="Settings"
           component={Settings}
-          options={({navigation}) =>({
+          options={({navigation}) => ({
             headerTitleAlign: 'center',
             headerLeft: () => (
               <TouchableOpacity

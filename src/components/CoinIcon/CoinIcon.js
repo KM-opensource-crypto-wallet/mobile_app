@@ -16,11 +16,7 @@ const CoinIcon = ({item}) => {
           style={styles.imageStyle}
         />
       )}
-      <ChainIcon
-        chainName={item?.chain_name}
-        itemType={item?.type}
-        size={20}
-      />
+      <ChainIcon chainName={item?.chain_name} itemType={item?.type} size={20} />
     </View>
   );
 };

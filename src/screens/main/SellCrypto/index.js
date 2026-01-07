@@ -242,7 +242,7 @@ const SellCrypto = ({navigation}) => {
         );
       }
     },
-    [dispatch],
+    [dispatch, selectedCountry],
   );
 
   return (

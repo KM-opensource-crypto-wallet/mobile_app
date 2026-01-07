@@ -30,6 +30,7 @@ if (typeof __filename === 'undefined') {
 if (typeof Buffer === 'undefined') {
   global.Buffer = require('buffer').Buffer;
 }
+// eslint-disable-next-line no-undef
 Uint8Array.prototype.copy = Buffer.prototype.copy;
 
 // Polyfill for Event (required by aptos other web-based libraries)

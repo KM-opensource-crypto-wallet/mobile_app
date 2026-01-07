@@ -39,10 +39,10 @@ const ResetWallet = ({navigation, route}) => {
                 ...styles.btn,
                 ...styles.shadow,
               }}>
-                <View pointerEvents="none">
-                  <CREATE_WALLET height={150} width={150} />
-                </View>              
-                <View style={styles.textBox}>
+              <View pointerEvents="none">
+                <CREATE_WALLET height={150} width={150} />
+              </View>
+              <View style={styles.textBox}>
                 <Text style={{...styles.textBtn, color: theme.font}}>
                   Create
                 </Text>

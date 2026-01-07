@@ -156,9 +156,9 @@ const Message = ({navigation}) => {
               message: text,
               senderAddress: conversation?.clientAddress,
             },
-            {
-              contentType: ContentTypeCustomReply,
-            },
+            // {
+            //   contentType: ContentTypeCustomReply,
+            // },
           );
         } else {
           resp = await conversationObj?.send(text);

@@ -1,5 +1,5 @@
 import {IS_ANDROID} from 'utils/dimensions';
-import { getBuildNumber, getVersion } from 'react-native-device-info';
+import {getBuildNumber, getVersion} from 'react-native-device-info';
 import crypto from 'react-native-quick-crypto';
 import {Linking} from 'react-native';
 
@@ -34,7 +34,11 @@ export async function generateSHA256ForCoins(coins, isEVMChain) {
         coinNames.push(str);
       }
     }
-    return Promise.all(coinNames.map(item => crypto.createHash('sha256').update(item).digest('hex')));
+    return Promise.all(
+      coinNames.map(item =>
+        crypto.createHash('sha256').update(item).digest('hex'),
+      ),
+    );
   }
   return [];
 }
