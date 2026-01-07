@@ -9,9 +9,8 @@ module.exports = {
     ['module:react-native-dotenv'],
     '@babel/plugin-proposal-export-namespace-from',
     '@babel/plugin-transform-class-static-block',
-    ['@babel/plugin-transform-export-namespace-from', {corejs: 3}],
     [
-      'module-resolver',
+      require.resolve('babel-plugin-module-resolver'),
       {
         root: ['./src'],
         alias: {
