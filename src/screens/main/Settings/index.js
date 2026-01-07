@@ -167,16 +167,16 @@ const Settings = ({navigation}) => {
             </View>
           </TouchableOpacity>
           {/* /////////////////////////////// */}
-          <Text style={styles.title}>Notifications settings</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Notifications')}
-            style={styles.btn}>
-            <Notifications width="24" height="22" fill={theme.font} />
-            <View style={styles.box}>
-              <Text style={styles.btnTitle}>Push Notifications</Text>
-              <Text style={styles.btnText}>Manage push notifications</Text>
-            </View>
-          </TouchableOpacity>
+          {/*<Text style={styles.title}>Notifications settings</Text>*/}
+          {/*<TouchableOpacity*/}
+          {/*  onPress={() => navigation.navigate('Notifications')}*/}
+          {/*  style={styles.btn}>*/}
+          {/*  <Notifications width="24" height="22" fill={theme.font} />*/}
+          {/*  <View style={styles.box}>*/}
+          {/*    <Text style={styles.btnTitle}>Push Notifications</Text>*/}
+          {/*    <Text style={styles.btnText}>Manage push notifications</Text>*/}
+          {/*  </View>*/}
+          {/*</TouchableOpacity>*/}
           {/* /////////////////////////////// */}
           <Text style={styles.title}>Security</Text>
           <TouchableOpacity
@@ -238,13 +238,15 @@ const Settings = ({navigation}) => {
                 </Text>
               </View>
             </View>
-            <Switch
-              value={isSwitchOn}
-              onValueChange={onToggleSwitch}
-              trackColor={{false: 'gray', true: '#E8E8E8'}}
-              thumbColor={isSwitchOn ? theme.background : 'white'}
-              ios_backgroundColor="#E8E8E8"
-            />
+            <View>
+              <Switch
+                value={isSwitchOn}
+                onValueChange={onToggleSwitch}
+                trackColor={{false: 'gray', true: '#E8E8E8'}}
+                thumbColor={isSwitchOn ? theme.background : 'white'}
+                ios_backgroundColor="#E8E8E8"
+              />
+            </View>
           </View>
 
           {/* /////////////////////////////// */}
