@@ -12,7 +12,6 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   AppState,
-  Image,
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {Formik} from 'formik';
