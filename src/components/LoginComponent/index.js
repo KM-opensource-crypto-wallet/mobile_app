@@ -41,7 +41,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {getLastAttempt} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 import {useNavigation} from '@react-navigation/native';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const LoginComponent = ({onClose, visible}) => {
   const navigation = useNavigation();
@@ -177,7 +177,7 @@ const LoginComponent = ({onClose, visible}) => {
     ],
   );
   return (
-    <DokSafeAreaView style={styles.safeAreaView}>
+    <SafeAreaView style={styles.safeAreaView}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           <View style={styles.formInput}>
@@ -276,7 +276,7 @@ const LoginComponent = ({onClose, visible}) => {
         navigation={navigation}
         page={'Forgot'}
       />
-    </DokSafeAreaView>
+    </SafeAreaView>
   );
 };
 export default LoginComponent;
