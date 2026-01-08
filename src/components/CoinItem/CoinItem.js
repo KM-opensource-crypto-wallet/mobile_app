@@ -37,6 +37,8 @@ const CoinItem = ({
   showDeleteMode,
   onPressDelete,
 }) => {
+console.log("item=>", item)
+
   const isCoinInWallet = item?.isInWallet;
   const isToken = item?.type === 'token';
   const isAddCoin = number === 3;

@@ -7,7 +7,8 @@ import {ThemeProvider} from 'theme/ThemeContext';
 import Toasts from 'components/Toasts';
 import ErrorBoundary from 'react-native-error-boundary';
 import ErrorComponent from 'components/ErrorComponent';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import BreezSpark from 'components/breezSparkTest';
 
 export default function App() {
   const onError = useCallback((error, stackTrace) => {
@@ -22,6 +23,7 @@ export default function App() {
           <ThemeProvider>
             <SafeAreaProvider>
               <Main />
+              {/* <BreezSpark /> */}
               <Toasts />
             </SafeAreaProvider>
           </ThemeProvider>
