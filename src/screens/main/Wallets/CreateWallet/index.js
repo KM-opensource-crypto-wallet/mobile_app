@@ -173,7 +173,9 @@ const CreateWallet = ({navigation, route}) => {
           walletName: values.name,
         }),
       );
-      navigation.navigate('Home');
+      navigation.navigate('Sidebar', {
+        screen: 'Home',
+      });
     } else {
       try {
         setIsLoading(true);

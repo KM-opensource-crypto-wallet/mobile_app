@@ -59,7 +59,7 @@ workflows:
         script: |
           npm run git:update
           rm -f package-lock.json
-          yarn install --immutable
+          yarn install --frozen-lockfile
       - name: Set Android SDK location
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/android/local.properties"
@@ -115,7 +115,6 @@ workflows:
         XCODE_SCHEME: "coinswallet" # <-- Put the name of your Xcode scheme here
         APP_ID: 1533065700 # <-- Put the app id number here. This is found in App Store Connect > App > General > App Information
       node: v20
-      xcode: 16.0
       cocoapods: default
     scripts:
       - name: Generate .env file
@@ -151,7 +150,7 @@ workflows:
         script: |
           npm run git:update
           rm -f package-lock.json
-          yarn install --immutable
+          yarn install --frozen-lockfile
       - name: Install CocoaPods dependencies
         script: |
          cd ios && pod install
@@ -246,7 +245,7 @@ workflows:
         script: |
           npm run git:update
           rm -f package-lock.json
-          yarn install --immutable
+          yarn install --frozen-lockfile
       - name: Install CocoaPods dependencies
         script: |
           cd ios && pod install

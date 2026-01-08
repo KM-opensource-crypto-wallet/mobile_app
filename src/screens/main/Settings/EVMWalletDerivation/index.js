@@ -47,23 +47,25 @@ const EVMWalletDerivation = () => {
                     <Text style={styles.mainText}>{item.walletName}</Text>
                   </View>
                 </View>
-                <Switch
-                  value={!!item.isEVMAddressesAdded}
-                  onValueChange={value => {
-                    if (value) {
-                      dispatch(
-                        addEVMAndTronDeriveAddresses({index, wallet: item}),
-                      );
-                    } else {
-                      dispatch(removeEVMDeriveAddresses({index}));
+                <View>
+                  <Switch
+                    value={!!item.isEVMAddressesAdded}
+                    onValueChange={value => {
+                      if (value) {
+                        dispatch(
+                          addEVMAndTronDeriveAddresses({index, wallet: item}),
+                        );
+                      } else {
+                        dispatch(removeEVMDeriveAddresses({index}));
+                      }
+                    }}
+                    trackColor={{false: 'gray', true: '#E8E8E8'}}
+                    thumbColor={
+                      item.isEVMAddressesAdded ? theme.background : 'white'
                     }
-                  }}
-                  trackColor={{false: 'gray', true: '#E8E8E8'}}
-                  thumbColor={
-                    item.isEVMAddressesAdded ? theme.background : 'white'
-                  }
-                  ios_backgroundColor="#E8E8E8"
-                />
+                    ios_backgroundColor="#E8E8E8"
+                  />
+                </View>
               </View>
             )
           }

@@ -1,5 +1,5 @@
 import React, {useContext} from 'react';
-import {View, StyleSheet} from 'react-native';
+import {View, StyleSheet, Image} from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
 import ChainIcon from 'components/ChainIcon/ChainIcon';
 import {ThemeContext} from 'theme/ThemeContext';
@@ -7,7 +7,6 @@ import {ThemeContext} from 'theme/ThemeContext';
 const CoinIcon = ({item}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-
   return (
     <View style={styles.iconBox}>
       {item?.icon && (
@@ -17,11 +16,7 @@ const CoinIcon = ({item}) => {
           style={styles.imageStyle}
         />
       )}
-      <ChainIcon
-        chainName={item?.chain_name}
-        itemType={item?.type}
-        size={20}
-      />
+      <ChainIcon chainName={item?.chain_name} itemType={item?.type} size={20} />
     </View>
   );
 };

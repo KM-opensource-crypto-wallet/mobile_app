@@ -161,7 +161,9 @@ const Wallets = ({navigation}) => {
                         } else {
                           dispatch(setCurrentWalletIndex(index));
                         }
-                        navigation.navigate('Home');
+                        navigation.popTo('Sidebar', {
+                          screen: 'Home',
+                        });
                       }}>
                       {!searchQuery && (
                         <TouchableOpacity

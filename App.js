@@ -7,6 +7,7 @@ import {ThemeProvider} from 'theme/ThemeContext';
 import Toasts from 'components/Toasts';
 import ErrorBoundary from 'react-native-error-boundary';
 import ErrorComponent from 'components/ErrorComponent';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 export default function App() {
   const onError = useCallback((error, stackTrace) => {
@@ -19,8 +20,10 @@ export default function App() {
       <Provider store={store}>
         <PaperProvider>
           <ThemeProvider>
-            <Main />
-            <Toasts />
+            <SafeAreaProvider>
+              <Main />
+              <Toasts />
+            </SafeAreaProvider>
           </ThemeProvider>
         </PaperProvider>
       </Provider>

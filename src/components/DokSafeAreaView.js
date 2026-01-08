@@ -10,7 +10,7 @@ export function DokSafeAreaView({children, ...rest}) {
   const edges = useMemo(() => {
     const temp = ['left', 'right', 'bottom'];
 
-    if (headerHeight === 0) {
+    if (headerHeight === 0 || !headerHeight) {
       temp.push('top');
     }
     return temp;

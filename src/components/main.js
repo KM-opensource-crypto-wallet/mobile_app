@@ -86,6 +86,7 @@ import {getFeesInfo} from 'dok-wallet-blockchain-networks/feesInfo/feesInfo';
 import {IS_KIML_WALLET, WALLET_CONNECT_DATA} from 'utils/wlData';
 import {ThemeContext} from 'theme/ThemeContext';
 import ModalApkDownload from 'components/ModalApkDownload';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const unsecureRoute = [
   'ContactUs',
@@ -93,6 +94,7 @@ const unsecureRoute = [
   'CarouselCards',
   'Registration',
   'TransactionList',
+  'Scanner',
 ];
 
 let lastCallTimeStamp;
@@ -378,7 +380,7 @@ const Main = () => {
           onReady={() => {
             MainNavigation.setNavigationObject(navigationRef.current);
           }}>
-          <MenuProvider>
+          <MenuProvider SafeAreaComponent={SafeAreaView}>
             <BottomSheetModalProvider>{routing}</BottomSheetModalProvider>
             {(!IS_KIML_WALLET || !IS_ANDROID) && (
               <ModalAppUpdate visible={showUpdateModal} />

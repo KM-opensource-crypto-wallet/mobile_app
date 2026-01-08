@@ -76,7 +76,7 @@ public class NativeKeygenModule extends ReactContextBaseJavaModule {
 
   // ...
   @ReactMethod
-  public static void generateMnemonic(Promise promise) {
+  public void generateMnemonic(Promise promise) {
     // Generate a new mnemonic
     try {
       HDWallet wallet = new HDWallet(128, "");

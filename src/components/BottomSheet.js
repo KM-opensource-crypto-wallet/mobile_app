@@ -27,6 +27,7 @@ const CustomBackdrop = props => {
       style,
       {
         backgroundColor: theme.backdrop,
+        zIndex: 9998,
       },
       containerAnimatedStyle,
     ],
@@ -36,7 +37,12 @@ const CustomBackdrop = props => {
   return (
     <Pressable
       onPress={dismiss}
-      style={{height: '100%', position: 'absolute', width: '100%'}}>
+      style={{
+        height: '100%',
+        position: 'absolute',
+        width: '100%',
+        zIndex: 9998,
+      }}>
       <Animated.View style={containerStyle} />
     </Pressable>
   );
@@ -72,6 +78,7 @@ const DokBottomSheet = props => {
         localBottomSheetRef.current = ref;
         bottomSheetRef(ref);
       }}
+      enableDynamicSizing={false}
       snapPoints={snapPointsLocal}
       backgroundStyle={{backgroundColor: theme.backgroundColor}}
       index={0}
@@ -81,7 +88,8 @@ const DokBottomSheet = props => {
       onDismiss={onDismiss}
       closeOnPress={true}
       onChange={onLocalChange}
-      backdropComponent={renderBackdrop}>
+      backdropComponent={renderBackdrop}
+      containerStyle={{zIndex: 9999}}>
       {props.children}
     </BottomSheetModal>
   );

@@ -46,7 +46,7 @@ import Checkbox from 'components/Checkbox';
 import MessageHeader from 'components/MessageHeader';
 import MessagePopover from 'components/MessagePopover';
 import Icon from 'react-native-vector-icons/FontAwesome6';
-import {ContentTypeCustomReply} from 'utils/xmtpContentReplyType';
+// import {ContentTypeCustomReply} from 'utils/xmtpContentReplyType';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -156,9 +156,9 @@ const Message = ({navigation}) => {
               message: text,
               senderAddress: conversation?.clientAddress,
             },
-            {
-              contentType: ContentTypeCustomReply,
-            },
+            // {
+            //   contentType: ContentTypeCustomReply,
+            // },
           );
         } else {
           resp = await conversationObj?.send(text);

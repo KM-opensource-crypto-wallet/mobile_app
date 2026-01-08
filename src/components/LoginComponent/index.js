@@ -31,7 +31,6 @@ import myStyles from './LoginScreenStyles';
 import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {isNoUpdateAvailable} from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
 import {LOGO, LOGO_DARK, WL_APP_NAME} from 'utils/wlData';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import ModalInfo from 'components/ModalInfo';
 import {Constants} from 'utils/common';
 import {isWalletReset} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
@@ -42,6 +41,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {getLastAttempt} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 import {useNavigation} from '@react-navigation/native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const LoginComponent = ({onClose, visible}) => {
   const navigation = useNavigation();
@@ -170,6 +170,7 @@ const LoginComponent = ({onClose, visible}) => {
       dispatch,
       hasWallet,
       navigation,
+      onClose,
       rateLimitCheck,
       redirectSuccess,
       storePassword,

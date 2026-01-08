@@ -62,11 +62,13 @@ export default function Sidebar({navigation, route}) {
   }, []);
 
   useEffect(() => {
+    const parent = navigation.getParent();
+
     if (modal === false) {
-      navigation.dispatch(DrawerActions.closeDrawer());
+      parent?.dispatch(DrawerActions.closeDrawer());
     }
     if (modal === true) {
-      navigation.dispatch(DrawerActions.openDrawer());
+      parent?.dispatch(DrawerActions.openDrawer());
     }
   }, [modal, navigation]);
 
@@ -75,6 +77,7 @@ export default function Sidebar({navigation, route}) {
       <>
         <DrawerContentScrollView {...props}>
           <DrawerItemList {...props} />
+          {/* Delete Account */}
           <DrawerItem
             icon={({focused}) => (
               <ResetWalletIcon
@@ -100,7 +103,7 @@ export default function Sidebar({navigation, route}) {
               setModal(true);
             }}
           />
-
+          {/* Logout */}
           <DrawerItem
             icon={({focused}) =>
               theme.backgroundColor === '#121212' ? (
@@ -178,7 +181,6 @@ export default function Sidebar({navigation, route}) {
           name="Home"
           component={HomeScreen}
           options={({navigation}) => ({
-            // headerStyle: { display: "flex", alignItems: "center", justifyContent: "space-between" },
             headerTitleAlign: 'center',
             headerShown: false,
             drawerLabel: 'Home',
@@ -377,7 +379,7 @@ export default function Sidebar({navigation, route}) {
         <Drawer.Screen
           name="ReceivePaymentUrl"
           component={ReceivePaymentUrl}
-          options={{
+          options={({navigation}) => ({
             headerTitleAlign: 'center',
             headerTitle: 'Request Crypto',
             drawerLabel: 'Request Crypto',
@@ -402,12 +404,12 @@ export default function Sidebar({navigation, route}) {
                 color={focused ? theme.background : theme.sidebarIcon}
               />
             ),
-          }}
+          })}
         />
         <Drawer.Screen
           name="About"
           component={AboutScreen}
-          options={{
+          options={({navigation}) => ({
             headerTitleAlign: 'center',
             headerLeft: () => (
               <TouchableOpacity
@@ -426,7 +428,7 @@ export default function Sidebar({navigation, route}) {
             drawerIcon: ({focused}) => (
               <InfoIcon fill={focused ? theme.background : theme.sidebarIcon} />
             ),
-          }}
+          })}
         />
         <Drawer.Screen
           name="ContactUs"
@@ -459,7 +461,7 @@ export default function Sidebar({navigation, route}) {
         <Drawer.Screen
           name="Settings"
           component={Settings}
-          options={{
+          options={({navigation}) => ({
             headerTitleAlign: 'center',
             headerLeft: () => (
               <TouchableOpacity
@@ -480,7 +482,7 @@ export default function Sidebar({navigation, route}) {
                 fill={focused ? theme.background : theme.sidebarIcon}
               />
             ),
-          }}
+          })}
         />
       </Drawer.Navigator>
       <ModalReset

@@ -1,7 +1,14 @@
-import React, {useContext, useEffect, useMemo, useState} from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {Text, TouchableOpacity, Dimensions, View} from 'react-native';
 
-import QRCodeScanner from 'react-native-qrcode-scanner';
+// import QRCodeScanner from 'react-native-qrcode-scanner';
 import * as Animatable from 'react-native-animatable';
 import myStyles from './ScannerStyles';
 import {ThemeContext} from 'theme/ThemeContext';
@@ -12,9 +19,17 @@ import {setCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walle
 import DeviceInfo from 'react-native-device-info';
 import {TextInput} from 'react-native-paper';
 import {createWalletConnection} from 'dok-wallet-blockchain-networks/service/walletconnect';
+import {
+  Camera,
+  useCameraDevice,
+  useCameraFormat,
+  useCameraPermission,
+  useCodeScanner,
+} from 'react-native-vision-camera';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-const SCREEN_HEIGHT = Dimensions.get('window').height;
-const SCREEN_WIDTH = Dimensions.get('window').width;
+const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
+const screenAspectRatio = SCREEN_HEIGHT / SCREEN_WIDTH;
 
 console.disableYellowBox = true;
 
@@ -39,7 +54,8 @@ console.disableYellowBox = true;
 
 const Scanner = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
-  const styles = myStyles(theme);
+  const {bottom} = useSafeAreaInsets();
+  const styles = myStyles(theme, bottom);
   const page = route.params.page;
   const walletConnect = route.params.walletConnect;
   const dispatch = useDispatch();
@@ -53,6 +69,16 @@ const Scanner = ({navigation, route}) => {
     });
     return obj;
   }, [allUserCoins]);
+  const {hasPermission, requestPermission} = useCameraPermission();
+  const device = useCameraDevice('back');
+  const format = useCameraFormat(device, [
+    {fps: 60},
+    {videoAspectRatio: screenAspectRatio},
+    {videoResolution: 'max'},
+    {photoAspectRatio: screenAspectRatio},
+    {photoResolution: 'max'},
+  ]);
+  const processingQR = useRef(false);
 
   useEffect(() => {
     // const init = async () => {
@@ -65,61 +91,71 @@ const Scanner = ({navigation, route}) => {
     });
   }, []);
 
-  // console.log('route on scanner', route);
-  const onSuccess = ({data}) => {
-    // Linking.openURL(e.data).catch(err =>
-    //   console.error('An error occured', err),
-    // );
-    // route.params.setAddressToSetInput(data);
-    if (
-      typeof data === 'string' &&
-      data?.slice(0, 2) === 'wc' &&
-      walletConnect
-    ) {
-      createWalletConnection({uri: data}).then();
-      navigation.navigate('Home');
-    } else if (page === 'ImportWalletByPrivateKey' || page === 'NewMessage') {
-      navigation.navigate({
-        name: page,
-        params: {
-          data,
-        },
-      });
-    } else if (page === 'ManageCoins') {
-      const coinObj = parseCryptoQrCodeString(data);
-      navigation.navigate({
-        name: route.params.page,
-        params: {
-          qrContractAddress: coinObj?.address,
-          newDateToString: new Date().toISOString(),
-          selectedNetwork: route.params.selectedNetwork,
-        },
-      });
-    } else if (page === 'SendFunds' || page === 'AddAddress') {
-      const coinObj = parseCryptoQrCodeString(data);
-      navigation.navigate({
-        name: route.params.page,
-        params: {
-          showModal: false,
-          qrAddress: coinObj?.address,
-          qrAmount: coinObj?.parameters?.amount,
-          newDateToString: new Date().toISOString(),
-        },
-      });
-    } else if (page === 'SendFundsMemo') {
-      navigation.navigate({
-        name: 'SendFunds',
-        params: {
-          memo: data,
-        },
-      });
-    } else if (page === 'Home') {
-      const coinObj = parseCryptoQrCodeString(data);
-      if (allSymbolId[coinObj?.scheme]) {
-        dispatch(setCurrentCoin(allSymbolId[coinObj?.scheme]));
-        setTimeout(() => {
-          navigation.navigate({
-            name: 'SendFunds',
+  const onSuccess = useCallback(
+    ({data}) => {
+      if (
+        typeof data === 'string' &&
+        data?.slice(0, 2) === 'wc' &&
+        walletConnect
+      ) {
+        createWalletConnection({uri: data}).then();
+        navigation.popTo('Sidebar', {
+          screen: 'Home',
+        });
+      } else if (page === 'ImportWalletByPrivateKey' || page === 'NewMessage') {
+        navigation.navigate({
+          name: page,
+          params: {
+            data,
+          },
+        });
+      } else if (page === 'ManageCoins') {
+        const coinObj = parseCryptoQrCodeString(data);
+        navigation.navigate({
+          name: route.params.page,
+          params: {
+            qrContractAddress: coinObj?.address,
+            newDateToString: new Date().toISOString(),
+            selectedNetwork: route.params.selectedNetwork,
+          },
+        });
+      } else if (page === 'SendFunds' || page === 'AddAddress') {
+        const coinObj = parseCryptoQrCodeString(data);
+        navigation.navigate({
+          name: route.params.page,
+          params: {
+            showModal: false,
+            qrAddress: coinObj?.address,
+            qrAmount: coinObj?.parameters?.amount,
+            newDateToString: new Date().toISOString(),
+          },
+        });
+      } else if (page === 'SendFundsMemo') {
+        navigation.navigate({
+          name: 'SendFunds',
+          params: {
+            memo: data,
+          },
+        });
+      } else if (page === 'Home') {
+        const coinObj = parseCryptoQrCodeString(data);
+        if (allSymbolId[coinObj?.scheme]) {
+          dispatch(setCurrentCoin(allSymbolId[coinObj?.scheme]));
+          setTimeout(() => {
+            navigation.navigate({
+              name: 'SendFunds',
+              params: {
+                showModal: !allSymbolId[coinObj?.scheme],
+                qrScheme: coinObj?.scheme,
+                qrAddress: coinObj?.address,
+                qrAmount: coinObj?.parameters?.amount,
+                newDateToString: new Date().toISOString(),
+              },
+            });
+          }, 0);
+        } else {
+          navigation.popTo({
+            name: 'Home',
             params: {
               showModal: !allSymbolId[coinObj?.scheme],
               qrScheme: coinObj?.scheme,
@@ -128,25 +164,23 @@ const Scanner = ({navigation, route}) => {
               newDateToString: new Date().toISOString(),
             },
           });
-        }, 0);
-      } else {
-        navigation.navigate({
-          name: 'Home',
-          params: {
-            showModal: !allSymbolId[coinObj?.scheme],
-            qrScheme: coinObj?.scheme,
-            qrAddress: coinObj?.address,
-            qrAmount: coinObj?.parameters?.amount,
-            newDateToString: new Date().toISOString(),
-          },
-        });
+        }
       }
-    }
-    // navigation.navigate({
-    //   name: route.params.page,
-    //   params: {showModal: true, data},
-    // });
-  };
+      // navigation.navigate({
+      //   name: route.params.page,
+      //   params: {showModal: true, data},
+      // });
+    },
+    [
+      allSymbolId,
+      dispatch,
+      navigation,
+      page,
+      route.params.page,
+      route.params.selectedNetwork,
+      walletConnect,
+    ],
+  );
 
   const makeSlideOutTranslation = (translationType, fromValue) => {
     return {
@@ -158,6 +192,29 @@ const Scanner = ({navigation, route}) => {
       },
     };
   };
+
+  const onCodeScanned = useCallback(
+    async codes => {
+      const value = codes[0]?.value;
+      if (value && !processingQR.current) {
+        processingQR.current = true;
+        onSuccess({
+          data: value,
+        });
+        processingQR.current = false;
+      }
+    },
+    [onSuccess],
+  );
+
+  const codeScanner = useCodeScanner({
+    codeTypes: ['qr'],
+    onCodeScanned,
+  });
+
+  useEffect(() => {
+    requestPermission();
+  }, [requestPermission]);
 
   if (isSimulator) {
     return (
@@ -190,31 +247,33 @@ const Scanner = ({navigation, route}) => {
     );
   }
 
+  const rectDimensions = SCREEN_WIDTH * 0.65;
+  const rectBorderWidth = SCREEN_WIDTH * 0.005;
+
   return (
-    <QRCodeScanner
-      onRead={onSuccess}
-      // flashMode={RNCamera.Constants.FlashMode.torch}
-      showMarker={true}
-      cameraStyle={{height: SCREEN_HEIGHT * 0.711}}
-      bottomViewStyle={styles.bottomStyle}
-      topViewStyle={styles.bottomStyle}
-      //   bottomContent={
-      //     <View style={styles.btnContainer}>
-      //       <TouchableOpacity
-      //         onPress={() => {
-      //           navigation.navigate('Home', {showModal: false});
-      //         }}>
-      //         <Text style={styles.btn}>CANCEL</Text>
-      //       </TouchableOpacity>
-      //     </View>
-      //   }
-      customMarker={
-        <View style={styles.rectangleContainer}>
+    <>
+      <View style={{flex: 1, backgroundColor: 'white'}}>
+        {/* Overlay structure */}
+        <View style={styles.overlayContainer}>
           <View style={styles.topOverlay} />
           <View style={{flexDirection: 'row'}}>
             <View style={styles.leftAndRightOverlay} />
 
             <View style={styles.rectangle}>
+              {/* Camera only in the rectangle */}
+              {hasPermission && device && (
+                <Camera
+                  codeScanner={codeScanner}
+                  format={format}
+                  device={device}
+                  isActive={true}
+                  style={{
+                    width: rectDimensions - rectBorderWidth * 2,
+                    height: rectDimensions - rectBorderWidth * 2,
+                  }}
+                />
+              )}
+
               <Animatable.View
                 style={styles.scanBar}
                 direction="alternate-reverse"
@@ -227,20 +286,20 @@ const Scanner = ({navigation, route}) => {
                 )}
               />
             </View>
+
             <View style={styles.leftAndRightOverlay} />
           </View>
+
           <View style={styles.bottomOverlay} />
+
           <View style={styles.btnContainer}>
-            <TouchableOpacity
-              onPress={() => {
-                navigation.navigate(page, {showModal: false});
-              }}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
               <Text style={styles.btn}>CANCEL</Text>
             </TouchableOpacity>
           </View>
         </View>
-      }
-    />
+      </View>
+    </>
   );
 };
 

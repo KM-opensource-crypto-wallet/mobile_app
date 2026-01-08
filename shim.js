@@ -1,3 +1,13 @@
+// TextEncoder/TextDecoder polyfill for @meshsdk/core and other libraries
+if (
+  typeof global.TextEncoder === 'undefined' ||
+  typeof global.TextDecoder === 'undefined'
+) {
+  const TextEncoding = require('text-encoding');
+  global.TextEncoder = TextEncoding.TextEncoder;
+  global.TextDecoder = TextEncoding.TextDecoder;
+}
+
 if (typeof __dirname === 'undefined') {
   global.__dirname = '/';
 }
@@ -19,6 +29,31 @@ if (typeof __filename === 'undefined') {
 //
 if (typeof Buffer === 'undefined') {
   global.Buffer = require('buffer').Buffer;
+}
+// eslint-disable-next-line no-undef
+Uint8Array.prototype.copy = Buffer.prototype.copy;
+
+// Polyfill for Event (required by aptos other web-based libraries)
+if (typeof Event === 'undefined') {
+  global.Event = class Event {
+    constructor(type, eventInitDict = {}) {
+      this.type = type;
+      this.bubbles = eventInitDict.bubbles || false;
+      this.cancelable = eventInitDict.cancelable || false;
+      this.composed = eventInitDict.composed || false;
+      this.defaultPrevented = false;
+      this.timeStamp = Date.now();
+    }
+
+    preventDefault() {
+      if (this.cancelable) {
+        this.defaultPrevented = true;
+      }
+    }
+
+    stopPropagation() {}
+    stopImmediatePropagation() {}
+  };
 }
 
 // global.location = global.location || { port: 80 }
