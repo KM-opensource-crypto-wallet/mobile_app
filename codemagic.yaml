@@ -55,9 +55,6 @@ workflows:
           DOKWALLET_WALLET_CONNECT_ID=$DOKWALLET_WALLET_CONNECT_ID
           KIMLWALLET_WALLET_CONNECT_ID=$KIMLWALLET_WALLET_CONNECT_ID
           EOF
-      - name: Install yarn version 1
-        script: |
-          npm install -g yarn@1
       - name: Install yarn dependencies
         script: |
           npm run git:update
@@ -149,9 +146,6 @@ workflows:
           DOKWALLET_WALLET_CONNECT_ID=$DOKWALLET_WALLET_CONNECT_ID
           KIMLWALLET_WALLET_CONNECT_ID=$KIMLWALLET_WALLET_CONNECT_ID
           EOF
-      - name: Install yarn version 1
-        script: |
-          npm install -g yarn@1
       - name: Install yarn dependencies
         script: |
           npm run git:update
@@ -247,9 +241,6 @@ workflows:
           DOKWALLET_WALLET_CONNECT_ID=$DOKWALLET_WALLET_CONNECT_ID
           KIMLWALLET_WALLET_CONNECT_ID=$KIMLWALLET_WALLET_CONNECT_ID
           EOF
-      - name: Install yarn version 1
-        script: |
-          npm install -g yarn@1
       - name: Install yarn dependencies
         script: |
           npm run git:update

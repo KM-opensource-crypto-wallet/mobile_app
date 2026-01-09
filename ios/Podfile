@@ -58,7 +58,11 @@ abstract_target 'coinswalletCommonPod' do
          command = "#{bitcode_strip_path} #{framework_path} -r -o #{framework_path}"
          system(command)
        end
-
+       installer.pods_project.targets.each do |target|
+            target.build_configurations.each do |config|
+              config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1' # replace here with your minimum deployment
+            end
+        end
       #  framework_paths = [
       #    "Pods/LogRocket/LogRocket.xcframework/ios-arm64/LogRocket.framework/LogRocket",
       #    "Pods/hermes-engine/destroot/Library/Frameworks/macosx/hermes.framework/hermes",
