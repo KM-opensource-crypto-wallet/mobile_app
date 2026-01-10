@@ -61,24 +61,18 @@ abstract_target 'coinswalletCommonPod' do
        installer.pods_project.targets.each do |target|
             target.build_configurations.each do |config|
               config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1' # replace here with your minimum deployment
-              config.build_settings['ENABLE_BITCODE'] = 'NO'
             end
         end
 
-      #  framework_paths = [
-      #    "Pods/LogRocket/LogRocket.xcframework/ios-arm64/LogRocket.framework/LogRocket",
-      #    "Pods/hermes-engine/destroot/Library/Frameworks/macosx/hermes.framework/hermes",
-      #    "Pods/hermes-engine/destroot/Library/Frameworks/macosx/hermes.framework/Versions/Current/hermes",
-      #    "Pods/hermes-engine/destroot/Library/Frameworks/universal/hermes.xcframework/ios-arm64/hermes.framework/hermes",
-      #    "Pods/hermes-engine/destroot/Library/Frameworks/universal/hermes.xcframework/ios-arm64_x86_64-maccatalyst/hermes.framework/hermes",
-      #    "Pods/OpenSSL-Universal/Frameworks/OpenSSL.xcframework/ios-arm64/OpenSSL.framework/OpenSSL",
-      #    "Pods/OpenSSL-Universal/Frameworks/OpenSSL.xcframework/ios-arm64_x86_64-maccatalyst/OpenSSL.framework/OpenSSL",
-      #    "Pods/BugfenderSDK/BugfenderSDK.xcframework/ios-arm64/BugfenderSDK.framework/BugfenderSDK",
-      #    "Pods/BugfenderSDK/BugfenderSDK.xcframework/ios-arm64_x86_64-maccatalyst/BugfenderSDK.framework/BugfenderSDK"
-      #  ]
+       framework_paths = [
+         "Pods/OpenSSL-Universal/Frameworks/OpenSSL.xcframework/ios-arm64/OpenSSL.framework/OpenSSL",
+         "Pods/OpenSSL-Universal/Frameworks/OpenSSL.xcframework/ios-arm64_x86_64-maccatalyst/OpenSSL.framework/OpenSSL",
+         "Pods/BugfenderSDK/BugfenderSDK.xcframework/ios-arm64/BugfenderSDK.framework/BugfenderSDK",
+         "Pods/BugfenderSDK/BugfenderSDK.xcframework/ios-arm64_x86_64-maccatalyst/BugfenderSDK.framework/BugfenderSDK"
+       ]
 
-      #  framework_paths.each do |framework_relative_path|
-      #    strip_bitcode_from_framework(bitcode_strip_path, framework_relative_path)
-      #  end
+       framework_paths.each do |framework_relative_path|
+         strip_bitcode_from_framework(bitcode_strip_path, framework_relative_path)
+       end
   end
 end
