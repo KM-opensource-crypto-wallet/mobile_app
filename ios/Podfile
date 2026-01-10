@@ -6,6 +6,7 @@ require Pod::Executable.execute_command('node', ['-p',
   )', __dir__]).strip
 
 platform :ios, '16.0'
+$VCEnableLocation = false
 prepare_react_native_project!
 
 linkage = ENV['USE_FRAMEWORKS']

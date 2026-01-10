@@ -54,8 +54,6 @@
 	<string>$(PRODUCT_NAME) needs to access your camera for scan QR code</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>$(PRODUCT_NAME) requires FaceID access to allows you quick and secure access.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>$(PRODUCT_NAME) needs to access your camera for scan QR code</string>
 	<key>NSPhotoLibraryUsageDescription</key>
