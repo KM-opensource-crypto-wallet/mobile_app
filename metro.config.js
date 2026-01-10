@@ -29,7 +29,23 @@ const config = {
       // Better crypto
       crypto: require.resolve('react-native-quick-crypto'),
     },
-    exports: 'non-strict',
+    resolveRequest: (context, moduleName, platform) => {
+      // Force libsodium packages to use CommonJS versions instead of ESM
+      if (
+        moduleName === 'libsodium-wrappers-sumo' ||
+        moduleName.startsWith('libsodium-wrappers-sumo/')
+      ) {
+        return {
+          filePath: path.resolve(
+            __dirname,
+            'node_modules/libsodium-wrappers-sumo/dist/modules-sumo/libsodium-wrappers.js',
+          ),
+          type: 'sourceFile',
+        };
+      }
+      // Default resolver
+      return context.resolveRequest(context, moduleName, platform);
+    },
     unstable_conditionNames: ['browser', 'require', 'react-native'],
   },
 };
