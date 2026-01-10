@@ -209,7 +209,6 @@ workflows:
         XCODE_SCHEME: "kimlwallet" # <-- Put the name of your Xcode scheme here
         APP_ID: 6746929530 # <-- Put the app id number here. This is found in App Store Connect > App > General > App Information
       node: v20
-      xcode: 16.0
       cocoapods: default
     scripts:
       - name: Generate .env file
