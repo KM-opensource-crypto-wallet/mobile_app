@@ -9,7 +9,6 @@ import {
 import {currencySymbol} from 'data/currency';
 import {CryptoList} from 'components/CryptoList';
 import WalletConnectStatus from 'components/WalletConnectStatus';
-import AddCircle from 'assets/images/icons/add-circle.svg';
 import {shallowEqual, useDispatch, useSelector} from 'react-redux';
 import {
   getLocalCurrency,

@@ -30,6 +30,11 @@ const myStyles = theme =>
       fontWeight: '500',
       flexShrink: 1,
     },
+    rightHeaderIcons: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 16,
+    },
 
     indicatorStyle: {
       backgroundColor: '#191B26',
