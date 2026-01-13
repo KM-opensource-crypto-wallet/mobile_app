@@ -61,3 +61,22 @@ export const addCustomDeriveAddressToWallet = async (
     throw e;
   }
 };
+
+// this method only for android for sensitive-info-migration
+export const getLegacySecureValue = async (sharedPreference, key) => {
+  try {
+    return await NativeKeygen.getLegacySecureValue(sharedPreference, key);
+  } catch (e) {
+    console.error('Failed to getLegacySecureValue: ', e);
+    throw e;
+  }
+};
+// this method only for android for sensitive-info-migration
+export const clearLegacySecureStorage = async sharedPreference => {
+  try {
+    return await NativeKeygen.clearLegacySecureStorage(sharedPreference);
+  } catch (e) {
+    console.error('Failed to clearLegacySecureStorage: ', e);
+    throw e;
+  }
+};

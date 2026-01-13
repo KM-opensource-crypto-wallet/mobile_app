@@ -1,5 +1,7 @@
 package com.coinswallet;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -154,6 +156,38 @@ public class NativeKeygenModule extends ReactContextBaseJavaModule {
       promise.reject("ERR_UNEXPECTED_EXCEPTION", e);
     }
   }
+
+    @ReactMethod
+    public void getLegacySecureValue(String legacyPrefsName, String key, Promise promise) {
+        try {
+            SharedPreferences prefs = getReactApplicationContext().getSharedPreferences(
+                    legacyPrefsName,
+                    Context.MODE_PRIVATE
+            );
+            String value = prefs.getString(key, null);
+            promise.resolve(value);
+        } catch (Exception e) {
+            promise.reject("E_LEGACY_READ_ERROR", "Failed to read legacy value: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Clears all values from the legacy SharedPreferences.
+     * Can be called after migration is complete.
+     */
+    @ReactMethod
+    public void clearLegacySecureStorage(String legacyPrefsName, Promise promise) {
+        try {
+            SharedPreferences prefs = getReactApplicationContext().getSharedPreferences(
+                    legacyPrefsName,
+                    Context.MODE_PRIVATE
+            );
+            prefs.edit().clear().apply();
+            promise.resolve(null);
+        } catch (Exception e) {
+            promise.reject("E_LEGACY_CLEAR_ERROR", "Failed to clear legacy storage: " + e.getMessage(), e);
+        }
+    }
 
   @ReactMethod
   public void generateWallet2(String mnemonic, Promise promise) {
