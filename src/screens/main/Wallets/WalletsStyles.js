@@ -39,7 +39,7 @@ const myStyles = theme =>
       elevation: 2,
     },
     walletCardSelected: {
-      backgroundColor: theme.background,
+      borderWidth: 2,
       borderColor: theme.background,
     },
     // Header row
@@ -73,10 +73,11 @@ const myStyles = theme =>
       color: theme.font,
     },
     walletNameSelected: {
-      color: '#FFFFFF',
+      color: theme.font,
+      fontWeight: '700',
     },
     activeBadge: {
-      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+      backgroundColor: theme.background,
       paddingHorizontal: 8,
       paddingVertical: 2,
       borderRadius: 10,
@@ -109,7 +110,7 @@ const myStyles = theme =>
       marginLeft: 32,
     },
     walletTypeSelected: {
-      color: 'rgba(255, 255, 255, 0.7)',
+      color: theme.gray,
     },
     walletTypeNoIndent: {
       marginLeft: 0,
@@ -132,7 +133,7 @@ const myStyles = theme =>
       marginBottom: 4,
     },
     balanceLabelSelected: {
-      color: 'rgba(255, 255, 255, 0.6)',
+      color: theme.gray,
     },
     balanceValue: {
       fontSize: 22,
@@ -140,7 +141,7 @@ const myStyles = theme =>
       color: theme.font,
     },
     balanceValueSelected: {
-      color: '#FFFFFF',
+      color: theme.font,
     },
     coinsInfo: {
       alignItems: 'flex-end',
@@ -162,7 +163,7 @@ const myStyles = theme =>
       alignItems: 'center',
     },
     coinIconWrapperSelected: {
-      borderColor: theme.background,
+      borderColor: theme.secondaryBackgroundColor || theme.backgroundColor,
     },
     coinIconOverlap: {
       marginLeft: -8,
@@ -177,61 +178,41 @@ const myStyles = theme =>
       color: theme.gray,
     },
     coinsCountSelected: {
-      color: 'rgba(255, 255, 255, 0.7)',
+      color: theme.gray,
     },
     // Sort menu styles
+    sortMenuBackdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
     sortMenuContainer: {
       position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      zIndex: 100,
-    },
-    sortMenuOverlay: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.3)',
     },
     sortMenu: {
-      position: 'absolute',
-      top: 8,
-      right: 16,
       backgroundColor: theme.secondaryBackgroundColor || theme.backgroundColor,
       borderRadius: 12,
-      paddingVertical: 8,
-      minWidth: 180,
+      minWidth: 200,
       shadowColor: '#000',
       shadowOffset: {width: 0, height: 4},
-      shadowOpacity: 0.15,
-      shadowRadius: 8,
-      elevation: 8,
-      zIndex: 101,
-      borderWidth: 1,
-      borderColor: theme.headerBorder,
+      shadowOpacity: 0.2,
+      shadowRadius: 12,
+      elevation: 12,
     },
     sortMenuTitle: {
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: '600',
       color: theme.gray,
       paddingHorizontal: 16,
-      paddingVertical: 8,
+      paddingVertical: 12,
       borderBottomWidth: 1,
       borderBottomColor: theme.headerBorder,
-      marginBottom: 4,
     },
     sortMenuItem: {
       paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingVertical: 14,
     },
     sortMenuItemActive: {
-      backgroundColor: 'rgba(128, 128, 128, 0.1)',
-    },
-    sortMenuItemLast: {
-      borderBottomWidth: 0,
+      backgroundColor: 'rgba(128, 128, 128, 0.15)',
     },
     sortMenuItemText: {
       fontSize: 15,
@@ -240,6 +221,11 @@ const myStyles = theme =>
     sortMenuItemTextActive: {
       color: theme.background,
       fontWeight: '600',
+    },
+    sortMenuDivider: {
+      height: 1,
+      backgroundColor: theme.headerBorder,
+      marginVertical: 4,
     },
     sortIndicator: {
       flexDirection: 'row',

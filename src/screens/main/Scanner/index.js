@@ -6,7 +6,13 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {Text, TouchableOpacity, Dimensions, View} from 'react-native';
+import {
+  Text,
+  TouchableOpacity,
+  Dimensions,
+  View,
+  StyleSheet,
+} from 'react-native';
 
 // import QRCodeScanner from 'react-native-qrcode-scanner';
 import * as Animatable from 'react-native-animatable';
@@ -182,13 +188,13 @@ const Scanner = ({navigation, route}) => {
     ],
   );
 
-  const makeSlideOutTranslation = (translationType, fromValue) => {
+  const makeSlideOutTranslation = (translationType, fromValue, toValue) => {
     return {
       from: {
-        [translationType]: SCREEN_WIDTH * -0.18,
+        [translationType]: fromValue,
       },
       to: {
-        [translationType]: fromValue,
+        [translationType]: toValue,
       },
     };
   };
@@ -249,10 +255,22 @@ const Scanner = ({navigation, route}) => {
 
   const rectDimensions = SCREEN_WIDTH * 0.65;
   const rectBorderWidth = SCREEN_WIDTH * 0.005;
+  const innerRectSize = rectDimensions - rectBorderWidth * 2;
+  const scanBarHeight = SCREEN_WIDTH * 0.0025;
+  // Animation should move from top to bottom of the inner rectangle
+  // Start at top edge: -(innerRectSize / 2 - scanBarHeight / 2)
+  // End at bottom edge: (innerRectSize / 2 - scanBarHeight / 2)
+  const animationStart = -(innerRectSize / 2 - scanBarHeight / 2);
+  const animationEnd = innerRectSize / 2 - scanBarHeight / 2;
 
   return (
     <>
-      <View style={{flex: 1, backgroundColor: 'white'}}>
+      {/* Full screen black background to prevent flash */}
+      <View
+        style={{...StyleSheet.absoluteFillObject, backgroundColor: '#000000'}}
+      />
+
+      <View style={{flex: 1}}>
         {/* Overlay structure */}
         <View style={styles.overlayContainer}>
           <View style={styles.topOverlay} />
@@ -267,10 +285,7 @@ const Scanner = ({navigation, route}) => {
                   format={format}
                   device={device}
                   isActive={true}
-                  style={{
-                    width: rectDimensions - rectBorderWidth * 2,
-                    height: rectDimensions - rectBorderWidth * 2,
-                  }}
+                  style={styles.cameraView}
                 />
               )}
 
@@ -282,7 +297,8 @@ const Scanner = ({navigation, route}) => {
                 easing="linear"
                 animation={makeSlideOutTranslation(
                   'translateY',
-                  SCREEN_WIDTH * 0.2,
+                  animationStart,
+                  animationEnd,
                 )}
               />
             </View>

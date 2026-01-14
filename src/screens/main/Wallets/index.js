@@ -19,6 +19,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 import CreateWalletSheet from 'components/CreateWalletSheet';
 import AddIcon from 'assets/images/sidebarIcons/Add.svg';
 import FilterListIcon from 'assets/images/icons/filter-list.svg';
+import SortMenu from 'components/SortMenu';
 import {
   getCurrentWalletIndex,
   selectAllWallets,
@@ -28,6 +29,7 @@ import {
   rearrangeWallet,
   setCurrentWalletIndex,
   setWalletPosition,
+  sortWallets,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import DraggableFlatList, {
   ScaleDecorator,
@@ -46,7 +48,9 @@ const getWalletTotalBalance = coins => {
   let total = 0;
   coins?.forEach(coin => {
     if (coin?.isInWallet) {
-      const value = isNaN(Number(coin.totalCourse)) ? 0 : Number(coin.totalCourse);
+      const value = isNaN(Number(coin.totalCourse))
+        ? 0
+        : Number(coin.totalCourse);
       total += value;
     }
   });
@@ -107,37 +111,15 @@ const Wallets = ({navigation}) => {
   const [searchWallets, setSearchWallets] = useState([]);
   const sortOption = useSelector(getWalletsSortOption);
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({top: 0, right: 0});
+  const filterButtonRef = useRef(null);
 
-  const sortedWallets = useMemo(() => {
-    if (sortOption === WALLET_SORT_OPTIONS.DEFAULT) {
-      return allWallets;
+  // Dispatch sort action when sortOption changes
+  useEffect(() => {
+    if (sortOption !== WALLET_SORT_OPTIONS.DEFAULT) {
+      dispatch(sortWallets({sortOption}));
     }
-
-    const walletsCopy = [...allWallets];
-
-    switch (sortOption) {
-      case WALLET_SORT_OPTIONS.VALUE_DESC:
-        return walletsCopy.sort(
-          (a, b) => getWalletTotalBalance(b?.coins) - getWalletTotalBalance(a?.coins),
-        );
-      case WALLET_SORT_OPTIONS.VALUE_ASC:
-        return walletsCopy.sort(
-          (a, b) => getWalletTotalBalance(a?.coins) - getWalletTotalBalance(b?.coins),
-        );
-      case WALLET_SORT_OPTIONS.NAME_ASC:
-        return walletsCopy.sort((a, b) =>
-          (a?.walletName || '').localeCompare(b?.walletName || ''),
-        );
-      case WALLET_SORT_OPTIONS.NAME_DESC:
-        return walletsCopy.sort((a, b) =>
-          (b?.walletName || '').localeCompare(a?.walletName || ''),
-        );
-      default:
-        return walletsCopy;
-    }
-  }, [allWallets, sortOption]);
-
-  const isSortActive = sortOption !== WALLET_SORT_OPTIONS.DEFAULT;
+  }, [sortOption, dispatch]);
 
   useEffect(() => {
     if (!isFocus) {
@@ -150,17 +132,24 @@ const Wallets = ({navigation}) => {
       headerRight: () => (
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <TouchableOpacity
+            ref={filterButtonRef}
             style={{padding: 12}}
             activeOpacity={0.5}
             onPress={() => {
               Keyboard.dismiss();
-              setShowSortMenu(prev => !prev);
+              if (filterButtonRef.current) {
+                filterButtonRef.current.measure(
+                  (_x, _y, _width, height, _pageX, pageY) => {
+                    setMenuPosition({
+                      top: pageY + height,
+                      right: 16,
+                    });
+                    setShowSortMenu(true);
+                  },
+                );
+              }
             }}>
-            <FilterListIcon
-              width="20"
-              height="20"
-              fill={isSortActive ? theme.background : theme.font}
-            />
+            <FilterListIcon width="20" height="20" fill={theme.font} />
           </TouchableOpacity>
           <TouchableOpacity
             style={{padding: 12, paddingRight: 15}}
@@ -175,7 +164,7 @@ const Wallets = ({navigation}) => {
         </View>
       ),
     });
-  }, [navigation, theme.font, theme.background, isSortActive]);
+  }, [navigation, theme.font, theme.background]);
 
   const onPressMove = useCallback(
     (index, isMoveUp) => {
@@ -229,7 +218,6 @@ const Wallets = ({navigation}) => {
   const handleSortSelect = useCallback(
     option => {
       dispatch(setWalletsSortOption(option));
-      setShowSortMenu(false);
     },
     [dispatch],
   );
@@ -249,6 +237,18 @@ const Wallets = ({navigation}) => {
     }
   };
 
+  const walletSortOptions = [
+    {
+      label: 'Default Order',
+      value: WALLET_SORT_OPTIONS.DEFAULT,
+      showDivider: true,
+    },
+    {label: 'Value: High to Low', value: WALLET_SORT_OPTIONS.VALUE_DESC},
+    {label: 'Value: Low to High', value: WALLET_SORT_OPTIONS.VALUE_ASC},
+    {label: 'Name: A to Z', value: WALLET_SORT_OPTIONS.NAME_ASC},
+    {label: 'Name: Z to A', value: WALLET_SORT_OPTIONS.NAME_DESC},
+  ];
+
   return (
     <DokSafeAreaView style={styles.container}>
       <View style={styles.container}>
@@ -261,117 +261,20 @@ const Wallets = ({navigation}) => {
           inputStyle={{minHeight: 0}}
         />
 
-        {/* Sort Menu Dropdown */}
-        {showSortMenu && (
-          <View style={styles.sortMenuContainer}>
-            <View style={styles.sortMenu}>
-              <Text style={styles.sortMenuTitle}>Sort Wallets</Text>
-              <TouchableOpacity
-                style={[
-                  styles.sortMenuItem,
-                  sortOption === WALLET_SORT_OPTIONS.DEFAULT &&
-                    styles.sortMenuItemActive,
-                ]}
-                onPress={() => handleSortSelect(WALLET_SORT_OPTIONS.DEFAULT)}>
-                <Text
-                  style={[
-                    styles.sortMenuItemText,
-                    sortOption === WALLET_SORT_OPTIONS.DEFAULT &&
-                      styles.sortMenuItemTextActive,
-                  ]}>
-                  Default Order
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.sortMenuItem,
-                  sortOption === WALLET_SORT_OPTIONS.VALUE_DESC &&
-                    styles.sortMenuItemActive,
-                ]}
-                onPress={() => handleSortSelect(WALLET_SORT_OPTIONS.VALUE_DESC)}>
-                <Text
-                  style={[
-                    styles.sortMenuItemText,
-                    sortOption === WALLET_SORT_OPTIONS.VALUE_DESC &&
-                      styles.sortMenuItemTextActive,
-                  ]}>
-                  Value: High to Low
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.sortMenuItem,
-                  sortOption === WALLET_SORT_OPTIONS.VALUE_ASC &&
-                    styles.sortMenuItemActive,
-                ]}
-                onPress={() => handleSortSelect(WALLET_SORT_OPTIONS.VALUE_ASC)}>
-                <Text
-                  style={[
-                    styles.sortMenuItemText,
-                    sortOption === WALLET_SORT_OPTIONS.VALUE_ASC &&
-                      styles.sortMenuItemTextActive,
-                  ]}>
-                  Value: Low to High
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.sortMenuItem,
-                  sortOption === WALLET_SORT_OPTIONS.NAME_ASC &&
-                    styles.sortMenuItemActive,
-                ]}
-                onPress={() => handleSortSelect(WALLET_SORT_OPTIONS.NAME_ASC)}>
-                <Text
-                  style={[
-                    styles.sortMenuItemText,
-                    sortOption === WALLET_SORT_OPTIONS.NAME_ASC &&
-                      styles.sortMenuItemTextActive,
-                  ]}>
-                  Name: A to Z
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.sortMenuItem,
-                  styles.sortMenuItemLast,
-                  sortOption === WALLET_SORT_OPTIONS.NAME_DESC &&
-                    styles.sortMenuItemActive,
-                ]}
-                onPress={() => handleSortSelect(WALLET_SORT_OPTIONS.NAME_DESC)}>
-                <Text
-                  style={[
-                    styles.sortMenuItemText,
-                    sortOption === WALLET_SORT_OPTIONS.NAME_DESC &&
-                      styles.sortMenuItemTextActive,
-                  ]}>
-                  Name: Z to A
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity
-              style={styles.sortMenuOverlay}
-              activeOpacity={1}
-              onPress={() => setShowSortMenu(false)}
-            />
-          </View>
-        )}
-
-        {/* Sort indicator */}
-        {isSortActive && (
-          <View style={styles.sortIndicator}>
-            <Text style={styles.sortIndicatorText}>Sorted by: {getSortLabel()}</Text>
-            <TouchableOpacity
-              onPress={() => dispatch(setWalletsSortOption(WALLET_SORT_OPTIONS.DEFAULT))}
-              hitSlop={{top: 8, right: 8, bottom: 8, left: 8}}>
-              <AntIcon name="close" size={16} color={theme.gray} />
-            </TouchableOpacity>
-          </View>
-        )}
+        <SortMenu
+          visible={showSortMenu}
+          onClose={() => setShowSortMenu(false)}
+          onSelect={handleSortSelect}
+          currentSort={sortOption}
+          position={menuPosition}
+          sortOptions={walletSortOptions}
+          title="Sort Wallets"
+        />
 
         <View style={styles.container}>
           <DraggableFlatList
             keyboardShouldPersistTaps={'always'}
-            data={searchQuery ? searchWallets : sortedWallets}
+            data={searchQuery ? searchWallets : allWallets}
             contentContainerStyle={{flexGrow: 1}}
             keyExtractor={item => item.walletName}
             onDragBegin={() => {
@@ -387,7 +290,7 @@ const Wallets = ({navigation}) => {
               const symbol = currencySymbol[localCurrency] || '$';
               const canMoveUp = index > 0;
               const canMoveDown = index < allWalletsLength - 1;
-              const showMoveButtons = allWalletsLength > 1 && !searchQuery && !isSortActive;
+              const showMoveButtons = allWalletsLength > 1 && !searchQuery;
 
               return (
                 <ScaleDecorator>
@@ -415,16 +318,21 @@ const Wallets = ({navigation}) => {
                     {/* Header Row */}
                     <View style={styles.cardHeader}>
                       <View style={styles.headerLeft}>
-                        {!searchQuery && !isSortActive && (
+                        {!searchQuery && (
                           <TouchableOpacity
                             style={styles.dragHandle}
                             onLongPress={drag}
                             disabled={isActive}
-                            hitSlop={{top: 12, right: 12, bottom: 12, left: 12}}>
+                            hitSlop={{
+                              top: 12,
+                              right: 12,
+                              bottom: 12,
+                              left: 12,
+                            }}>
                             <FontAwesomeIcon
                               name={'grip-vertical'}
                               size={18}
-                              color={isSelectedWallet ? '#FFFFFF' : theme.gray}
+                              color={theme.gray}
                             />
                           </TouchableOpacity>
                         )}
@@ -456,15 +364,7 @@ const Wallets = ({navigation}) => {
                               }}>
                               <AntIcon
                                 name={'caretup'}
-                                color={
-                                  canMoveUp
-                                    ? isSelectedWallet
-                                      ? '#FFFFFF'
-                                      : theme.font
-                                    : isSelectedWallet
-                                    ? 'rgba(255,255,255,0.3)'
-                                    : theme.gray
-                                }
+                                color={canMoveUp ? theme.font : theme.gray}
                                 size={14}
                               />
                             </TouchableOpacity>
@@ -477,15 +377,7 @@ const Wallets = ({navigation}) => {
                               }}>
                               <AntIcon
                                 name={'caretdown'}
-                                color={
-                                  canMoveDown
-                                    ? isSelectedWallet
-                                      ? '#FFFFFF'
-                                      : theme.font
-                                    : isSelectedWallet
-                                    ? 'rgba(255,255,255,0.3)'
-                                    : theme.gray
-                                }
+                                color={canMoveDown ? theme.font : theme.gray}
                                 size={14}
                               />
                             </TouchableOpacity>
@@ -503,7 +395,7 @@ const Wallets = ({navigation}) => {
                           <IoniconsIcon
                             name={'ellipsis-vertical'}
                             size={20}
-                            color={isSelectedWallet ? '#FFFFFF' : theme.font}
+                            color={theme.font}
                           />
                         </TouchableOpacity>
                       </View>
@@ -514,7 +406,7 @@ const Wallets = ({navigation}) => {
                       style={[
                         styles.walletType,
                         isSelectedWallet && styles.walletTypeSelected,
-                        (searchQuery || isSortActive) && styles.walletTypeNoIndent,
+                        searchQuery && styles.walletTypeNoIndent,
                       ]}
                       numberOfLines={1}>
                       {item?.isImportWalletWithPrivateKey
@@ -549,7 +441,8 @@ const Wallets = ({navigation}) => {
                               style={[
                                 styles.coinIconWrapper,
                                 coinIndex > 0 && styles.coinIconOverlap,
-                                isSelectedWallet && styles.coinIconWrapperSelected,
+                                isSelectedWallet &&
+                                  styles.coinIconWrapperSelected,
                               ]}>
                               {coin?.icon && (
                                 <FastImage

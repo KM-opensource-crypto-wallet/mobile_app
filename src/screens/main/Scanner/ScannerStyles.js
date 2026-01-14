@@ -7,7 +7,8 @@ const overlayColor = 'rgba(255,255,255,1)'; // this gives us a black color with 
 const rectDimensions = SCREEN_WIDTH * 0.65; // this is equivalent to 255 from a 393 device width
 const rectBorderWidth = SCREEN_WIDTH * 0.005; // this is equivalent to 2 from a 393 device width
 
-const scanBarWidth = SCREEN_WIDTH * 0.6; // this is equivalent to 180 from a 393 device width
+const innerRectSize = rectDimensions - rectBorderWidth * 2;
+const scanBarWidth = innerRectSize; // Match the inner rectangle width
 const scanBarHeight = SCREEN_WIDTH * 0.0025; //this is equivalent to 1 from a 393 device width
 const scanBarColor = 'green';
 
@@ -33,7 +34,8 @@ const myStyles = (theme, bottom) =>
       borderColor: theme.background,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: 'transparent',
+      backgroundColor: '#000000',
+      overflow: 'hidden',
     },
 
     topOverlay: {
@@ -60,9 +62,15 @@ const myStyles = (theme, bottom) =>
     },
 
     scanBar: {
+      position: 'absolute',
       width: scanBarWidth,
       height: scanBarHeight,
       backgroundColor: scanBarColor,
+    },
+    cameraView: {
+      position: 'absolute',
+      width: innerRectSize,
+      height: innerRectSize,
     },
     btnContainer: {
       width: SCREEN_WIDTH,

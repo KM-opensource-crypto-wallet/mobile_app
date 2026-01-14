@@ -162,7 +162,6 @@ const myStyles = theme =>
       fontFamily: 'Roboto-Regular',
       fontWeight: '600',
     },
-
     headerNumber: {
       color: theme.font,
       fontSize: 24,

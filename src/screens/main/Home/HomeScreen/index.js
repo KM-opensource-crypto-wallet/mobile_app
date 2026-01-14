@@ -1,4 +1,10 @@
-import React, {useState, useEffect, useContext, useRef, useCallback} from 'react';
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+  useCallback,
+} from 'react';
 import {TouchableOpacity, View, Text} from 'react-native';
 import myStyles from './HomeScreenStyles';
 import {Portal, Provider} from 'react-native-paper';
@@ -40,7 +46,7 @@ import {
 import QRCodeIcon from 'assets/images/sidebarIcons/QRCode.svg';
 import BurgerMenuIcon from 'assets/images/sidebarIcons/BurgerMenu.svg';
 import FilterListIcon from 'assets/images/icons/filter-list.svg';
-import SortCoins, {SORT_OPTIONS} from 'components/SortCoins';
+import SortMenu from 'components/SortMenu';
 import {MainNavigation} from 'utils/navigation';
 import {TabView, TabBar} from 'react-native-tab-view';
 import {IS_IOS, SCREEN_WIDTH} from 'utils/dimensions';
@@ -82,6 +88,29 @@ import {IS_KIML_WALLET, LOGO_SINGLE, LOGO_SINGLE_DARK} from 'utils/wlData';
 import AddCoins from 'components/AddCoins';
 import AddCircle from 'assets/images/icons/add-circle.svg';
 
+export const SORT_OPTIONS = {
+  DEFAULT: 'default',
+  VALUE_DESC: 'value_desc',
+  VALUE_ASC: 'value_asc',
+  BALANCE_DESC: 'balance_desc',
+  BALANCE_ASC: 'balance_asc',
+  NAME_ASC: 'name_asc',
+  NAME_DESC: 'name_desc',
+  SYMBOL_ASC: 'symbol_asc',
+  SYMBOL_DESC: 'symbol_desc',
+};
+
+const SORT_LIST = [
+  {label: 'Default', value: SORT_OPTIONS.DEFAULT},
+  {label: 'Value High to Low', value: SORT_OPTIONS.VALUE_DESC},
+  {label: 'Value Low to High', value: SORT_OPTIONS.VALUE_ASC},
+  {label: 'Balance High to Low', value: SORT_OPTIONS.BALANCE_DESC},
+  {label: 'Balance Low to High', value: SORT_OPTIONS.BALANCE_ASC},
+  {label: 'Name A-Z', value: SORT_OPTIONS.NAME_ASC},
+  {label: 'Name Z-A', value: SORT_OPTIONS.NAME_DESC},
+  {label: 'Symbol A-Z', value: SORT_OPTIONS.SYMBOL_ASC},
+  {label: 'Symbol Z-A', value: SORT_OPTIONS.SYMBOL_DESC},
+];
 
 const RenderTabBar = props => {
   const {styles} = props;
@@ -103,6 +132,8 @@ const HomeScreen = ({navigation, route}) => {
   const [backupModalVisible, setBackupModalVisible] = useState(false);
   const [addCoinModalVisible, setAddCoinModalVisible] = useState(false);
   const [sortModalVisible, setSortModalVisible] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({top: 0, right: 0});
+  const filterButtonRef = useRef(null);
   const sortOption = useSelector(getCoinsSortOption);
   // const allCoins = useSelector(getAllCoins);
   const requestedModalVisible = useSelector(selectRequestedModalVisible);
@@ -397,9 +428,22 @@ const HomeScreen = ({navigation, route}) => {
                   </View>
                   <View style={styles.rightHeaderIcons}>
                     <TouchableOpacity
+                      ref={filterButtonRef}
                       hitSlop={{top: 12, left: 12, right: 12, bottom: 12}}
                       activeOpacity={1}
-                      onPress={() => setSortModalVisible(true)}>
+                      onPress={() => {
+                        if (filterButtonRef.current) {
+                          filterButtonRef.current.measure(
+                            (_x, _y, _width, height, _pageX, pageY) => {
+                              setMenuPosition({
+                                top: pageY + height,
+                                right: 16,
+                              });
+                              setSortModalVisible(true);
+                            },
+                          );
+                        }
+                      }}>
                       <FilterListIcon
                         width="22"
                         height="22"
@@ -487,11 +531,14 @@ const HomeScreen = ({navigation, route}) => {
                 hideModal={setAddCoinModalVisible}
               />
             )}
-            <SortCoins
+            <SortMenu
               visible={sortModalVisible}
-              hideModal={setSortModalVisible}
-              onApply={handleSortApply}
+              onClose={() => setSortModalVisible(false)}
+              onSelect={handleSortApply}
               currentSort={sortOption}
+              position={menuPosition}
+              sortOptions={SORT_LIST}
+              title="Sort Coins"
             />
           </Portal>
         </Provider>
