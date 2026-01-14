@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useContext, useRef} from 'react';
+import React, {useState, useEffect, useContext, useRef, useCallback} from 'react';
 import {TouchableOpacity, View, Text} from 'react-native';
 import myStyles from './HomeScreenStyles';
 import {Portal, Provider} from 'react-native-paper';
@@ -15,7 +15,10 @@ import {
   selectCurrentWallet,
   selectIsBackedUp,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {setCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {
+  setCurrentCoin,
+  sortCurrentWalletCoins,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {VerifyInfoModal} from 'components/VerifyInfo';
 import {
   getNewsMessage,
@@ -36,8 +39,10 @@ import {
 } from 'utils/hapticFeedback';
 import QRCodeIcon from 'assets/images/sidebarIcons/QRCode.svg';
 import BurgerMenuIcon from 'assets/images/sidebarIcons/BurgerMenu.svg';
+import FilterListIcon from 'assets/images/icons/filter-list.svg';
+import SortCoins, {SORT_OPTIONS} from 'components/SortCoins';
 import {MainNavigation} from 'utils/navigation';
-import {TabView, TabBar, SceneMap} from 'react-native-tab-view';
+import {TabView, TabBar} from 'react-native-tab-view';
 import {IS_IOS, SCREEN_WIDTH} from 'utils/dimensions';
 import Coins from 'components/Coins';
 import NFTList from 'components/NFTList';
@@ -64,7 +69,11 @@ import {
   getPaymentData,
   getWCUri,
 } from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
-import {isChatOptions} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {
+  isChatOptions,
+  getCoinsSortOption,
+} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {setCoinsSortOption} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Toast from 'react-native-toast-message';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
@@ -73,10 +82,6 @@ import {IS_KIML_WALLET, LOGO_SINGLE, LOGO_SINGLE_DARK} from 'utils/wlData';
 import AddCoins from 'components/AddCoins';
 import AddCircle from 'assets/images/icons/add-circle.svg';
 
-const renderScene = SceneMap({
-  coins: Coins,
-  nftlist: NFTList,
-});
 
 const RenderTabBar = props => {
   const {styles} = props;
@@ -97,6 +102,8 @@ const HomeScreen = ({navigation, route}) => {
   const [modalVisible, setmodalVisible] = useState(false);
   const [backupModalVisible, setBackupModalVisible] = useState(false);
   const [addCoinModalVisible, setAddCoinModalVisible] = useState(false);
+  const [sortModalVisible, setSortModalVisible] = useState(false);
+  const sortOption = useSelector(getCoinsSortOption);
   // const allCoins = useSelector(getAllCoins);
   const requestedModalVisible = useSelector(selectRequestedModalVisible);
   const transactionModalVisible = useSelector(selectTransactionModalVisible);
@@ -319,6 +326,25 @@ const HomeScreen = ({navigation, route}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newDateToString, qrAddress, qrScheme, qrAmount]);
 
+  const handleSortApply = useCallback(
+    newSortOption => {
+      dispatch(setCoinsSortOption(newSortOption));
+      dispatch(sortCurrentWalletCoins({sortOption: newSortOption}));
+    },
+    [dispatch],
+  );
+
+  const renderScene = useCallback(({route: sceneRoute}) => {
+    switch (sceneRoute.key) {
+      case 'coins':
+        return <Coins />;
+      case 'nftlist':
+        return <NFTList />;
+      default:
+        return null;
+    }
+  }, []);
+
   return (
     <>
       <ErrorBoundary
@@ -369,17 +395,29 @@ const HomeScreen = ({navigation, route}) => {
                       </Text>
                     </TouchableOpacity>
                   </View>
-                  <TouchableOpacity
-                    hitSlop={{top: 12, left: 12, right: 12, bottom: 12}}
-                    activeOpacity={1}
-                    onPress={() =>
-                      navigation.navigate('Scanner', {
-                        page: 'Home',
-                        walletConnect: true,
-                      })
-                    }>
-                    <QRCodeIcon fill={theme.background} />
-                  </TouchableOpacity>
+                  <View style={styles.rightHeaderIcons}>
+                    <TouchableOpacity
+                      hitSlop={{top: 12, left: 12, right: 12, bottom: 12}}
+                      activeOpacity={1}
+                      onPress={() => setSortModalVisible(true)}>
+                      <FilterListIcon
+                        width="22"
+                        height="22"
+                        fill={theme.borderActiveColor}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      hitSlop={{top: 12, left: 12, right: 12, bottom: 12}}
+                      activeOpacity={1}
+                      onPress={() =>
+                        navigation.navigate('Scanner', {
+                          page: 'Home',
+                          walletConnect: true,
+                        })
+                      }>
+                      <QRCodeIcon fill={theme.background} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
                 {!!newsMessage && (
                   <View style={styles.syncView}>
@@ -449,6 +487,12 @@ const HomeScreen = ({navigation, route}) => {
                 hideModal={setAddCoinModalVisible}
               />
             )}
+            <SortCoins
+              visible={sortModalVisible}
+              hideModal={setSortModalVisible}
+              onApply={handleSortApply}
+              currentSort={sortOption}
+            />
           </Portal>
         </Provider>
       </ErrorBoundary>
