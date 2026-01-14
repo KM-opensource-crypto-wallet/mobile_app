@@ -1,32 +1,49 @@
-import React, {useCallback} from 'react';
-import {Provider} from 'react-redux';
-import {store} from 'redux/store';
-import {Provider as PaperProvider} from 'react-native-paper';
-import Main from 'components/main';
-import {ThemeProvider} from 'theme/ThemeContext';
-import Toasts from 'components/Toasts';
-import ErrorBoundary from 'react-native-error-boundary';
-import ErrorComponent from 'components/ErrorComponent';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import React, {useEffect, useState} from 'react';
+import {IS_ANDROID} from 'utils/dimensions';
+import {View} from 'react-native';
+import {getAsyncStorageData, storeAsyncStorageData} from 'utils/asyncStorage';
+import {setItem} from 'react-native-sensitive-info';
+import MainApp from 'components/MainApp';
+import {
+  clearLegacySecureStorage,
+  getLegacySecureValue,
+} from 'myWallet/wallet.service';
 
 export default function App() {
-  const onError = useCallback((error, stackTrace) => {
-    console.error('Error in app', error.message);
-    console.error('Error in app stacktrace', stackTrace);
+  const [isMigrating, setIsMigrating] = useState(IS_ANDROID);
+
+  useEffect(() => {
+    (async () => {
+      if (IS_ANDROID) {
+        const isMigrationDone = await getAsyncStorageData(
+          'sensitive_info_migration',
+        );
+        if (isMigrationDone === 'true') {
+          setIsMigrating(false);
+        } else {
+          console.log('migration started');
+          const sharedPreference = process.env.REDUX_SHARED_PREFERENCE_NAME;
+          const reduxKey = `persist:${process.env.REDUX_KEY}`;
+          let oldData = await getLegacySecureValue(sharedPreference, reduxKey);
+          if (oldData) {
+            await setItem(reduxKey, oldData, {
+              accessControl: 'none',
+              keychainService: process.env.REDUX_KEYCHAIN_NAME,
+            });
+            console.log('migration saved');
+            await clearLegacySecureStorage(sharedPreference);
+            console.log('migration completed');
+          }
+          await storeAsyncStorageData('sensitive_info_migration', 'true');
+          setIsMigrating(false);
+        }
+      }
+    })();
   }, []);
 
-  return (
-    <ErrorBoundary onError={onError} FallbackComponent={ErrorComponent}>
-      <Provider store={store}>
-        <PaperProvider>
-          <ThemeProvider>
-            <SafeAreaProvider>
-              <Main />
-              <Toasts />
-            </SafeAreaProvider>
-          </ThemeProvider>
-        </PaperProvider>
-      </Provider>
-    </ErrorBoundary>
-  );
+  if (isMigrating) {
+    return <View />;
+  }
+
+  return <MainApp />;
 }

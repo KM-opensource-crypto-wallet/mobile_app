@@ -23,7 +23,7 @@ import {
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {initWalletConnect} from 'dok-wallet-blockchain-networks/service/walletconnect';
-import {AppState} from 'react-native';
+import {AppLifecycle} from 'react-native-applifecycle';
 import {
   addMinutes,
   isAfterCurrentDate,
@@ -128,7 +128,7 @@ const Main = () => {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   // const phrase = useSelector(getWalletPhrase);
   const routing = useRoute(storePassword);
-  const appState = useRef(AppState.currentState);
+  const appState = useRef(AppLifecycle.currentState);
   const lockTimeSet = useRef(null);
   const lockTimeRef = useRef(lockTime);
   const compareRpcUrlsIntervalRef = useRef(null);
@@ -330,33 +330,37 @@ const Main = () => {
   }, [lockTime]);
 
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      const currentRouteName =
-        navigationRef?.current?.getCurrentRoute?.()?.name || '';
-
-      if (appState.current.match(/background/) && nextAppState === 'active') {
-        if (
-          currentRouteName !== 'Login' &&
-          !unsecureRoute.includes(currentRouteName) &&
-          isAfterCurrentDate(lockTimeSet.current)
-        ) {
-          setLoginModalVisible(true);
+    const subscription = AppLifecycle.addEventListener(
+      'change',
+      nextAppState => {
+        const currentRouteName =
+          navigationRef?.current?.getCurrentRoute?.()?.name || '';
+        console.log('current  state ->', appState.current);
+        console.log('current app state ->', currentRouteName, nextAppState);
+        if (appState.current.match(/background/) && nextAppState === 'active') {
+          if (
+            currentRouteName !== 'Login' &&
+            !unsecureRoute.includes(currentRouteName) &&
+            isAfterCurrentDate(lockTimeSet.current)
+          ) {
+            setLoginModalVisible(true);
+          }
+          checkInAppUpdates();
+          compareRpcUrls();
+          fetchFeesInfo();
+        } else if (nextAppState === 'background') {
+          lockTimeSet.current = addMinutes(lockTimeRef.current).toISOString();
+          if (
+            !unsecureRoute.includes(currentRouteName) &&
+            currentRouteName !== 'Login' &&
+            lockTimeRef.current === 0
+          ) {
+            setLoginModalVisible(true);
+          }
         }
-        checkInAppUpdates();
-        compareRpcUrls();
-        fetchFeesInfo();
-      } else if (nextAppState === 'background') {
-        lockTimeSet.current = addMinutes(lockTimeRef.current).toISOString();
-        if (
-          !unsecureRoute.includes(currentRouteName) &&
-          currentRouteName !== 'Login' &&
-          lockTimeRef.current === 0
-        ) {
-          setLoginModalVisible(true);
-        }
-      }
-      appState.current = nextAppState;
-    });
+        appState.current = nextAppState;
+      },
+    );
     return () => {
       subscription.remove();
     };

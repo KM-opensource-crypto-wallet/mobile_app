@@ -23,7 +23,9 @@ import {batchTransactionSlice} from '../../dok-wallet-blockchain-networks/redux/
 
 const storage = createSensitiveStorage({
   keychainService: process.env.REDUX_KEYCHAIN_NAME,
-  sharedPreferencesName: process.env.REDUX_SHARED_PREFERENCE_NAME,
+  /* Don't delete this line in newer react-native-sensitive-info this is deleted,
+   we are doing migration for android so it is for code reference */
+  // sharedPreferencesName: process.env.REDUX_SHARED_PREFERENCE_NAME,
   accessControl: 'none',
 });
 
