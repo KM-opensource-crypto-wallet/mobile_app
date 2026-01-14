@@ -48,9 +48,9 @@ const getWalletTotalBalance = coins => {
   let total = 0;
   coins?.forEach(coin => {
     if (coin?.isInWallet) {
-      const value = isNaN(Number(coin.totalCourse))
+      const value = isNaN(Number(coin.totalBalanceCourse))
         ? 0
-        : Number(coin.totalCourse);
+        : Number(coin.totalBalanceCourse);
       total += value;
     }
   });
