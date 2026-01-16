@@ -222,26 +222,10 @@ const Wallets = ({navigation}) => {
     [dispatch],
   );
 
-  const getSortLabel = () => {
-    switch (sortOption) {
-      case WALLET_SORT_OPTIONS.VALUE_DESC:
-        return 'Value: High to Low';
-      case WALLET_SORT_OPTIONS.VALUE_ASC:
-        return 'Value: Low to High';
-      case WALLET_SORT_OPTIONS.NAME_ASC:
-        return 'Name: A to Z';
-      case WALLET_SORT_OPTIONS.NAME_DESC:
-        return 'Name: Z to A';
-      default:
-        return 'Default Order';
-    }
-  };
-
   const walletSortOptions = [
     {
       label: 'Default Order',
       value: WALLET_SORT_OPTIONS.DEFAULT,
-      showDivider: true,
     },
     {label: 'Value: High to Low', value: WALLET_SORT_OPTIONS.VALUE_DESC},
     {label: 'Value: Low to High', value: WALLET_SORT_OPTIONS.VALUE_ASC},

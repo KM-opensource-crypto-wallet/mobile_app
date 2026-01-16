@@ -177,24 +177,33 @@ const CreateWallet = ({navigation, route}) => {
         screen: 'Home',
       });
     } else {
-      try {
-        setIsLoading(true);
-        await dispatch(
-          createWallet({
-            walletName: values.name || 'Main Wallet',
-            phrase,
-            privateKey,
-            chain_name,
-          }),
-        ).unwrap();
-        setIsLoading(false);
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'Sidebar'}],
+      // Check if importing by private key - skip SelectCoins screen
+      if (privateKey && chain_name) {
+        try {
+          setIsLoading(true);
+          await dispatch(
+            createWallet({
+              walletName: values.name || 'Main Wallet',
+              phrase,
+              privateKey,
+              chain_name,
+            }),
+          ).unwrap();
+          setIsLoading(false);
+          navigation.reset({
+            index: 0,
+            routes: [{name: 'Sidebar'}],
+          });
+        } catch (e) {
+          setIsLoading(false);
+          console.error('error in create wallet', e.stack);
+        }
+      } else {
+        // Navigate to SelectCoins screen for new wallet or mnemonic import
+        navigation.navigate('SelectCoins', {
+          walletName: values.name || 'Main Wallet',
+          phrase,
         });
-      } catch (e) {
-        setIsLoading(false);
-        console.error('error in create wallet', e.stack);
       }
     }
   };
@@ -326,7 +335,11 @@ const CreateWallet = ({navigation, route}) => {
                     style={{...styles.button, opacity: wrong && 0.5}}
                     onPress={handleSubmit}>
                     <Text style={styles.buttonTitle}>
-                      {walletName ? 'Update Wallet' : 'Create Wallet'}
+                      {walletName
+                        ? 'Update Wallet'
+                        : privateKey
+                        ? 'Create Wallet'
+                        : 'Next'}
                     </Text>
                   </TouchableOpacity>
                 </View>

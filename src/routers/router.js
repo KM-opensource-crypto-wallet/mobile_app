@@ -17,6 +17,7 @@ import {Keyboard, StatusBar, StyleSheet, TouchableOpacity} from 'react-native';
 import Back from 'assets/images/sidebarIcons/Back.svg';
 import ShareIcon from 'assets/images/icons/share.svg';
 import CreateWallet from 'screens/main/Wallets/CreateWallet';
+import SelectCoins from 'screens/main/Wallets/SelectCoins';
 import ManageCoins from 'screens/main/Home/ManageCoins';
 // ////////////////////////reset////////////////////////////////////////
 import ResetWallet from 'screens/main/ResetWallet';
@@ -196,6 +197,29 @@ export const useRoute = isAuth => {
             color: theme.borderActiveColor,
           },
           title: 'Create Wallet',
+          headerLeft: () => (
+            <TouchableOpacity
+              style={styles.headerLeftStyle}
+              onPress={() => navigation.goBack()}>
+              <Back width="22" height="18" fill={theme.borderActiveColor} />
+            </TouchableOpacity>
+          ),
+          cardStyleInterpolator: forFade,
+        })}
+      />
+      <Stack.Screen
+        name="SelectCoins"
+        component={SelectCoins}
+        options={({navigation}) => ({
+          headerStyle: {
+            borderBottomColor: theme.headerBorder,
+            borderBottomWidth: 1,
+            backgroundColor: theme.backgroundColor,
+          },
+          headerTitleStyle: {
+            color: theme.borderActiveColor,
+          },
+          title: 'Select Coins',
           headerLeft: () => (
             <TouchableOpacity
               style={styles.headerLeftStyle}
