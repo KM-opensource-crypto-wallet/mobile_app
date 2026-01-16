@@ -47,7 +47,8 @@ import {
 import {showToast} from 'utils/toast';
 
 const SelectableCoinItem = memo(
-  ({item, isSelected, onToggle, isDefaultCoin, theme}) => {
+  ({item, isSelected, onToggle}) => {
+    const {theme} = useContext(ThemeContext);
     const styles = myStyles(theme);
     const isToken = item?.type === 'token';
     const isBitcoin = isBitcoinChain(item?.chain_name);
@@ -94,7 +95,6 @@ const SelectableCoinItem = memo(
     return (
       prevProps.item._id === nextProps.item._id &&
       prevProps.isSelected === nextProps.isSelected &&
-      prevProps.isDefaultCoin === nextProps.isDefaultCoin &&
       prevProps.onToggle === nextProps.onToggle
     );
   },
@@ -183,12 +183,6 @@ const SelectCoins = ({navigation, route}) => {
     }, 500);
     return () => clearTimeout(timer);
   }, [dispatch]);
-
-  // Memoized set of default coin IDs
-  const defaultCoinIds = useMemo(
-    () => new Set(activeCurrencies.map(c => c._id)),
-    [activeCurrencies],
-  );
 
   // Compute base coin lists (without collapse logic for better performance)
   const {selectedList, unselectedList} = useMemo(() => {
@@ -342,16 +336,6 @@ const SelectCoins = ({navigation, route}) => {
       // Get selected coin objects directly from our tracked state
       const selectedCoinArray = Array.from(selectedCoinObjects.values());
 
-      console.log('SelectCoins - selectedCoins Set size:', selectedCoins.size);
-      console.log(
-        'SelectCoins - selectedCoinArray count:',
-        selectedCoinArray.length,
-      );
-      console.log(
-        'SelectCoins - selectedCoinArray symbols:',
-        selectedCoinArray.map(c => c.symbol),
-      );
-
       await dispatch(
         createWallet({
           walletName,
@@ -388,11 +372,10 @@ const SelectCoins = ({navigation, route}) => {
         item={item}
         isSelected={selectedCoins.has(item._id)}
         onToggle={toggleCoinSelection}
-        isDefaultCoin={defaultCoinIds.has(item._id)}
         theme={theme}
       />
     ),
-    [selectedCoins, toggleCoinSelection, defaultCoinIds, theme],
+    [selectedCoins, toggleCoinSelection, theme],
   );
 
   const keyExtractor = useCallback(item => item._id, []);

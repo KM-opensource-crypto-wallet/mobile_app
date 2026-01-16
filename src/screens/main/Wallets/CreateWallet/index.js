@@ -335,7 +335,11 @@ const CreateWallet = ({navigation, route}) => {
                     style={{...styles.button, opacity: wrong && 0.5}}
                     onPress={handleSubmit}>
                     <Text style={styles.buttonTitle}>
-                      {walletName ? 'Update Wallet' : 'Create Wallet'}
+                      {walletName
+                        ? 'Update Wallet'
+                        : privateKey
+                        ? 'Create Wallet'
+                        : 'Next'}
                     </Text>
                   </TouchableOpacity>
                 </View>
