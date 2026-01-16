@@ -16,7 +16,6 @@ import {
 import Spinner from 'components/Spinner';
 import {MainNavigation} from 'utils/navigation';
 import {
-  checkNewCoinAvailable,
   checkNewsAvailable,
   fetchCurrencies,
 } from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
@@ -294,7 +293,6 @@ const Main = () => {
         }
       };
       unsubscribe = Linking.addEventListener('url', onUrlGet);
-      dispatch(checkNewCoinAvailable());
       const key = `${
         IS_IOS ? 'ios' : 'android'
       }_${getVersion()}_${getBuildNumber()}`;
@@ -315,7 +313,7 @@ const Main = () => {
     dispatch(fetchSupportedBuyCryptoCurrency({fromDevice, country}));
     fetchAndCompareRpcUrls();
     fetchFeesInfo();
-    dispatch(fetchCurrencies({}));
+    dispatch(fetchCurrencies({checkNewCoins: true, ignoreLimit: true}));
     setTimeout(() => {
       dispatch(resetNfts({}));
     }, 2000);

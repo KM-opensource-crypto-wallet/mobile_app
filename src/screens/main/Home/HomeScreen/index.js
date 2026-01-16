@@ -20,6 +20,7 @@ import {
   getEthereumCoin,
   selectCurrentWallet,
   selectIsBackedUp,
+  selectCurrentWalletSortOption,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
   setCurrentCoin,
@@ -75,11 +76,7 @@ import {
   getPaymentData,
   getWCUri,
 } from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
-import {
-  isChatOptions,
-  getCoinsSortOption,
-} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import {setCoinsSortOption} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
+import {isChatOptions} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import Clipboard from '@react-native-clipboard/clipboard';
 import Toast from 'react-native-toast-message';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
@@ -134,7 +131,7 @@ const HomeScreen = ({navigation, route}) => {
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({top: 0, right: 0});
   const filterButtonRef = useRef(null);
-  const sortOption = useSelector(getCoinsSortOption);
+  const sortOption = useSelector(selectCurrentWalletSortOption);
   // const allCoins = useSelector(getAllCoins);
   const requestedModalVisible = useSelector(selectRequestedModalVisible);
   const transactionModalVisible = useSelector(selectTransactionModalVisible);
@@ -359,7 +356,6 @@ const HomeScreen = ({navigation, route}) => {
 
   const handleSortApply = useCallback(
     newSortOption => {
-      dispatch(setCoinsSortOption(newSortOption));
       dispatch(sortCurrentWalletCoins({sortOption: newSortOption}));
     },
     [dispatch],
