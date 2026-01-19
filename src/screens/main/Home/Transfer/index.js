@@ -1145,6 +1145,7 @@ const Transfer = ({navigation, route}) => {
         selectedFeesType={selectedFeesType}
         customFees={customFees}
         customNonce={customNonce}
+        chainName={convertedChainName}
         gasCurrency={GAS_CURRENCY[convertedChainName] || 'Gwei'}
         onSelectFeesType={onSelectFeesType}
         onChangeCustomFees={onChangeCustomFees}

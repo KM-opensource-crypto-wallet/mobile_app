@@ -3,6 +3,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
   useRef,
+  useMemo,
 } from 'react';
 import {
   View,
@@ -16,6 +17,7 @@ import {BottomSheetView, BottomSheetTextInput} from '@gorhom/bottom-sheet';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import DokBottomSheet from 'components/BottomSheet';
 import {ThemeContext} from 'theme/ThemeContext';
+import {isEVMChain} from 'dok-wallet-blockchain-networks/helper';
 
 const AdvancedFeesSheet = forwardRef(
   (
@@ -28,6 +30,7 @@ const AdvancedFeesSheet = forwardRef(
       onSelectFeesType,
       onChangeCustomFees,
       onChangeCustomNonce,
+      chainName,
     },
     ref,
   ) => {
@@ -43,6 +46,9 @@ const AdvancedFeesSheet = forwardRef(
     const handleClose = () => {
       bottomSheetRef.current?.close();
     };
+    const isEVM = useMemo(() => {
+      return isEVMChain(chainName);
+    }, [chainName]);
 
     return (
       <DokBottomSheet
@@ -64,7 +70,6 @@ const AdvancedFeesSheet = forwardRef(
               />
               <Text style={styles.title}>Advanced Options</Text>
             </View>
-
             {/* Gas Price Section */}
             {!!feesOptions?.length && (
               <View style={styles.section}>
@@ -143,38 +148,38 @@ const AdvancedFeesSheet = forwardRef(
                 )}
               </View>
             )}
-
             {/* Nonce Section */}
-            <View style={styles.section}>
-              <View style={styles.labelRow}>
-                <MaterialCommunityIcons
-                  name="counter"
-                  size={18}
-                  color={theme.background}
-                />
-                <Text style={styles.label}>Transaction Nonce</Text>
+            {isEVM && (
+              <View style={styles.section}>
+                <View style={styles.labelRow}>
+                  <MaterialCommunityIcons
+                    name="counter"
+                    size={18}
+                    color={theme.background}
+                  />
+                  <Text style={styles.label}>Transaction Nonce</Text>
+                </View>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Nonce</Text>
+                  <BottomSheetTextInput
+                    style={[
+                      styles.textInput,
+                      {color: theme.font, borderColor: theme.headerBorder},
+                    ]}
+                    placeholder="Enter nonce value"
+                    placeholderTextColor={theme.gray}
+                    keyboardType="numeric"
+                    autoCapitalize="none"
+                    onChangeText={onChangeCustomNonce}
+                    value={customNonce}
+                  />
+                </View>
+                <Text style={styles.hint}>
+                  Used for transaction ordering. Only modify if you know what
+                  you're doing.
+                </Text>
               </View>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Nonce</Text>
-                <BottomSheetTextInput
-                  style={[
-                    styles.textInput,
-                    {color: theme.font, borderColor: theme.headerBorder},
-                  ]}
-                  placeholder="Enter nonce value"
-                  placeholderTextColor={theme.gray}
-                  keyboardType="numeric"
-                  autoCapitalize="none"
-                  onChangeText={onChangeCustomNonce}
-                  value={customNonce}
-                />
-              </View>
-              <Text style={styles.hint}>
-                Used for transaction ordering. Only modify if you know what
-                you're doing.
-              </Text>
-            </View>
-
+            )}
             {/* Done Button */}
             <TouchableOpacity style={styles.button} onPress={handleClose}>
               <Text style={styles.buttonText}>Done</Text>
