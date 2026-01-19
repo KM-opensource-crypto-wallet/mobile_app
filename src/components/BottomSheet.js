@@ -49,7 +49,17 @@ const CustomBackdrop = props => {
 };
 
 const DokBottomSheet = props => {
-  const {bottomSheetRef, snapPoints, onDismiss, onChange} = props;
+  const {
+    bottomSheetRef,
+    snapPoints,
+    onDismiss,
+    onChange,
+    keyboardBehavior = 'interactive',
+    keyboardBlurBehavior = 'restore',
+    android_keyboardInputMode = 'adjustResize',
+    enableDynamicSizing = false,
+    maxDynamicContentSize,
+  } = props;
   const {theme} = useContext(ThemeContext);
   const localBottomSheetRef = useRef();
   const snapPointsLocal = useMemo(() => snapPoints || ['40%'], [snapPoints]);
@@ -78,8 +88,9 @@ const DokBottomSheet = props => {
         localBottomSheetRef.current = ref;
         bottomSheetRef(ref);
       }}
-      enableDynamicSizing={false}
-      snapPoints={snapPointsLocal}
+      enableDynamicSizing={enableDynamicSizing}
+      snapPoints={enableDynamicSizing ? undefined : snapPointsLocal}
+      maxDynamicContentSize={maxDynamicContentSize}
       backgroundStyle={{backgroundColor: theme.backgroundColor}}
       index={0}
       handleIndicatorStyle={{backgroundColor: theme.primary}}
@@ -89,7 +100,10 @@ const DokBottomSheet = props => {
       closeOnPress={true}
       onChange={onLocalChange}
       backdropComponent={renderBackdrop}
-      containerStyle={{zIndex: 9999}}>
+      containerStyle={{zIndex: 9999}}
+      keyboardBehavior={keyboardBehavior}
+      keyboardBlurBehavior={keyboardBlurBehavior}
+      android_keyboardInputMode={android_keyboardInputMode}>
       {props.children}
     </BottomSheetModal>
   );

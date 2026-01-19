@@ -14,14 +14,13 @@ import {
   Text,
   TouchableWithoutFeedback,
   Keyboard,
-  Linking,
 } from 'react-native';
+import ChevronIcon from 'assets/images/icons/keyboard-arrow-right.svg';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import AdvancedFeesSheet from 'components/AdvancedFeesSheet';
 
 import {useDispatch, useSelector} from 'react-redux';
-import {
-  getLocalCurrency,
-  isFeesOptions,
-} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {IS_ANDROID, SCREEN_WIDTH, useFloatingHeight} from 'utils/dimensions';
 import {sendFunds} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {ThemeContext} from 'theme/ThemeContext';
@@ -63,7 +62,6 @@ import {getExchange} from 'dok-wallet-blockchain-networks/redux/exchange/exchang
 import FastImage from '@d11/react-native-fast-image';
 import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
 import ValidatorItem from 'components/ValidatorItem';
-import {TextInput} from 'react-native-paper';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {getSellCryptoRequestDetails} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
@@ -136,8 +134,9 @@ const Transfer = ({navigation, route}) => {
 
   const convertedChainName = isEVMChain(chainName) ? 'ethereum' : chainName;
 
-  const isFeesOptionsEnabled = useSelector(isFeesOptions);
   const feesOptions = useSelector(getTransferDataFeesOptions);
+  const [customNonce, setCustomNonce] = useState('');
+  const advancedOptionsSheetRef = useRef(null);
 
   const nativeBalanceForBatchTransactions = useMemo(() => {
     if (isBatchTransaction && transferData?.transactionsData?.length) {
@@ -157,6 +156,56 @@ const Transfer = ({navigation, route}) => {
       setCustomFees(feesOptions?.[0]?.gasPrice);
     }
   }, [feesOptions]);
+
+  useEffect(() => {
+    if (transferData?.nonce !== undefined && transferData?.nonce !== null) {
+      setCustomNonce(String(transferData.nonce));
+    }
+  }, [transferData?.nonce]);
+
+  const openAdvancedOptionsSheet = useCallback(() => {
+    advancedOptionsSheetRef.current?.present();
+  }, []);
+
+  const onChangeCustomNonce = text => {
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setCustomNonce(numericValue);
+  };
+
+  const onSelectFeesType = useCallback(
+    (type, gasPrice) => {
+      if (type === 'custom') {
+        isPauseCalculateFees.current = true;
+        setSelectedFeesType('custom');
+        selectedFeesTypeRef.current = 'custom';
+      } else {
+        isPauseCalculateFees.current = false;
+        setSelectedFeesType(type);
+        selectedFeesTypeRef.current = type;
+        if (gasPrice) {
+          dispatch(updateFees({gasPrice, convertedChainName}));
+        }
+      }
+    },
+    [dispatch, convertedChainName],
+  );
+
+  const getSelectedFeesLabel = useMemo(() => {
+    if (selectedFeesType === 'custom') {
+      return `Custom: ${customFees} ${
+        GAS_CURRENCY[convertedChainName] || 'Gwei'
+      }`;
+    }
+    const selectedOption = feesOptions?.find(
+      opt => opt?.title?.toLowerCase() === selectedFeesType?.toLowerCase(),
+    );
+    if (selectedOption) {
+      return `${selectedOption.title}: ${selectedOption.gasPrice} ${
+        GAS_CURRENCY[convertedChainName] || 'Gwei'
+      }`;
+    }
+    return 'Recommended';
+  }, [selectedFeesType, customFees, feesOptions, convertedChainName]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -346,6 +395,7 @@ const Transfer = ({navigation, route}) => {
       sendFunds({
         to: transferData.toAddress,
         memo: transferData.memo,
+        nonce: customNonce,
         amount:
           isSendFundScreen || isStakingScreen || isSellCryptoScreen
             ? transferData?.amount
@@ -420,6 +470,7 @@ const Transfer = ({navigation, route}) => {
     transferData?.resourceType,
     transferData?.selectedVotes,
     transferData?.stakingAddress,
+    customNonce,
     isSendFundScreen,
     isStakingScreen,
     isSellCryptoScreen,
@@ -442,10 +493,15 @@ const Transfer = ({navigation, route}) => {
   const onSuccess = useCallback(async () => {
     setShowConfirmModal(false);
     await delay(300);
-    const {tx_hash, status} = await submitTransferData();
-    if (redirect_url && tx_hash) {
+    const data = await submitTransferData();
+    if (redirect_url && data?.tx_hash) {
       try {
-        await handleTransferRedirect(redirect_url, tx_hash, status, meta);
+        await handleTransferRedirect(
+          redirect_url,
+          data?.tx_hash,
+          data?.status,
+          meta,
+        );
       } catch (error) {
         console.error('Failed to open redirect URL:', error);
       }
@@ -992,112 +1048,52 @@ const Transfer = ({navigation, route}) => {
                 : isBatchTransaction
                 ? renderBatchTransactionUI()
                 : renderVotingUI()}
-              {isFeesOptionsEnabled &&
-                isFeesOptionChain(convertedChainName) &&
+              {/* Advanced Options Card */}
+              {isFeesOptionChain(convertedChainName) &&
                 !!feesOptions?.length &&
                 !isExchangeScreen && (
-                  <View>
-                    <View style={styles.feesOptionContainer}>
-                      <TouchableOpacity
-                        onPress={() => {
-                          isPauseCalculateFees.current = false;
-                          setSelectedFeesType('recommended');
-                          selectedFeesTypeRef.current = 'recommended';
-                          dispatch(
-                            updateFees({
-                              gasPrice: feesOptions?.[0].gasPrice,
-                              convertedChainName,
-                            }),
-                          );
-                        }}
-                        style={[
-                          styles.feesOptionsItem,
-                          selectedFeesType?.toLowerCase() ===
-                            feesOptions?.[0]?.title?.toLowerCase() && {
-                            borderColor: theme.background,
-                            borderWidth: 3,
-                          },
-                        ]}>
-                        <Text numberOfLines={1} style={styles.feesOptionTitle}>
-                          {`${feesOptions?.[0].title}`}
+                  <TouchableOpacity
+                    style={styles.advancedOptionsCard}
+                    onPress={openAdvancedOptionsSheet}
+                    activeOpacity={0.7}>
+                    <View style={styles.advancedOptionsCardLeft}>
+                      <MaterialCommunityIcons
+                        name="tune-vertical"
+                        size={22}
+                        color={theme.background}
+                      />
+                      <View style={styles.advancedOptionsCardContent}>
+                        <Text style={styles.advancedOptionsCardTitle}>
+                          Advanced Options
                         </Text>
-                        <Text style={styles.feesOptionDescription}>
-                          {`${feesOptions?.[0].gasPrice} ${GAS_CURRENCY[convertedChainName]}`}
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.feesOptionsItem,
-                          selectedFeesType?.toLowerCase() ===
-                            feesOptions?.[1]?.title?.toLowerCase() && {
-                            borderColor: theme.background,
-                            borderWidth: 3,
-                          },
-                        ]}
-                        onPress={() => {
-                          isPauseCalculateFees.current = false;
-                          setSelectedFeesType('normal');
-                          selectedFeesTypeRef.current = 'normal';
-                          dispatch(
-                            updateFees({
-                              gasPrice: feesOptions?.[1].gasPrice,
-                              convertedChainName,
-                            }),
-                          );
-                        }}>
-                        <Text
-                          numberOfLines={1}
-                          style={
-                            styles.feesOptionTitle
-                          }>{`${feesOptions?.[1].title}`}</Text>
-                        <Text style={styles.feesOptionDescription}>
-                          {`${feesOptions?.[1].gasPrice} ${GAS_CURRENCY[convertedChainName]}`}
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.feesOptionsItem,
-                          selectedFeesType?.toLowerCase() === 'custom' && {
-                            borderColor: theme.background,
-                            borderWidth: 3,
-                          },
-                        ]}
-                        onPress={() => {
-                          isPauseCalculateFees.current = true;
-                          setSelectedFeesType('custom');
-                          selectedFeesTypeRef.current = 'custom';
-                        }}>
-                        <Text style={styles.feesOptionTitle}>{'Custom'}</Text>
-                      </TouchableOpacity>
+                        <View style={styles.advancedOptionsCardDetails}>
+                          {!!feesOptions?.length && (
+                            <View style={styles.advancedOptionsCardRow}>
+                              <MaterialCommunityIcons
+                                name="gas-station"
+                                size={14}
+                                color={theme.gray}
+                              />
+                              <Text style={styles.advancedOptionsCardValue}>
+                                {getSelectedFeesLabel}
+                              </Text>
+                            </View>
+                          )}
+                          <View style={styles.advancedOptionsCardRow}>
+                            <MaterialCommunityIcons
+                              name="counter"
+                              size={14}
+                              color={theme.gray}
+                            />
+                            <Text style={styles.advancedOptionsCardValue}>
+                              Nonce: {customNonce || transferData?.nonce || '0'}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
                     </View>
-                    {selectedFeesType === 'custom' && (
-                      <>
-                        <TextInput
-                          style={styles.input}
-                          label="Gas price"
-                          textColor={theme.font}
-                          placeholder={'Enter Gas price'}
-                          theme={{
-                            colors: {
-                              onSurfaceVariant: '#989898',
-                              primary: '#989898',
-                            },
-                          }}
-                          outlineColor={'#989898'}
-                          activeOutlineColor={theme.borderActiveColor}
-                          keyboardType={'numeric'}
-                          autoCapitalize="none"
-                          returnKeyType="done"
-                          mode="outlined"
-                          blurOnSubmit={false}
-                          name="customFees"
-                          autoFocus={true}
-                          onChangeText={onChangeCustomFees}
-                          value={customFees}
-                        />
-                      </>
-                    )}
-                  </View>
+                    <ChevronIcon width={20} height={20} fill={theme.gray} />
+                  </TouchableOpacity>
                 )}
               {isDisabled && (
                 <Text
@@ -1140,6 +1136,19 @@ const Transfer = ({navigation, route}) => {
       <DuplicateTransactionModal
         visible={showDuplicateModal}
         onClose={() => setShowDuplicateModal(false)}
+      />
+
+      {/* Advanced Options Bottom Sheet */}
+      <AdvancedFeesSheet
+        ref={advancedOptionsSheetRef}
+        feesOptions={feesOptions}
+        selectedFeesType={selectedFeesType}
+        customFees={customFees}
+        customNonce={customNonce}
+        gasCurrency={GAS_CURRENCY[convertedChainName] || 'Gwei'}
+        onSelectFeesType={onSelectFeesType}
+        onChangeCustomFees={onChangeCustomFees}
+        onChangeCustomNonce={onChangeCustomNonce}
       />
     </DokSafeAreaView>
   );

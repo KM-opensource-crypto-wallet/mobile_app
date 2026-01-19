@@ -10,6 +10,7 @@ const myStyles = theme =>
     },
     contentContainerStyle: {
       flexGrow: 1,
+      paddingBottom: 20,
     },
 
     mainView: {
@@ -78,12 +79,13 @@ const myStyles = theme =>
       alignItems: 'center',
     },
     button: {
-      height: 60,
-      borderRadius: 10,
+      height: 56,
+      borderRadius: 12,
       fontSize: 20,
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: 16,
+      marginTop: 20,
+      marginBottom: 10,
     },
     buttonTitle: {
       color: theme.title,
@@ -103,34 +105,47 @@ const myStyles = theme =>
       width: '100%',
       alignItems: 'center',
     },
-    feesOptionContainer: {
-      height: 100,
-      width: '100%',
-      justifyContent: 'space-between',
+    // Advanced Options Card Styles
+    advancedOptionsCard: {
+      marginTop: 20,
       flexDirection: 'row',
-      marginVertical: 16,
-    },
-    feesOptionsItem: {
-      width: (SCREEN_WIDTH - 56) / 3,
-      height: '100%',
-      justifyContent: 'center',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: theme.whiteOutline,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
       borderWidth: 1,
       borderColor: theme.headerBorder,
-      borderRadius: 8,
     },
-    feesOptionDescription: {
-      color: theme.gray,
-      fontSize: 16,
-      fontFamily: 'Roboto-Regular',
-      alignSelf: 'center',
-      flexShrink: 1,
-      marginTop: 8,
+    advancedOptionsCardLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      gap: 12,
     },
-    feesOptionTitle: {
+    advancedOptionsCardContent: {
+      flex: 1,
+    },
+    advancedOptionsCardTitle: {
+      fontSize: 15,
       fontFamily: 'Roboto-Regular',
-      fontSize: 16,
       color: theme.font,
-      textAlign: 'center',
+      fontWeight: '600',
+      marginBottom: 6,
+    },
+    advancedOptionsCardDetails: {
+      gap: 4,
+    },
+    advancedOptionsCardRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    advancedOptionsCardValue: {
+      fontSize: 12,
+      fontFamily: 'Roboto-Regular',
+      color: theme.gray,
     },
     input: {
       marginBottom: 20,
