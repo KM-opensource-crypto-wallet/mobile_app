@@ -82,5 +82,5 @@ let persistor = persistStore(store, null, () => {
     store.dispatch(setReduxStoreLoaded(true));
   }, 500);
 });
-
+// persistor.purge()
 export {persistor, store};

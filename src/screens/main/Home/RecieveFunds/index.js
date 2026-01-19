@@ -20,17 +20,22 @@ import {CommonActions} from '@react-navigation/native';
 import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useSelector} from 'react-redux';
-
+import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {ThemeContext} from 'theme/ThemeContext';
 import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import LightningDropDown from 'components/LightningDropDown';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const RecieveFunds = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-
+  const address = useRef(null);
   const currentCoin = useSelector(selectCurrentCoin);
-  const address = currentCoin?.address;
+  address.current = currentCoin?.address;
+  const isLightning =
+    currentCoin?.chain_name === 'bitcoin_lightning' ? true : false;
+  const chain = getChain(currentCoin?.chain_name);
+  const [addressState, setAddressState] = useState('');
   const [productQRref, setProductQRref] = useState(
     `${currentCoin?.symbol}:${address}`,
   );
@@ -66,6 +71,28 @@ const RecieveFunds = ({navigation}) => {
     navigation.dispatch(CommonActions.setParams({shareQR}));
   }, [navigation, shareQR]);
 
+  const handleLightningDropDownChange = useCallback(
+    async currentValue => {
+      let newAddress = '';
+
+      if (currentValue === 'Receive via BTC mainnet') {
+        const {address} = await chain.generateInvoiceViaBitcoinAddress();
+        newAddress = address;
+      } else if (currentValue === 'Receive via Invoice') {
+        const {address} = await chain.generateInvoiceViaBolt11();
+        newAddress = address;
+      } else if (currentValue === 'Receive via Lightning Address') {
+        // generateSparkAddress
+        const {address} = await chain.generateSparkAddress();
+        newAddress = address;
+      }
+
+      setAddressState(newAddress);
+      setProductQRref(`${currentCoin?.symbol}:${newAddress}`);
+    },
+    [chain, currentCoin?.symbol],
+  );
+
   return (
     <View
       style={styles.container}
@@ -75,6 +102,12 @@ const RecieveFunds = ({navigation}) => {
         <Text style={styles.title}>
           Receive funds by providing your address or QR code
         </Text>
+        <View style={styles.title}>
+          <LightningDropDown
+            isLightning={isLightning}
+            handleLightningDropDownChange={handleLightningDropDownChange}
+          />
+        </View>
         <Text style={styles.qrContainer}>
           <QRCode
             value={productQRref}
@@ -85,10 +118,14 @@ const RecieveFunds = ({navigation}) => {
         </Text>
         <Text style={styles.addressTitle}>YOUR ADDRESS</Text>
         <View style={styles.addressContainer}>
-          <Text style={styles.address}>{address}</Text>
+          <Text style={styles.address}>
+            {addressState ? addressState : address.current}
+          </Text>
           <TouchableOpacity
             onPress={() => {
-              Clipboard.setString(address);
+              Clipboard.setString(
+                addressState ? addressState : address.current,
+              );
             }}>
             <CopyIcon fill={theme.background} width={20} height={30} />
           </TouchableOpacity>
