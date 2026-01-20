@@ -27,6 +27,7 @@ import {
   decodeSolMessage,
   getCustomizePublicAddress,
   isValidBigInt,
+  parseBalance,
   safelyJsonStringify,
 } from 'dok-wallet-blockchain-networks/helper';
 import {createWalletConnectTransaction} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectActions';
@@ -150,16 +151,13 @@ const WalletConnectTransactionModal = props => {
           : transactionData?.params[1];
       if (finaltransactionData?.value) {
         const etherAmount = finaltransactionData?.value
-          ? ethers.formatUnits(finaltransactionData?.value)
+          ? parseBalance(finaltransactionData?.value, 18)
           : '';
         const gasPrice =
           isValidBigInt(finaltransactionData?.gasPrice) || BigInt(0);
         const gasLimit =
           isValidBigInt(finaltransactionData?.gasLimit) || BigInt(0);
-        const transactionFees = ethers.formatUnits(
-          gasPrice * gasLimit,
-          'ether',
-        );
+        const transactionFees = parseBalance(gasPrice * gasLimit, 18);
         const transactionFeeBN = BigNumber(transactionFees);
         const currencyRateBN = BigNumber(walletData?.currencyRate || '0');
         const fiatTransactionFees = transactionFeeBN

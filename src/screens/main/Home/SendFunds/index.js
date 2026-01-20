@@ -407,7 +407,7 @@ const SendFunds = ({navigation, route}) => {
                                 errors.send ? 'red' : theme.font
                               }
                               autoCapitalize="none"
-                              returnKeyType="next"
+                              returnKeyType="done"
                               mode="outlined"
                               blurOnSubmit={false}
                               name="send"
@@ -416,7 +416,9 @@ const SendFunds = ({navigation, route}) => {
                               }}
                               onBlur={handleBlur('send')}
                               value={values.send}
-                              onSubmitEditing={handleSubmit}
+                              onSubmitEditing={() => {
+                                Keyboard.dismiss();
+                              }}
                               right={
                                 !fieldDisable && (
                                   <TextInput.Icon
@@ -465,7 +467,6 @@ const SendFunds = ({navigation, route}) => {
                                 errors.amount ? 'red' : theme.font
                               }
                               autoCapitalize="none"
-                              returnKeyType="next"
                               mode="outlined"
                               blurOnSubmit={false}
                               name="amount"
@@ -534,7 +535,6 @@ const SendFunds = ({navigation, route}) => {
                                 errors.amount ? 'red' : theme.font
                               }
                               autoCapitalize="none"
-                              returnKeyType="next"
                               mode="outlined"
                               blurOnSubmit={false}
                               name="currencyAmount"
@@ -601,7 +601,6 @@ const SendFunds = ({navigation, route}) => {
                                 errors.memo ? 'red' : theme.font
                               }
                               autoCapitalize="none"
-                              returnKeyType="next"
                               mode="outlined"
                               blurOnSubmit={false}
                               name="memo"
