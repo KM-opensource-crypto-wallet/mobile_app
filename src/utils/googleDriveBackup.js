@@ -275,7 +275,10 @@ export const backupWalletsToDrive = async payload => {
         }
       }
     } catch (e) {
-      // It's okay if no existing backup found, we start fresh
+      const msg = e?.message || e?.json?.error?.message;
+      if (msg !== 'No backup file found.') {
+        throw e;
+      }
     }
 
     // 2. Merge new wallets: Update existing if found (matched by clientId or name+chain), or add new
