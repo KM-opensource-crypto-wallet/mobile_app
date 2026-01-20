@@ -11,6 +11,7 @@ import {useSelector} from 'react-redux';
 import {ThemeContext} from 'theme/ThemeContext';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import ModalConfirm from 'components/ModalConfirm';
+import DriveGuideModal from 'components/BackupRestore/DriveGuideModal';
 import Checkbox from 'components/Checkbox';
 import FastImage from '@d11/react-native-fast-image';
 import {
@@ -53,6 +54,7 @@ const BackupWallets = ({navigation}) => {
   );
 
   const [showWarningModal, setShowWarningModal] = useState(false);
+  const [showDriveGuideModal, setShowDriveGuideModal] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
 
@@ -157,8 +159,13 @@ const BackupWallets = ({navigation}) => {
     setShowWarningModal(true);
   };
 
-  const performBackup = async () => {
+  const performBackup = () => {
     setShowWarningModal(false);
+    setShowDriveGuideModal(true);
+  };
+
+  const handleDriveGuideContinue = async () => {
+    setShowDriveGuideModal(false);
     setIsBackingUp(true);
 
     try {
@@ -273,6 +280,11 @@ const BackupWallets = ({navigation}) => {
         noButtonTitle="Cancel"
         onPressYes={performBackup}
         onPressNo={() => setShowWarningModal(false)}
+      />
+
+      <DriveGuideModal
+        visible={showDriveGuideModal}
+        onContinue={handleDriveGuideContinue}
       />
     </DokSafeAreaView>
   );

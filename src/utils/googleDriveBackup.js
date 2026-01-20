@@ -263,14 +263,22 @@ export const backupWalletsToDrive = async payload => {
       // It's okay if no existing backup found, we start fresh
     }
 
-    // 2. Merge new wallets
+    // 2. Merge new wallets: Update existing if found (matched by clientId or name+chain), or add new
     const newWallets = payload.wallets || [];
     newWallets.forEach(newW => {
       const index = finalWallets.findIndex(
-        oldW => oldW.clientId === newW.clientId,
+        oldW =>
+          (oldW.clientId && oldW.clientId === newW.clientId) ||
+          (oldW.walletName === newW.walletName &&
+            oldW.chain_name === newW.chain_name),
       );
+
       if (index !== -1) {
-        finalWallets[index] = newW;
+        // Update existing wallet with new details (e.g. updated balances, new coins)
+        finalWallets[index] = {
+          ...finalWallets[index],
+          ...newW,
+        };
       } else {
         finalWallets.push(newW);
       }
@@ -314,7 +322,7 @@ export const backupWalletsToDrive = async payload => {
     return true;
   } catch (error) {
     console.error('Backup Failed:', error);
-    throw error;
+    throw error?.json?.error || error;
   }
 };
 

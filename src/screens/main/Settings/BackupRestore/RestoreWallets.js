@@ -38,6 +38,7 @@ import AntIcon from 'react-native-vector-icons/AntDesign';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import WalletSelectionCard from 'components/BackupRestore/WalletSelectionCard';
+import DriveGuideModal from 'components/BackupRestore/DriveGuideModal';
 import myStyles from './styles';
 
 const RestoreWallets = ({navigation}) => {
@@ -51,6 +52,7 @@ const RestoreWallets = ({navigation}) => {
   const [selectedWalletIds, setSelectedWalletIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [restoring, setRestoring] = useState(false);
+  const [showDriveGuideModal, setShowDriveGuideModal] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [error, setError] = useState(null);
 
@@ -78,7 +80,12 @@ const RestoreWallets = ({navigation}) => {
     initAndCheckSession();
   }, [initAndCheckSession]);
 
-  const handleConnect = async () => {
+  const handleConnect = () => {
+    setShowDriveGuideModal(true);
+  };
+
+  const handleDriveGuideContinue = async () => {
+    setShowDriveGuideModal(false);
     setLoading(true);
     setError(null);
     try {
@@ -307,6 +314,10 @@ const RestoreWallets = ({navigation}) => {
             <Text style={styles.buttonText}>Connect Google Drive</Text>
           </TouchableOpacity>
         </View>
+        <DriveGuideModal
+          visible={showDriveGuideModal}
+          onContinue={handleDriveGuideContinue}
+        />
       </DokSafeAreaView>
     );
   }
