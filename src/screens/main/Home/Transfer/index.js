@@ -1079,16 +1079,19 @@ const Transfer = ({navigation, route}) => {
                               </Text>
                             </View>
                           )}
-                          <View style={styles.advancedOptionsCardRow}>
-                            <MaterialCommunityIcons
-                              name="counter"
-                              size={14}
-                              color={theme.gray}
-                            />
-                            <Text style={styles.advancedOptionsCardValue}>
-                              Nonce: {customNonce || transferData?.nonce || '0'}
-                            </Text>
-                          </View>
+                          {isEVMChain(convertedChainName) && (
+                            <View style={styles.advancedOptionsCardRow}>
+                              <MaterialCommunityIcons
+                                name="counter"
+                                size={14}
+                                color={theme.gray}
+                              />
+                              <Text style={styles.advancedOptionsCardValue}>
+                                Nonce:{' '}
+                                {customNonce || transferData?.nonce || '0'}
+                              </Text>
+                            </View>
+                          )}
                         </View>
                       </View>
                     </View>

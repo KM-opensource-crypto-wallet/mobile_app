@@ -114,6 +114,7 @@ const Scanner = ({navigation, route}) => {
           params: {
             data,
           },
+          pop: true,
         });
       } else if (page === 'ManageCoins') {
         const coinObj = parseCryptoQrCodeString(data);
@@ -124,6 +125,7 @@ const Scanner = ({navigation, route}) => {
             newDateToString: new Date().toISOString(),
             selectedNetwork: route.params.selectedNetwork,
           },
+          pop: true,
         });
       } else if (page === 'SendFunds' || page === 'AddAddress') {
         const coinObj = parseCryptoQrCodeString(data);
@@ -135,6 +137,7 @@ const Scanner = ({navigation, route}) => {
             qrAmount: coinObj?.parameters?.amount,
             newDateToString: new Date().toISOString(),
           },
+          pop: true,
         });
       } else if (page === 'SendFundsMemo') {
         navigation.navigate({
@@ -142,6 +145,7 @@ const Scanner = ({navigation, route}) => {
           params: {
             memo: data,
           },
+          pop: true,
         });
       } else if (page === 'Home') {
         const coinObj = parseCryptoQrCodeString(data);
@@ -157,11 +161,12 @@ const Scanner = ({navigation, route}) => {
                 qrAmount: coinObj?.parameters?.amount,
                 newDateToString: new Date().toISOString(),
               },
+              pop: true,
             });
           }, 0);
         } else {
-          navigation.popTo({
-            name: 'Home',
+          navigation.navigate('Sidebar', {
+            screen: 'Home',
             params: {
               showModal: !allSymbolId[coinObj?.scheme],
               qrScheme: coinObj?.scheme,
@@ -169,6 +174,7 @@ const Scanner = ({navigation, route}) => {
               qrAmount: coinObj?.parameters?.amount,
               newDateToString: new Date().toISOString(),
             },
+            pop: true,
           });
         }
       }
