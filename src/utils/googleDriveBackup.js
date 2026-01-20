@@ -95,7 +95,7 @@ export const googleDrive = {
           GD.accessToken = tokenRes?.accessToken;
           GD.fetchCoercesTypes = true;
           GD.fetchRejectsOnHttpErrors = true;
-          GD.fetchTimeout = 3000;
+          GD.fetchTimeout = 30000; // 30 seconds for file operations
           resolve(GD);
         })
         .catch(reject);
@@ -151,55 +151,70 @@ export const googleDrive = {
 
   moveToGDrive: (fileBase64, filename, folder_id) =>
     new Promise((resolve, reject) => {
-      googleDrive.getGoogleDriveInstance().then(async GD => {
-        GD.files
-          .newMultipartUploader()
-          .setData(fileBase64, 'application/json') // Changed to JSON as we are uploading JSON
-          .setIsBase64(true) // We might pass raw string/json, but let's check input
-          .setRequestBody({
-            name: filename,
-            parents: [folder_id],
-          })
-          .execute()
-          .then(resolve)
-          .catch(error => {
-            reject({
-              message: 'GDrive: Error while uploading file',
-              error,
+      googleDrive
+        .getGoogleDriveInstance()
+        .then(async GD => {
+          GD.files
+            .newMultipartUploader()
+            .setData(fileBase64, 'application/json') // Changed to JSON as we are uploading JSON
+            .setIsBase64(true) // We might pass raw string/json, but let's check input
+            .setRequestBody({
+              name: filename,
+              parents: [folder_id],
+            })
+            .execute()
+            .then(resolve)
+            .catch(error => {
+              reject({
+                message: 'GDrive: Error while uploading file',
+                error,
+              });
             });
-          });
-      });
+        })
+        .catch(error => {
+          reject({message: 'GDrive: Instance not created', error});
+        });
     }),
 
   deleteGDriveFile: fileId =>
     new Promise((resolve, reject) => {
-      googleDrive.getGoogleDriveInstance().then(async GD => {
-        GD.files
-          .delete(fileId)
-          .then(resolve)
-          .catch(error => {
-            reject({
-              message: 'GDrive: Error while uploading file',
-              error,
+      googleDrive
+        .getGoogleDriveInstance()
+        .then(GD => {
+          GD.files
+            .delete(fileId)
+            .then(resolve)
+            .catch(error => {
+              reject({
+                message: 'GDrive: Error while deleting file',
+                error,
+              });
             });
-          });
-      });
+        })
+        .catch(error => {
+          reject({message: 'GDrive: Instance not created', error});
+        });
     }),
   getTextFromGDriveFile: fileId =>
     new Promise((resolve, reject) => {
-      googleDrive.getGoogleDriveInstance().then(async GD => {
-        GD.files
-          .getText(fileId, {
-            spaces: 'appDataFolder',
-          })
-          .then(resolve)
-          .catch(error => {
-            reject({
-              message: 'GDrive: Error while uploading file',
-              error,
+      googleDrive
+        .getGoogleDriveInstance()
+        .then(GD => {
+          GD.files
+            .getText(fileId, {
+              spaces: 'appDataFolder',
+            })
+            .then(resolve)
+            .catch(error => {
+              reject({
+                message: 'GDrive: Error while reading file',
+                error,
+              });
             });
-          });
-      });
+        })
+        .catch(error => {
+          reject({message: 'GDrive: Instance not created', error});
+        });
     }),
 };
 
@@ -356,27 +371,6 @@ export const restoreWalletsFromDrive = async () => {
   } catch (error) {
     throw error?.json?.error || error;
   }
-};
-
-export const signinWithGoogleAndToken = async () => {
-  if (IS_IOS) {
-    GoogleSignin.configure({
-      scopes: ['https://www.googleapis.com/auth/userinfo.profile'],
-    });
-  } else {
-    GoogleSignin.configure({
-      scopes: ['https://www.googleapis.com/auth/userinfo.profile'],
-      webClientId:
-        '528421087287-19nu327o1822pl9rsvdvvb26cph97biq.apps.googleusercontent.com',
-    });
-  }
-  const hasPlayService = await GoogleSignin.hasPlayServices();
-  await GoogleSignin.signOut();
-  if (!hasPlayService) {
-    throw new Error('No google play service available');
-  }
-  const userInfo = await GoogleSignin.signIn();
-  return userInfo.idToken;
 };
 
 export default googleDrive;
