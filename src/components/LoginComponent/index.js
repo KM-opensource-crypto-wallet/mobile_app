@@ -246,7 +246,7 @@ const LoginComponent = ({onClose, visible}) => {
             </Formik>
             {!onClose && (
               <View style={styles.reset}>
-                <Text style={styles.resetTitle}>Forgot you password?</Text>
+                <Text style={styles.resetTitle}>Forgot your password?</Text>
                 <TouchableOpacity
                   // onPress={() => navigation.navigate('Registration')}
                   onPress={() => {
