@@ -310,6 +310,49 @@ const Settings = ({navigation}) => {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
+              navigation.navigate('BackupWallets');
+            }}
+            style={{
+              ...styles.btn,
+              borderBottomWidth: 0.5,
+              borderBottomColor: theme.gray,
+            }}>
+            <MaterialCommunityIcons
+              name={'cloud-upload'}
+              size={24}
+              color={theme.font}
+            />
+            <View style={[{...styles.box, flex: 1}]}>
+              <Text style={styles.btnTitle}>Backup Wallets</Text>
+              <Text style={styles.btnText} numberOfLines={2}>
+                Backup your wallets to Google Drive
+              </Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('RestoreWallets');
+            }}
+            style={{
+              ...styles.btn,
+              borderBottomWidth: 0.5,
+              borderBottomColor: theme.gray,
+            }}>
+            <MaterialCommunityIcons
+              name={'cloud-download'}
+              size={24}
+              color={theme.font}
+            />
+            <View style={[{...styles.box, flex: 1}]}>
+              <Text style={styles.btnTitle}>Restore Wallets</Text>
+              <Text style={styles.btnText} numberOfLines={2}>
+                Restore your wallets from Google Drive
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
               navigation.navigate('EVMWalletDerivation');
             }}
             style={{

@@ -35,8 +35,14 @@
 			<array>
 				<string>dokwallet</string>
 			</array>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.667161601287-30elsk2qg7irtafto8siad67f8k9n6qb</string>
+			</array>
 		</dict>
 	</array>
+	<key>GIDClientID</key>
+	<string>667161601287-30elsk2qg7irtafto8siad67f8k9n6qb.apps.googleusercontent.com</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
