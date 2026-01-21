@@ -52,7 +52,8 @@ const Transactions = ({renderList, selectedAddress}) => {
       isTransactionListNotSupported(currentCoin?.chain_name, currentCoin?.type),
     [currentCoin?.chain_name, currentCoin?.type],
   );
-
+  const isLightning =
+    currentCoin?.chain_name === 'bitcoin_lightning' ? true : false;
   // useEffect(() => {
   //  setList(currentCoin.transactions);
   // }, [currentCoin]);
@@ -126,8 +127,11 @@ const Transactions = ({renderList, selectedAddress}) => {
         ) : (
           <>
             {list?.map((item, index) => {
-              const isReceived =
-                item?.to?.toUpperCase() === selectedAddress?.toUpperCase();
+              const isReceived = isLightning
+                ? item.paymentType === 1
+                  ? true
+                  : false
+                : item?.to?.toUpperCase() === selectedAddress?.toUpperCase();
               return (
                 <TouchableOpacity
                   style={styles.section}

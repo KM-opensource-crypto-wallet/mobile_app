@@ -29,9 +29,9 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const RecieveFunds = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-  const address = useRef(null);
+  const address = useRef('');
   const currentCoin = useSelector(selectCurrentCoin);
-  address.current = currentCoin?.address;
+  address.current = currentCoin?.address ?? '';
   const isLightning =
     currentCoin?.chain_name === 'bitcoin_lightning' ? true : false;
   const chain = getChain(currentCoin?.chain_name);
@@ -73,22 +73,26 @@ const RecieveFunds = ({navigation}) => {
 
   const handleLightningDropDownChange = useCallback(
     async currentValue => {
-      let newAddress = '';
+      try {
+        let newAddress = '';
 
-      if (currentValue === 'Receive via BTC mainnet') {
-        const {address} = await chain.generateInvoiceViaBitcoinAddress();
-        newAddress = address;
-      } else if (currentValue === 'Receive via Invoice') {
-        const {address} = await chain.generateInvoiceViaBolt11();
-        newAddress = address;
-      } else if (currentValue === 'Receive via Lightning Address') {
-        // generateSparkAddress
-        const {address} = await chain.generateSparkAddress();
-        newAddress = address;
+        if (currentValue === 'Receive via BTC mainnet') {
+          const {address} = await chain.generateInvoiceViaBitcoinAddress();
+          newAddress = address;
+        } else if (currentValue === 'Receive via Invoice') {
+          const {address} = await chain.generateInvoiceViaBolt11();
+          newAddress = address;
+        } else if (currentValue === 'Receive via Lightning Address') {
+          // generateSparkAddress
+          const {address} = await chain.generateSparkAddress();
+          newAddress = address;
+        }
+
+        setAddressState(newAddress);
+        setProductQRref(`${currentCoin?.symbol}:${newAddress}`);
+      } catch (error) {
+        console.log(error);
       }
-
-      setAddressState(newAddress);
-      setProductQRref(`${currentCoin?.symbol}:${newAddress}`);
     },
     [chain, currentCoin?.symbol],
   );

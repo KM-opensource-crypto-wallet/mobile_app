@@ -2,19 +2,20 @@ import {useCallback, useState} from 'react';
 import DokDropdown from './DokDropdown';
 
 const data = [
-  {label: 'Receive via Lightning Address'},
-  {label: 'Receive via BTC mainnet'},
-  {label: 'Receive via Invoice'},
+  {label: 'Receive via Lightning Address', value: 'lightning_address'},
+  {label: 'Receive via BTC mainnet', value: 'btc_mainnet'},
+  {label: 'Receive via Invoice', value: 'invoice'},
 ];
+
 export default function LightningDropDown({
   isLightning,
   handleLightningDropDownChange,
 }) {
-  const [selectedValue, setSelectedValue] = useState(data[0].label);
+  const [selectedValue, setSelectedValue] = useState(data[0].value);
 
   const handleOnChangeValue = useCallback(
     item => {
-      setSelectedValue(item.label);
+      setSelectedValue(item.value);
       handleLightningDropDownChange(item.label);
     },
     [handleLightningDropDownChange],
@@ -26,7 +27,7 @@ export default function LightningDropDown({
     <DokDropdown
       title=""
       data={data}
-      value={selectedValue?.value}
+      value={selectedValue}
       onChangeValue={handleOnChangeValue}
       placeholder="Select Invoice Type"
     />

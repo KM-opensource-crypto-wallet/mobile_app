@@ -39,6 +39,7 @@ PODS:
     - SocketRocket
     - uniffi-bindgen-react-native (= 0.28.3-5)
     - Yoga
+  - BugfenderSDK (2.0.1)
   - DoubleConversion (1.1.6)
   - fast_float (8.0.0)
   - FBLazyVector (0.83.1)
@@ -184,6 +185,7 @@ PODS:
     - React-RCTText (= 0.83.1)
     - React-RCTVibration (= 0.83.1)
   - React-callinvoker (0.83.1)
+  - React-Codegen (0.1.0)
   - React-Core (0.83.1):
     - boost
     - DoubleConversion
@@ -2026,7 +2028,7 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - SocketRocket
-  - react-native-compat (2.23.3):
+  - react-native-compat (2.23.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -2054,7 +2056,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-    - YttriumWrapper (= 0.10.0)
   - react-native-config (1.6.1):
     - react-native-config/App (= 1.6.1)
   - react-native-config/App (1.6.1):
@@ -2119,7 +2120,7 @@ PODS:
     - Yoga
   - react-native-in-app-review (4.4.2):
     - React-Core
-  - react-native-keyboard-controller (1.20.5):
+  - react-native-keyboard-controller (1.20.4):
     - boost
     - DoubleConversion
     - fast_float
@@ -2137,7 +2138,7 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-keyboard-controller/common (= 1.20.5)
+    - react-native-keyboard-controller/common (= 1.20.4)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -2148,7 +2149,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-keyboard-controller/common (1.20.5):
+  - react-native-keyboard-controller/common (1.20.4):
     - boost
     - DoubleConversion
     - fast_float
@@ -2328,7 +2329,7 @@ PODS:
     - SDWebImage (~> 5.21.0)
     - SocketRocket
     - Yoga
-  - react-native-slider (5.1.2):
+  - react-native-slider (5.1.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -2346,7 +2347,7 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-slider/common (= 5.1.2)
+    - react-native-slider/common (= 5.1.1)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -2357,7 +2358,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-slider/common (5.1.2):
+  - react-native-slider/common (5.1.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -2972,7 +2973,7 @@ PODS:
     - React-perflogger (= 0.83.1)
     - React-utils (= 0.83.1)
     - SocketRocket
-  - RNBootSplash (6.3.12):
+  - RNBootSplash (6.3.11):
     - boost
     - DoubleConversion
     - fast_float
@@ -3000,6 +3001,14 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - RnBugfender (4.0.0):
+    - BugfenderSDK (~> 2.0)
+    - RCT-Folly
+    - RCTRequired
+    - RCTTypeSafety
+    - React
+    - React-Codegen
+    - React-Core
   - RNCAsyncStorage (2.2.0):
     - boost
     - DoubleConversion
@@ -3600,7 +3609,7 @@ PODS:
     - SDWebImage (~> 5.10)
   - SDWebImageSVGCoder (1.7.0):
     - SDWebImage/Core (~> 5.6)
-  - SDWebImageWebPCoder (0.15.0):
+  - SDWebImageWebPCoder (0.14.6):
     - libwebp (~> 1.0)
     - SDWebImage/Core (~> 5.17)
   - SensitiveInfo (5.6.2):
@@ -3632,7 +3641,7 @@ PODS:
     - SocketRocket
     - Yoga
   - SocketRocket (0.7.1)
-  - SwiftProtobuf (1.33.3)
+  - SwiftProtobuf (1.31.1)
   - TrustWalletCore (3.2.9):
     - TrustWalletCore/Core (= 3.2.9)
   - TrustWalletCore/Core (3.2.9):
@@ -3648,7 +3657,6 @@ PODS:
   - VisionCamera/React (4.7.3):
     - React-Core
   - Yoga (0.0.0)
-  - YttriumWrapper (0.10.0)
 
 DEPENDENCIES:
   - boost (from `../node_modules/react-native/third-party-podspecs/boost.podspec`)
@@ -3749,6 +3757,7 @@ DEPENDENCIES:
   - ReactCodegen (from `build/generated/ios/ReactCodegen`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - RNBootSplash (from `../node_modules/react-native-bootsplash`)
+  - "RnBugfender (from `../node_modules/@bugfender/rn-bugfender`)"
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
@@ -3776,10 +3785,12 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - BugfenderSDK
     - libavif
     - libdav1d
     - libwebp
     - OpenSSL-Universal
+    - React-Codegen
     - SDWebImage
     - SDWebImageAVIFCoder
     - SDWebImageSVGCoder
@@ -3788,7 +3799,6 @@ SPEC REPOS:
     - SwiftProtobuf
     - TrustWalletCore
     - uniffi-bindgen-react-native
-    - YttriumWrapper
 
 EXTERNAL SOURCES:
   boost:
@@ -3986,6 +3996,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   RNBootSplash:
     :path: "../node_modules/react-native-bootsplash"
+  RnBugfender:
+    :path: "../node_modules/@bugfender/rn-bugfender"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNCClipboard:
@@ -4034,6 +4046,7 @@ SPEC CHECKSUMS:
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
   breeztech-breez-sdk-spark-react-native: fef6a59b6c874a52c0c540901cef1021c9a8f407
+  BugfenderSDK: 01831192d8bfe81912f104b903510f1c93fb3592
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   fast_float: b32c788ed9c6a8c584d114d0047beda9664e7cc6
   FBLazyVector: 309703e71d3f2f1ed7dc7889d58309c9d77a95a4
@@ -4052,6 +4065,7 @@ SPEC CHECKSUMS:
   RCTTypeSafety: 27927d0ca04e419ed9467578b3e6297e37210b5c
   React: 4bc1f928568ad4bcfd147260f907b4ea5873a03b
   React-callinvoker: 87f8728235a0dc62e9dc19b3851c829d9347d015
+  React-Codegen: 4b8b4817cea7a54b83851d4c1f91f79aa73de30a
   React-Core: 19e0183e28d7a6613ecacebd7525fe6650efa3b6
   React-CoreModules: 73cc86f2a0ff84b93d6325073ad2e4874d21ad40
   React-cxxreact: 4bf734645c77c9b86e2f3e933e0411cf2f14d1ba
@@ -4080,13 +4094,13 @@ SPEC CHECKSUMS:
   React-logger: 6ac901f5c7f7321d2be1a40b203bccc2e23411e3
   React-Mapbuffer: 2e0e7cc5b7064eaed9c8b8afc3a87621cb7ef5cd
   React-microtasksnativemodule: dd4d33b251b57e5027c572c6d0b45cbfbcfaa386
-  react-native-compat: ddfc3317f703ad827dbb45a0088ae0a1d578ba50
+  react-native-compat: 70f8aee4d09b2b4ba58254b8dd4ebb203b1614a8
   react-native-config: d11015cb98b2973fec0e49407181720225733567
   react-native-fast-pbkdf2: 44d6ffa0346863e14100294004a1595ec76b2e9f
   react-native-fingerprint-scanner: ac6656f18c8e45a7459302b84da41a44ad96dbbe
   react-native-get-random-values: 9856c21cab42a6d8db71dcb35c3059fdaeac2b16
   react-native-in-app-review: bb863fb300f2c716479c4285201df746cf5e20a2
-  react-native-keyboard-controller: e590c6497b0f1df95aa49b259db0618d2f9518a1
+  react-native-keyboard-controller: d07a35e49d478d26b2eb44b10aedc4e1d35354d6
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
   react-native-pager-view: 899989dd025d219d3ac0d386b2bc162f81ae8330
   react-native-randombytes: ddf6edfd3fb9091af8c6ed1b35e57c308b5f5f2c
@@ -4094,7 +4108,7 @@ SPEC CHECKSUMS:
   react-native-restart: 7595693413fe3ca15893702f2c8306c62a708162
   react-native-safe-area-context: 54d812805f3c4e08a4580ad086cbde1d8780c2e4
   react-native-screenguard: 7d9e9000f8da97ea7e664a972402fa0576331448
-  react-native-slider: 5da4af460d0dd1346f927e829dfecbb81bd46f91
+  react-native-slider: e35799fb9983a19307195d77f10caf5f6a716842
   react-native-view-shot: 6b7ed61d77d88580fed10954d45fad0eb2d47688
   react-native-webview: 8b9097e270a99ee8798449f191a7ea27c790fa1c
   React-NativeModulesApple: 7f2f2fed3f6c858889eb61d09941be965d52df58
@@ -4130,7 +4144,8 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: bfb12ead469222b022a2024f32aba47ce50de512
   ReactCodegen: 894c9c13d45d134966e464ad5453a6d81f197910
   ReactCommon: 05ad684db7d88e194272ae26baddf6300e30b8b7
-  RNBootSplash: 9bcb1ea9b8a8199cf7e397200f38261424daac6f
+  RNBootSplash: 1e2d285376d8901d0b106da4829817e53f3eed94
+  RnBugfender: 41a3391a57e9a5af1506a0ac880151636c5a2bd6
   RNCAsyncStorage: 302f2fac014fd450046c120567ca364632da682b
   RNCClipboard: 962296f7af77f6c039b683e21c2e2255af9c05df
   RNDeviceInfo: 53f9c84e28e854a308d3e548e25ef120b4615531
@@ -4152,16 +4167,15 @@ SPEC CHECKSUMS:
   SDWebImage: f84b0feeb08d2d11e6a9b843cb06d75ebf5b8868
   SDWebImageAVIFCoder: afe194a084e851f70228e4be35ef651df0fc5c57
   SDWebImageSVGCoder: 15a300a97ec1c8ac958f009c02220ac0402e936c
-  SDWebImageWebPCoder: 0e06e365080397465cc73a7a9b472d8a3bd0f377
+  SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   SensitiveInfo: 7f362ffec4ce959a31f0706a4f22c9338f7926ee
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
-  SwiftProtobuf: e1b437c8e31a4c5577b643249a0bb62ed4f02153
+  SwiftProtobuf: e02f51c8c2df5845657aee2d4de9d61bf50ef788
   TrustWalletCore: 33400e9cf939277435b4e2e6c21daaa1afe26c7c
   uniffi-bindgen-react-native: 018090e6c342b31e1189eb4d098860e9d44caa86
   VisionCamera: 68d40255fa8866e815cbbb063730102d3da276fd
   Yoga: 5456bb010373068fc92221140921b09d126b116e
-  YttriumWrapper: a111be1d94e57cfe5f242f2b52dac691cd93d0a8
 
-PODFILE CHECKSUM: bf6f7a842664f5298a14d7cc61edd4fc993766aa
+PODFILE CHECKSUM: 90249c916d6c7aed72cea4b98209c6d08a6dc0f7
 
 COCOAPODS: 1.15.2

@@ -37,6 +37,8 @@ const TransactionList = () => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const allTransactions = currentCoin?.transactions;
+  const isLightning =
+    currentCoin?.chain_name === 'bitcoin_lightning' ? true : false;
   const [modalVisible, setModalVisible] = useState(false);
   const [sort, setSort] = useState('Date Descending');
   const [filter, setFilter] = useState('None');
@@ -170,11 +172,15 @@ const TransactionList = () => {
                 <Text style={styles.address} numberOfLines={1}>
                   Your last 20 transactions
                 </Text>
-                <TouchableOpacity
-                  style={styles.viewButton}
-                  onPress={onPressViewAll}>
-                  <Text style={styles.viewButtonText}>{'View all'}</Text>
-                </TouchableOpacity>
+                {isLightning ? (
+                  <></>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.viewButton}
+                    onPress={onPressViewAll}>
+                    <Text style={styles.viewButtonText}>{'View all'}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
             <View style={styles.borderBox}>
