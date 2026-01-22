@@ -3,6 +3,7 @@ import {Dimensions, TouchableOpacity, View, StyleSheet} from 'react-native';
 import {Modal, Portal, Text} from 'react-native-paper';
 import FastImage from '@d11/react-native-fast-image';
 import {ThemeContext} from 'theme/ThemeContext';
+import {DRIVE_GUIDE_IMG} from '../../utils/wlData';
 
 const {width} = Dimensions.get('window');
 const MODAL_WIDTH = width * 0.85;
@@ -30,7 +31,7 @@ const DriveGuideModal = ({visible, onContinue}) => {
 
           <View style={styles.imageContainer}>
             <FastImage
-              source={require('assets/images/drive_guide.png')}
+              source={DRIVE_GUIDE_IMG}
               style={styles.image}
               resizeMode={FastImage.resizeMode.cover}
             />

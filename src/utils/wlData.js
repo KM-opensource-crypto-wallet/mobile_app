@@ -41,6 +41,13 @@ const WEB_GOOGLE_CLIENT_ID_OBJ = {
 
 export const WEB_GOOGLE_CLIENT_ID = WEB_GOOGLE_CLIENT_ID_OBJ[wlName];
 
+const DRIVE_GUIDE_IMG_OBJ = {
+  dokwallet: require('assets/dokwallet/drive_guide.png'),
+  kimlwallet: require('assets/kimlwallet/drive_guide.png'),
+};
+
+export const DRIVE_GUIDE_IMG = DRIVE_GUIDE_IMG_OBJ[wlName];
+
 const IOS_APPSTORE_URL_OBJ = {
   dokwallet: 'itms-apps://apps.apple.com/app/id1533065700?mt=8',
   kimlwallet: 'itms-apps://apps.apple.com/app/id6746929530?mt=8',

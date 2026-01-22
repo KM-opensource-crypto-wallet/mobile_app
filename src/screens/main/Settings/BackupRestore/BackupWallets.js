@@ -38,10 +38,12 @@ import {showToast} from 'utils/toast';
 
 import WalletSelectionCard from 'components/BackupRestore/WalletSelectionCard';
 import myStyles from './styles';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const BackupWallets = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
-  const styles = myStyles(theme);
+  const {bottom} = useSafeAreaInsets();
+  const styles = myStyles(theme, bottom);
 
   const allWallets = useSelector(selectAllWallets);
   const masterClientId = useSelector(getMasterClientId);

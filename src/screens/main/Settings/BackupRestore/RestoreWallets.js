@@ -40,10 +40,12 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import WalletSelectionCard from 'components/BackupRestore/WalletSelectionCard';
 import DriveGuideModal from 'components/BackupRestore/DriveGuideModal';
 import myStyles from './styles';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const RestoreWallets = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
-  const styles = myStyles(theme);
+  const {bottom} = useSafeAreaInsets();
+  const styles = myStyles(theme, bottom);
   const dispatch = useDispatch();
 
   const existingWallets = useSelector(selectAllWallets);

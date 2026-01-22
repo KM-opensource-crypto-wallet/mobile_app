@@ -1,6 +1,6 @@
 import {StyleSheet} from 'react-native';
 
-const myStyles = theme =>
+const myStyles = (theme, bottom) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -77,11 +77,12 @@ const myStyles = theme =>
 
     footer: {
       position: 'absolute',
-      bottom: 0,
+      bottom: bottom,
       left: 0,
       right: 0,
       backgroundColor: theme.backgroundColor,
       padding: 20,
+      paddingBottom: 0,
       borderTopWidth: 1,
       borderTopColor: theme.headerBorder,
     },
