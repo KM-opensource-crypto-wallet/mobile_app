@@ -1114,10 +1114,15 @@
   dependencies:
     regenerator-runtime "^0.14.0"
 
-"@babel/runtime@7.28.4", "@babel/runtime@^7.25.0", "@babel/runtime@^7.28.4":
+"@babel/runtime@7.28.4":
   version "7.28.4"
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.28.4.tgz#a70226016fabe25c5783b2f22d3e1c9bc5ca3326"
   integrity sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==
+
+"@babel/runtime@^7.25.0", "@babel/runtime@^7.28.4":
+  version "7.28.6"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.28.6.tgz#d267a43cb1836dc4d182cce93ae75ba954ef6d2b"
+  integrity sha512-05WQkdpL9COIMz4LjTxGpPNCdlpyimKppYNoJ5Di5EUObifl8t4tuLuUBBZEpoLYOmfvIWrsp9fCl0HoPRVTdA==
 
 "@babel/template@^7.25.0", "@babel/template@^7.27.1", "@babel/template@^7.27.2", "@babel/template@^7.3.3":
   version "7.27.2"
@@ -1218,9 +1223,9 @@
   integrity sha512-wJ8ReQbHxsAfXhrf9ixl0aYbZorRuOWpBNzm8pL8ftmSxQx/wnJD5Eg861NwJU/czy2VXFIebCeZnZrI9rktIQ==
 
 "@bugfender/common@^1.4.0":
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/@bugfender/common/-/common-1.4.0.tgz#e7483949cee6269a4ba78c1e82c03f31ca14f4ce"
-  integrity sha512-EWsdYow0IqIjZERXVwKDHtoZKRFIknQDt/QpdVC4K2Yu1nTjkYecQRYJdnuP+Cvgn4JMrKl0HaTux2IjOyyLvA==
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@bugfender/common/-/common-1.6.0.tgz#d41f5445bbe99360c00010e230db04fea1676bd4"
+  integrity sha512-lmqULDnBxF7o8zNsYDPZJb3Vg9fBd/22cFFqF70Jg+YfCXvpi9oI0UHw+IL1pu/Kun1ZODC+KrXBd+3PnwoC1g==
 
 "@bugfender/rn-bugfender@^4.0.0":
   version "4.0.0"
