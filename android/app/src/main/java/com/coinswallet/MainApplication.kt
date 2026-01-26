@@ -6,9 +6,6 @@ import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
-import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
-import com.facebook.react.soloader.OpenSourceMergedSoMapping
-import com.facebook.soloader.SoLoader
 
 class MainApplication : Application(), ReactApplication {
 
@@ -29,15 +26,16 @@ class MainApplication : Application(), ReactApplication {
     super.onCreate()
     loadReactNative(this)
   }
-  fun addActivityToStack(cls: Class<*>) {
-    if (!runningActivities.contains(cls)) runningActivities.add(cls)
-  }
 
-  fun removeActivityFromStack(cls: Class<*>) {
-    if (runningActivities.contains(cls)) runningActivities.remove(cls)
-  }
+   fun addActivityToStack(cls: Class<*>) {
+        if (!runningActivities.contains(cls)) runningActivities.add(cls)
+    }
 
-  fun isActivityInBackStack(cls: Class<*>): Boolean {
-    return runningActivities.contains(cls)
-  }
+    fun removeActivityFromStack(cls: Class<*>) {
+        if (runningActivities.contains(cls)) runningActivities.remove(cls)
+    }
+
+    fun isActivityInBackStack(cls: Class<*>): Boolean {
+        return runningActivities.contains(cls)
+    }
 }
