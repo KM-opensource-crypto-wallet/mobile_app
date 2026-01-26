@@ -8,7 +8,6 @@ import {walletsSlice} from 'dok-wallet-blockchain-networks/redux/wallets/wallets
 import {currentTransferSlice} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {currencySlice} from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
 import {exchangeSlice} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
-import BootSplash from 'react-native-bootsplash';
 import {
   setReduxStoreLoaded,
   walletConnectSlice,
@@ -81,7 +80,6 @@ const store = configureStore({
 let persistor = persistStore(store, null, () => {
   setTimeout(() => {
     store.dispatch(setReduxStoreLoaded(true));
-    BootSplash.hide({fade: true});
   }, 500);
 });
 
