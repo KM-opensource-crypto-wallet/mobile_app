@@ -6,10 +6,12 @@ import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
+import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
+import com.facebook.react.soloader.OpenSourceMergedSoMapping
+import com.facebook.soloader.SoLoader
 
 class MainApplication : Application(), ReactApplication {
 
-  private val runningActivities = mutableListOf<Class<*>>()
   override val reactHost: ReactHost by lazy {
     getDefaultReactHost(
       context = applicationContext,
@@ -24,18 +26,8 @@ class MainApplication : Application(), ReactApplication {
 
   override fun onCreate() {
     super.onCreate()
+    // loadReactNative(this)
+    SoLoader.init(this, OpenSourceMergedSoMapping)
     loadReactNative(this)
   }
-
-   fun addActivityToStack(cls: Class<*>) {
-        if (!runningActivities.contains(cls)) runningActivities.add(cls)
-    }
-
-    fun removeActivityFromStack(cls: Class<*>) {
-        if (runningActivities.contains(cls)) runningActivities.remove(cls)
-    }
-
-    fun isActivityInBackStack(cls: Class<*>): Boolean {
-        return runningActivities.contains(cls)
-    }
 }

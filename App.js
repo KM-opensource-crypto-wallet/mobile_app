@@ -8,9 +8,16 @@ import {
   clearLegacySecureStorage,
   getLegacySecureValue,
 } from 'myWallet/wallet.service';
+import SplashScreen from 'react-native-bootsplash';
 
 export default function App() {
   const [isMigrating, setIsMigrating] = useState(IS_ANDROID);
+
+  useEffect(() => {
+    if (IS_ANDROID) {
+      SplashScreen.hide();
+    }
+  }, []);
 
   useEffect(() => {
     (async () => {
