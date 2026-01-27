@@ -8,23 +8,12 @@ import {
     SendPaymentMethod,
     SendPaymentMethod_Tags,
     InputType_Tags,
+    SendPaymentOptions,
+    OnchainConfirmationSpeed,
 } from '@breeztech/breez-sdk-spark-react-native';
 
 import { config, IS_SANDBOX } from 'dok-wallet-blockchain-networks/config/config';
-import { Alert } from 'react-native';
 import { DocumentDirectoryPath } from 'react-native-fs';
-
-function decimalStringToBigInt(value, decimals) {
-  if (!/^\d+(\.\d+)?$/.test(value)) {
-    throw new Error('Invalid decimal string');
-  }
-
-  const [intPart, fracPart = ''] = value.split('.');
-  const paddedFrac = (fracPart + '0'.repeat(decimals)).slice(0, decimals);
-
-  return BigInt(intPart + paddedFrac);
-}
-
 class JsEventListener {
     constructor(callback) {
         this.callback = callback;
@@ -70,6 +59,7 @@ const commonConnectSdk = async mnemonic => {
 
 async function connectToSdk(phrase) {
     let mnemonic = phrase;
+    console.log("sdkInstance:", sdkInstance)
     if (sdkInstance) {
         if (sdkMap.has(mnemonic)) {
             console.log('♻️ Reusing SDK');
@@ -96,7 +86,7 @@ async function prepareAndSendPayment(phrase, paymentRequest, amount) {
     try {
         const sdk = await connectToSdk(phrase);
         if (!sdk || !paymentRequest) {
-            Alert.alert('Error', 'SDK not connected or no payment request');
+            console.log('Error', 'SDK not connected or no payment request');
             return;
         }
         const prepareResponse = await sdk.prepareSendPayment({
@@ -127,10 +117,19 @@ async function prepareAndSendPayment(phrase, paymentRequest, amount) {
                 sparkFee: '',
             };
         }
+        if (
+            prepareResponse.paymentMethod?.tag ===
+            SendPaymentMethod_Tags.BitcoinAddress
+        ) {
+            const feeSats = prepareResponse.paymentMethod.inner.feeQuote.speedFast.userFeeSat;
+            return {
+                lightningFee: feeSats,
+                sparkFee: '',
+            };
+        }
         return {};
     } catch (err) {
         console.error('Error preparing payment:', err);
-        Alert.alert('Prepare Error', err.message);
     }
 }
 
@@ -141,6 +140,17 @@ function satoshiToBtc(sats) {
     const satsNumber = typeof sats === 'bigint' ? Number(sats) : Number(sats);
 
     return satsNumber / 100_000_000;
+}
+
+function decimalStringToBigInt(value, decimals) {
+    if (!/^\d+(\.\d+)?$/.test(value)) {
+        throw new Error('Invalid decimal string');
+    }
+
+    const [intPart, fracPart = ''] = value.split('.');
+    const paddedFrac = (fracPart + '0'.repeat(decimals)).slice(0, decimals);
+
+    return BigInt(intPart + paddedFrac);
 }
 
 export const getLightningBalance = async (phrase) => {
@@ -159,12 +169,12 @@ export const isLightningAddressValid = async (address, phrase) => {
     try {
         const sdk = await connectToSdk(phrase);
         if (!sdk) {
-            Alert.alert('Error', 'SDK not connected or no payment request');
+            console.log('Error', 'SDK not connected or no payment request');
             return;
         }
         const input = await sdk.parse(address);
         if (input.tag === InputType_Tags.BitcoinAddress) {
-            return false;
+            return true;
         } else if (input.tag === InputType_Tags.Bolt11Invoice) {
             return true;
         } else if (input.tag === InputType_Tags.SparkAddress) {
@@ -181,7 +191,7 @@ export const generateLightningInvoiceViaBolt11 = async (phrase) => {
     try {
         const sdk = await connectToSdk(phrase);
         if (!sdk) {
-            Alert.alert('Error', 'SDK not connected');
+            console.log('Error', 'SDK not connected');
             return;
         }
         const response = await sdk.receivePayment({
@@ -195,7 +205,7 @@ export const generateLightningInvoiceViaBolt11 = async (phrase) => {
         };
     } catch (error) {
         console.error('Error generating invoice:', error);
-        Alert.alert('Invoice Error', error.message);
+        console.log('Invoice Error', error.message);
     }
 }
 
@@ -203,7 +213,7 @@ export const generateLightningSparkAddress = async (phrase) => {
     try {
         const sdk = await connectToSdk(phrase);
         if (!sdk) {
-            Alert.alert('Error', 'SDK not connected');
+            console.log('Error', 'SDK not connected');
             return;
         }
         const response = await sdk.receivePayment({
@@ -216,7 +226,7 @@ export const generateLightningSparkAddress = async (phrase) => {
         };
     } catch (error) {
         console.error('Error generating invoice:', error);
-        Alert.alert('Invoice Error', error.message);
+        console.log('Invoice Error', error.message);
     }
 }
 
@@ -224,20 +234,19 @@ export const generateLightningInvoiceViaBitcoinAddress = async (phrase) => {
     try {
         const sdk = await connectToSdk(phrase);
         if (!sdk) {
-            Alert.alert('Error', 'SDK not connected');
+            console.log('Error', 'SDK not connected');
             return;
         }
         const response = await sdk.receivePayment({
             paymentMethod: new ReceivePaymentMethod.BitcoinAddress(),
         });
-
         return {
             address: response.paymentRequest,
             receiveFeeSats: response.fee,
         };
     } catch (err) {
         console.error('Error generating invoice:', err);
-        Alert.alert('Invoice Error', err.message);
+        console.log('Invoice Error', err.message);
     }
 }
 
@@ -259,9 +268,10 @@ export const prepareLightning = async (phrase, toAddress, amount) => {
 
 export const sendLightning = async (phrase) => {
     try {
+        let options = undefined;
         const sdk = await connectToSdk(phrase);
         if (!sdk || !prepareSendResponse) {
-            Alert.alert('Error', 'SDK not connected or no payment request');
+            console.log('Error', 'SDK not connected or no payment request');
             return;
         }
 
@@ -287,17 +297,26 @@ export const sendLightning = async (phrase) => {
                 `Fees: ${prepareSendResponse.paymentMethod.inner.fee} token base units`,
             );
         }
+        if (
+            prepareSendResponse.paymentMethod?.tag ===
+            SendPaymentMethod_Tags.BitcoinAddress
+        ) {
+            options = new SendPaymentOptions.BitcoinAddress({
+                confirmationSpeed: OnchainConfirmationSpeed.Fast
+            })
+        }
+        console.log("prepareSendResponse:", prepareSendResponse)
 
         // Send the token payment
         const sendResponse = await sdk.sendPayment({
             prepareResponse: prepareSendResponse,
-            options: undefined,
+            options: options,
             idempotencyKey: undefined,
         });
         const payment = sendResponse.payment;
         return payment.id;
     } catch (error) {
-        console.error('Error in bitcoin gas fee', error);
+        console.error('Error:  ', error);
         throw error;
     }
 }
@@ -306,7 +325,7 @@ export const waitForLightningConfirmation = async (phrase) => {
     const sdk = await connectToSdk(phrase);
 
     if (!sdk) {
-        Alert.alert('Error', 'SDK not connected');
+        console.log('Error', 'SDK not connected');
         return;
     }
 
@@ -321,7 +340,7 @@ export const waitForLightningConfirmation = async (phrase) => {
 
                 if (resolved) return;
 
-               if (event.tag === 'PaymentSucceeded' || event.tag === 'Synced') {
+                if (event.tag === 'PaymentSucceeded' || event.tag === 'Synced') {
                     resolved = true;
 
                     // 🧹 cleanup
@@ -380,7 +399,6 @@ export const getLightningTransactions = async (phrase) => {
             limit: 20,
         });
         const transactions = response.payments;
-        console.log('transactions:', transactions);
         if (Array.isArray(transactions)) {
             return transactions.map(item => {
                 const txHash = item?.details.inner?.paymentHash || item?.id || 'N/A';
