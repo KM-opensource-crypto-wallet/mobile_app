@@ -4802,6 +4802,11 @@
   resolved "https://registry.yarnpkg.com/@react-native-community/slider/-/slider-5.1.1.tgz#321c37da565b264fd8f96a4edcb55d3fe78f26aa"
   integrity sha512-W98If/LnTaziU3/0h5+G1LvJaRhMc6iLQBte6UWa4WBIHDMaDPglNBIFKcCXc9Dxp83W+f+5Wv22Olq9M2HJYA==
 
+"@react-native-google-signin/google-signin@^16.1.1":
+  version "16.1.1"
+  resolved "https://registry.yarnpkg.com/@react-native-google-signin/google-signin/-/google-signin-16.1.1.tgz#40b9f8458a09cf8933132efd8a68f0a573167e92"
+  integrity sha512-lcHBnZ7uvCJiWtGooKOklo/4okqszWvJ0BatW1UaIe+ynmpVpp1lyJkvv1Mj08d39k4soaWuhZVNKjD/RFL34Q==
+
 "@react-native/assets-registry@0.83.1":
   version "0.83.1"
   resolved "https://registry.yarnpkg.com/@react-native/assets-registry/-/assets-registry-0.83.1.tgz#d210065b8d7939660f845fba3c6d9e5aa5998d13"
@@ -5158,6 +5163,23 @@
   version "4.0.0-rc.8"
   resolved "https://registry.yarnpkg.com/@rneui/themed/-/themed-4.0.0-rc.8.tgz#5c0e1aaa3d190ead88936693c5cef50ec404cd05"
   integrity sha512-8L/XOrL9OK/r+/iBLvx63TbIdZOXF8SIjN9eArMYm6kRbMr8m4BitXllDN8nBhBsSPNYvL6EAgjk+i2MfY4sBA==
+
+"@robinbobin/mimetype-constants@^2.0.3":
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/@robinbobin/mimetype-constants/-/mimetype-constants-2.0.3.tgz#064bed7a0ab4896b3e1cda0636d0b26b6fb2b3b6"
+  integrity sha512-elfj39euC34YHvx8siGdx1CHAWKZey4tIiLzDomn7Dq5co5XVsCnru8UWSEfeKSnI+KwEm8IrF9vOWufeEUL/w==
+  dependencies:
+    radashi "^12.7.1"
+
+"@robinbobin/react-native-google-drive-api-wrapper@^2.2.6":
+  version "2.2.6"
+  resolved "https://registry.yarnpkg.com/@robinbobin/react-native-google-drive-api-wrapper/-/react-native-google-drive-api-wrapper-2.2.6.tgz#d055b01e247bb44f94e29600558faa799cba0c5f"
+  integrity sha512-RAHj1Zplql7dTT6DQXOsV4TnvewMI6EvmdfSfdrt9MNyyixT1nlrsgvBqtg6N32P2gWnZzPAS9OXUQBWthKdtA==
+  dependencies:
+    "@robinbobin/mimetype-constants" "^2.0.3"
+    base64-js "^1.5.1"
+    radashi "^12.6.0"
+    utf8 "^3.0.0"
 
 "@rvagg/ripemd160@^2.2.4":
   version "2.2.4"
@@ -15160,6 +15182,11 @@ quick-lru@^5.1.1:
   resolved "https://registry.yarnpkg.com/quick-lru/-/quick-lru-5.1.1.tgz#366493e6b3e42a3a6885e2e99d18f80fb7a8c932"
   integrity sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==
 
+radashi@^12.6.0, radashi@^12.7.1:
+  version "12.7.1"
+  resolved "https://registry.yarnpkg.com/radashi/-/radashi-12.7.1.tgz#f57ae58b9d8a2bba3efebbd733580ca456daa429"
+  integrity sha512-rwxcGY3oKMQJ+ojhS4MlxyVWqdXPVJSxg3ZjXDYYz26DYRuAAs+7XBM406/GYzPEBbjSJqdKfHDpBRfjWn34RQ==
+
 radix3@^1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/radix3/-/radix3-1.1.2.tgz#fd27d2af3896c6bf4bcdfab6427c69c2afc69ec0"
@@ -18045,7 +18072,7 @@ utf-8-validate@^6.0.4:
   dependencies:
     node-gyp-build "^4.3.0"
 
-utf8@3.0.0:
+utf8@3.0.0, utf8@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/utf8/-/utf8-3.0.0.tgz#f052eed1364d696e769ef058b183df88c87f69d1"
   integrity sha512-E8VjFIQ/TyQgp+TZfS6l8yp/xWppSAHzidGiRrqe4bK4XP9pTRyKFgGJpO3SN7zdX4DeomTrwaseCHovfpFcqQ==

@@ -64,6 +64,8 @@ import Message from 'screens/main/Home/Message';
 import {CustomDerivation} from 'screens/main/Home/CustomDerivation';
 import VoteStaking from 'screens/main/Home/VoteStaking';
 import BlockedConversations from 'screens/main/Settings/BlockedConvervastions';
+import BackupWallets from 'screens/main/Settings/BackupRestore/BackupWallets';
+import RestoreWallets from 'screens/main/Settings/BackupRestore/RestoreWallets';
 import UpdateTransaction from 'screens/main/Home/UpdateTransaction';
 import EditConversation from 'screens/main/Home/EditConversation';
 import ForwardMessage from 'components/ForwardMessage';
@@ -615,6 +617,36 @@ export const useRoute = isAuth => {
           options={({navigation}) => ({
             title: 'Blockchain Chat Blocked',
 
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+            cardStyleInterpolator: forFade,
+          })}
+        />
+        <Stack.Screen
+          name="BackupWallets"
+          component={BackupWallets}
+          options={({navigation}) => ({
+            title: 'Backup Wallets',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+            cardStyleInterpolator: forFade,
+          })}
+        />
+        <Stack.Screen
+          name="RestoreWallets"
+          component={RestoreWallets}
+          options={({navigation}) => ({
+            title: 'Restore Wallets',
             headerLeft: () => (
               <TouchableOpacity
                 style={styles.headerLeftStyle}

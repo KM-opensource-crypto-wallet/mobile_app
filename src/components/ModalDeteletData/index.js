@@ -1,9 +1,10 @@
 import React from 'react';
-import {Dimensions, TouchableOpacity, View, Text, Modal} from 'react-native';
+import {TouchableOpacity, View, Text, Modal} from 'react-native';
 
 import styles from './ModalDeleteData';
 import {persistor} from 'redux/store';
 import RNRestart from 'react-native-restart';
+import googleDrive from '../../utils/googleDriveBackup';
 
 const ModalDeleteData = ({visible, hideModal}) => {
   const handlerNo = () => {
@@ -14,6 +15,7 @@ const ModalDeleteData = ({visible, hideModal}) => {
     try {
       hideModal();
       await persistor.purge();
+      await googleDrive.googleSignOut();
       RNRestart.restart();
     } catch (e) {
       console.error('Error in delete data', e);

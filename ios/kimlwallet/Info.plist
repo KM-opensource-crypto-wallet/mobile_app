@@ -35,8 +35,14 @@
 			<array>
 				<string>kimlwallet</string>
 			</array>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.258522351383-q6k0k1sjo8709mhf59ub24p9s98d6j7d</string>
+			</array>
 		</dict>
 	</array>
+	<key>GIDClientID</key>
+	<string>258522351383-q6k0k1sjo8709mhf59ub24p9s98d6j7d.apps.googleusercontent.com</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>

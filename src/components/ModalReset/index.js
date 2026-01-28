@@ -19,6 +19,7 @@ import {useDispatch} from 'react-redux';
 import {resetCurrentTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {resetBatchTransactions} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
 import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
+import googleDrive from '../../utils/googleDriveBackup';
 
 const WIDTH = Dimensions.get('window').width + 80;
 
@@ -55,11 +56,12 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
     }
   };
 
-  const handlerYes = () => {
+  const handlerYes = async () => {
     if (list === 'Delete Account' || list === 'Forgot') {
       dispatch(resetWallet());
       dispatch(resetCurrentTransferData());
       dispatch(resetBatchTransactions());
+      await googleDrive.googleSignOut();
       hideModal(false);
       dispatch(logOutSuccess());
       setTimeout(() => {
