@@ -3,7 +3,7 @@ import {Dimensions, TouchableOpacity, View, StyleSheet} from 'react-native';
 import {Modal, Portal, Text} from 'react-native-paper';
 import FastImage from '@d11/react-native-fast-image';
 import {ThemeContext} from 'theme/ThemeContext';
-import {DRIVE_GUIDE_IMG} from '../../utils/wlData';
+import {DRIVE_GUIDE_IMG} from 'utils/wlData';
 
 const {width} = Dimensions.get('window');
 const MODAL_WIDTH = width * 0.85;
@@ -58,7 +58,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderRadius: 20,
     padding: 24,
-    overflow: 'hidden',
   },
   content: {
     alignItems: 'center',
