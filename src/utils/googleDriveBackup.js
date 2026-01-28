@@ -218,67 +218,71 @@ export const googleDrive = {
     }),
 };
 
-// OpenSSL-compatible key derivation (EVP_BytesToKey with MD5)
-// This matches CryptoJS's passphrase-based AES behavior for backward compatibility
-const evpBytesToKey = (password, salt) => {
-  const keyLen = 32; // AES-256
-  const ivLen = 16; // CBC IV
-  const parts = [];
-  let prev = Buffer.alloc(0);
-  while (Buffer.concat(parts).length < keyLen + ivLen) {
-    const hash = crypto.createHash('md5');
-    hash.update(prev);
-    hash.update(Buffer.from(password, 'utf8'));
-    if (salt) {
-      hash.update(salt);
-    }
-    prev = hash.digest();
-    parts.push(prev);
-  }
-  const combined = Buffer.concat(parts);
-  return {
-    key: combined.subarray(0, keyLen),
-    iv: combined.subarray(keyLen, keyLen + ivLen),
-  };
+// Version prefix for encrypted payloads
+const VERSION_V1_GCM = 'v1-gcm:';
+
+// Key derivation using PBKDF2-SHA256
+const deriveKey = (password, salt) => {
+  const passwordBuffer = Buffer.from(password, 'utf8');
+  return crypto.pbkdf2Sync(passwordBuffer, salt, 100000, 32, 'sha256');
 };
 
-// Encryption (OpenSSL format compatible with CryptoJS)
+// Encryption with AES-256-GCM (authenticated encryption)
+// Format: "v1-gcm:" + base64([16-byte salt][12-byte nonce][ciphertext][16-byte auth tag])
 const encryptData = data => {
   try {
     const jsonString = JSON.stringify(data);
-    const salt = crypto.randomBytes(8);
-    const {key, iv} = evpBytesToKey(process.env.WALLET_BACKUP_SECRET, salt);
-    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+    const salt = crypto.randomBytes(16);
+    const nonce = crypto.randomBytes(12); // GCM standard nonce size
+    const key = deriveKey(process.env.WALLET_BACKUP_SECRET, salt);
+
+    const cipher = crypto.createCipheriv('aes-256-gcm', key, nonce);
     const encrypted = Buffer.concat([
       cipher.update(jsonString, 'utf8'),
       cipher.final(),
     ]);
-    // OpenSSL format: "Salted__" + 8-byte salt + ciphertext
-    const result = Buffer.concat([
-      Buffer.from('Salted__', 'ascii'),
-      salt,
-      encrypted,
-    ]);
-    return result.toString('base64');
+    const authTag = cipher.getAuthTag(); // 16 bytes
+
+    // v1-gcm format: salt + nonce + ciphertext + authTag
+    const payload = Buffer.concat([salt, nonce, encrypted, authTag]);
+    return VERSION_V1_GCM + payload.toString('base64');
   } catch (error) {
     console.error('Encryption Failed:', error);
     throw new Error('Failed to encrypt wallet data');
   }
 };
 
-// Decryption (OpenSSL format compatible with CryptoJS)
+// Decryption with AES-256-GCM (authenticated decryption)
 const decryptData = ciphertext => {
   try {
-    const rawData = Buffer.from(ciphertext, 'base64');
-    // OpenSSL format: first 8 bytes = "Salted__", next 8 bytes = salt, rest = ciphertext
-    const salt = rawData.subarray(8, 16);
-    const encrypted = rawData.subarray(16);
-    const {key, iv} = evpBytesToKey(process.env.WALLET_BACKUP_SECRET, salt);
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+    if (!ciphertext.startsWith(VERSION_V1_GCM)) {
+      throw new Error('Invalid encrypted data format');
+    }
+
+    const base64Data = ciphertext.slice(VERSION_V1_GCM.length);
+    const rawData = Buffer.from(base64Data, 'base64');
+
+    // Minimum size: 16 (salt) + 12 (nonce) + 1 (min ciphertext) + 16 (auth tag) = 45 bytes
+    if (rawData.length < 45) {
+      throw new Error('Invalid encrypted data: too short');
+    }
+
+    const salt = rawData.subarray(0, 16);
+    const nonce = rawData.subarray(16, 28);
+    const authTag = rawData.subarray(rawData.length - 16);
+    const encrypted = rawData.subarray(28, rawData.length - 16);
+
+    const key = deriveKey(process.env.WALLET_BACKUP_SECRET, salt);
+
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, nonce);
+    decipher.setAuthTag(authTag);
+
+    // GCM authentication happens during decryption - will throw if tag is invalid
     const decrypted = Buffer.concat([
       decipher.update(encrypted),
-      decipher.final(),
+      decipher.final(), // Throws if auth tag verification fails
     ]);
+
     return JSON.parse(decrypted.toString('utf8'));
   } catch (error) {
     console.error('Decryption Failed:', error);
