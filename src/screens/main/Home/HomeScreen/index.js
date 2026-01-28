@@ -193,24 +193,24 @@ const HomeScreen = ({navigation, route}) => {
   useEffect(() => {
     setAddCoinModalVisible(false);
     if (paymentData?.address && paymentData?.currency) {
-      setAddCoinModalVisible(true);
       dispatch(searchAndAddCoins({currency: paymentData?.currency}))
         .unwrap()
         .then(data => {
           if (data?.coinId) {
             dispatch(setCurrentCoin(data?.coinId));
+            setTimeout(() => {
+              navigation.navigate('SendFunds', {
+                ...paymentData,
+                amount: paymentData?.amount,
+                address: paymentData?.address,
+                memo: paymentData?.memo,
+                date: new Date().toISOString(),
+              });
+              dispatch(setPaymentData(null));
+            }, 1000);
+          } else {
+            setAddCoinModalVisible(true);
           }
-          setAddCoinModalVisible(false);
-          setTimeout(() => {
-            navigation.navigate('SendFunds', {
-              ...paymentData,
-              amount: paymentData?.amount,
-              address: paymentData?.address,
-              memo: paymentData?.memo,
-              date: new Date().toISOString(),
-            });
-            dispatch(setPaymentData(null));
-          }, 0);
         })
         .catch(err => {
           console.error('Failed to searchAndAddCoins:', err);

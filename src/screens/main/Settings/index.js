@@ -15,18 +15,14 @@ import ModalFingerprintVerification from 'components/ModalFingerprintVerificatio
 import {useDispatch, useSelector} from 'react-redux';
 import {
   getLocalCurrency,
-  getLockTime,
   getLockTimeDisplay,
   isChatOptions,
-  isFeesOptions,
   isFingerprint,
   isSearchInHomeScreen,
   isWalletReset,
-  isUpdateSearchInHomeScreen,
 } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {
   updateChatOptions,
-  updateFeesOptions,
   updateFingerprint,
   updateSearchInHomeScreen,
   setResetWallet,
@@ -57,7 +53,6 @@ const Settings = ({navigation}) => {
   const [isFingerprintEnabled, setIsFingerprintEnabled] = useState(null);
   const localCurrency = useSelector(getLocalCurrency);
   const lockTimeDisplay = useSelector(getLockTimeDisplay);
-  const feesOptions = useSelector(isFeesOptions);
   const chatOptions = useSelector(isChatOptions);
   const searchInHomeScreen = useSelector(isSearchInHomeScreen);
   const rateLimitCheck = useSelector(isWalletReset);
@@ -73,10 +68,6 @@ const Settings = ({navigation}) => {
     } else {
       setShowModalVarify(true);
     }
-  };
-
-  const onChangeFeesOptions = value => {
-    dispatch(updateFeesOptions(value));
   };
 
   const onChangeChatOptions = value => {
@@ -369,37 +360,6 @@ const Settings = ({navigation}) => {
               </Text>
             </View>
           </TouchableOpacity>
-          <View
-            style={{
-              ...styles.btn,
-              justifyContent: 'space-between',
-              marginTop: 12,
-              borderBottomWidth: 0.5,
-              borderBottomColor: theme.gray,
-            }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                flex: 1,
-              }}>
-              <AddIcon width="25" height="25" stroke={theme.font} />
-              <View style={styles.box}>
-                <Text style={styles.btnTitle}>{'EVM Fees Options'}</Text>
-                <Text style={styles.btnText}>
-                  {'It will show the fees options for supported EVM chains'}
-                </Text>
-              </View>
-            </View>
-
-            <Switch
-              value={feesOptions}
-              onValueChange={onChangeFeesOptions}
-              trackColor={{false: 'gray', true: '#E8E8E8'}}
-              thumbColor={feesOptions ? theme.background : 'white'}
-              ios_backgroundColor="#E8E8E8"
-            />
-          </View>
           <View
             style={{
               ...styles.btn,

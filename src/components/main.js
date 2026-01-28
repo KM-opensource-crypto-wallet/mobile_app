@@ -1,3 +1,4 @@
+import BootSplash from 'react-native-bootsplash';
 import React, {
   useCallback,
   useContext,
@@ -263,6 +264,7 @@ const Main = () => {
       setAdjustPan();
     }
     if (isReduxStoreLoad) {
+      BootSplash.hide({fade: true});
       if (!IS_KIML_WALLET || !IS_ANDROID) {
         checkInAppUpdates(true);
       }
