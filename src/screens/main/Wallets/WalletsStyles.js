@@ -75,6 +75,8 @@ const myStyles = theme =>
     walletNameSelected: {
       color: theme.font,
       fontWeight: '700',
+      maxWidth: '70%',
+      flexWrap: 'wrap',
     },
     activeBadge: {
       backgroundColor: theme.background,
