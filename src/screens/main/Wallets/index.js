@@ -43,48 +43,12 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {setWalletsSortOption} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
 import {currencySymbol} from 'data/currency';
-
-const getWalletTotalBalance = coins => {
-  let total = 0;
-  coins?.forEach(coin => {
-    if (coin?.isInWallet) {
-      const value = isNaN(Number(coin.totalBalanceCourse))
-        ? 0
-        : Number(coin.totalBalanceCourse);
-      total += value;
-    }
-  });
-  return total;
-};
-
-const getTopTwoCoins = coins => {
-  if (!coins || !Array.isArray(coins)) {
-    return [];
-  }
-  const walletCoins = coins.filter(coin => coin?.isInWallet);
-  const sorted = [...walletCoins].sort((a, b) => {
-    const aValue = isNaN(Number(a.totalCourse)) ? 0 : Number(a.totalCourse);
-    const bValue = isNaN(Number(b.totalCourse)) ? 0 : Number(b.totalCourse);
-    return bValue - aValue;
-  });
-  return sorted.slice(0, 2);
-};
-
-const getCoinsCount = coins => {
-  if (!coins || !Array.isArray(coins)) {
-    return 0;
-  }
-  return coins.filter(coin => coin?.isInWallet).length;
-};
-
-const formatBalance = value => {
-  if (value >= 1000000) {
-    return (value / 1000000).toFixed(2) + 'M';
-  } else if (value >= 1000) {
-    return value.toLocaleString('en-US', {maximumFractionDigits: 2});
-  }
-  return value.toFixed(2);
-};
+import {
+  formatBalance,
+  getCoinsCount,
+  getTopTwoCoins,
+  getWalletTotalBalance,
+} from 'dok-wallet-blockchain-networks/helper';
 
 const WALLET_SORT_OPTIONS = {
   DEFAULT: 'default',

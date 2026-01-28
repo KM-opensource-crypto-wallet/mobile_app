@@ -103,7 +103,6 @@
     "bs58": "^6.0.0",
     "buffer": "^6.0.3",
     "country-list": "^2.4.1",
-    "crypto-js": "^4.2.0",
     "dayjs": "^1.11.19",
     "deprecated-react-native-prop-types": "^5.0.0",
     "ecpair": "^2.1.0",

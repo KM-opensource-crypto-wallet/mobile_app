@@ -4,7 +4,7 @@ import {
   ListQueryBuilder,
 } from '@robinbobin/react-native-google-drive-api-wrapper';
 import {Platform} from 'react-native';
-import CryptoJS from 'crypto-js';
+import crypto from 'react-native-quick-crypto';
 import {Buffer} from 'buffer';
 import {IOS_GOOGLE_CLIENT_ID, WEB_GOOGLE_CLIENT_ID} from './wlData';
 
@@ -218,30 +218,68 @@ export const googleDrive = {
     }),
 };
 
-// Encryption
+// OpenSSL-compatible key derivation (EVP_BytesToKey with MD5)
+// This matches CryptoJS's passphrase-based AES behavior for backward compatibility
+const evpBytesToKey = (password, salt) => {
+  const keyLen = 32; // AES-256
+  const ivLen = 16; // CBC IV
+  const parts = [];
+  let prev = Buffer.alloc(0);
+  while (Buffer.concat(parts).length < keyLen + ivLen) {
+    const hash = crypto.createHash('md5');
+    hash.update(prev);
+    hash.update(Buffer.from(password, 'utf8'));
+    if (salt) {
+      hash.update(salt);
+    }
+    prev = hash.digest();
+    parts.push(prev);
+  }
+  const combined = Buffer.concat(parts);
+  return {
+    key: combined.subarray(0, keyLen),
+    iv: combined.subarray(keyLen, keyLen + ivLen),
+  };
+};
+
+// Encryption (OpenSSL format compatible with CryptoJS)
 const encryptData = data => {
   try {
     const jsonString = JSON.stringify(data);
-    const encrypted = CryptoJS.AES.encrypt(
-      jsonString,
-      process.env.WALLET_BACKUP_SECRET,
-    ).toString();
-    return encrypted;
+    const salt = crypto.randomBytes(8);
+    const {key, iv} = evpBytesToKey(process.env.WALLET_BACKUP_SECRET, salt);
+    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+    const encrypted = Buffer.concat([
+      cipher.update(jsonString, 'utf8'),
+      cipher.final(),
+    ]);
+    // OpenSSL format: "Salted__" + 8-byte salt + ciphertext
+    const result = Buffer.concat([
+      Buffer.from('Salted__', 'ascii'),
+      salt,
+      encrypted,
+    ]);
+    return result.toString('base64');
   } catch (error) {
     console.error('Encryption Failed:', error);
     throw new Error('Failed to encrypt wallet data');
   }
 };
 
-// Decryption
+// Decryption (OpenSSL format compatible with CryptoJS)
 const decryptData = ciphertext => {
   try {
-    const bytes = CryptoJS.AES.decrypt(
-      ciphertext,
-      process.env.WALLET_BACKUP_SECRET,
-    );
-    const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
-    return JSON.parse(decryptedString);
+    const rawData = Buffer.from(ciphertext, 'base64');
+    // OpenSSL format: first 8 bytes = "Salted__", next 8 bytes = salt, rest = ciphertext
+    const salt = rawData.subarray(8, 16);
+    const encrypted = rawData.subarray(16);
+    const {key, iv} = evpBytesToKey(process.env.WALLET_BACKUP_SECRET, salt);
+    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+    const decrypted = Buffer.concat([
+      decipher.update(encrypted),
+      decipher.final(),
+    ]);
+    return JSON.parse(decrypted.toString('utf8'));
   } catch (error) {
     console.error('Decryption Failed:', error);
     throw new Error(
