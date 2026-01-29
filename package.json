@@ -133,6 +133,7 @@
     "react-native-applifecycle": "^1.0.0",
     "react-native-bip39": "^2.3.0",
     "react-native-bootsplash": "^6.3.11",
+    "react-native-circular-progress": "^1.4.1",
     "react-native-config": "^1.6.0",
     "react-native-country-picker-modal": "^2.0.0",
     "react-native-crypto": "^2.2.1",

@@ -19,6 +19,7 @@ import ShareIcon from 'assets/images/icons/share.svg';
 import CreateWallet from 'screens/main/Wallets/CreateWallet';
 import SelectCoins from 'screens/main/Wallets/SelectCoins';
 import ManageCoins from 'screens/main/Home/ManageCoins';
+import CoinSyncScreen from 'screens/main/CoinSyncScreen';
 // ////////////////////////reset////////////////////////////////////////
 import ResetWallet from 'screens/main/ResetWallet';
 import LearnReset from 'screens/main/ResetWallet/LearnReset';
@@ -681,6 +682,14 @@ export const useRoute = isAuth => {
           ),
           cardStyleInterpolator: forFade,
         })}
+      />
+      <Stack.Screen
+        name="CoinSyncScreen"
+        component={CoinSyncScreen}
+        options={{
+          headerShown: false,
+          cardStyleInterpolator: forFade,
+        }}
       />
       <Stack.Screen
         name="MessageList"

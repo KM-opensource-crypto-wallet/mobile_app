@@ -78,6 +78,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
 import {isChatOptions} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import Clipboard from '@react-native-clipboard/clipboard';
+import CoinSyncBanner from 'components/CoinSyncBanner';
 import Toast from 'react-native-toast-message';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {createWalletConnection} from 'dok-wallet-blockchain-networks/service/walletconnect';
@@ -484,6 +485,7 @@ const HomeScreen = ({navigation, route}) => {
                     </TouchableOpacity>
                   </View>
                 )}
+                <CoinSyncBanner />
                 <TabView
                   navigationState={{index, routes}}
                   renderScene={renderScene}
