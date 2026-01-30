@@ -165,7 +165,6 @@ const SendScreen = ({ navigation, route }) => {
   );
 
     const handleCheckCustomDerivation = useCallback(() => {
-      dispatch(updateCustomDerivedChecked(!isCheckedStored));
       setShowAdvanceModal(false);
       setShowConfirmModal(true);
       isCustomDerivationClicked.current = true;
