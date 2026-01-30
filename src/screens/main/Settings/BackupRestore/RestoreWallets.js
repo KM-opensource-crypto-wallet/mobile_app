@@ -181,7 +181,10 @@ const RestoreWallets = ({navigation}) => {
       showToast({
         type: 'errorToast',
         title: 'Download Failed',
-        message: err.message || 'Failed to download backup.',
+        message:
+          !err?.message || err?.message?.includes('DEVELOPER_ERROR')
+            ? 'Failed to download backup.'
+            : err?.message,
       });
     } finally {
       setLoading(false);
