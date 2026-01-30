@@ -207,11 +207,17 @@ const BackupWallets = ({navigation}) => {
     } catch (err) {
       // Handle known cancellation error for UX
       // err.code === statusCodes.SIGN_IN_CANCELLED
-
+      console.error(err.message);
+      if (err.message.includes('insufficient authentication scopes')) {
+        await handleLogout();
+      }
       showToast({
         type: 'errorToast',
         title: 'Backup Failed',
-        message: err.message || 'An unexpected error occurred during backup.',
+        message:
+          !err?.message || err?.message?.includes('DEVELOPER_ERROR')
+            ? 'An unexpected error occurred during backup.'
+            : err?.message,
       });
     } finally {
       setIsBackingUp(false);
