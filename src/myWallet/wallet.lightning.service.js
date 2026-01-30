@@ -117,19 +117,20 @@ async function prepareAndSendPayment(phrase, paymentRequest, amount) {
                 sparkFee: '',
             };
         }
-        if (
-            prepareResponse.paymentMethod?.tag ===
-            SendPaymentMethod_Tags.BitcoinAddress
-        ) {
-            const feeSats = prepareResponse.paymentMethod.inner.feeQuote.speedFast.userFeeSat;
-            return {
-                lightningFee: feeSats,
+        if (prepareResponse.paymentMethod?.tag === SendPaymentMethod_Tags.BitcoinAddress) {
+            const feeQuote = prepareResponse.paymentMethod.inner.feeQuote
+            const slowFeeSats = feeQuote.speedSlow.userFeeSat + feeQuote.speedSlow.l1BroadcastFeeSat
+            const mediumFeeSats = feeQuote.speedMedium.userFeeSat + feeQuote.speedMedium.l1BroadcastFeeSat
+            const fastFeeSats = feeQuote.speedFast.userFeeSat + feeQuote.speedFast.l1BroadcastFeeSat
+             return {
+                lightningFee: fastFeeSats,
                 sparkFee: '',
             };
         }
         return {};
     } catch (err) {
         console.error('Error preparing payment:', err);
+        return {};
     }
 }
 
@@ -156,8 +157,6 @@ function decimalStringToBigInt(value, decimals) {
 export const getLightningBalance = async (phrase) => {
     try {
         const sdk = await connectToSdk(phrase);
-        const obj1 = Object.fromEntries(sdkMap);
-        console.log('sdkMap as object:', obj1);
         const info = await sdk.getInfo({});
         return info.balanceSats;
     } catch (error) {
