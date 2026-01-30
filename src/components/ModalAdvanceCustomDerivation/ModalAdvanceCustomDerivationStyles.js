@@ -42,12 +42,12 @@ const myStyles = theme =>
       textAlign: 'center',
       fontFamily: 'Roboto-Regular',
     },
-    checkboxAndText:{ 
+    checkboxAndText: {
       marginBottom: 15,
-      justifyContent:"center",
-      alignItems:"center",
-      flexDirection:"row",
-     },
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'row',
+    },
     btnList: {
       flexDirection: 'row',
       alignItems: 'center',

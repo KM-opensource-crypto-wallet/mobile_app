@@ -18,7 +18,6 @@ import myStyles from './SendScreenStyles';
 import SendIcon from 'assets/images/send/send.svg';
 import RecIcon from 'assets/images/send/rec.svg';
 import {useSelector, useDispatch} from 'react-redux';
-import {Provider, Portal} from 'react-native-paper';
 import CopyIcon from 'assets/images/icons/copy.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
@@ -36,7 +35,6 @@ import {
   refreshCurrentCoin,
   setIsAddMoreAddressPopupHidden,
   setSelectedDeriveAddress,
-  updateCurrentCoin,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import FastImage from '@d11/react-native-fast-image';
 import Loading from 'components/Loading';
@@ -62,14 +60,11 @@ import EntypoIcon from 'react-native-vector-icons/Entypo';
 import ModalAdvanceCustomDerivation from 'components/ModalAdvanceCustomDerivation';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {clearSelectedUTXOs} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import {
-updateCustomDerivedChecked
-} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
-import { isCustomDerivedChecked } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {isCustomDerivedChecked} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 
-const SendScreen = ({ navigation, route }) => {
+const SendScreen = ({navigation, route}) => {
   const currentCoin = useSelector(selectCurrentCoin);
-  const { theme } = useContext(ThemeContext);
+  const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const localCurrency = useSelector(getLocalCurrency);
   const isImportWithPrivateKey = useSelector(isImportWalletWithPrivateKey);
@@ -96,8 +91,9 @@ const SendScreen = ({ navigation, route }) => {
   const deriveAddresses = useMemo(() => {
     return currentCoin?.deriveAddresses?.map(subItem => ({
       options: subItem,
-      label: `${getCustomizePublicAddress(subItem?.address)} ${isBitcoin ? `(${subItem?.balance || 0} ${currentCoin?.symbol})` : ''
-        }`,
+      label: `${getCustomizePublicAddress(subItem?.address)} ${
+        isBitcoin ? `(${subItem?.balance || 0} ${currentCoin?.symbol})` : ''
+      }`,
       value: subItem.address,
     }));
   }, [currentCoin?.deriveAddresses, currentCoin?.symbol, isBitcoin]);
@@ -164,21 +160,20 @@ const SendScreen = ({ navigation, route }) => {
     [currentCoin, dispatch],
   );
 
-    const handleCheckCustomDerivation = useCallback(() => {
-      setShowAdvanceModal(false);
-      setShowConfirmModal(true);
-      isCustomDerivationClicked.current = true;
+  const handleCheckCustomDerivation = useCallback(() => {
+    setShowAdvanceModal(false);
+    setShowConfirmModal(true);
+    isCustomDerivationClicked.current = true;
   }, []);
 
-  const handleCustomDerivation = useCallback(()=>{
-    console.log("isChecked handleCustomDerivation:", isCheckedStored);
-    if(isCheckedStored){
-          setShowConfirmModal(true);
-          isCustomDerivationClicked.current = true;
-    }else{
+  const handleCustomDerivation = useCallback(() => {
+    if (isCheckedStored) {
+      setShowConfirmModal(true);
+      isCustomDerivationClicked.current = true;
+    } else {
       setShowAdvanceModal(true);
     }
-  },[isCheckedStored])
+  }, [isCheckedStored]);
 
   useLayoutEffect(() => {
     if (isDeriveAddressChain && !isImportWithPrivateKey) {
@@ -194,8 +189,7 @@ const SendScreen = ({ navigation, route }) => {
                 />
               </MenuTrigger>
               <MenuOptions optionsContainerStyle={styles.optionsContainer}>
-                <MenuOption
-                  onSelect={handleCustomDerivation}>
+                <MenuOption onSelect={handleCustomDerivation}>
                   <View style={styles.optionMenu}>
                     <Text style={styles.optionText}>{'Custom Derivation'}</Text>
                   </View>
@@ -239,7 +233,13 @@ const SendScreen = ({ navigation, route }) => {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDeriveAddressChain, isImportWithPrivateKey, navigation, theme.font, handleCustomDerivation]);
+  }, [
+    isDeriveAddressChain,
+    isImportWithPrivateKey,
+    navigation,
+    theme.font,
+    handleCustomDerivation,
+  ]);
 
   if (!currentCoin) {
     return null;
