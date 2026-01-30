@@ -83,4 +83,5 @@ let persistor = persistStore(store, null, () => {
   }, 500);
 });
 
+// persistor.purge();
 export {persistor, store};

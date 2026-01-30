@@ -62,10 +62,14 @@ import EntypoIcon from 'react-native-vector-icons/Entypo';
 import ModalAdvanceCustomDerivation from 'components/ModalAdvanceCustomDerivation';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {clearSelectedUTXOs} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
+import {
+updateCustomDerivedChecked
+} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
+import { isCustomDerivedChecked } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 
-const SendScreen = ({navigation, route}) => {
+const SendScreen = ({ navigation, route }) => {
   const currentCoin = useSelector(selectCurrentCoin);
-  const {theme} = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const styles = myStyles(theme);
   const localCurrency = useSelector(getLocalCurrency);
   const isImportWithPrivateKey = useSelector(isImportWalletWithPrivateKey);
@@ -77,6 +81,7 @@ const SendScreen = ({navigation, route}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showAdvanceModal, setShowAdvanceModal] = useState(false);
+  const isCheckedStored = useSelector(isCustomDerivedChecked);
   const isCustomDerivationClicked = useRef(false);
 
   const {item} = route.params;
@@ -91,9 +96,8 @@ const SendScreen = ({navigation, route}) => {
   const deriveAddresses = useMemo(() => {
     return currentCoin?.deriveAddresses?.map(subItem => ({
       options: subItem,
-      label: `${getCustomizePublicAddress(subItem?.address)} ${
-        isBitcoin ? `(${subItem?.balance || 0} ${currentCoin?.symbol})` : ''
-      }`,
+      label: `${getCustomizePublicAddress(subItem?.address)} ${isBitcoin ? `(${subItem?.balance || 0} ${currentCoin?.symbol})` : ''
+        }`,
       value: subItem.address,
     }));
   }, [currentCoin?.deriveAddresses, currentCoin?.symbol, isBitcoin]);
@@ -160,6 +164,23 @@ const SendScreen = ({navigation, route}) => {
     [currentCoin, dispatch],
   );
 
+    const handleCheckCustomDerivation = useCallback(() => {
+      dispatch(updateCustomDerivedChecked(!isCheckedStored));
+      setShowAdvanceModal(false);
+      setShowConfirmModal(true);
+      isCustomDerivationClicked.current = true;
+  }, []);
+
+  const handleCustomDerivation = useCallback(()=>{
+    console.log("isChecked handleCustomDerivation:", isCheckedStored);
+    if(isCheckedStored){
+          setShowConfirmModal(true);
+          isCustomDerivationClicked.current = true;
+    }else{
+      setShowAdvanceModal(true);
+    }
+  },[isCheckedStored])
+
   useLayoutEffect(() => {
     if (isDeriveAddressChain && !isImportWithPrivateKey) {
       navigation.setOptions({
@@ -175,9 +196,7 @@ const SendScreen = ({navigation, route}) => {
               </MenuTrigger>
               <MenuOptions optionsContainerStyle={styles.optionsContainer}>
                 <MenuOption
-                  onSelect={() => {
-                    setShowAdvanceModal(true);
-                  }}>
+                  onSelect={handleCustomDerivation}>
                   <View style={styles.optionMenu}>
                     <Text style={styles.optionText}>{'Custom Derivation'}</Text>
                   </View>
@@ -221,7 +240,7 @@ const SendScreen = ({navigation, route}) => {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDeriveAddressChain, isImportWithPrivateKey, navigation, theme.font]);
+  }, [isDeriveAddressChain, isImportWithPrivateKey, navigation, theme.font, handleCustomDerivation]);
 
   if (!currentCoin) {
     return null;
@@ -412,12 +431,10 @@ const SendScreen = ({navigation, route}) => {
         onSuccess={onSuccessOfPrivateKey}
       />
       <ModalAdvanceCustomDerivation
+        isChecked={isCheckedStored}
+        showConfirmModal={showConfirmModal}
         visible={showAdvanceModal}
-        onPressYes={() => {
-          setShowAdvanceModal(false);
-          setShowConfirmModal(true);
-          isCustomDerivationClicked.current = true;
-        }}
+        onPressYes={handleCheckCustomDerivation}
         onPressNo={() => {
           setShowAdvanceModal(false);
         }}
