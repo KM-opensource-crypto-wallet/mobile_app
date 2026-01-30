@@ -207,8 +207,8 @@ const BackupWallets = ({navigation}) => {
     } catch (err) {
       // Handle known cancellation error for UX
       // err.code === statusCodes.SIGN_IN_CANCELLED
-      console.error(err.message);
-      if (err.message.includes('insufficient authentication scopes')) {
+      console.error('Backup Failed:', err);
+      if (err?.message?.includes('insufficient authentication scopes')) {
         await handleLogout();
       }
       showToast({
