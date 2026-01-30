@@ -414,6 +414,7 @@ export const restoreWalletsFromDrive = async () => {
 
     return decryptData(parsedContent.data);
   } catch (error) {
+    console.error('Restore Failed:', error);
     throw error?.json?.error || error;
   }
 };
