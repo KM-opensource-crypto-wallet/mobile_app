@@ -72,7 +72,6 @@ android/.gradle/
 /build/
 /android/app/dokwallet/release
 /android/app/kimlwallet/release
-.vscode/settings.json
 *.apk
 
 .env
@@ -96,4 +95,3 @@ web-build/
 
 
 .claude
-.vscode

@@ -21,12 +21,7 @@ if (isIpad) {
   ITEM_WIDTH = Math.round(WIDTH * 0.7);
 }
 
-const ModalAdvanceCustomDerivation = ({
-  isChecked,
-  visible,
-  onPressYes,
-  onPressNo,
-}) => {
+const ModalAdvanceCustomDerivation = ({visible, onPressYes, onPressNo}) => {
   const {theme} = useContext(ThemeContext);
   const [checked, setChecked] = useState(false);
   const styles = myStyles(theme);
@@ -37,12 +32,14 @@ const ModalAdvanceCustomDerivation = ({
   }, [onPressNo]);
 
   const handlerYes = useCallback(() => {
+    if (checked) {
       dispatch(updateCustomDerivedChecked(true));
+    }
     onPressYes?.();
-  }, [onPressYes]);
+  }, [checked, dispatch, onPressYes]);
 
   const handleCheckBox = useCallback(() => {
-    setChecked(prev => !prev)
+    setChecked(prev => !prev);
   }, [setChecked]);
 
   return (
