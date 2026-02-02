@@ -49,7 +49,9 @@ export const googleDrive = {
   googleSignOut: () =>
     new Promise(async (resolve, reject) => {
       try {
-        await GoogleSignin.revokeAccess();
+        try {
+          await GoogleSignin.revokeAccess();
+        } catch {}
         await GoogleSignin.signOut();
         resolve(true);
       } catch (error) {

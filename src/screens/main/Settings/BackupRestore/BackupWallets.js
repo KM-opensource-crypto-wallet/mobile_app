@@ -86,11 +86,13 @@ const BackupWallets = ({navigation}) => {
     init();
   }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = async notShowToast => {
     try {
       await googleDrive.googleSignOut();
       setUserInfo(null);
-      showToast({type: 'successToast', message: 'Logged out successfully'});
+      if (!notShowToast) {
+        showToast({type: 'successToast', message: 'Logged out successfully'});
+      }
     } catch (err) {}
   };
 

@@ -99,13 +99,15 @@ const RestoreWallets = ({navigation}) => {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogout = async notShowToast => {
     try {
       await googleDrive.googleSignOut();
       setUserInfo(null);
       setRestorableWallets([]);
       setError(null);
-      showToast({type: 'successToast', message: 'Logged out successfully'});
+      if (!notShowToast) {
+        showToast({type: 'successToast', message: 'Logged out successfully'});
+      }
     } catch (err) {}
   };
 
@@ -153,7 +155,7 @@ const RestoreWallets = ({navigation}) => {
   }, [navigation, userInfo, theme, styles]);
 
   const handleRetry = async () => {
-    await handleLogout();
+    await handleLogout(true);
     handleConnect();
   };
 
