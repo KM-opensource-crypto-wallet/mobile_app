@@ -16,13 +16,6 @@ module.exports = {
         alias: {
           crypto: 'react-native-quick-crypto',
           'dok-wallet-blockchain-networks': './dok-wallet-blockchain-networks',
-          assets: './src/assets',
-          components: './src/components',
-          data: './src/data',
-          redux: './src/redux',
-          utils: './src/utils',
-          myWallet: './src/myWallet',
-          theme: './src/theme',
         },
       },
     ],
