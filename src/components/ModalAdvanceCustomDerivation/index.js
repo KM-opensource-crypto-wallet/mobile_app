@@ -40,7 +40,7 @@ const ModalAdvanceCustomDerivation = ({visible, onPressYes, onPressNo}) => {
 
   const handleCheckBox = useCallback(() => {
     setChecked(prev => !prev);
-  }, [setChecked]);
+  }, []);
 
   return (
     <Portal>
