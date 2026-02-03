@@ -430,7 +430,6 @@ const SendScreen = ({navigation, route}) => {
         onSuccess={onSuccessOfPrivateKey}
       />
       <ModalAdvanceCustomDerivation
-        isChecked={isCheckedStored}
         showConfirmModal={showConfirmModal}
         visible={showAdvanceModal}
         onPressYes={handleCheckCustomDerivation}
