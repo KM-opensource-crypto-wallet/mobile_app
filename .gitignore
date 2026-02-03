@@ -77,6 +77,9 @@ android/.gradle/
 
 .env
 
+# Google Services (download via: yarn setup:google-services)
+**/google-services.json
+**/GoogleService-Info.plist
 
 # testing
 /coverage

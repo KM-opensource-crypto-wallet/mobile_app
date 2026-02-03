@@ -20,31 +20,6 @@ const WHITE_LABEL_ID_OBJ = {
 export const WHITE_LABEL_ID = WHITE_LABEL_ID_OBJ[wlName];
 setWhiteLabelIdToDokApi(WHITE_LABEL_ID);
 
-const IOS_GOOGLE_CLIENT_ID_OBJ = {
-  dokwallet: process.env.DOK_WALLET_GOOGLE_IOS_CLIENT_ID,
-  kimlwallet: process.env.KIML_WALLET_GOOGLE_IOS_CLIENT_ID,
-};
-
-export const IOS_GOOGLE_CLIENT_ID = IOS_GOOGLE_CLIENT_ID_OBJ[wlName];
-
-const ANDROID_GOOGLE_CLIENT_ID_OBJ = {
-  dokwallet: __DEV__
-    ? process.env.DOK_WALLET_GOOGLE_ANDROID_CLIENT_ID_DEBUG
-    : process.env.DOK_WALLET_GOOGLE_ANDROID_CLIENT_ID,
-  kimlwallet: __DEV__
-    ? process.env.KIML_WALLET_GOOGLE_ANDROID_CLIENT_ID_DEBUG
-    : process.env.KIML_WALLET_GOOGLE_ANDROID_CLIENT_ID,
-};
-
-export const ANDROID_GOOGLE_CLIENT_ID = ANDROID_GOOGLE_CLIENT_ID_OBJ[wlName];
-
-const WEB_GOOGLE_CLIENT_ID_OBJ = {
-  dokwallet: process.env.DOK_WALLET_GOOGLE_WEB_CLIENT_ID,
-  kimlwallet: process.env.KIML_WALLET_GOOGLE_WEB_CLIENT_ID,
-};
-
-export const WEB_GOOGLE_CLIENT_ID = WEB_GOOGLE_CLIENT_ID_OBJ[wlName];
-
 const DRIVE_GUIDE_IMG_OBJ = {
   dokwallet: require('assets/dokwallet/drive_guide.png'),
   kimlwallet: require('assets/kimlwallet/drive_guide.png'),

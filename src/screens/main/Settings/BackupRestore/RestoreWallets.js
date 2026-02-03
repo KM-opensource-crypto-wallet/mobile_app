@@ -25,7 +25,6 @@ import {
   googleDrive,
 } from 'utils/googleDriveBackup';
 import {showToast} from 'utils/toast';
-import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import Checkbox from 'components/Checkbox';
 import FastImage from '@d11/react-native-fast-image';
 import {
@@ -61,10 +60,10 @@ const RestoreWallets = ({navigation}) => {
   const initAndCheckSession = useCallback(async () => {
     try {
       initGoogleDrive();
-      const hasPrevious = GoogleSignin.hasPreviousSignIn();
+      const hasPrevious = await googleDrive.hasPreviousSignIn();
       if (hasPrevious) {
         try {
-          const user = await GoogleSignin.signInSilently();
+          const user = await googleDrive.signInSilently();
           setUserInfo(user?.data?.user || null);
           fetchBackup();
         } catch (silentError) {

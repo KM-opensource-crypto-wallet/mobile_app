@@ -19,7 +19,7 @@ workflows:
           key_alias_environment_variable: CM_KIMLWALLET_KEY_ALIAS
           key_password_environment_variable: CM_KIMLWALLET_KEY_PASSWORD
       groups:
-        - google_play_vars # <-- (Includes GCLOUD_SERVICE_ACCOUNT_CREDENTIALS <-- Put your google-services.json)
+        - google_play_vars # <-- (Includes GCLOUD_SERVICE_ACCOUNT_CREDENTIALS)
         - common # common env variables
       vars:
         PACKAGE_NAME: "com.coinswallet" # <-- Put your package name here e.g. com.domain.myapp
@@ -60,6 +60,9 @@ workflows:
           npm run git:update
           rm -f package-lock.json
           yarn install --frozen-lockfile
+      - name: Setup Google Services
+        script: |
+          bash scripts/setup-google-services.sh
       - name: Set Android SDK location
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/android/local.properties"
@@ -151,6 +154,9 @@ workflows:
           npm run git:update
           rm -f package-lock.json
           yarn install --frozen-lockfile
+      - name: Setup Google Services
+        script: |
+          bash scripts/setup-google-services.sh
       - name: Install CocoaPods dependencies
         script: |
          cd ios && pod install
@@ -245,6 +251,9 @@ workflows:
           npm run git:update
           rm -f package-lock.json
           yarn install --frozen-lockfile
+      - name: Setup Google Services
+        script: |
+          bash scripts/setup-google-services.sh
       - name: Install CocoaPods dependencies
         script: |
           cd ios && pod install
