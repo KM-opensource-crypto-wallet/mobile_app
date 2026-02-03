@@ -241,6 +241,11 @@ const SendScreen = ({navigation, route}) => {
                     <Text style={styles.optionText}>{'Select UTXOs'}</Text>
                   </View>
                 </MenuOption>
+                <MenuOption onSelect={handleCustomDerivation}>
+                  <View style={styles.optionMenu}>
+                    <Text style={styles.optionText}>{'Custom Derivation'}</Text>
+                  </View>
+                </MenuOption>
               </MenuOptions>
             </Menu>
           </View>
@@ -267,6 +272,9 @@ const SendScreen = ({navigation, route}) => {
       }, 300);
     }
   }, [isLoading, listOfUnClaimedDeposits?.length]);
+  const handleAdd = useCallback(() => {
+    dispatch(addEVMAndTronDeriveAddresses());
+  }, [dispatch]);
 
   if (!currentCoin) {
     return null;
@@ -293,9 +301,7 @@ const SendScreen = ({navigation, route}) => {
                   </Text>
                   <TouchableOpacity
                     style={styles.syncButton}
-                    onPress={() => {
-                      dispatch(addEVMAndTronDeriveAddresses());
-                    }}>
+                    onPress={handleAdd}>
                     <Text style={styles.syncButtonTitle}>{'Add'}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity

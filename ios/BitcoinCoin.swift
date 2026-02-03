@@ -62,4 +62,14 @@ class BitcoinCoin: CoinFactory.Coin {
     // Implement the logic to sign a Bitcoin transaction using the provided raw data
     return ""
   }
+
+  override func addCustomDerivation(derivePath:String) -> NSMutableDictionary {
+      let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: derivePath)
+      let address = CoinType.bitcoin.deriveAddress(privateKey: privateKey)
+      let yourAuxDic: NSMutableDictionary = [:]
+      yourAuxDic["derivePath"] = derivePath
+      yourAuxDic["privateKey"] = privateKey.data.hexString
+      yourAuxDic["address"] = address
+      return yourAuxDic;
+  }
 }
