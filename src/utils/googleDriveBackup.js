@@ -6,7 +6,6 @@ import {
 import {Platform} from 'react-native';
 import crypto from 'react-native-quick-crypto';
 import {Buffer} from 'buffer';
-import {IOS_GOOGLE_CLIENT_ID, WEB_GOOGLE_CLIENT_ID} from './wlData';
 
 const IS_IOS = Platform.OS === 'ios';
 
@@ -14,9 +13,6 @@ const BACKUP_FILE_NAME = 'wallet_backup_encrypted.json';
 
 const googleConfigure = {
   scopes: ['https://www.googleapis.com/auth/drive.appfolder'],
-  iosClientId: IOS_GOOGLE_CLIENT_ID,
-  webClientId: WEB_GOOGLE_CLIENT_ID,
-  forceCodeForRefreshToken: true,
 };
 
 export const googleDrive = {
@@ -105,17 +101,23 @@ export const googleDrive = {
       }
     }),
   getGoogleDriveInstance: () =>
-    new Promise((resolve, reject) => {
-      GoogleSignin.getTokens()
-        .then(tokenRes => {
-          const GD = new GDrive();
-          GD.accessToken = tokenRes?.accessToken;
-          GD.fetchCoercesTypes = true;
-          GD.fetchRejectsOnHttpErrors = true;
-          GD.fetchTimeout = 30000; // 30 seconds for file operations
-          resolve(GD);
-        })
-        .catch(reject);
+    new Promise(async (resolve, reject) => {
+      try {
+        const currentUser = GoogleSignin.getCurrentUser();
+        if (!currentUser) {
+          // Automatically sign in if user is not signed in
+          await GoogleSignin.signIn();
+        }
+        const tokenRes = await GoogleSignin.getTokens();
+        const GD = new GDrive();
+        GD.accessToken = tokenRes?.accessToken;
+        GD.fetchCoercesTypes = true;
+        GD.fetchRejectsOnHttpErrors = true;
+        GD.fetchTimeout = 30000; // 30 seconds for file operations
+        resolve(GD);
+      } catch (error) {
+        reject(error);
+      }
     }),
   getFileList: parentFolderId =>
     new Promise((resolve, reject) => {
@@ -398,7 +400,7 @@ export const backupWalletsToDrive = async payload => {
     );
     return true;
   } catch (error) {
-    console.error('Backup Failed:', error);
+    console.error('Drive Backup Failed:', error);
     throw error?.json?.error || error;
   }
 };

@@ -27,7 +27,9 @@
     "postinstall": "rn-nodeify --install assert,events,fs,http,https,process,stream,url,zlib --hack --yarn && patch-package && sh script.sh",
     "pod:install": "pod install --project-directory=./ios",
     "pod:re-install": "rm -rf ios/Pods && rm -rf ios/.xcode.env.local && npm run pod:install",
-    "git:update": "git submodule update --init --recursive --remote"
+    "git:update": "git submodule update --init --recursive --remote",
+    "setup:google-services": "bash scripts/setup-google-services.sh",
+    "setup:xcode-plist": "ruby scripts/add-google-services-to-xcode.rb"
   },
   "dependencies": {
     "@anza-xyz/solana-rpc-get-stake-activation": "^1.0.1",
