@@ -10,7 +10,10 @@ import wallet.core.jni.HDVersion;
 import wallet.core.jni.HDWallet;
 import wallet.core.jni.CoinType;
 import wallet.core.jni.Purpose;
-
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableMap;
+import wallet.core.jni.PrivateKey;
 
 public class BitcoinCoin extends CoinFactory.Coin {
     private final HDWallet wallet;
@@ -68,5 +71,17 @@ public class BitcoinCoin extends CoinFactory.Coin {
         // You need to implement this method according to the specific requirements of
         // Bitcoin transactions.
         return null;
+    }
+
+    @Override
+    public ReadableMap addCustomDerivation(String derivePath) {
+        WritableMap obj = Arguments.createMap();
+        PrivateKey tempPrivateKey = wallet.getKey(CoinType.BITCOIN,derivePath);
+        String address = CoinType.BITCOIN.deriveAddress(tempPrivateKey);
+        String privateKeyString =  CoinFactory.Coin.toHex(tempPrivateKey.data());
+        obj.putString("address",address);
+        obj.putString("derivePath",derivePath);
+        obj.putString("privateKey",privateKeyString);
+        return obj;
     }
 }
