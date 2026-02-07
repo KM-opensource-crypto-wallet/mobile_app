@@ -36,8 +36,13 @@ const CoinSyncWidget = () => {
     }
   }, [currentRoute]);
 
-  // Don't show widget if not syncing or already on CoinSyncScreen
-  if (!shouldShowWidget || currentRoute === 'CoinSyncScreen') {
+  // Don't show widget if not syncing or already on CoinSyncScreen or Login screens
+  if (
+    !shouldShowWidget ||
+    currentRoute === 'CoinSyncScreen' ||
+    currentRoute === 'Login' ||
+    currentRoute === 'VerifyLogin'
+  ) {
     return null;
   }
 

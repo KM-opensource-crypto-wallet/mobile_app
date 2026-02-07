@@ -78,7 +78,11 @@ const CoinSyncActionButton = ({
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={[styles.button, buttonConfig.isCancel && styles.buttonCancel]}
+        style={[
+          styles.button,
+          buttonConfig.isCancel && styles.buttonCancel,
+          buttonConfig.disabled && styles.buttonDisabled,
+        ]}
         onPress={buttonConfig.onPress}
         disabled={buttonConfig.disabled}>
         <MaterialCommunityIcons

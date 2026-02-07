@@ -31,6 +31,9 @@ const myStyles = theme =>
     buttonCancel: {
       backgroundColor: '#FF5252',
     },
+    buttonDisabled: {
+      opacity: 0.5,
+    },
     buttonText: {
       color: 'white',
       fontSize: 16,

@@ -192,31 +192,29 @@ const CoinSyncScreen = () => {
             <View style={styles.placeholder} />
           </View>
 
-          <ScrollView>
-            <View style={styles.headerContainer}>
-              <CoinSyncProgress
-                theme={theme}
-                progress={progress}
-                currentCoin={currentCoin}
-                isSyncing={isSyncing}
-                status={status}
-              />
+          <FlatList
+            data={coinsWithBalance}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            ListEmptyComponent={renderEmptyList}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              <View style={styles.headerContainer}>
+                <CoinSyncProgress
+                  theme={theme}
+                  progress={progress}
+                  currentCoin={currentCoin}
+                  isSyncing={isSyncing}
+                  status={status}
+                />
 
-              {isCompleted && coinsWithBalanceCount > 0 && (
-                <Text style={styles.resultsHeader}>{resultsHeaderText}</Text>
-              )}
-            </View>
-
-            <FlatList
-              data={coinsWithBalance}
-              renderItem={renderItem}
-              keyExtractor={keyExtractor}
-              ListEmptyComponent={renderEmptyList}
-              contentContainerStyle={styles.listContent}
-              showsVerticalScrollIndicator={false}
-              scrollEnabled={false}
-            />
-          </ScrollView>
+                {coinsWithBalanceCount > 0 && (
+                  <Text style={styles.resultsHeader}>{resultsHeaderText}</Text>
+                )}
+              </View>
+            }
+          />
 
           <CoinSyncActionButton
             theme={theme}

@@ -1,5 +1,5 @@
-import React, {memo} from 'react';
-import {View, Text, ActivityIndicator} from 'react-native';
+import {memo} from 'react';
+import {View, Text, ActivityIndicator, Modal} from 'react-native';
 import myStyles from './InteractionBlockerStyles';
 
 const InteractionBlocker = ({visible, theme}) => {
@@ -10,13 +10,15 @@ const InteractionBlocker = ({visible, theme}) => {
   }
 
   return (
-    <View style={styles.overlay}>
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color={theme.background} />
-        <Text style={styles.title}>Creating wallets...</Text>
-        <Text style={styles.subtitle}>Please wait, do not close the app</Text>
+    <Modal visible={visible} transparent={true}>
+      <View style={styles.overlay}>
+        <View style={styles.container}>
+          <ActivityIndicator size="large" color={theme.background} />
+          <Text style={styles.title}>Creating wallets...</Text>
+          <Text style={styles.subtitle}>Please wait, do not close the app</Text>
+        </View>
       </View>
-    </View>
+    </Modal>
   );
 };
 

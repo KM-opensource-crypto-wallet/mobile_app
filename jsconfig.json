@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "*": ["src/*"],
+      "dok-wallet-blockchain-networks/*": ["./dok-wallet-blockchain-networks/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}
