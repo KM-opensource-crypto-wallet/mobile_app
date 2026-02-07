@@ -56,6 +56,7 @@ workflows:
           KIMLWALLET_WALLET_CONNECT_ID=$KIMLWALLET_WALLET_CONNECT_ID
           WALLET_BACKUP_SECRET=$WALLET_BACKUP_SECRET
           GITHUB_PAT=$GITHUB_PAT
+          DOK_WALLET_GOOGLE_WEB_CLIENT_ID=$DOK_WALLET_GOOGLE_WEB_CLIENT_ID
           EOF
       - name: Install yarn dependencies
         script: |
@@ -152,6 +153,7 @@ workflows:
           KIMLWALLET_WALLET_CONNECT_ID=$KIMLWALLET_WALLET_CONNECT_ID
           WALLET_BACKUP_SECRET=$WALLET_BACKUP_SECRET
           GITHUB_PAT=$GITHUB_PAT
+          DOK_WALLET_GOOGLE_WEB_CLIENT_ID=$DOK_WALLET_GOOGLE_WEB_CLIENT_ID
           EOF
       - name: Install yarn dependencies
         script: |
@@ -251,6 +253,7 @@ workflows:
           KIMLWALLET_WALLET_CONNECT_ID=$KIMLWALLET_WALLET_CONNECT_ID
           WALLET_BACKUP_SECRET=$WALLET_BACKUP_SECRET
           GITHUB_PAT=$GITHUB_PAT
+          DOK_WALLET_GOOGLE_WEB_CLIENT_ID=$DOK_WALLET_GOOGLE_WEB_CLIENT_ID
           EOF
       - name: Install yarn dependencies
         script: |
