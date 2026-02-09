@@ -61,6 +61,13 @@ import ModalAdvanceCustomDerivation from 'components/ModalAdvanceCustomDerivatio
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {clearSelectedUTXOs} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {isCustomDerivedChecked} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import ModalAddCoins from 'components/ModalAddCoins';
+import {unClaimedDeposits} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {
+  getCurrentWalletPhrase,
+  selectBtcLightningUnClaimed,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {useFocusEffect} from '@react-navigation/native';
 
 const SendScreen = ({navigation, route}) => {
   const currentCoin = useSelector(selectCurrentCoin);
@@ -72,17 +79,22 @@ const SendScreen = ({navigation, route}) => {
     getCurrentWalletIsAddMoreAddressPopupHidden,
   );
   const isNativeCoinAvailable = useSelector(checkIsNativeCoinAvailable);
+  const btcLightningUnClaimedData = useSelector(selectBtcLightningUnClaimed);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showAdvanceModal, setShowAdvanceModal] = useState(false);
   const isCheckedStored = useSelector(isCustomDerivedChecked);
+  // const [unClaimedData, setUnClaimedData] = useState();
   const isCustomDerivationClicked = useRef(false);
-
+  const unClaimedBottomSheet = useRef();
   const {item} = route.params;
   const isBitcoin = isBitcoinChain(currentCoin?.chain_name);
   const isStaking =
     isStakingChain(currentCoin?.chain_name) && currentCoin?.type === 'coin';
+  const isLightning =
+    currentCoin?.chain_name === 'bitcoin_lightning' ? true : false;
+  const currentPhrase = useSelector(getCurrentWalletPhrase);
   const isDeriveAddressChain = isDeriveAddressSupportChain(
     currentCoin?.chain_name,
   );
@@ -120,9 +132,17 @@ const SendScreen = ({navigation, route}) => {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    if (isLightning) {
+      await dispatch(
+        unClaimedDeposits({
+          chain_name: currentCoin?.chain_name,
+          phrase: currentPhrase,
+        }),
+      );
+    }
     await dispatch(refreshCurrentCoin()).unwrap();
     setRefreshing(false);
-  }, [dispatch]);
+  }, [currentCoin?.chain_name, currentPhrase, dispatch, isLightning]);
 
   const onSuccessOfPrivateKey = useCallback(() => {
     setShowConfirmModal(false);
@@ -159,6 +179,14 @@ const SendScreen = ({navigation, route}) => {
     },
     [currentCoin, dispatch],
   );
+  const openBottomSheet = useCallback(() => {
+    unClaimedBottomSheet?.current?.close?.();
+    unClaimedBottomSheet?.current?.present?.();
+  }, []);
+
+  const onDismissAddCoinsSheet = useCallback(() => {
+    unClaimedBottomSheet?.current?.close?.();
+  }, []);
 
   const handleCheckCustomDerivation = useCallback(() => {
     setShowAdvanceModal(false);
@@ -241,6 +269,16 @@ const SendScreen = ({navigation, route}) => {
     handleCustomDerivation,
   ]);
 
+  useFocusEffect(
+    useCallback(() => {
+      const timeout = setTimeout(() => {
+        openBottomSheet();
+      }, 150);
+
+      return () => clearTimeout(timeout);
+    }, [openBottomSheet]),
+  );
+
   if (!currentCoin) {
     return null;
   }
@@ -252,174 +290,190 @@ const SendScreen = ({navigation, route}) => {
         {isLoading ? (
           <Loading />
         ) : (
-          <ScrollView
-            contentContainerStyle={styles.containerContainerStyle}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }>
-            {isDeriveAddressChain &&
-              !isImportWithPrivateKey &&
-              !isAddMoreAddressPopupHide && (
-                <View style={styles.syncView}>
-                  <Text style={styles.syncTitle} numberOfLines={2}>
-                    {'Do you want to allow more addresses under this wallet?'}
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.syncButton}
-                    onPress={() => {
-                      dispatch(addEVMAndTronDeriveAddresses());
-                    }}>
-                    <Text style={styles.syncButtonTitle}>{'Add'}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => {
-                      dispatch(setIsAddMoreAddressPopupHidden(true));
-                    }}>
-                    <MaterialCommunityIcons
-                      name={'close'}
-                      size={24}
-                      color={theme.font}
-                    />
-                  </TouchableOpacity>
-                </View>
-              )}
-            <View style={styles.box}>
-              <View style={styles.coinList}>
-                <View style={styles.coinIcon}>
-                  {/* {currentList && (
-                    <Text style={styles.currentIcon}>{currentCoin.icon}</Text>
-                  )} */}
-                  {currentCoin?.icon && (
-                    <FastImage
-                      source={{uri: item?.icon}}
-                      resizeMode={'contain'}
-                      style={{
-                        height: '100%',
-                        width: '100%',
-                        borderRadius: 30,
-                      }}
-                    />
-                  )}
-                </View>
-                <View style={styles.coinBox}>
-                  <Text style={{...styles.coinNumber, marginRight: 5}}>
-                    {currentCoin.totalAmount}
-                  </Text>
-                  <Text style={styles.coinNumber}>{currentCoin?.symbol}</Text>
-                  {isBitcoin && (
-                    <Text
-                      style={
-                        styles.coinNumber
-                      }>{` (${currentCoin?.chain_display_name})`}</Text>
-                  )}
-                </View>
-                <Text style={styles.coinSum}>
-                  {currencySymbol[localCurrency] || ''}
-                  {currentCoin.totalCourse}
-                </Text>
-              </View>
-              <View style={styles.btnList}>
-                <TouchableOpacity
-                  style={{...styles.btn, ...styles.shadow, marginRight: 20}}
-                  onPress={() => {
-                    if (isNativeCoinAvailable) {
-                      dispatch(clearSelectedUTXOs());
-                      navigation.navigate('SendFunds');
-                    } else {
-                      Toast.show({
-                        type: 'errorToast',
-                        text1: `Require ${currentCoin?.chain_display_name} chain`,
-                        text2: `You need to add ${currentCoin?.chain_display_name} to send ${currentCoin?.name}`,
-                      });
-                    }
-                  }}>
-                  <SendIcon style={styles.icon} />
-                  <Text style={styles.btnText}>Send</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={{...styles.btn, ...styles.shadow}}
-                  onPress={() => navigation.navigate('RecieveFunds')}>
-                  <RecIcon style={styles.icon} />
-                  <Text style={styles.btnText}>Receive</Text>
-                </TouchableOpacity>
-              </View>
-
-              {(isBitcoin || isDeriveAddressChain) &&
-                Array.isArray(deriveAddresses) && (
-                  <View>
-                    <DokDropdown
-                      placeholder={'SELECT ADDRESS:'}
-                      title={'Select address'}
-                      titleStyle={styles.addresTitle}
-                      data={deriveAddresses}
-                      onChangeValue={onChangeSelectedAddress}
-                      value={address}
-                    />
+          <>
+            {isLightning && btcLightningUnClaimedData?.length > 0 ? (
+              <ModalAddCoins
+                isLightning={isLightning}
+                unClaimedData={btcLightningUnClaimedData}
+                bottomSheetRef={ref => (unClaimedBottomSheet.current = ref)}
+                onDismiss={onDismissAddCoinsSheet}
+              />
+            ) : (
+              <></>
+            )}
+            <ScrollView
+              contentContainerStyle={styles.containerContainerStyle}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }>
+              {isDeriveAddressChain &&
+                !isImportWithPrivateKey &&
+                !isAddMoreAddressPopupHide && (
+                  <View style={styles.syncView}>
+                    <Text style={styles.syncTitle} numberOfLines={2}>
+                      {'Do you want to allow more addresses under this wallet?'}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.syncButton}
+                      onPress={() => {
+                        dispatch(addEVMAndTronDeriveAddresses());
+                      }}>
+                      <Text style={styles.syncButtonTitle}>{'Add'}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => {
+                        dispatch(setIsAddMoreAddressPopupHidden(true));
+                      }}>
+                      <MaterialCommunityIcons
+                        name={'close'}
+                        size={24}
+                        color={theme.font}
+                      />
+                    </TouchableOpacity>
                   </View>
                 )}
-              <TouchableOpacity
-                onPress={() => {
-                  Clipboard.setString(address);
-                  triggerHapticFeedbackLight();
-                  Toast.show({
-                    type: 'successToast',
-                    text1: 'Address copied',
-                  });
-                }}
-                style={styles.addresList}>
-                <View style={styles.boxAdress}>
-                  <Text style={styles.addresTitle}>Your Address:</Text>
-                  <CopyIcon fill={theme.background} width={20} height={30} />
+              <View style={styles.box}>
+                <View style={styles.coinList}>
+                  <View style={styles.coinIcon}>
+                    {/* {currentList && (
+                    <Text style={styles.currentIcon}>{currentCoin.icon}</Text>
+                  )} */}
+                    {currentCoin?.icon && (
+                      <FastImage
+                        source={{uri: item?.icon}}
+                        resizeMode={'contain'}
+                        style={{
+                          height: '100%',
+                          width: '100%',
+                          borderRadius: 30,
+                        }}
+                      />
+                    )}
+                  </View>
+                  <View style={styles.coinBox}>
+                    <Text style={{...styles.coinNumber, marginRight: 5}}>
+                      {currentCoin.totalAmount}
+                    </Text>
+                    <Text style={styles.coinNumber}>{currentCoin?.symbol}</Text>
+                    {isBitcoin && (
+                      <Text
+                        style={
+                          styles.coinNumber
+                        }>{` (${currentCoin?.chain_display_name})`}</Text>
+                    )}
+                  </View>
+                  <Text style={styles.coinSum}>
+                    {currencySymbol[localCurrency] || ''}
+                    {currentCoin.totalCourse}
+                  </Text>
                 </View>
-                <Text style={styles.address}>{address}</Text>
-              </TouchableOpacity>
-              {!isPrivateKeyNotSupportedChain(currentCoin?.chain_name) && (
+                <View style={styles.btnList}>
+                  <TouchableOpacity
+                    style={{...styles.btn, ...styles.shadow, marginRight: 20}}
+                    onPress={() => {
+                      if (isNativeCoinAvailable) {
+                        dispatch(clearSelectedUTXOs());
+                        navigation.navigate('SendFunds');
+                      } else {
+                        Toast.show({
+                          type: 'errorToast',
+                          text1: `Require ${currentCoin?.chain_display_name} chain`,
+                          text2: `You need to add ${currentCoin?.chain_display_name} to send ${currentCoin?.name}`,
+                        });
+                      }
+                    }}>
+                    <SendIcon style={styles.icon} />
+                    <Text style={styles.btnText}>Send</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{...styles.btn, ...styles.shadow}}
+                    onPress={() => navigation.navigate('RecieveFunds')}>
+                    <RecIcon style={styles.icon} />
+                    <Text style={styles.btnText}>Receive</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {(isBitcoin || isDeriveAddressChain) &&
+                  Array.isArray(deriveAddresses) && (
+                    <View>
+                      <DokDropdown
+                        placeholder={'SELECT ADDRESS:'}
+                        title={'Select address'}
+                        titleStyle={styles.addresTitle}
+                        data={deriveAddresses}
+                        onChangeValue={onChangeSelectedAddress}
+                        value={address}
+                      />
+                    </View>
+                  )}
                 <TouchableOpacity
                   onPress={() => {
-                    setShowConfirmModal(true);
-                    isCustomDerivationClicked.current = false;
+                    Clipboard.setString(address);
+                    triggerHapticFeedbackLight();
+                    Toast.show({
+                      type: 'successToast',
+                      text1: 'Address copied',
+                    });
                   }}
                   style={styles.addresList}>
                   <View style={styles.boxAdress}>
-                    <Text style={styles.privateKeyTitle}>Private Key:</Text>
-
+                    <Text style={styles.addresTitle}>Your Address:</Text>
                     <CopyIcon fill={theme.background} width={20} height={30} />
                   </View>
-
-                  <Text style={styles.privateKey}>
-                    {
-                      'Click here to copy the private key. Ensure that you keep your private key secure.'
-                    }
-                  </Text>
+                  <Text style={styles.address}>{address}</Text>
                 </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={{
-                  ...styles.btn,
-                  ...styles.shadow,
-                  marginTop: 24,
-                  width: '100%',
-                }}
-                onPress={() => {
-                  navigation.navigate('TransactionList');
-                }}>
-                <Text style={styles.btnText}>{'Transaction History'}</Text>
-              </TouchableOpacity>
-              {isStaking ? (
+                {!isPrivateKeyNotSupportedChain(currentCoin?.chain_name) && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowConfirmModal(true);
+                      isCustomDerivationClicked.current = false;
+                    }}
+                    style={styles.addresList}>
+                    <View style={styles.boxAdress}>
+                      <Text style={styles.privateKeyTitle}>Private Key:</Text>
+
+                      <CopyIcon
+                        fill={theme.background}
+                        width={20}
+                        height={30}
+                      />
+                    </View>
+
+                    <Text style={styles.privateKey}>
+                      {
+                        'Click here to copy the private key. Ensure that you keep your private key secure.'
+                      }
+                    </Text>
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity
                   style={{
                     ...styles.btn,
                     ...styles.shadow,
+                    marginTop: 24,
                     width: '100%',
                   }}
                   onPress={() => {
-                    navigation.navigate('StakingList');
+                    navigation.navigate('TransactionList');
                   }}>
-                  <Text style={styles.btnText}>{'Staking'}</Text>
+                  <Text style={styles.btnText}>{'Transaction History'}</Text>
                 </TouchableOpacity>
-              ) : null}
-            </View>
-          </ScrollView>
+                {isStaking ? (
+                  <TouchableOpacity
+                    style={{
+                      ...styles.btn,
+                      ...styles.shadow,
+                      width: '100%',
+                    }}
+                    onPress={() => {
+                      navigation.navigate('StakingList');
+                    }}>
+                    <Text style={styles.btnText}>{'Staking'}</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            </ScrollView>
+          </>
         )}
       </DokSafeAreaView>
       <ModalConfirmTransaction

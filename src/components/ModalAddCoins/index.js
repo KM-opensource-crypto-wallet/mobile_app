@@ -9,6 +9,7 @@ import {SCREEN_WIDTH} from 'utils/dimensions';
 import TabAddCoins from 'components/TabAddCoins';
 import TabAddCoinGroups from 'components/TabAddCoinGroups';
 import DokBottomSheet from 'components/BottomSheet';
+import {BtcLightningUnclaimedData} from 'components/BtcLightningUnclaimedData';
 
 const renderScene = SceneMap({
   add_coins: TabAddCoins,
@@ -45,7 +46,12 @@ const RenderTabBar = props => {
   );
 };
 
-const ModalAddCoins = ({bottomSheetRef, onDismiss}) => {
+const ModalAddCoins = ({
+  isLightning,
+  unClaimedData,
+  bottomSheetRef,
+  onDismiss,
+}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const [index, setIndex] = React.useState(0);
@@ -57,14 +63,18 @@ const ModalAddCoins = ({bottomSheetRef, onDismiss}) => {
       snapPoints={['90%']}
       onDismiss={onDismiss}>
       <View style={styles.centeredView}>
-        <TabView
-          navigationState={{index, routes}}
-          renderScene={renderScene}
-          onIndexChange={setIndex}
-          initialLayout={{width: SCREEN_WIDTH}}
-          renderTabBar={props => <RenderTabBar {...props} styles={styles} />}
-          lazy={true}
-        />
+        {isLightning ? (
+          <BtcLightningUnclaimedData unClaimedData={unClaimedData} />
+        ) : (
+          <TabView
+            navigationState={{index, routes}}
+            renderScene={renderScene}
+            onIndexChange={setIndex}
+            initialLayout={{width: SCREEN_WIDTH}}
+            renderTabBar={props => <RenderTabBar {...props} styles={styles} />}
+            lazy={true}
+          />
+        )}
       </View>
     </DokBottomSheet>
   );

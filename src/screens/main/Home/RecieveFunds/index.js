@@ -22,7 +22,10 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import {useSelector} from 'react-redux';
 import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {ThemeContext} from 'theme/ThemeContext';
-import {getCurrentWalletPhrase, selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  getCurrentWalletPhrase,
+  selectCurrentCoin,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import LightningDropDown from 'components/LightningDropDown';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -31,7 +34,7 @@ const RecieveFunds = ({navigation}) => {
   const styles = myStyles(theme);
   const address = useRef('');
   const currentCoin = useSelector(selectCurrentCoin);
-  const currentPhhrase = useSelector(getCurrentWalletPhrase);
+  const currentPhrase = useSelector(getCurrentWalletPhrase);
   address.current = currentCoin?.address ?? '';
   const isLightning =
     currentCoin?.chain_name === 'bitcoin_lightning' ? true : false;
@@ -78,14 +81,16 @@ const RecieveFunds = ({navigation}) => {
         let newAddress = '';
 
         if (currentValue === 'Receive via BTC mainnet') {
-          const {address} = await chain.generateInvoiceViaBitcoinAddress(currentPhhrase);
+          const {address} = await chain.generateInvoiceViaBitcoinAddress(
+            currentPhrase,
+          );
           newAddress = address;
         } else if (currentValue === 'Receive via Invoice') {
-          const {address} = await chain.generateInvoiceViaBolt11(currentPhhrase);
+          const {address} = await chain.generateInvoiceViaBolt11(currentPhrase);
           newAddress = address;
         } else if (currentValue === 'Receive via Lightning Address') {
           // generateSparkAddress
-          const {address} = await chain.generateSparkAddress(currentPhhrase);
+          const {address} = await chain.generateSparkAddress(currentPhrase);
           newAddress = address;
         }
 
@@ -95,7 +100,7 @@ const RecieveFunds = ({navigation}) => {
         console.log(error);
       }
     },
-    [chain, currentCoin?.symbol],
+    [chain, currentCoin?.symbol, currentPhrase],
   );
 
   return (
