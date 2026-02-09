@@ -8,25 +8,24 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {useSelector} from 'react-redux';
 import {BitcoinLightningChain} from 'dok-wallet-blockchain-networks/cryptoChain/chains/BitcoinLightningChain';
-import {TextInput} from 'react-native-paper';
+import {ActivityIndicator, TextInput} from 'react-native-paper';
 import * as bitcoin from 'bitcoinjs-lib';
 import {config} from 'dok-wallet-blockchain-networks/config/config';
 
 export const BtcLightningUnclaimedData = ({unClaimedData}) => {
   const [activeRejectIndex, setActiveRejectIndex] = useState(null);
   const [destinationAddress, setDestinationAddress] = useState('');
-  const [addressValidationError, setAddressValidationError] = useState('');
-  const [loading, setLoading] = useState(false);
-
+  const [addressValidationError, setAddressValidationError] = useState(false);
+  const [loadingIndex, setLoadingIndex] = useState(null);
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const currentCoin = useSelector(selectCurrentCoin);
   const currentPhrase = useSelector(getCurrentWalletPhrase);
 
   const handleApprove = useCallback(
-    async item => {
+    async (item, index) => {
       try {
-        setLoading(true);
+        setLoadingIndex(index);
         const lightningChain = await BitcoinLightningChain(
           currentCoin?.chain_name,
           currentPhrase,
@@ -37,10 +36,10 @@ export const BtcLightningUnclaimedData = ({unClaimedData}) => {
         );
         if (response) {
         }
-        setLoading(false);
+        setLoadingIndex(null);
       } catch (error) {
         console.log('error:', error);
-        setLoading(false);
+        setLoadingIndex(null);
       }
     },
     [currentCoin?.chain_name, currentPhrase],
@@ -66,16 +65,15 @@ export const BtcLightningUnclaimedData = ({unClaimedData}) => {
   };
 
   const handleRefund = useCallback(
-    async item => {
+    async (item, index) => {
       try {
-        console.log('item:', item);
-        setLoading(true);
+        setLoadingIndex(index);
         const {txid, amount, vout} = item;
         if (
           !isValidBTCAddress(destinationAddress, config.BITCOIN_NETWORK_STRING)
         ) {
           setAddressValidationError(true);
-          setLoading(false);
+          setLoadingIndex(null);
           return;
         }
         setAddressValidationError(false);
@@ -91,10 +89,10 @@ export const BtcLightningUnclaimedData = ({unClaimedData}) => {
         if (response) {
           // Refresh page
         }
-        setLoading(false);
+        setLoadingIndex(null);
       } catch (error) {
         console.log('error:', error);
-        setLoading(false);
+        setLoadingIndex(null);
       }
     },
     [currentCoin?.chain_name, currentPhrase, destinationAddress],
@@ -111,8 +109,8 @@ export const BtcLightningUnclaimedData = ({unClaimedData}) => {
     return (
       <>
         <View style={styles.card}>
-          {loading ? (
-            <Text>Loading....</Text>
+          {loadingIndex === index ? (
+            <ActivityIndicator size={'small'} animating={true} />
           ) : (
             <>
               {/* Info Section */}
@@ -149,7 +147,7 @@ export const BtcLightningUnclaimedData = ({unClaimedData}) => {
 
                     <TouchableOpacity
                       style={[styles.btn, styles.shadow]}
-                      onPress={() => handleRefund(item)}>
+                      onPress={() => handleRefund(item, index)}>
                       <Text style={styles.btnText}>REFUND</Text>
                     </TouchableOpacity>
                   </View>
@@ -167,7 +165,7 @@ export const BtcLightningUnclaimedData = ({unClaimedData}) => {
 
                   <TouchableOpacity
                     style={[styles.btn, styles.shadow]}
-                    onPress={() => handleApprove(item)}>
+                    onPress={() => handleApprove(item, index)}>
                     <Text style={styles.btnText}>APPROVE</Text>
                   </TouchableOpacity>
                 </View>

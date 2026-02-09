@@ -426,7 +426,7 @@ export const getLightningTransactions = async phrase => {
   }
 };
 
-export const claimOnchainDposit = async phrase => {
+export const claimOnchainDeposit = async phrase => {
   try {
     const sdk = await connectToSdk(phrase);
     if (!sdk) return;
