@@ -46,12 +46,7 @@ const RenderTabBar = props => {
   );
 };
 
-const ModalAddCoins = ({
-  isLightning,
-  unClaimedData,
-  bottomSheetRef,
-  onDismiss,
-}) => {
+const ModalAddCoins = ({isLightning, bottomSheetRef, onDismiss}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const [index, setIndex] = React.useState(0);
@@ -64,7 +59,7 @@ const ModalAddCoins = ({
       onDismiss={onDismiss}>
       <View style={styles.centeredView}>
         {isLightning ? (
-          <BtcLightningUnclaimedData unClaimedData={unClaimedData} />
+          <BtcLightningUnclaimedData onDismiss={onDismiss} />
         ) : (
           <TabView
             navigationState={{index, routes}}

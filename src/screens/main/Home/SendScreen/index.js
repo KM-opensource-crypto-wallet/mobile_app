@@ -294,7 +294,6 @@ const SendScreen = ({navigation, route}) => {
             {isLightning && btcLightningUnClaimedData?.length > 0 ? (
               <ModalAddCoins
                 isLightning={isLightning}
-                unClaimedData={btcLightningUnClaimedData}
                 bottomSheetRef={ref => (unClaimedBottomSheet.current = ref)}
                 onDismiss={onDismissAddCoinsSheet}
               />
