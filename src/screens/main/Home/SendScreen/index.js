@@ -271,12 +271,13 @@ const SendScreen = ({navigation, route}) => {
 
   useFocusEffect(
     useCallback(() => {
+      if (!isLightning || !btcLightningUnClaimedData?.length) return;
       const timeout = setTimeout(() => {
         openBottomSheet();
       }, 150);
 
       return () => clearTimeout(timeout);
-    }, [openBottomSheet]),
+    }, [btcLightningUnClaimedData?.length, isLightning, openBottomSheet]),
   );
 
   if (!currentCoin) {
