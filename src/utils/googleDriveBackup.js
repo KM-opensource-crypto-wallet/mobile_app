@@ -13,6 +13,7 @@ const BACKUP_FILE_NAME = 'wallet_backup_encrypted.json';
 
 const googleConfigure = {
   scopes: ['https://www.googleapis.com/auth/drive.appfolder'],
+  webClientId: process.env.DOK_WALLET_GOOGLE_WEB_CLIENT_ID,
 };
 
 export const googleDrive = {

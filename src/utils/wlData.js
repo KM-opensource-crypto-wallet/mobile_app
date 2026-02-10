@@ -34,6 +34,13 @@ const IOS_APPSTORE_URL_OBJ = {
 
 export const IOS_APPSTORE_URL = IOS_APPSTORE_URL_OBJ[wlName];
 
+const WEB_GOOGLE_CLIENT_ID_OBJ = {
+  dokwallet: process.env.DOK_WALLET_GOOGLE_WEB_CLIENT_ID,
+  kimlwallet: process.env.KIML_WALLET_GOOGLE_WEB_CLIENT_ID,
+};
+
+export const WEB_GOOGLE_CLIENT_ID = WEB_GOOGLE_CLIENT_ID_OBJ[wlName];
+
 // Use static require paths inside a mapping
 const logoMap = {
   dokwallet: {

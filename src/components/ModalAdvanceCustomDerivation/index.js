@@ -1,4 +1,4 @@
-import React, {useContext, useCallback} from 'react';
+import React, {useContext, useCallback, useState} from 'react';
 import {Dimensions, TouchableOpacity, View} from 'react-native';
 import {Modal, Portal, Text} from 'react-native-paper';
 import {ThemeContext} from 'theme/ThemeContext';
@@ -21,28 +21,26 @@ if (isIpad) {
   ITEM_WIDTH = Math.round(WIDTH * 0.7);
 }
 
-const ModalAdvanceCustomDerivation = ({
-  isChecked,
-  visible,
-  onPressYes,
-  onPressNo,
-}) => {
+const ModalAdvanceCustomDerivation = ({visible, onPressYes, onPressNo}) => {
   const {theme} = useContext(ThemeContext);
+  const [checked, setChecked] = useState(false);
   const styles = myStyles(theme);
   const dispatch = useDispatch();
 
   const handlerNo = useCallback(() => {
-    dispatch(updateCustomDerivedChecked(false));
     onPressNo?.();
-  }, [dispatch, onPressNo]);
+  }, [onPressNo]);
 
   const handlerYes = useCallback(() => {
+    if (checked) {
+      dispatch(updateCustomDerivedChecked(true));
+    }
     onPressYes?.();
-  }, [onPressYes]);
+  }, [checked, dispatch, onPressYes]);
 
   const handleCheckBox = useCallback(() => {
-    dispatch(updateCustomDerivedChecked(!isChecked));
-  }, [dispatch, isChecked]);
+    setChecked(prev => !prev);
+  }, []);
 
   return (
     <Portal>
@@ -67,9 +65,9 @@ const ModalAdvanceCustomDerivation = ({
         <TouchableOpacity onPress={handleCheckBox}>
           <View style={styles.checkboxAndText}>
             <MaterialCommunityIcons
-              name={isChecked ? 'checkbox-marked' : 'checkbox-blank-outline'}
+              name={checked ? 'checkbox-marked' : 'checkbox-blank-outline'}
               size={24}
-              color={isChecked ? theme.background : theme.gray}
+              color={checked ? theme.background : theme.gray}
             />
             <Text style={[{}, styles.info]}>Don't show this popup again</Text>
           </View>
