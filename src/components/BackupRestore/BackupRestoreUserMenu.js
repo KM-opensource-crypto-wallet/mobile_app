@@ -66,7 +66,7 @@ const BackupRestoreUserMenu = ({
           {/* Logout Option */}
           <MenuOption onSelect={onLogout} style={styles.menuOption}>
             <View style={styles.menuOptionContent}>
-              <AntIcon name="logout" size={18} />
+              <AntIcon name="logout" size={18} color={theme.font} />
               <Text style={styles.menuOptionText}>Logout</Text>
             </View>
           </MenuOption>

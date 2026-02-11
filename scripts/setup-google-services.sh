@@ -19,7 +19,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 # Load environment variables from .env file
 if [ -f "$PROJECT_ROOT/.env" ]; then
-  export $(grep -E '^GITHUB_PAT=' "$PROJECT_ROOT/.env" | xargs)
+  export "$(grep -E '^GITHUB_PAT=' "$PROJECT_ROOT/.env" | xargs)"
 fi
 
 if [ -z "$GITHUB_PAT" ]; then

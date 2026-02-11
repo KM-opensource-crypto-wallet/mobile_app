@@ -35,7 +35,15 @@ export const googleDrive = {
         })
         .catch(reject);
     }),
-  isGoogleSignedIn: () => GoogleSignin.getCurrentUser(),
+  isGoogleSignedIn: () =>
+    new Promise((resolve, reject) => {
+      try {
+        const user = GoogleSignin.getCurrentUser();
+        resolve(user);
+      } catch (error) {
+        reject(error);
+      }
+    }),
   googleSignIn: () =>
     new Promise((resolve, reject) => {
       GoogleSignin.signIn()

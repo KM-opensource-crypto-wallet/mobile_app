@@ -55,7 +55,7 @@ const RestoreWallets = ({navigation}) => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const currentUser = googleDrive.isGoogleSignedIn();
+        const currentUser = await googleDrive.isGoogleSignedIn();
 
         if (currentUser?.user) {
           setUserInfo(currentUser.user);
