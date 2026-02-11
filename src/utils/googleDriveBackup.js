@@ -6,6 +6,7 @@ import {
 import {Platform} from 'react-native';
 import crypto from 'react-native-quick-crypto';
 import {Buffer} from 'buffer';
+import {WEB_GOOGLE_CLIENT_ID} from './wlData';
 
 const IS_IOS = Platform.OS === 'ios';
 
@@ -13,7 +14,7 @@ const BACKUP_FILE_NAME = 'wallet_backup_encrypted.json';
 
 const googleConfigure = {
   scopes: ['https://www.googleapis.com/auth/drive.appfolder'],
-  webClientId: process.env.DOK_WALLET_GOOGLE_WEB_CLIENT_ID,
+  webClientId: WEB_GOOGLE_CLIENT_ID,
 };
 
 export const googleDrive = {
@@ -241,8 +242,17 @@ export const googleDrive = {
 // Version prefix for encrypted payloads
 const VERSION_V1_GCM = 'v1-gcm:';
 
+if (!process.env.WALLET_BACKUP_SECRET) {
+  console.error(
+    'WALLET_BACKUP_SECRET is not defined! Check your .env file and rebuild the app.',
+  );
+}
+
 // Key derivation using PBKDF2-SHA256
 const deriveKey = (password, salt) => {
+  if (!password) {
+    throw new Error('Encryption password is not configured');
+  }
   const passwordBuffer = Buffer.from(password, 'utf8');
   return crypto.pbkdf2Sync(passwordBuffer, salt, 100000, 32, 'sha256');
 };
@@ -435,6 +445,26 @@ export const restoreWalletsFromDrive = async () => {
     return decryptData(parsedContent.data);
   } catch (error) {
     console.error('Restore Failed:', error);
+    throw error?.json?.error || error;
+  }
+};
+
+export const deleteWalletBackup = async () => {
+  try {
+    const filesList = await googleDrive.getFileList('appDataFolder');
+    const files = filesList.files || [];
+    const existingFile = files.find(
+      f => f.name === BACKUP_FILE_NAME && !f.trashed,
+    );
+
+    if (!existingFile) {
+      throw new Error('No backup file found to delete.');
+    }
+
+    await googleDrive.deleteGDriveFile(existingFile.id);
+    return true;
+  } catch (error) {
+    console.error('Delete Backup Failed:', error);
     throw error?.json?.error || error;
   }
 };

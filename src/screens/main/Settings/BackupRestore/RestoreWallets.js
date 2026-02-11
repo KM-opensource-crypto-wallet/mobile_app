@@ -1,9 +1,9 @@
 import React, {
   useState,
-  useEffect,
   useCallback,
   useContext,
   useLayoutEffect,
+  useEffect,
 } from 'react';
 import {
   View,
@@ -21,23 +21,16 @@ import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/wal
 import {createWalletsBatch} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {
   restoreWalletsFromDrive,
-  initGoogleDrive,
+  deleteWalletBackup,
   googleDrive,
 } from 'utils/googleDriveBackup';
 import {showToast} from 'utils/toast';
 import Checkbox from 'components/Checkbox';
-import FastImage from '@d11/react-native-fast-image';
-import {
-  Menu,
-  MenuOption,
-  MenuOptions,
-  MenuTrigger,
-} from 'react-native-popup-menu';
-import AntIcon from 'react-native-vector-icons/AntDesign';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import BackupRestoreUserMenu from 'components/BackupRestore/BackupRestoreUserMenu';
 
 import WalletSelectionCard from 'components/BackupRestore/WalletSelectionCard';
 import DriveGuideModal from 'components/BackupRestore/DriveGuideModal';
+import ModalDeleteBackup from 'components/ModalDeleteBackup';
 import myStyles from './styles';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
@@ -46,40 +39,48 @@ const RestoreWallets = ({navigation}) => {
   const {bottom} = useSafeAreaInsets();
   const styles = myStyles(theme, bottom);
   const dispatch = useDispatch();
+  const [userInfo, setUserInfo] = useState(null);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   const existingWallets = useSelector(selectAllWallets);
 
   const [restorableWallets, setRestorableWallets] = useState([]);
   const [selectedWalletIds, setSelectedWalletIds] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [showDriveGuideModal, setShowDriveGuideModal] = useState(false);
-  const [userInfo, setUserInfo] = useState(null);
   const [error, setError] = useState(null);
-
-  const initAndCheckSession = useCallback(async () => {
-    try {
-      initGoogleDrive();
-      const hasPrevious = await googleDrive.hasPreviousSignIn();
-      if (hasPrevious) {
-        try {
-          const user = await googleDrive.signInSilently();
-          setUserInfo(user?.data?.user || null);
-          fetchBackup();
-        } catch (silentError) {
-          setLoading(false);
-        }
-      } else {
-        setLoading(false);
-      }
-    } catch (err) {
-      setLoading(false);
-    }
-  }, []);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
-    initAndCheckSession();
-  }, [initAndCheckSession]);
+    const checkSession = async () => {
+      try {
+        const currentUser = googleDrive.isGoogleSignedIn();
+
+        if (currentUser?.user) {
+          setUserInfo(currentUser.user);
+          fetchBackup();
+          return;
+        }
+
+        const hasPrevious = await googleDrive.hasPreviousSignIn();
+
+        if (hasPrevious) {
+          const user = await googleDrive.signInSilently();
+          const userData = user?.data?.user || user?.user || null;
+          setUserInfo(userData);
+          if (userData) {
+            fetchBackup();
+          }
+        }
+      } catch (err) {
+        console.error('RestoreWallets - Session check failed:', err);
+      } finally {
+        setIsCheckingSession(false);
+      }
+    };
+    checkSession();
+  }, []);
 
   const handleConnect = () => {
     setShowDriveGuideModal(true);
@@ -90,16 +91,19 @@ const RestoreWallets = ({navigation}) => {
     setLoading(true);
     setError(null);
     try {
-      await googleDrive.googleSignIn();
-      const userWrapper = await googleDrive.googleGetUser();
-      setUserInfo(userWrapper?.user);
-      fetchBackup();
+      const user = await googleDrive.googleSignIn();
+      const userData = user?.data?.user || user?.user || null;
+      setUserInfo(userData);
+      if (userData) {
+        await fetchBackup();
+      }
     } catch (err) {
       setLoading(false);
+      console.error('Sign-in failed:', err);
     }
   };
 
-  const handleLogout = async notShowToast => {
+  const handleLogout = useCallback(async notShowToast => {
     try {
       await googleDrive.googleSignOut();
       setUserInfo(null);
@@ -108,51 +112,45 @@ const RestoreWallets = ({navigation}) => {
       if (!notShowToast) {
         showToast({type: 'successToast', message: 'Logged out successfully'});
       }
-    } catch (err) {}
-  };
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  }, []);
+
+  const handleDeleteBackup = useCallback(async () => {
+    try {
+      await deleteWalletBackup();
+      setRestorableWallets([]);
+      setSelectedWalletIds([]);
+      showToast({
+        type: 'successToast',
+        title: 'Backup Deleted',
+        message: 'All wallet backups have been deleted from Google Drive.',
+      });
+    } catch (err) {
+      console.error('Delete Backup Failed:', err);
+      showToast({
+        type: 'errorToast',
+        title: 'Delete Failed',
+        message:
+          err?.message === 'No backup file found to delete.'
+            ? 'No backup found to delete.'
+            : err?.message || 'Failed to delete backup from Google Drive.',
+      });
+    }
+  }, []);
 
   useLayoutEffect(() => {
     const headerRight = () => (
-      <View style={styles.headerRightContainer}>
-        {userInfo ? (
-          <Menu>
-            <MenuTrigger customStyles={{triggerWrapper: {padding: 5}}}>
-              <View style={styles.headerAvatarContainer}>
-                <FontAwesome name="user-circle" size={26} color={theme.font} />
-              </View>
-            </MenuTrigger>
-            <MenuOptions optionsContainerStyle={styles.menuOptionsContainer}>
-              <View style={styles.userInfoSection}>
-                <FastImage
-                  source={{uri: userInfo?.photo}}
-                  style={styles.userAvatar}
-                  resizeMode="cover"
-                />
-                <View style={styles.userInfoDetails}>
-                  <Text style={styles.userName} numberOfLines={1}>
-                    {userInfo?.name}
-                  </Text>
-                  <Text style={styles.userEmail} numberOfLines={1}>
-                    {userInfo?.email}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.divider} />
-
-              <MenuOption onSelect={handleLogout} style={styles.menuOption}>
-                <View style={styles.menuOptionContent}>
-                  <AntIcon name="logout" size={18} />
-                  <Text style={styles.menuOptionText}>Logout</Text>
-                </View>
-              </MenuOption>
-            </MenuOptions>
-          </Menu>
-        ) : null}
-      </View>
+      <BackupRestoreUserMenu
+        userInfo={userInfo}
+        onDeleteBackup={() => setShowDeleteModal(true)}
+        onLogout={handleLogout}
+        styles={styles}
+      />
     );
     navigation.setOptions({headerRight});
-  }, [navigation, userInfo, theme, styles]);
+  }, [navigation, userInfo, styles, handleLogout]);
 
   const handleRetry = async () => {
     await handleLogout(true);
@@ -294,19 +292,19 @@ const RestoreWallets = ({navigation}) => {
     );
   };
 
-  if (loading) {
+  if (isCheckingSession || loading) {
     return (
       <DokSafeAreaView style={[styles.container, styles.center]}>
         <ActivityIndicator size="large" color={theme.font} />
         <Text style={[styles.text, styles.marginTop20]}>
-          {userInfo ? 'Searching for backups...' : 'Starting...'}
+          {userInfo ? 'Searching for backups...' : 'Checking session...'}
         </Text>
       </DokSafeAreaView>
     );
   }
 
   // Not Logged In
-  if (!userInfo) {
+  if (!isCheckingSession && !userInfo) {
     return (
       <DokSafeAreaView style={[styles.container, styles.center]}>
         <View style={styles.emptyStateContainer}>
@@ -323,6 +321,12 @@ const RestoreWallets = ({navigation}) => {
         <DriveGuideModal
           visible={showDriveGuideModal}
           onContinue={handleDriveGuideContinue}
+        />
+
+        <ModalDeleteBackup
+          visible={showDeleteModal}
+          hideModal={() => setShowDeleteModal(false)}
+          onConfirm={handleDeleteBackup}
         />
       </DokSafeAreaView>
     );
@@ -348,6 +352,12 @@ const RestoreWallets = ({navigation}) => {
             <Text style={styles.buttonText}>Retry</Text>
           </TouchableOpacity>
         </View>
+
+        <ModalDeleteBackup
+          visible={showDeleteModal}
+          hideModal={() => setShowDeleteModal(false)}
+          onConfirm={handleDeleteBackup}
+        />
       </DokSafeAreaView>
     );
   }
@@ -412,6 +422,12 @@ const RestoreWallets = ({navigation}) => {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <ModalDeleteBackup
+        visible={showDeleteModal}
+        hideModal={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteBackup}
+      />
     </DokSafeAreaView>
   );
 };
