@@ -25,6 +25,7 @@ import {
   backupWalletsToDrive,
   deleteWalletBackup,
   googleDrive,
+  initGoogleDrive,
 } from 'utils/googleDriveBackup';
 import {showToast} from 'utils/toast';
 
@@ -57,6 +58,7 @@ const BackupWallets = ({navigation}) => {
   useEffect(() => {
     const checkSession = async () => {
       try {
+        initGoogleDrive();
         const currentUser = await googleDrive.isGoogleSignedIn();
 
         if (currentUser?.user) {
@@ -64,7 +66,7 @@ const BackupWallets = ({navigation}) => {
           return;
         }
 
-        const hasPrevious = await googleDrive.hasPreviousSignIn();
+        const hasPrevious = googleDrive.hasPreviousSignIn();
 
         if (hasPrevious) {
           const user = await googleDrive.signInSilently();

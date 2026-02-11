@@ -19,14 +19,7 @@ const googleConfigure = {
 
 export const googleDrive = {
   configure: () => GoogleSignin.configure(googleConfigure),
-  hasPreviousSignIn: () =>
-    new Promise((resolve, reject) => {
-      GoogleSignin.hasPreviousSignIn()
-        .then(isSignedIn => {
-          resolve(isSignedIn);
-        })
-        .catch(reject);
-    }),
+  hasPreviousSignIn: () => GoogleSignin.hasPreviousSignIn(),
   signInSilently: () =>
     new Promise((resolve, reject) => {
       GoogleSignin.signInSilently()

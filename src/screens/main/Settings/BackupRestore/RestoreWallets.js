@@ -23,6 +23,7 @@ import {
   restoreWalletsFromDrive,
   deleteWalletBackup,
   googleDrive,
+  initGoogleDrive,
 } from 'utils/googleDriveBackup';
 import {showToast} from 'utils/toast';
 import Checkbox from 'components/Checkbox';
@@ -55,6 +56,7 @@ const RestoreWallets = ({navigation}) => {
   useEffect(() => {
     const checkSession = async () => {
       try {
+        initGoogleDrive();
         const currentUser = await googleDrive.isGoogleSignedIn();
 
         if (currentUser?.user) {
@@ -63,7 +65,7 @@ const RestoreWallets = ({navigation}) => {
           return;
         }
 
-        const hasPrevious = await googleDrive.hasPreviousSignIn();
+        const hasPrevious = googleDrive.hasPreviousSignIn();
 
         if (hasPrevious) {
           const user = await googleDrive.signInSilently();
