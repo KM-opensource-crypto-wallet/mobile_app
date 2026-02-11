@@ -7,20 +7,30 @@
 
 set -e
 
-PRIVATE_REPO="git@github.com:KM-opensource-crypto-wallet/km_mobile_config.git"
-BRANCH="main"
-
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${YELLOW}Setting up Google Services configuration files...${NC}"
-
 # Get the directory where the script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Load environment variables from .env file
+if [ -f "$PROJECT_ROOT/.env" ]; then
+  export "$(grep -E '^GITHUB_PAT=' "$PROJECT_ROOT/.env" | xargs)"
+fi
+
+if [ -z "$GITHUB_PAT" ]; then
+  echo -e "${RED}Error: GITHUB_PAT not found in .env file${NC}"
+  exit 1
+fi
+
+PRIVATE_REPO="https://${GITHUB_PAT}@github.com/KM-opensource-crypto-wallet/km_mobile_config.git"
+BRANCH="main"
+
+echo -e "${YELLOW}Setting up Google Services configuration files...${NC}"
 
 # Create temp directory
 TEMP_DIR=$(mktemp -d)
@@ -32,7 +42,7 @@ echo "Cloning config repository..."
 if ! git clone --depth 1 --branch "$BRANCH" "$PRIVATE_REPO" "$TEMP_DIR/config" 2>/dev/null; then
   echo -e "${RED}Error: Failed to clone config repository.${NC}"
   echo ""
-  echo "Please ensure you have access to: $PRIVATE_REPO"
+  echo "Please ensure your GITHUB_PAT in .env has access to: KM-opensource-crypto-wallet/km_mobile_config"
   echo "Contact the repository admin to request access."
   exit 1
 fi

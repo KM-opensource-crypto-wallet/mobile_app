@@ -13,15 +13,7 @@ import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import ModalConfirm from 'components/ModalConfirm';
 import DriveGuideModal from 'components/BackupRestore/DriveGuideModal';
 import Checkbox from 'components/Checkbox';
-import FastImage from '@d11/react-native-fast-image';
-import {
-  Menu,
-  MenuOption,
-  MenuOptions,
-  MenuTrigger,
-} from 'react-native-popup-menu';
-import AntIcon from 'react-native-vector-icons/AntDesign';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import BackupRestoreUserMenu from 'components/BackupRestore/BackupRestoreUserMenu';
 
 import {
   selectAllWallets,
@@ -31,12 +23,14 @@ import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/se
 import {currencySymbol} from 'data/currency';
 import {
   backupWalletsToDrive,
-  initGoogleDrive,
+  deleteWalletBackup,
   googleDrive,
+  initGoogleDrive,
 } from 'utils/googleDriveBackup';
 import {showToast} from 'utils/toast';
 
 import WalletSelectionCard from 'components/BackupRestore/WalletSelectionCard';
+import ModalDeleteBackup from 'components/ModalDeleteBackup';
 import myStyles from './styles';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
@@ -44,6 +38,7 @@ const BackupWallets = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
   const {bottom} = useSafeAreaInsets();
   const styles = myStyles(theme, bottom);
+  const [userInfo, setUserInfo] = useState(null);
 
   const allWallets = useSelector(selectAllWallets);
   const masterClientId = useSelector(getMasterClientId);
@@ -58,7 +53,32 @@ const BackupWallets = ({navigation}) => {
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [showDriveGuideModal, setShowDriveGuideModal] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
-  const [userInfo, setUserInfo] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        initGoogleDrive();
+        const currentUser = await googleDrive.isGoogleSignedIn();
+
+        if (currentUser?.user) {
+          setUserInfo(currentUser.user);
+          return;
+        }
+
+        const hasPrevious = googleDrive.hasPreviousSignIn();
+
+        if (hasPrevious) {
+          const user = await googleDrive.signInSilently();
+          const userData = user?.data?.user || user?.user || null;
+          setUserInfo(userData);
+        }
+      } catch (err) {
+        console.log('BackupWallets - Session check failed:', err);
+      }
+    };
+    checkSession();
+  }, []);
 
   // Computed state for "Select All"
   const isAllSelected = useMemo(
@@ -75,71 +95,50 @@ const BackupWallets = ({navigation}) => {
     }
   }, [isAllSelected, allWallets]);
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        initGoogleDrive();
-        const user = await googleDrive.googleGetUser();
-        setUserInfo(user?.user || null);
-      } catch (err) {}
-    };
-    init();
-  }, []);
-
-  const handleLogout = async notShowToast => {
+  const handleLogout = useCallback(async notShowToast => {
     try {
       await googleDrive.googleSignOut();
       setUserInfo(null);
       if (!notShowToast) {
         showToast({type: 'successToast', message: 'Logged out successfully'});
       }
-    } catch (err) {}
-  };
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  }, []);
+
+  const handleDeleteBackup = useCallback(async () => {
+    try {
+      await deleteWalletBackup();
+      showToast({
+        type: 'successToast',
+        title: 'Backup Deleted',
+        message: 'All wallet backups have been deleted from Google Drive.',
+      });
+    } catch (err) {
+      console.error('Delete Backup Failed:', err);
+      showToast({
+        type: 'errorToast',
+        title: 'Delete Failed',
+        message:
+          err?.message === 'No backup file found to delete.'
+            ? 'No backup found to delete.'
+            : err?.message || 'Failed to delete backup from Google Drive.',
+      });
+    }
+  }, []);
 
   useLayoutEffect(() => {
     const headerRight = () => (
-      <View style={styles.headerRightContainer}>
-        {userInfo ? (
-          <Menu>
-            <MenuTrigger customStyles={{triggerWrapper: {padding: 5}}}>
-              <View style={styles.headerAvatarContainer}>
-                <FontAwesome name="user-circle" size={26} color={theme.font} />
-              </View>
-            </MenuTrigger>
-            <MenuOptions optionsContainerStyle={styles.menuOptionsContainer}>
-              {/* User Info Section */}
-              <View style={styles.userInfoSection}>
-                <FastImage
-                  source={{uri: userInfo?.photo}}
-                  style={styles.userAvatar}
-                  resizeMode="cover"
-                />
-                <View style={styles.userInfoDetails}>
-                  <Text style={styles.userName} numberOfLines={1}>
-                    {userInfo?.name}
-                  </Text>
-                  <Text style={styles.userEmail} numberOfLines={1}>
-                    {userInfo?.email}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.divider} />
-
-              {/* Logout Option */}
-              <MenuOption onSelect={handleLogout} style={styles.menuOption}>
-                <View style={styles.menuOptionContent}>
-                  <AntIcon name="logout" size={18} />
-                  <Text style={styles.menuOptionText}>Logout</Text>
-                </View>
-              </MenuOption>
-            </MenuOptions>
-          </Menu>
-        ) : null}
-      </View>
+      <BackupRestoreUserMenu
+        userInfo={userInfo}
+        onDeleteBackup={() => setShowDeleteModal(true)}
+        onLogout={handleLogout}
+        styles={styles}
+      />
     );
     navigation.setOptions({headerRight});
-  }, [navigation, userInfo, theme, styles]);
+  }, [navigation, userInfo, styles, handleLogout]);
 
   const toggleSelect = useCallback(clientId => {
     setSelectedWalletIds(prev => {
@@ -173,13 +172,11 @@ const BackupWallets = ({navigation}) => {
     setIsBackingUp(true);
 
     try {
-      let currentUser = userInfo;
-      if (!currentUser) {
-        await googleDrive.googleSignIn();
-        const userWrapper = await googleDrive.googleGetUser();
-        currentUser = userWrapper?.user;
-        setUserInfo(currentUser);
+      if (!userInfo) {
+        const user = await googleDrive.googleSignIn();
+        setUserInfo(user?.data?.user || user?.user || null);
       }
+
       const selectedWallets = allWallets.filter(w =>
         selectedWalletIds.includes(w.clientId),
       );
@@ -295,6 +292,12 @@ const BackupWallets = ({navigation}) => {
       <DriveGuideModal
         visible={showDriveGuideModal}
         onContinue={handleDriveGuideContinue}
+      />
+
+      <ModalDeleteBackup
+        visible={showDeleteModal}
+        hideModal={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteBackup}
       />
     </DokSafeAreaView>
   );
