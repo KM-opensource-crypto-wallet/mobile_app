@@ -3,12 +3,13 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		042789952A03DABE00B8290E /* fonts in Resources */ = {isa = PBXBuildFile; fileRef = 042789942A03DABE00B8290E /* fonts */; };
 		1C66517DDBF543F6AECC0244 /* Roboto-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 64FC04C990DE41D18CB05715 /* Roboto-Bold.ttf */; };
+		39FE1632059AB7E12AAB1D3F /* libPods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0F1116199F6DEC38FB00D687 /* libPods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.a */; };
 		3F1834F72A4F0A1A004B7D37 /* CustomMethods.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F1834F62A4F0A1A004B7D37 /* CustomMethods.swift */; };
 		3F1834F92A4F0A56004B7D37 /* CustomMethods.m in Sources */ = {isa = PBXBuildFile; fileRef = 3F1834F82A4F0A56004B7D37 /* CustomMethods.m */; };
 		3F1834FB2A4F1470004B7D37 /* CoinFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F1834FA2A4F1470004B7D37 /* CoinFactory.swift */; };
@@ -22,6 +23,8 @@
 		8F127B30AF9E90CD8D5EB8ED /* libPods-coinswalletCommonPod-kimlwallet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F0760659BEE1A5B23AAA5BA /* libPods-coinswalletCommonPod-kimlwallet.a */; };
 		98B27C0C2528E0FBF4E0AD38 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B0615FCE19AA857BC879EE41 /* GoogleService-Info.plist */; };
 		A9BD179BEDC14A1F99F7F32E /* Roboto-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C386D48D108B452E86A44CA6 /* Roboto-Regular.ttf */; };
+		C8B0BA212F3B3CA100E9A906 /* OneSignalNotificationServiceExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C8B0BA1A2F3B3CA000E9A906 /* OneSignalNotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C8B0BA332F3B3D8600E9A906 /* OneSignalNotificationServiceExtensionKimlWallet.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C8B0BA2C2F3B3D8600E9A906 /* OneSignalNotificationServiceExtensionKimlWallet.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D132F77C58BAA58F810454D0 /* libPods-coinswalletCommonPod-coinswallet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DB37B2E2CEF9D0366BC2639C /* libPods-coinswalletCommonPod-coinswallet.a */; };
 		D2057C2D2BC514C000E14112 /* PolkadotCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2057C2C2BC514C000E14112 /* PolkadotCoin.swift */; };
 		D21ADCA12ACD362200244A4C /* SolanaCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D21ADCA02ACD362200244A4C /* SolanaCoin.swift */; };
@@ -72,12 +75,57 @@
 		D2F828102AB1EAEF004381E3 /* commonExternsion.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F8280F2AB1EAEF004381E3 /* commonExternsion.swift */; };
 		D2F849AC2DC8D32F006B2140 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D2F849A82DC8D32F006B2140 /* Images.xcassets */; };
 		D2F849B62DC8D334006B2140 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D2F849B12DC8D334006B2140 /* Images.xcassets */; };
+		F83E28646670B35C00481270 /* libPods-coinswalletCommonPod-OneSignalNotificationServiceExtension.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 462C3FD0A2481453AA386297 /* libPods-coinswalletCommonPod-OneSignalNotificationServiceExtension.a */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C8B0BA1F2F3B3CA100E9A906 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C8B0BA192F3B3CA000E9A906;
+			remoteInfo = OneSignalNotificationServiceExtension;
+		};
+		C8B0BA312F3B3D8600E9A906 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C8B0BA2B2F3B3D8600E9A906;
+			remoteInfo = OneSignalNotificationServiceExtensionKimlWallet;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C8B0BA262F3B3CA100E9A906 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C8B0BA212F3B3CA100E9A906 /* OneSignalNotificationServiceExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8B0BA382F3B3D8600E9A906 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C8B0BA332F3B3D8600E9A906 /* OneSignalNotificationServiceExtensionKimlWallet.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		042789942A03DABE00B8290E /* fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = fonts; sourceTree = "<group>"; };
 		0E62451CD24EFAA54FD034A7 /* Pods-coinswalletCommonPod-kimlwallet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswalletCommonPod-kimlwallet.release.xcconfig"; path = "Target Support Files/Pods-coinswalletCommonPod-kimlwallet/Pods-coinswalletCommonPod-kimlwallet.release.xcconfig"; sourceTree = "<group>"; };
+		0F1116199F6DEC38FB00D687 /* libPods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07F961A680F5B00A75B9A /* Dok Wallet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Dok Wallet.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2FE15072BDF00087B06F1F56 /* Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension.debug.xcconfig"; path = "Target Support Files/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension.debug.xcconfig"; sourceTree = "<group>"; };
 		362FA31358934F348B234F43 /* Roboto-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Roboto-Medium.ttf"; path = "../src/assets/fonts/Roboto-Medium.ttf"; sourceTree = "<group>"; };
 		3F1834F52A4F0A1A004B7D37 /* coinswallet-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "coinswallet-Bridging-Header.h"; sourceTree = "<group>"; };
 		3F1834F62A4F0A1A004B7D37 /* CustomMethods.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMethods.swift; sourceTree = "<group>"; };
@@ -86,16 +134,20 @@
 		3F1834FD2A4F18B6004B7D37 /* BitcoinCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitcoinCoin.swift; sourceTree = "<group>"; };
 		3F911F042A501CAE000E5820 /* EthereumCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EthereumCoin.swift; sourceTree = "<group>"; };
 		3F911F072A502908000E5820 /* TronCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TronCoin.swift; sourceTree = "<group>"; };
+		462C3FD0A2481453AA386297 /* libPods-coinswalletCommonPod-OneSignalNotificationServiceExtension.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-coinswalletCommonPod-OneSignalNotificationServiceExtension.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		64FC04C990DE41D18CB05715 /* Roboto-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Roboto-Bold.ttf"; path = "../src/assets/fonts/Roboto-Bold.ttf"; sourceTree = "<group>"; };
 		6B7F9D112E226773008316E5 /* kimlwallet.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = kimlwallet.entitlements; sourceTree = "<group>"; };
 		6BAFDDE82DCA48BA00A5C1C0 /* FilecoinCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilecoinCoin.swift; sourceTree = "<group>"; };
 		6C0B51F7D0444916F2AB5416 /* Pods-coinswalletCommonPod-coinswallet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswalletCommonPod-coinswallet.debug.xcconfig"; path = "Target Support Files/Pods-coinswalletCommonPod-coinswallet/Pods-coinswalletCommonPod-coinswallet.debug.xcconfig"; sourceTree = "<group>"; };
 		7130A4B002BE16B2D0933CF0 /* Pods-coinswalletCommonPod-coinswallet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswalletCommonPod-coinswallet.release.xcconfig"; path = "Target Support Files/Pods-coinswalletCommonPod-coinswallet/Pods-coinswalletCommonPod-coinswallet.release.xcconfig"; sourceTree = "<group>"; };
+		80C053DD3284E401AC1FBC14 /* Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.debug.xcconfig"; path = "Target Support Files/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.debug.xcconfig"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = coinswallet/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		883D331014B6C09A33D7719D /* Pods-coinswalletCommonPod-kimlwallet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswalletCommonPod-kimlwallet.debug.xcconfig"; path = "Target Support Files/Pods-coinswalletCommonPod-kimlwallet/Pods-coinswalletCommonPod-kimlwallet.debug.xcconfig"; sourceTree = "<group>"; };
 		8F0760659BEE1A5B23AAA5BA /* libPods-coinswalletCommonPod-kimlwallet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-coinswalletCommonPod-kimlwallet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B0615FCE19AA857BC879EE41 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		C386D48D108B452E86A44CA6 /* Roboto-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Roboto-Regular.ttf"; path = "../src/assets/fonts/Roboto-Regular.ttf"; sourceTree = "<group>"; };
+		C8B0BA1A2F3B3CA000E9A906 /* OneSignalNotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OneSignalNotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8B0BA2C2F3B3D8600E9A906 /* OneSignalNotificationServiceExtensionKimlWallet.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OneSignalNotificationServiceExtensionKimlWallet.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D2057C2C2BC514C000E14112 /* PolkadotCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolkadotCoin.swift; sourceTree = "<group>"; };
 		D21ADCA02ACD362200244A4C /* SolanaCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolanaCoin.swift; sourceTree = "<group>"; };
 		D22953612B3ED65100E1794E /* ThorCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThorCoin.swift; sourceTree = "<group>"; };
@@ -121,9 +173,33 @@
 		D2F849B12DC8D334006B2140 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		D2F849B22DC8D334006B2140 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		DB37B2E2CEF9D0366BC2639C /* libPods-coinswalletCommonPod-coinswallet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-coinswalletCommonPod-coinswallet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E3E0D87747DE1F51F1C9212D /* Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.release.xcconfig"; path = "Target Support Files/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.release.xcconfig"; sourceTree = "<group>"; };
+		E536BF55E40CEE8DCE161DCC /* Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension.release.xcconfig"; path = "Target Support Files/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F83BC5CC8776F3BD92B04398 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C8B0BA222F3B3CA100E9A906 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C8B0BA192F3B3CA000E9A906 /* OneSignalNotificationServiceExtension */;
+		};
+		C8B0BA342F3B3D8600E9A906 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C8B0BA2B2F3B3D8600E9A906 /* OneSignalNotificationServiceExtensionKimlWallet */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		C8B0BA1B2F3B3CA100E9A906 /* OneSignalNotificationServiceExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8B0BA222F3B3CA100E9A906 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = OneSignalNotificationServiceExtension; sourceTree = "<group>"; };
+		C8B0BA2D2F3B3D8600E9A906 /* OneSignalNotificationServiceExtensionKimlWallet */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (C8B0BA342F3B3D8600E9A906 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = OneSignalNotificationServiceExtensionKimlWallet; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
@@ -131,6 +207,22 @@
 			buildActionMask = 2147483647;
 			files = (
 				D132F77C58BAA58F810454D0 /* libPods-coinswalletCommonPod-coinswallet.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8B0BA172F3B3CA000E9A906 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F83E28646670B35C00481270 /* libPods-coinswalletCommonPod-OneSignalNotificationServiceExtension.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8B0BA292F3B3D8600E9A906 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				39FE1632059AB7E12AAB1D3F /* libPods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -168,6 +260,8 @@
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				DB37B2E2CEF9D0366BC2639C /* libPods-coinswalletCommonPod-coinswallet.a */,
 				8F0760659BEE1A5B23AAA5BA /* libPods-coinswalletCommonPod-kimlwallet.a */,
+				462C3FD0A2481453AA386297 /* libPods-coinswalletCommonPod-OneSignalNotificationServiceExtension.a */,
+				0F1116199F6DEC38FB00D687 /* libPods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -222,6 +316,8 @@
 				042789942A03DABE00B8290E /* fonts */,
 				13B07FAE1A68108700A75B9A /* coinswallet */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
+				C8B0BA1B2F3B3CA100E9A906 /* OneSignalNotificationServiceExtension */,
+				C8B0BA2D2F3B3D8600E9A906 /* OneSignalNotificationServiceExtensionKimlWallet */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -237,6 +333,8 @@
 			children = (
 				13B07F961A680F5B00A75B9A /* Dok Wallet.app */,
 				D2E7E5CC2DC8CB0E00A414F5 /* KIML Wallet.app */,
+				C8B0BA1A2F3B3CA000E9A906 /* OneSignalNotificationServiceExtension.appex */,
+				C8B0BA2C2F3B3D8600E9A906 /* OneSignalNotificationServiceExtensionKimlWallet.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -248,6 +346,10 @@
 				7130A4B002BE16B2D0933CF0 /* Pods-coinswalletCommonPod-coinswallet.release.xcconfig */,
 				883D331014B6C09A33D7719D /* Pods-coinswalletCommonPod-kimlwallet.debug.xcconfig */,
 				0E62451CD24EFAA54FD034A7 /* Pods-coinswalletCommonPod-kimlwallet.release.xcconfig */,
+				2FE15072BDF00087B06F1F56 /* Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension.debug.xcconfig */,
+				E536BF55E40CEE8DCE161DCC /* Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension.release.xcconfig */,
+				80C053DD3284E401AC1FBC14 /* Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.debug.xcconfig */,
+				E3E0D87747DE1F51F1C9212D /* Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -296,15 +398,61 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				9CB78BA9874B0BA6BD91A94A /* [CP] Embed Pods Frameworks */,
 				65AB045258FCE59FE775AD6E /* [CP] Copy Pods Resources */,
+				C8B0BA262F3B3CA100E9A906 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C8B0BA202F3B3CA100E9A906 /* PBXTargetDependency */,
 			);
 			name = coinswallet;
 			productName = coinswallet;
 			productReference = 13B07F961A680F5B00A75B9A /* Dok Wallet.app */;
 			productType = "com.apple.product-type.application";
+		};
+		C8B0BA192F3B3CA000E9A906 /* OneSignalNotificationServiceExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C8B0BA232F3B3CA100E9A906 /* Build configuration list for PBXNativeTarget "OneSignalNotificationServiceExtension" */;
+			buildPhases = (
+				57F370E1E6181EF98D886433 /* [CP] Check Pods Manifest.lock */,
+				C8B0BA162F3B3CA000E9A906 /* Sources */,
+				C8B0BA172F3B3CA000E9A906 /* Frameworks */,
+				C8B0BA182F3B3CA000E9A906 /* Resources */,
+				51730139F9293B342E60F991 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C8B0BA1B2F3B3CA100E9A906 /* OneSignalNotificationServiceExtension */,
+			);
+			name = OneSignalNotificationServiceExtension;
+			productName = OneSignalNotificationServiceExtension;
+			productReference = C8B0BA1A2F3B3CA000E9A906 /* OneSignalNotificationServiceExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		C8B0BA2B2F3B3D8600E9A906 /* OneSignalNotificationServiceExtensionKimlWallet */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C8B0BA352F3B3D8600E9A906 /* Build configuration list for PBXNativeTarget "OneSignalNotificationServiceExtensionKimlWallet" */;
+			buildPhases = (
+				662126933C68FEC2D41DC7BF /* [CP] Check Pods Manifest.lock */,
+				C8B0BA282F3B3D8600E9A906 /* Sources */,
+				C8B0BA292F3B3D8600E9A906 /* Frameworks */,
+				C8B0BA2A2F3B3D8600E9A906 /* Resources */,
+				01DBFB3FADA54E8650670A2F /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C8B0BA2D2F3B3D8600E9A906 /* OneSignalNotificationServiceExtensionKimlWallet */,
+			);
+			name = OneSignalNotificationServiceExtensionKimlWallet;
+			productName = OneSignalNotificationServiceExtensionKimlWallet;
+			productReference = C8B0BA2C2F3B3D8600E9A906 /* OneSignalNotificationServiceExtensionKimlWallet.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 		D2E7E5A12DC8CB0E00A414F5 /* kimlwallet */ = {
 			isa = PBXNativeTarget;
@@ -317,10 +465,12 @@
 				D2E7E5C62DC8CB0E00A414F5 /* Bundle React Native code and images */,
 				6E4F7B7B10FE4D2A7288404E /* [CP] Embed Pods Frameworks */,
 				18BD3170FC15815273123025 /* [CP] Copy Pods Resources */,
+				C8B0BA382F3B3D8600E9A906 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C8B0BA322F3B3D8600E9A906 /* PBXTargetDependency */,
 			);
 			name = kimlwallet;
 			productName = coinswallet;
@@ -333,10 +483,17 @@
 		83CBB9F71A601CBA00E9B192 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 2610;
 				LastUpgradeCheck = 1210;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1430;
+					};
+					C8B0BA192F3B3CA000E9A906 = {
+						CreatedOnToolsVersion = 26.1;
+					};
+					C8B0BA2B2F3B3D8600E9A906 = {
+						CreatedOnToolsVersion = 26.1;
 					};
 				};
 			};
@@ -355,6 +512,8 @@
 			targets = (
 				13B07F861A680F5B00A75B9A /* coinswallet */,
 				D2E7E5A12DC8CB0E00A414F5 /* kimlwallet */,
+				C8B0BA192F3B3CA000E9A906 /* OneSignalNotificationServiceExtension */,
+				C8B0BA2B2F3B3D8600E9A906 /* OneSignalNotificationServiceExtensionKimlWallet */,
 			);
 		};
 /* End PBXProject section */
@@ -373,6 +532,20 @@
 				8290ED3BD6EB4B519FC982AE /* Roboto-Medium.ttf in Resources */,
 				A9BD179BEDC14A1F99F7F32E /* Roboto-Regular.ttf in Resources */,
 				98B27C0C2528E0FBF4E0AD38 /* GoogleService-Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8B0BA182F3B3CA000E9A906 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8B0BA2A2F3B3D8600E9A906 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -411,6 +584,27 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"\\\"$WITH_ENVIRONMENT\\\" \\\"$REACT_NATIVE_XCODE\\\"\"\n";
 		};
+		01DBFB3FADA54E8650670A2F /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		09580B5B82DAF34EF5E43F94 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -441,13 +635,60 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-kimlwallet/Pods-coinswalletCommonPod-kimlwallet-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-kimlwallet/Pods-coinswalletCommonPod-kimlwallet-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
+			outputPaths = (
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-kimlwallet/Pods-coinswalletCommonPod-kimlwallet-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		51730139F9293B342E60F991 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		57F370E1E6181EF98D886433 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		65AB045258FCE59FE775AD6E /* [CP] Copy Pods Resources */ = {
@@ -458,13 +699,39 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-coinswallet/Pods-coinswalletCommonPod-coinswallet-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-coinswallet/Pods-coinswalletCommonPod-coinswallet-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
+			outputPaths = (
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-coinswallet/Pods-coinswalletCommonPod-coinswallet-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		662126933C68FEC2D41DC7BF /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		6E4F7B7B10FE4D2A7288404E /* [CP] Embed Pods Frameworks */ = {
@@ -475,9 +742,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-kimlwallet/Pods-coinswalletCommonPod-kimlwallet-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-kimlwallet/Pods-coinswalletCommonPod-kimlwallet-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -492,9 +763,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-coinswallet/Pods-coinswalletCommonPod-coinswallet-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-coinswallet/Pods-coinswalletCommonPod-coinswallet-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -572,6 +847,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C8B0BA162F3B3CA000E9A906 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8B0BA282F3B3D8600E9A906 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D2E7E5A42DC8CB0E00A414F5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -603,6 +892,19 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		C8B0BA202F3B3CA100E9A906 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C8B0BA192F3B3CA000E9A906 /* OneSignalNotificationServiceExtension */;
+			targetProxy = C8B0BA1F2F3B3CA100E9A906 /* PBXContainerItemProxy */;
+		};
+		C8B0BA322F3B3D8600E9A906 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C8B0BA2B2F3B3D8600E9A906 /* OneSignalNotificationServiceExtensionKimlWallet */;
+			targetProxy = C8B0BA312F3B3D8600E9A906 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -611,11 +913,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = dokwallet/coinswallet.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development: Divyang Khatri (ZBWJFA97F3)";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 9HJ6G8C9BU;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = dokwallet/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Dok Wallet";
@@ -633,7 +934,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.dok.wallet;
 				PRODUCT_NAME = "Dok Wallet";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = DokWalletDevProfile;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
@@ -652,11 +952,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = dokwallet/coinswallet.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Distribution: Moreover4u2 Ltd (9HJ6G8C9BU)";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 9HJ6G8C9BU;
 				INFOPLIST_FILE = dokwallet/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Dok Wallet";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -673,7 +972,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.dok.wallet;
 				PRODUCT_NAME = "Dok Wallet";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = DokWalletDistProfile;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
@@ -845,6 +1143,200 @@
 			};
 			name = Release;
 		};
+		C8B0BA242F3B3CA100E9A906 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2FE15072BDF00087B06F1F56 /* Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = OneSignalNotificationServiceExtension/OneSignalNotificationServiceExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OneSignalNotificationServiceExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = OneSignalNotificationServiceExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dok.wallet.OneSignalNotificationServiceExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C8B0BA252F3B3CA100E9A906 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = E536BF55E40CEE8DCE161DCC /* Pods-coinswalletCommonPod-OneSignalNotificationServiceExtension.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = OneSignalNotificationServiceExtension/OneSignalNotificationServiceExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OneSignalNotificationServiceExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = OneSignalNotificationServiceExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dok.wallet.OneSignalNotificationServiceExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		C8B0BA362F3B3D8600E9A906 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 80C053DD3284E401AC1FBC14 /* Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = OneSignalNotificationServiceExtensionKimlWallet/OneSignalNotificationServiceExtensionKimlWallet.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development: Divyang Khatri (75XS4RJ248)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OneSignalNotificationServiceExtensionKimlWallet/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = OneSignalNotificationServiceExtensionKimlWallet;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kimlwallet.OneSignalNotificationServiceExtensionKimlWallet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C8B0BA372F3B3D8600E9A906 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = E3E0D87747DE1F51F1C9212D /* Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = OneSignalNotificationServiceExtensionKimlWallet/OneSignalNotificationServiceExtensionKimlWallet.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Distribution: KIML View Ltd (N9US926Q47)";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OneSignalNotificationServiceExtensionKimlWallet/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = OneSignalNotificationServiceExtensionKimlWallet;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kimlwallet.OneSignalNotificationServiceExtensionKimlWallet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		D2E7E5CA2DC8CB0E00A414F5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 883D331014B6C09A33D7719D /* Pods-coinswalletCommonPod-kimlwallet.debug.xcconfig */;
@@ -942,6 +1434,24 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C8B0BA232F3B3CA100E9A906 /* Build configuration list for PBXNativeTarget "OneSignalNotificationServiceExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C8B0BA242F3B3CA100E9A906 /* Debug */,
+				C8B0BA252F3B3CA100E9A906 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C8B0BA352F3B3D8600E9A906 /* Build configuration list for PBXNativeTarget "OneSignalNotificationServiceExtensionKimlWallet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C8B0BA362F3B3D8600E9A906 /* Debug */,
+				C8B0BA372F3B3D8600E9A906 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

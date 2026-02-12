@@ -9,8 +9,14 @@ import {
   getLegacySecureValue,
 } from 'myWallet/wallet.service';
 
+import OneSignalManager from 'utils/oneSignalManager';
+
 export default function App() {
   const [isMigrating, setIsMigrating] = useState(IS_ANDROID);
+
+  useEffect(() => {
+    OneSignalManager.initialize(process.env.ONESIGNAL_APP_ID);
+  }, []);
 
   useEffect(() => {
     (async () => {
