@@ -141,7 +141,7 @@ function satoshiToBtc(sats) {
   // Handle BigInt or number or string safely
   const satsNumber = typeof sats === 'bigint' ? Number(sats) : Number(sats);
 
-  return satsNumber / 100_000_000;
+  return satsNumber / 1e8;
 }
 
 function decimalStringToBigInt(value, decimals) {
@@ -430,26 +430,24 @@ export const claimOnchainDeposit = async phrase => {
   try {
     const sdk = await connectToSdk(phrase);
     if (!sdk) return;
-
     const request = {};
     const result = [];
 
     const response = await sdk.listUnclaimedDeposits(request);
     console.log('listUnclaimedDeposits response:', response);
-
     for (const deposit of response.deposits) {
-      console.log('deposit:', deposit);
-      console.log(`Unclaimed deposit: ${deposit.txid}:${deposit.vout}`);
-      console.log(`Amount: ${deposit.amountSats} sats`);
+      const requiredFeeRate =
+        deposit.claimError.inner.requiredFeeSats || BigInt(0);
 
+      const amountReceive = deposit.amountSats - requiredFeeRate;
       result.push({
         txid: deposit.txid,
         vout: deposit.vout,
         amount: satoshiToBtc(deposit.amountSats),
+        fees: satoshiToBtc(requiredFeeRate),
+        receivedAmount: satoshiToBtc(amountReceive),
       });
     }
-
-    console.log('result:', result);
     return result;
   } catch (error) {
     console.error(`error getting transactions for bitcoin lightning ${error}`);
@@ -462,39 +460,42 @@ export const approveClaimDepositRequest = async (phrase, txid, vout) => {
     const sdk = await connectToSdk(phrase);
     if (!sdk) return;
     const response = await sdk.listUnclaimedDeposits({});
+    const recommendedFees = await sdk.recommendedFees();
     for (const deposit of response.deposits) {
       if (
-        deposit.claimError?.tag ===
-          DepositClaimError_Tags.MaxDepositClaimFeeExceeded &&
-        deposit.txid === txid &&
-        deposit.vout === vout
+        deposit.claimError != null &&
+        txid === deposit.txid &&
+        vout === deposit.vout
       ) {
-        const requiredFeeRate =
-          deposit.claimError.inner.requiredFeeRateSatPerVbyte;
-
-        const recommendedFees = await sdk.recommendedFees();
-        console.log('requiredFeeRate:', requiredFeeRate);
-        console.log('recommendedFees.fastestFee:', recommendedFees.fastestFee);
-        if (requiredFeeRate <= recommendedFees.fastestFee) {
+        if (
+          deposit.claimError?.tag ===
+          DepositClaimError_Tags.MaxDepositClaimFeeExceeded
+        ) {
           console.log(
             '============= APPROVING =============',
             deposit.txid,
             deposit.vout,
           );
-          const claimRequest = {
-            txid: deposit.txid,
-            vout: deposit.vout,
-            maxFee: new MaxFee.Rate({satPerVbyte: requiredFeeRate}),
-          };
-          await sdk.claimDeposit(claimRequest);
-          console.log('============= APPROVED =============');
+          const requiredFeeRate =
+            deposit.claimError.inner.requiredFeeRateSatPerVbyte;
+          if (requiredFeeRate <= recommendedFees.fastestFee) {
+            const claimRequest = {
+              txid: deposit.txid,
+              vout: deposit.vout,
+              maxFee: new MaxFee.Rate({satPerVbyte: requiredFeeRate}),
+            };
+            await sdk.claimDeposit(claimRequest);
+            console.log('============= APPROVED =============');
+          }
           return true;
         }
       }
     }
     return false;
   } catch (error) {
-    console.error(`error getting transactions for bitcoin lightning ${error}`);
+    console.error(
+      `error approving deposit request for bitcoin lightning ${error}`,
+    );
     return false;
   }
 };
@@ -516,11 +517,7 @@ export const refundClaimRequest = async (
       destinationAddress,
       fee,
     };
-    console.log('refundClaimRequest request:', request);
     const response = await sdk.refundDeposit(request);
-    console.log('Refund transaction created:');
-    console.log('Transaction ID:', response.txId);
-    console.log('Transaction hex:', response.txHex);
     return true;
   } catch (error) {
     console.log(JSON.stringify(error));

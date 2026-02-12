@@ -13,12 +13,14 @@ import * as bitcoin from 'bitcoinjs-lib';
 import {config} from 'dok-wallet-blockchain-networks/config/config';
 import IoniconIcon from 'react-native-vector-icons/Ionicons';
 import {selectBtcLightningUnClaimed} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import ModalConfirmTransaction from '../ModalConfirmTransaction';
 
 export const BtcLightningUnclaimedData = ({onDismiss}) => {
   const [activeRejectIndex, setActiveRejectIndex] = useState(null);
   const [destinationAddress, setDestinationAddress] = useState('');
   const [addressValidationError, setAddressValidationError] = useState(false);
   const [loadingIndex, setLoadingIndex] = useState(null);
+  const [confirmationIndex, setConfirmationIndex] = useState(null);
   const unClaimedData = useSelector(selectBtcLightningUnClaimed);
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
@@ -28,6 +30,7 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
   const handleApprove = useCallback(
     async (item, index) => {
       try {
+        setConfirmationIndex(null);
         setLoadingIndex(index);
         const lightningChain = await BitcoinLightningChain(
           currentCoin?.chain_name,
@@ -53,7 +56,7 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
     setActiveRejectIndex(index);
   }, []);
 
-  const handleCancel = useCallback((item, index) => {
+  const handleCancel = useCallback(() => {
     setActiveRejectIndex(null);
     setDestinationAddress('');
     setAddressValidationError(false);
@@ -123,16 +126,6 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
           </View>
         ) : (
           <>
-            {/* Status Badge */}
-            <View style={styles.statusBadge}>
-              <IoniconIcon
-                name="time-outline"
-                size={16}
-                color={theme.warningBottom}
-              />
-              <Text style={styles.statusText}>Pending Claim</Text>
-            </View>
-
             {/* Amount Section - Primary Focus */}
             <View style={styles.amountSection}>
               <View style={styles.amountIconContainer}>
@@ -169,9 +162,25 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
                     size={16}
                     color={theme.gray}
                   />
-                  <Text style={styles.infoLabel}>Output Index</Text>
+                  <Text style={styles.infoLabel}>Fees</Text>
                 </View>
-                <Text style={styles.infoValue}>#{item.vout || 0}</Text>
+                <Text style={styles.infoValue}>
+                  {Number(item.fees || 0).toFixed(8)} BTC
+                </Text>
+              </View>
+
+              <View style={styles.infoItem}>
+                <View style={styles.infoLabelRow}>
+                  <IoniconIcon
+                    name="arrow-down-circle-outline"
+                    size={16}
+                    color={theme.gray}
+                  />
+                  <Text style={styles.infoLabel}>Receive Amount</Text>
+                </View>
+                <Text style={styles.infoValue}>
+                  {Number(item.receivedAmount || 0).toFixed(8)} BTC
+                </Text>
               </View>
             </View>
 
@@ -218,7 +227,7 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
                   </View>
                 )}
 
-                <View style={styles.actionButtons}>
+                {/* <View style={styles.actionButtons}>
                   <TouchableOpacity
                     style={[styles.buttonSecondary, styles.shadow]}
                     onPress={() => handleCancel(item, index)}>
@@ -240,11 +249,11 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
                     />
                     <Text style={styles.buttonPrimaryText}>Refund</Text>
                   </TouchableOpacity>
-                </View>
+                </View> */}
               </View>
             ) : (
               <View style={styles.actionButtons}>
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   style={[styles.buttonSecondary, styles.shadow]}
                   onPress={() => handleReject(index)}>
                   <IoniconIcon
@@ -253,11 +262,11 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
                     color={theme.font}
                   />
                   <Text style={styles.buttonSecondaryText}>Reject</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
 
                 <TouchableOpacity
                   style={[styles.buttonPrimary, styles.shadow]}
-                  onPress={() => handleApprove(item, index)}>
+                  onPress={() => setConfirmationIndex(index)}>
                   <IoniconIcon
                     name="checkmark-circle-outline"
                     size={20}
@@ -269,6 +278,13 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
             )}
           </>
         )}
+        <ModalConfirmTransaction
+          hideModal={() => {
+            setConfirmationIndex(null);
+          }}
+          visible={confirmationIndex === index}
+          onSuccess={() => handleApprove(item, index)}
+        />
       </View>
     );
   };
@@ -309,14 +325,16 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
   );
 
   return (
-    <FlatList
-      data={unClaimedData}
-      renderItem={renderItem}
-      keyExtractor={(item, index) => `${item.txid}-${index}`}
-      ListHeaderComponent={ListHeaderComponent}
-      ListEmptyComponent={ListEmptyComponent}
-      contentContainerStyle={styles.listContent}
-      showsVerticalScrollIndicator={false}
-    />
+    <>
+      <FlatList
+        data={unClaimedData}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => `${item.txid}-${index}`}
+        ListHeaderComponent={ListHeaderComponent}
+        ListEmptyComponent={ListEmptyComponent}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
+    </>
   );
 };

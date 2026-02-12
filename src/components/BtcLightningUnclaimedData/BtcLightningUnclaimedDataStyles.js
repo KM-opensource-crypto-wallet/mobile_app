@@ -314,20 +314,23 @@ const myStyles = theme =>
       flexDirection: 'row',
       alignItems: 'center',
       alignSelf: 'flex-start',
-      backgroundColor: theme.walletItemColor,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
+      backgroundColor: '#FFF3E0',
+      paddingHorizontal: 14,
+      paddingVertical: 8,
       borderRadius: 20,
       marginBottom: 20,
+      borderWidth: 1,
+      borderColor: '#FFB74D',
     },
 
     statusText: {
-      color: theme.warningBottom,
+      color: '#E65100',
       fontSize: 12,
       fontFamily: 'Roboto-Regular',
-      fontWeight: '600',
+      fontWeight: '700',
       marginLeft: 6,
       textTransform: 'uppercase',
+      letterSpacing: 0.5,
     },
 
     amountSection: {
