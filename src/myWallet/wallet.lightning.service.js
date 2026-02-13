@@ -138,8 +138,7 @@ async function prepareAndSendPayment(phrase, paymentRequest, amount) {
 function satoshiToBtc(sats) {
   if (sats === null || sats === undefined) return 0;
 
-  // Handle BigInt or number or string safely
-  const satsNumber = typeof sats === 'bigint' ? Number(sats) : Number(sats);
+  const satsNumber = Number(sats);
 
   return satsNumber / 1e8;
 }
@@ -335,7 +334,7 @@ export const waitForLightningConfirmation = async phrase => {
     return;
   }
 
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     let listenerId = null;
     let timeoutId = null;
     let resolved = false;
@@ -361,7 +360,7 @@ export const waitForLightningConfirmation = async phrase => {
         }
       });
 
-      listenerId = await sdk.addEventListener(eventListener);
+      listenerId = sdk.addEventListener(eventListener);
       console.log('Event listener registered:', listenerId);
 
       // ⏱️ 90 seconds timeout
