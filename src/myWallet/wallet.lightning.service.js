@@ -222,6 +222,8 @@ export const generateLightningSparkAddress = async phrase => {
 
     return {
       address: response.paymentRequest,
+      privateKey: null,
+      publicKey: null,
       receiveFeeSats: response.fee,
     };
   } catch (error) {

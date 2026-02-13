@@ -19,7 +19,6 @@
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		826E4C2E84BA17F6ECC74D16 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F83BC5CC8776F3BD92B04398 /* GoogleService-Info.plist */; };
 		8290ED3BD6EB4B519FC982AE /* Roboto-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 362FA31358934F348B234F43 /* Roboto-Medium.ttf */; };
-		8F127B30AF9E90CD8D5EB8ED /* libPods-coinswalletCommonPod-kimlwallet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F0760659BEE1A5B23AAA5BA /* libPods-coinswalletCommonPod-kimlwallet.a */; };
 		98B27C0C2528E0FBF4E0AD38 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B0615FCE19AA857BC879EE41 /* GoogleService-Info.plist */; };
 		A9BD179BEDC14A1F99F7F32E /* Roboto-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C386D48D108B452E86A44CA6 /* Roboto-Regular.ttf */; };
 		B3FC1B36565BA3AF5C231DB2 /* libPods-coinswalletCommonPod-coinswallet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E94DE946B69C52FD6EA68317 /* libPods-coinswalletCommonPod-coinswallet.a */; };
@@ -78,6 +77,7 @@
 		03A283948E436BFED9342BBD /* libPods-coinswalletCommonPod-kimlwallet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-coinswalletCommonPod-kimlwallet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		042789942A03DABE00B8290E /* fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = fonts; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* Dok Wallet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Dok Wallet.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		17A94497DE0E331FFAF53BDE /* Pods-coinswalletCommonPod-kimlwallet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswalletCommonPod-kimlwallet.release.xcconfig"; path = "Target Support Files/Pods-coinswalletCommonPod-kimlwallet/Pods-coinswalletCommonPod-kimlwallet.release.xcconfig"; sourceTree = "<group>"; };
 		362FA31358934F348B234F43 /* Roboto-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Roboto-Medium.ttf"; path = "../src/assets/fonts/Roboto-Medium.ttf"; sourceTree = "<group>"; };
 		3F1834F52A4F0A1A004B7D37 /* coinswallet-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "coinswallet-Bridging-Header.h"; sourceTree = "<group>"; };
 		3F1834F62A4F0A1A004B7D37 /* CustomMethods.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomMethods.swift; sourceTree = "<group>"; };
@@ -86,15 +86,19 @@
 		3F1834FD2A4F18B6004B7D37 /* BitcoinCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitcoinCoin.swift; sourceTree = "<group>"; };
 		3F911F042A501CAE000E5820 /* EthereumCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EthereumCoin.swift; sourceTree = "<group>"; };
 		3F911F072A502908000E5820 /* TronCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TronCoin.swift; sourceTree = "<group>"; };
+		4E67D7BD0B37EDE7112ABA8F /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		587D5C0F4D1C4E2DAD22B64E /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		5DB3389D97F10692B91CF51C /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		64FC04C990DE41D18CB05715 /* Roboto-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Roboto-Bold.ttf"; path = "../src/assets/fonts/Roboto-Bold.ttf"; sourceTree = "<group>"; };
 		6B7F9D112E226773008316E5 /* kimlwallet.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = kimlwallet.entitlements; sourceTree = "<group>"; };
 		6BAFDDE82DCA48BA00A5C1C0 /* FilecoinCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilecoinCoin.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = coinswallet/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		883D331014B6C09A33D7719D /* Pods-coinswalletCommonPod-kimlwallet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswalletCommonPod-kimlwallet.debug.xcconfig"; path = "Target Support Files/Pods-coinswalletCommonPod-kimlwallet/Pods-coinswalletCommonPod-kimlwallet.debug.xcconfig"; sourceTree = "<group>"; };
-		8F0760659BEE1A5B23AAA5BA /* libPods-coinswalletCommonPod-kimlwallet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-coinswalletCommonPod-kimlwallet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A197734FA72412A574B801D1 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		AE8746B20137DAB58B3B9CFD /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		B0615FCE19AA857BC879EE41 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		C386D48D108B452E86A44CA6 /* Roboto-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Roboto-Regular.ttf"; path = "../src/assets/fonts/Roboto-Regular.ttf"; sourceTree = "<group>"; };
 		CA5A670CA423C26E754F61A6 /* Pods-coinswalletCommonPod-kimlwallet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswalletCommonPod-kimlwallet.debug.xcconfig"; path = "Target Support Files/Pods-coinswalletCommonPod-kimlwallet/Pods-coinswalletCommonPod-kimlwallet.debug.xcconfig"; sourceTree = "<group>"; };
+		D05078782283C9D49360C6A8 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		D2057C2C2BC514C000E14112 /* PolkadotCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolkadotCoin.swift; sourceTree = "<group>"; };
 		D21ADCA02ACD362200244A4C /* SolanaCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SolanaCoin.swift; sourceTree = "<group>"; };
 		D22953612B3ED65100E1794E /* ThorCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThorCoin.swift; sourceTree = "<group>"; };
@@ -123,6 +127,7 @@
 		E94DE946B69C52FD6EA68317 /* libPods-coinswalletCommonPod-coinswallet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-coinswalletCommonPod-coinswallet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F83BC5CC8776F3BD92B04398 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		FA6F3923FF1212E0E5AF7C32 /* Pods-coinswalletCommonPod-coinswallet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswalletCommonPod-coinswallet.debug.xcconfig"; path = "Target Support Files/Pods-coinswalletCommonPod-coinswallet/Pods-coinswalletCommonPod-coinswallet.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -244,10 +249,10 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				A383345AF6614D0CCC488854 /* Pods-coinswalletCommonPod-coinswallet.debug.xcconfig */,
 				E7DC09A96C80DFFE91789065 /* Pods-coinswalletCommonPod-coinswallet.release.xcconfig */,
 				CA5A670CA423C26E754F61A6 /* Pods-coinswalletCommonPod-kimlwallet.debug.xcconfig */,
-				8CB6D87037B4558D64E89869 /* Pods-coinswalletCommonPod-kimlwallet.release.xcconfig */,
+				FA6F3923FF1212E0E5AF7C32 /* Pods-coinswalletCommonPod-coinswallet.debug.xcconfig */,
+				17A94497DE0E331FFAF53BDE /* Pods-coinswalletCommonPod-kimlwallet.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -267,6 +272,9 @@
 				D2F849A82DC8D32F006B2140 /* Images.xcassets */,
 				D2F849A92DC8D32F006B2140 /* Info.plist */,
 				F83BC5CC8776F3BD92B04398 /* GoogleService-Info.plist */,
+				5DB3389D97F10692B91CF51C /* GoogleService-Info.plist */,
+				D05078782283C9D49360C6A8 /* GoogleService-Info.plist */,
+				AE8746B20137DAB58B3B9CFD /* GoogleService-Info.plist */,
 			);
 			path = kimlwallet;
 			sourceTree = "<group>";
@@ -278,6 +286,9 @@
 				D2F849B12DC8D334006B2140 /* Images.xcassets */,
 				D2F849B22DC8D334006B2140 /* Info.plist */,
 				B0615FCE19AA857BC879EE41 /* GoogleService-Info.plist */,
+				A197734FA72412A574B801D1 /* GoogleService-Info.plist */,
+				4E67D7BD0B37EDE7112ABA8F /* GoogleService-Info.plist */,
+				587D5C0F4D1C4E2DAD22B64E /* GoogleService-Info.plist */,
 			);
 			path = dokwallet;
 			sourceTree = "<group>";
@@ -606,7 +617,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A383345AF6614D0CCC488854 /* Pods-coinswalletCommonPod-coinswallet.debug.xcconfig */;
+			baseConfigurationReference = FA6F3923FF1212E0E5AF7C32 /* Pods-coinswalletCommonPod-coinswallet.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -893,7 +904,7 @@
 		};
 		D2E7E5CB2DC8CB0E00A414F5 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8CB6D87037B4558D64E89869 /* Pods-coinswalletCommonPod-kimlwallet.release.xcconfig */;
+			baseConfigurationReference = 17A94497DE0E331FFAF53BDE /* Pods-coinswalletCommonPod-kimlwallet.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

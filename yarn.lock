@@ -11073,7 +11073,7 @@ graphemer@^1.4.0:
   resolved "https://registry.yarnpkg.com/graphemer/-/graphemer-1.4.0.tgz#fb2f1d55e0e3a1849aeffc90c4fa0dd53a0e66c6"
   integrity sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==
 
-h3@^1.15.4:
+h3@1.15.5, h3@^1.15.4:
   version "1.15.5"
   resolved "https://registry.yarnpkg.com/h3/-/h3-1.15.5.tgz#e2f28d4a66a249973bb050eaddb06b9ab55506f8"
   integrity sha512-xEyq3rSl+dhGX2Lm0+eFQIAzlDN6Fs0EcC4f7BNUmzaRX/PTzeuM+Tr2lHB8FoXggsQIeXLj8EDVgs5ywxyxmg==
@@ -17808,11 +17808,6 @@ ufo@^1.6.1:
   version "1.6.2"
   resolved "https://registry.yarnpkg.com/ufo/-/ufo-1.6.2.tgz#aaf4d46b98425b2fb5031abe8d65ca069e93e755"
   integrity sha512-heMioaxBcG9+Znsda5Q8sQbWnLJSl98AFDXTO80wELWEzX3hordXsTdxrIfMQoO9IY1MEnoGoPjpoKpMj+Yx0Q==
-
-ufo@^1.6.3:
-  version "1.6.3"
-  resolved "https://registry.yarnpkg.com/ufo/-/ufo-1.6.3.tgz#799666e4e88c122a9659805e30b9dc071c3aed4f"
-  integrity sha512-yDJTmhydvl5lJzBmy/hyOAA0d+aqCBuwl818haVdYCRrWV84o7YyeVm4QlVHStqNrrJSTb6jKuFAVqAFsr+K3Q==
 
 ufo@^1.6.3:
   version "1.6.3"
