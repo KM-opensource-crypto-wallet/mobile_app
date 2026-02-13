@@ -75,6 +75,8 @@ import AddAddress from 'screens/main/Settings/AddressBook/AddAddress';
 import AddressBook from 'components/AddressBook';
 import AddIcon from 'assets/images/sidebarIcons/Add.svg';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import NotificationAlerts from 'screens/main/Settings/NotificationAlerts';
+import AddNotificationAlert from 'screens/main/Settings/AddNotificationAlert';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -542,6 +544,36 @@ export const useRoute = isAuth => {
                 style={styles.headerRightStyle}
                 onPress={() => navigation.navigate('Home')}>
                 <Check width="25" height="25" fill={theme.font} />
+              </TouchableOpacity>
+            ),
+            cardStyleInterpolator: forFade,
+          })}
+        />
+        <Stack.Screen
+          name="NotificationAlerts"
+          component={NotificationAlerts}
+          options={({navigation}) => ({
+            title: 'Notification Alerts',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+            cardStyleInterpolator: forFade,
+          })}
+        />
+        <Stack.Screen
+          name="AddNotificationAlert"
+          component={AddNotificationAlert}
+          options={({navigation}) => ({
+            title: 'New Alert',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
             cardStyleInterpolator: forFade,

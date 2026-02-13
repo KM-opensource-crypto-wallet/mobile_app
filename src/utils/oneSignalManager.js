@@ -267,6 +267,42 @@ class OneSignalManager {
   }
 
   /**
+   * Check if push notification permission is granted
+   * @returns {Promise<boolean>} Whether permission is granted
+   */
+  async hasNotificationPermission() {
+    if (!this.initialized) {
+      console.warn('OneSignal not initialized');
+      return false;
+    }
+
+    try {
+      return await OneSignal.Notifications.getPermissionAsync();
+    } catch (error) {
+      console.error('Error checking notification permission:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Request push notification permission
+   * @returns {Promise<boolean>} Whether permission was granted
+   */
+  async requestNotificationPermission() {
+    if (!this.initialized) {
+      console.warn('OneSignal not initialized');
+      return false;
+    }
+
+    try {
+      return await OneSignal.Notifications.requestPermission(false);
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+      return false;
+    }
+  }
+
+  /**
    * Set log level
    * @param {LogLevel} level - Log level
    */
