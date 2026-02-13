@@ -434,7 +434,6 @@ export const claimOnchainDeposit = async phrase => {
     const result = [];
 
     const response = await sdk.listUnclaimedDeposits(request);
-    console.log('listUnclaimedDeposits response:', response);
     for (const deposit of response.deposits) {
       const requiredFeeRate =
         deposit.claimError.inner.requiredFeeSats || BigInt(0);
@@ -471,13 +470,13 @@ export const approveClaimDepositRequest = async (phrase, txid, vout) => {
           deposit.claimError?.tag ===
           DepositClaimError_Tags.MaxDepositClaimFeeExceeded
         ) {
-          console.log(
-            '============= APPROVING =============',
-            deposit.txid,
-            deposit.vout,
-          );
           const requiredFeeRate =
             deposit.claimError.inner.requiredFeeRateSatPerVbyte;
+          console.log('requiredFeeRate:', requiredFeeRate);
+          console.log(
+            'recommendedFees.fastestFee:',
+            recommendedFees.fastestFee,
+          );
           if (requiredFeeRate <= recommendedFees.fastestFee) {
             const claimRequest = {
               txid: deposit.txid,
@@ -485,9 +484,8 @@ export const approveClaimDepositRequest = async (phrase, txid, vout) => {
               maxFee: new MaxFee.Rate({satPerVbyte: requiredFeeRate}),
             };
             await sdk.claimDeposit(claimRequest);
-            console.log('============= APPROVED =============');
+            return true;
           }
-          return true;
         }
       }
     }

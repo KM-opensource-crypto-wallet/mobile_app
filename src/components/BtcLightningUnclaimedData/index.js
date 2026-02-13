@@ -6,7 +6,7 @@ import {
   getCurrentWalletPhrase,
   selectCurrentCoin,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {BitcoinLightningChain} from 'dok-wallet-blockchain-networks/cryptoChain/chains/BitcoinLightningChain';
 import {ActivityIndicator, TextInput} from 'react-native-paper';
 import * as bitcoin from 'bitcoinjs-lib';
@@ -14,6 +14,7 @@ import {config} from 'dok-wallet-blockchain-networks/config/config';
 import IoniconIcon from 'react-native-vector-icons/Ionicons';
 import {selectBtcLightningUnClaimed} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import ModalConfirmTransaction from '../ModalConfirmTransaction';
+import {removeUnClaimedLightningBTC} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 
 export const BtcLightningUnclaimedData = ({onDismiss}) => {
   const [activeRejectIndex, setActiveRejectIndex] = useState(null);
@@ -26,6 +27,7 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
   const styles = myStyles(theme);
   const currentCoin = useSelector(selectCurrentCoin);
   const currentPhrase = useSelector(getCurrentWalletPhrase);
+  const dispatch = useDispatch();
 
   const handleApprove = useCallback(
     async (item, index) => {
@@ -41,7 +43,12 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
           item.vout,
         );
         if (response) {
-          onDismiss();
+          dispatch(
+            removeUnClaimedLightningBTC({
+              txid: item.txid,
+              vout: item.vout,
+            }),
+          );
         }
         setLoadingIndex(null);
       } catch (error) {
@@ -49,7 +56,7 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
         setLoadingIndex(null);
       }
     },
-    [currentCoin?.chain_name, currentPhrase, onDismiss],
+    [currentCoin?.chain_name, currentPhrase, dispatch],
   );
 
   const handleReject = useCallback(index => {

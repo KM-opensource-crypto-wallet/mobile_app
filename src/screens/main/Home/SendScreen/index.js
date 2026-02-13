@@ -61,13 +61,13 @@ import ModalAdvanceCustomDerivation from 'components/ModalAdvanceCustomDerivatio
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {clearSelectedUTXOs} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {isCustomDerivedChecked} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import ModalAddCoins from 'components/ModalAddCoins';
 import {unClaimedDeposits} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {
   getCurrentWalletPhrase,
   selectBtcLightningUnClaimed,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {useFocusEffect} from '@react-navigation/native';
+import UnclaimedBottomSheet from 'components/UnclaimedBottomSheet';
 
 const SendScreen = ({navigation, route}) => {
   const currentCoin = useSelector(selectCurrentCoin);
@@ -88,6 +88,9 @@ const SendScreen = ({navigation, route}) => {
   // const [unClaimedData, setUnClaimedData] = useState();
   const isCustomDerivationClicked = useRef(false);
   const unClaimedBottomSheet = useRef();
+  const bottomSheetRefCallback = useCallback(ref => {
+    unClaimedBottomSheet.current = ref;
+  }, []);
   const {item} = route.params;
   const isBitcoin = isBitcoinChain(currentCoin?.chain_name);
   const isStaking =
@@ -180,7 +183,6 @@ const SendScreen = ({navigation, route}) => {
     [currentCoin, dispatch],
   );
   const openBottomSheet = useCallback(() => {
-    unClaimedBottomSheet?.current?.close?.();
     unClaimedBottomSheet?.current?.present?.();
   }, []);
 
@@ -292,14 +294,11 @@ const SendScreen = ({navigation, route}) => {
           <Loading />
         ) : (
           <>
-            {isLightning && btcLightningUnClaimedData?.length > 0 ? (
-              <ModalAddCoins
-                isLightning={isLightning}
-                bottomSheetRef={ref => (unClaimedBottomSheet.current = ref)}
+            {isLightning && btcLightningUnClaimedData?.length > 0 && (
+              <UnclaimedBottomSheet
+                bottomSheetRef={bottomSheetRefCallback}
                 onDismiss={onDismissAddCoinsSheet}
               />
-            ) : (
-              <></>
             )}
             <ScrollView
               contentContainerStyle={styles.containerContainerStyle}
