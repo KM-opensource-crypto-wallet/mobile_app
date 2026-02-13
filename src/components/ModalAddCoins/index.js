@@ -45,7 +45,7 @@ const RenderTabBar = props => {
   );
 };
 
-const ModalAddCoins = ({isLightning, bottomSheetRef, onDismiss}) => {
+const ModalAddCoins = ({bottomSheetRef, onDismiss}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const [index, setIndex] = React.useState(0);
