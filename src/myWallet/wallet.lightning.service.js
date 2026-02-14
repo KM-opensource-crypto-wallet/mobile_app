@@ -259,7 +259,6 @@ export const prepareLightning = async (phrase, toAddress, amount) => {
       amount,
     );
     const fee = satoshiToBtc(lightningFee);
-    console.log('fee:', fee);
     return {
       fee: fee,
       estimateGas: 0,
@@ -310,7 +309,6 @@ export const sendLightning = async phrase => {
         confirmationSpeed: OnchainConfirmationSpeed.Fast,
       });
     }
-    console.log('prepareSendResponse:', prepareSendResponse);
 
     // Send the token payment
     const sendResponse = await sdk.sendPayment({
@@ -341,8 +339,6 @@ export const waitForLightningConfirmation = async phrase => {
 
     try {
       const eventListener = new JsEventListener(async event => {
-        console.log('event:', event);
-
         if (resolved) return;
 
         if (event.tag === 'PaymentSucceeded' || event.tag === 'Synced') {
@@ -361,8 +357,6 @@ export const waitForLightningConfirmation = async phrase => {
       });
 
       listenerId = sdk.addEventListener(eventListener);
-      console.log('Event listener registered:', listenerId);
-
       // ⏱️ 90 seconds timeout
       timeoutId = setTimeout(() => {
         if (resolved) return;
@@ -473,11 +467,6 @@ export const approveClaimDepositRequest = async (phrase, txid, vout) => {
         ) {
           const requiredFeeRate =
             deposit.claimError.inner.requiredFeeRateSatPerVbyte;
-          console.log('requiredFeeRate:', requiredFeeRate);
-          console.log(
-            'recommendedFees.fastestFee:',
-            recommendedFees.fastestFee,
-          );
           if (requiredFeeRate <= recommendedFees.fastestFee) {
             const claimRequest = {
               txid: deposit.txid,
