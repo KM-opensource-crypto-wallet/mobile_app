@@ -16,7 +16,7 @@ export default function LightningDropDown({
   const handleOnChangeValue = useCallback(
     item => {
       setSelectedValue(item.value);
-      handleLightningDropDownChange(item.label);
+      handleLightningDropDownChange(item.value);
     },
     [handleLightningDropDownChange],
   );

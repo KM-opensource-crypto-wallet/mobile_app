@@ -36,10 +36,10 @@ const RecieveFunds = ({navigation}) => {
   const currentCoin = useSelector(selectCurrentCoin);
   const currentPhrase = useSelector(getCurrentWalletPhrase);
   address.current = currentCoin?.address ?? '';
-  const isLightning =
-    currentCoin?.chain_name === 'bitcoin_lightning' ? true : false;
+  const isLightning = currentCoin?.chain_name === 'bitcoin_lightning';
   const chain = getChain(currentCoin?.chain_name);
   const [addressState, setAddressState] = useState('');
+  const [showBtcMainnetBanner, setShowBtcMainnetBanner] = useState(false);
   const [productQRref, setProductQRref] = useState(
     `${currentCoin?.symbol}:${address}`,
   );
@@ -80,18 +80,23 @@ const RecieveFunds = ({navigation}) => {
       try {
         let newAddress = '';
 
-        if (currentValue === 'Receive via BTC mainnet') {
-          const {address} = await chain.generateInvoiceViaBitcoinAddress(
+        if (currentValue === 'btc_mainnet') {
+          setShowBtcMainnetBanner(true);
+          const respAddress = await chain.generateInvoiceViaBitcoinAddress(
             currentPhrase,
           );
-          newAddress = address;
-        } else if (currentValue === 'Receive via Invoice') {
-          const {address} = await chain.generateInvoiceViaBolt11(currentPhrase);
-          newAddress = address;
-        } else if (currentValue === 'Receive via Lightning Address') {
+          newAddress = respAddress?.address;
+        } else if (currentValue === 'invoice') {
+          setShowBtcMainnetBanner(false);
+          const respAddress = await chain.generateInvoiceViaBolt11(
+            currentPhrase,
+          );
+          newAddress = respAddress?.address;
+        } else if (currentValue === 'lightning_address') {
+          setShowBtcMainnetBanner(false);
           // generateSparkAddress
-          const {address} = await chain.generateSparkAddress(currentPhrase);
-          newAddress = address;
+          const respAddress = await chain.generateSparkAddress(currentPhrase);
+          newAddress = respAddress?.address;
         }
 
         setAddressState(newAddress);
@@ -109,6 +114,15 @@ const RecieveFunds = ({navigation}) => {
       behavior={keyboardHeight}
       scrollEnabled={false}>
       <ScrollView style={styles.section}>
+        {showBtcMainnetBanner && (
+          <View style={styles.bannerContainer}>
+            <Text style={styles.bannerText}>
+              Note: On-chain BTC deposits require 4 confirmations before the
+              balance is available. You will need to manually claim the deposit
+              once confirmed.
+            </Text>
+          </View>
+        )}
         <Text style={styles.title}>
           Receive funds by providing your address or QR code
         </Text>
