@@ -157,11 +157,16 @@ const toastConfig = theme => {
   };
 };
 
-const Toasts = () => {
+const Toasts = ({bottomOffset = 0}) => {
   const {theme} = useContext(ThemeContext);
   const {top} = useSafeAreaInsets();
   return (
-    <Toast config={toastConfig(theme)} position={'bottom'} topOffset={top} />
+    <Toast
+      config={toastConfig(theme)}
+      position={'bottom'}
+      topOffset={top}
+      {...(bottomOffset ? {bottomOffset} : {})}
+    />
   );
 };
 const styles = theme =>

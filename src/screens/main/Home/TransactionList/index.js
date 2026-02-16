@@ -16,7 +16,6 @@ import myStyles from './TransactionListStyles';
 import {useSelector, useDispatch} from 'react-redux';
 import Transactions from 'components/Transactions';
 import SortTransactions from 'components/SortTransactions';
-import {Provider, Portal} from 'react-native-paper';
 import FilterIcon from 'assets/images/icons/filter-list.svg';
 
 import {ThemeContext} from 'theme/ThemeContext';

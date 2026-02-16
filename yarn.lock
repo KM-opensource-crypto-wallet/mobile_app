@@ -1114,10 +1114,15 @@
   dependencies:
     regenerator-runtime "^0.14.0"
 
-"@babel/runtime@7.28.4", "@babel/runtime@^7.25.0", "@babel/runtime@^7.28.4":
+"@babel/runtime@7.28.4":
   version "7.28.4"
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.28.4.tgz#a70226016fabe25c5783b2f22d3e1c9bc5ca3326"
   integrity sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==
+
+"@babel/runtime@^7.25.0", "@babel/runtime@^7.28.4":
+  version "7.28.6"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.28.6.tgz#d267a43cb1836dc4d182cce93ae75ba954ef6d2b"
+  integrity sha512-05WQkdpL9COIMz4LjTxGpPNCdlpyimKppYNoJ5Di5EUObifl8t4tuLuUBBZEpoLYOmfvIWrsp9fCl0HoPRVTdA==
 
 "@babel/template@^7.25.0", "@babel/template@^7.27.1", "@babel/template@^7.27.2", "@babel/template@^7.3.3":
   version "7.27.2"
@@ -1205,15 +1210,22 @@
   dependencies:
     "@noble/curves" "^1.7.0"
 
+"@breeztech/breez-sdk-spark-react-native@0.7.14":
+  version "0.7.14"
+  resolved "https://registry.yarnpkg.com/@breeztech/breez-sdk-spark-react-native/-/breez-sdk-spark-react-native-0.7.14.tgz#b8914719e67620aa6b85178d7a903d7efcaedbac"
+  integrity sha512-xHhcwD0/aDQAGg6mJM1K1Wepp3bmf3SnuK7tIC2jSX7VA308lB92u6ag3vIQMvAtz6mZptu+8Le+br9sr2u4/w==
+  dependencies:
+    uniffi-bindgen-react-native "^0.28.3-5"
+
 "@bufbuild/protobuf@^1.10.0":
   version "1.10.1"
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.10.1.tgz#1d76d15290c0212076c15ede94d15157ba0c6344"
   integrity sha512-wJ8ReQbHxsAfXhrf9ixl0aYbZorRuOWpBNzm8pL8ftmSxQx/wnJD5Eg861NwJU/czy2VXFIebCeZnZrI9rktIQ==
 
 "@bugfender/common@^1.4.0":
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/@bugfender/common/-/common-1.4.0.tgz#e7483949cee6269a4ba78c1e82c03f31ca14f4ce"
-  integrity sha512-EWsdYow0IqIjZERXVwKDHtoZKRFIknQDt/QpdVC4K2Yu1nTjkYecQRYJdnuP+Cvgn4JMrKl0HaTux2IjOyyLvA==
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@bugfender/common/-/common-1.6.0.tgz#d41f5445bbe99360c00010e230db04fea1676bd4"
+  integrity sha512-lmqULDnBxF7o8zNsYDPZJb3Vg9fBd/22cFFqF70Jg+YfCXvpi9oI0UHw+IL1pu/Kun1ZODC+KrXBd+3PnwoC1g==
 
 "@bugfender/rn-bugfender@^4.0.0":
   version "4.0.0"
@@ -15431,6 +15443,14 @@ react-native-fast-pbkdf2@^0.3.1:
   version "6.0.0"
   resolved "git+https://github.com/hieuvp/react-native-fingerprint-scanner.git#9cecc0db326471c571553ea85f7c016fee2f803d"
 
+react-native-fs@^2.20.0:
+  version "2.20.0"
+  resolved "https://registry.yarnpkg.com/react-native-fs/-/react-native-fs-2.20.0.tgz#05a9362b473bfc0910772c0acbb73a78dbc810f6"
+  integrity sha512-VkTBzs7fIDUiy/XajOSNk0XazFE9l+QlMAce7lGuebZcag5CnjszB+u4BdqzwaQOdcYb5wsJIsqq4kxInIRpJQ==
+  dependencies:
+    base-64 "^0.1.0"
+    utf8 "^3.0.0"
+
 react-native-gesture-handler@^2.29.1:
   version "2.30.0"
   resolved "https://registry.yarnpkg.com/react-native-gesture-handler/-/react-native-gesture-handler-2.30.0.tgz#990c621fbeeefde853ececdcab7cbe1b621dbb8b"
@@ -17906,6 +17926,11 @@ unicode-property-aliases-ecmascript@^2.0.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/unicode-property-aliases-ecmascript/-/unicode-property-aliases-ecmascript-2.2.0.tgz#301d4f8a43d2b75c97adfad87c9dd5350c9475d1"
   integrity sha512-hpbDzxUY9BFwX+UeBnxv3Sh1q7HFxj48DTmXchNgRa46lO8uj3/1iEn3MiNUYTg1g9ctIqXCCERn8gYZhHC5lQ==
+
+uniffi-bindgen-react-native@^0.28.3-5:
+  version "0.28.3-5"
+  resolved "https://registry.yarnpkg.com/uniffi-bindgen-react-native/-/uniffi-bindgen-react-native-0.28.3-5.tgz#47827bee008f341507956ef77a8308c96cfa4080"
+  integrity sha512-IOgKr4D+iHYmigAoV03Yuti94l8egKLADXqw/sE0Oyk7FOVexczFr+Kztnx2aHiCBnNv39gSfRCmLGd3i9AFaw==
 
 unique-filename@^2.0.0:
   version "2.0.1"
