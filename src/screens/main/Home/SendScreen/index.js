@@ -263,7 +263,6 @@ const SendScreen = ({navigation, route}) => {
   useEffect(() => {
     if (listOfUnClaimedDeposits?.length && !isLoading) {
       setTimeout(() => {
-        // unClaimedBottomSheet?.current?.dismiss?.();
         unClaimedBottomSheet?.current?.present?.();
       }, 300);
     }
