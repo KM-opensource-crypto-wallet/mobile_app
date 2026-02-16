@@ -388,7 +388,6 @@ export const getLightningTransactions = async phrase => {
       address = response2.paymentRequest;
     }
 
-    console.log('response', response);
     const transactions = response.payments;
     if (Array.isArray(transactions)) {
       return transactions.map(item => {
