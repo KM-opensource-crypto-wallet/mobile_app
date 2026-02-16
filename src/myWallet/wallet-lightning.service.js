@@ -13,7 +13,7 @@ import {
   Fee,
 } from '@breeztech/breez-sdk-spark-react-native';
 
-import {config, IS_SANDBOX} from 'dok-wallet-blockchain-networks/config/config';
+import {IS_SANDBOX} from 'dok-wallet-blockchain-networks/config/config';
 import {DocumentDirectoryPath} from 'react-native-fs';
 import {
   convertToSmallAmount,
@@ -382,10 +382,10 @@ export const getLightningTransactions = async phrase => {
     });
     let address;
     if (response.payments.length) {
-      const response = await sdk.receivePayment({
+      const response2 = await sdk.receivePayment({
         paymentMethod: new ReceivePaymentMethod.SparkAddress(),
       });
-      address = response.paymentRequest;
+      address = response2.paymentRequest;
     }
 
     console.log('response', response);
@@ -480,7 +480,7 @@ export const refundClaimRequest = async (phrase, txData) => {
       destinationAddress,
       fee,
     };
-    const response = await sdk.refundDeposit(request);
+    await sdk.refundDeposit(request);
     return true;
   } catch (error) {
     console.log(JSON.stringify(error));
