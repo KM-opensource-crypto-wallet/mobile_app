@@ -1,20 +1,16 @@
-import {useCallback, useContext, useState} from 'react';
+import {useCallback, useContext, useMemo, useState} from 'react';
 import {FlatList, Text, TouchableOpacity, View} from 'react-native';
 import myStyles from './BtcLightningUnclaimedDataStyles';
 import {ThemeContext} from 'theme/ThemeContext';
-import {
-  getCurrentWalletPhrase,
-  selectCurrentCoin,
-} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {useDispatch, useSelector} from 'react-redux';
-import {BitcoinLightningChain} from 'dok-wallet-blockchain-networks/cryptoChain/chains/BitcoinLightningChain';
 import {ActivityIndicator, TextInput} from 'react-native-paper';
 import * as bitcoin from 'bitcoinjs-lib';
 import {config} from 'dok-wallet-blockchain-networks/config/config';
 import IoniconIcon from 'react-native-vector-icons/Ionicons';
-import {selectBtcLightningUnClaimed} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import ModalConfirmTransaction from '../ModalConfirmTransaction';
-import {removeUnClaimedLightningBTC} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {handleUnclaimedData} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {showToast} from 'utils/toast';
 
 export const BtcLightningUnclaimedData = ({onDismiss}) => {
   const [activeRejectIndex, setActiveRejectIndex] = useState(null);
@@ -22,11 +18,13 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
   const [addressValidationError, setAddressValidationError] = useState(false);
   const [loadingIndex, setLoadingIndex] = useState(null);
   const [confirmationIndex, setConfirmationIndex] = useState(null);
-  const unClaimedData = useSelector(selectBtcLightningUnClaimed);
+  const currentCoin = useSelector(selectCurrentCoin);
+  const unClaimedData = useMemo(() => {
+    return currentCoin?.listOfUnClaimedDeposits || [];
+  }, [currentCoin]);
+
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-  const currentCoin = useSelector(selectCurrentCoin);
-  const currentPhrase = useSelector(getCurrentWalletPhrase);
   const dispatch = useDispatch();
 
   const handleApprove = useCallback(
@@ -34,29 +32,33 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
       try {
         setConfirmationIndex(null);
         setLoadingIndex(index);
-        const lightningChain = await BitcoinLightningChain(
-          currentCoin?.chain_name,
-          currentPhrase,
-        );
-        const response = await lightningChain.approveClaimedBtc(
-          item.txid,
-          item.vout,
-        );
-        if (response) {
-          dispatch(
-            removeUnClaimedLightningBTC({
+        const unClaimedDataLength = unClaimedData?.length;
+        await dispatch(
+          handleUnclaimedData({
+            action: 'approve',
+            currentCoin,
+            txData: {
               txid: item.txid,
               vout: item.vout,
-            }),
-          );
-        }
+              fees: item.fees,
+            },
+          }),
+        ).unwrap();
         setLoadingIndex(null);
+        if (unClaimedDataLength === 1) {
+          onDismiss();
+        }
       } catch (error) {
         console.log('error:', error);
         setLoadingIndex(null);
+        showToast({
+          type: 'errorToast',
+          title: 'Something went wrong',
+          message: error?.message || error,
+        });
       }
     },
-    [currentCoin?.chain_name, currentPhrase, dispatch],
+    [currentCoin, dispatch, onDismiss, unClaimedData?.length],
   );
 
   const handleReject = useCallback(index => {
@@ -82,7 +84,6 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
     async (item, index) => {
       try {
         setLoadingIndex(index);
-        const {txid, amount, vout} = item;
         if (
           !isValidBTCAddress(destinationAddress, config.BITCOIN_NETWORK_STRING)
         ) {
@@ -90,26 +91,36 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
           setLoadingIndex(null);
           return;
         }
+        const unClaimedDataLength = unClaimedData?.length;
         setAddressValidationError(false);
-        const lightningChain = await BitcoinLightningChain(
-          currentCoin?.chain_name,
-          currentPhrase,
-        );
-        const response = await lightningChain.rejectClaimRequest(
-          txid,
-          vout,
-          destinationAddress,
-        );
-        if (response) {
+        await dispatch(
+          handleUnclaimedData({
+            action: 'reject',
+            currentCoin,
+            txData: {
+              txid: item.txid,
+              vout: item.vout,
+              fees: item.fees,
+              destinationAddress,
+            },
+          }),
+        ).unwrap();
+        setLoadingIndex(null);
+        if (unClaimedDataLength === 1) {
           onDismiss();
         }
-        setLoadingIndex(null);
       } catch (error) {
         console.log('error:', error);
         setLoadingIndex(null);
       }
     },
-    [currentCoin?.chain_name, currentPhrase, destinationAddress, onDismiss],
+    [
+      currentCoin,
+      destinationAddress,
+      dispatch,
+      onDismiss,
+      unClaimedData?.length,
+    ],
   );
 
   const trimTxId = txid => {

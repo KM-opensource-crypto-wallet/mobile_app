@@ -16,7 +16,6 @@ import myStyles from './TransactionListStyles';
 import {useSelector, useDispatch} from 'react-redux';
 import Transactions from 'components/Transactions';
 import SortTransactions from 'components/SortTransactions';
-import {Provider, Portal} from 'react-native-paper';
 import FilterIcon from 'assets/images/icons/filter-list.svg';
 
 import {ThemeContext} from 'theme/ThemeContext';
@@ -37,8 +36,6 @@ const TransactionList = () => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const allTransactions = currentCoin?.transactions;
-  const isLightning =
-    currentCoin?.chain_name === 'bitcoin_lightning' ? true : false;
   const [modalVisible, setModalVisible] = useState(false);
   const [sort, setSort] = useState('Date Descending');
   const [filter, setFilter] = useState('None');
@@ -172,15 +169,11 @@ const TransactionList = () => {
                 <Text style={styles.address} numberOfLines={1}>
                   Your last 20 transactions
                 </Text>
-                {isLightning ? (
-                  <></>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.viewButton}
-                    onPress={onPressViewAll}>
-                    <Text style={styles.viewButtonText}>{'View all'}</Text>
-                  </TouchableOpacity>
-                )}
+                <TouchableOpacity
+                  style={styles.viewButton}
+                  onPress={onPressViewAll}>
+                  <Text style={styles.viewButtonText}>{'View all'}</Text>
+                </TouchableOpacity>
               </View>
             </View>
             <View style={styles.borderBox}>

@@ -9,13 +9,17 @@ import {
   InputType_Tags,
   SendPaymentOptions,
   OnchainConfirmationSpeed,
-  DepositClaimError_Tags,
   MaxFee,
   Fee,
 } from '@breeztech/breez-sdk-spark-react-native';
 
 import {config, IS_SANDBOX} from 'dok-wallet-blockchain-networks/config/config';
 import {DocumentDirectoryPath} from 'react-native-fs';
+import {
+  convertToSmallAmount,
+  parseBalance,
+} from 'dok-wallet-blockchain-networks/helper';
+
 class JsEventListener {
   constructor(callback) {
     this.callback = callback;
@@ -51,7 +55,6 @@ const commonConnectSdk = async mnemonic => {
       storageDir: workingDir,
     });
     sdkMap.set(mnemonic, sdkInstance);
-    console.log('✅ Breez SDK connected');
     return sdkInstance;
   } catch (err) {
     console.error('❌ Connection error:', err);
@@ -65,7 +68,6 @@ async function connectToSdk(phrase) {
   let mnemonic = phrase;
   if (sdkInstance) {
     if (sdkMap.has(mnemonic)) {
-      console.log('♻️ Reusing SDK');
       return sdkMap.get(mnemonic);
     } else {
       // Initialize sdkInstance for the new mnemonic
@@ -93,7 +95,7 @@ async function prepareAndSendPayment(phrase, paymentRequest, amount) {
     }
     const prepareResponse = await sdk.prepareSendPayment({
       paymentRequest,
-      amount: decimalStringToBigInt(amount, 8),
+      amount: BigInt(convertToSmallAmount(amount, 8)),
     });
     prepareSendResponse = prepareResponse;
     if (
@@ -133,25 +135,6 @@ async function prepareAndSendPayment(phrase, paymentRequest, amount) {
     console.error('Error preparing payment:', err);
     return {};
   }
-}
-
-function satoshiToBtc(sats) {
-  if (sats === null || sats === undefined) return 0;
-
-  const satsNumber = Number(sats);
-
-  return satsNumber / 1e8;
-}
-
-function decimalStringToBigInt(value, decimals) {
-  if (!/^\d+(\.\d+)?$/.test(value)) {
-    throw new Error('Invalid decimal string');
-  }
-
-  const [intPart, fracPart = ''] = value.split('.');
-  const paddedFrac = (fracPart + '0'.repeat(decimals)).slice(0, decimals);
-
-  return BigInt(intPart + paddedFrac);
 }
 
 export const getLightningBalance = async phrase => {
@@ -258,7 +241,7 @@ export const prepareLightning = async (phrase, toAddress, amount) => {
       toAddress,
       amount,
     );
-    const fee = satoshiToBtc(lightningFee);
+    const fee = parseBalance(lightningFee, 8);
     return {
       fee: fee,
       estimateGas: 0,
@@ -397,20 +380,32 @@ export const getLightningTransactions = async phrase => {
       offset: undefined,
       limit: 20,
     });
+    let address;
+    if (response.payments.length) {
+      const response = await sdk.receivePayment({
+        paymentMethod: new ReceivePaymentMethod.SparkAddress(),
+      });
+      address = response.paymentRequest;
+    }
+
+    console.log('response', response);
     const transactions = response.payments;
     if (Array.isArray(transactions)) {
       return transactions.map(item => {
-        const txHash = item?.details.inner?.paymentHash || item?.id || 'N/A';
+        const txHash =
+          item?.details.inner?.txId ||
+          item?.details.inner?.paymentHash ||
+          item?.id ||
+          'N/A';
         return {
           amount: item.amount,
           link: txHash?.substring(0, 13) + '...',
-          url: `${config.BITCOIN_LIGHTNING_URL}/tx/${txHash}`,
+          url: null,
           status: item?.status ? 'Pending' : 'SUCCESS',
           date: Number(item?.timestamp) * 1000,
-          from: item?.details.inner?.preimage,
-          to: item?.details.inner?.destinationPubKey,
+          from: item.paymentType === 1 ? null : address,
+          to: item.paymentType === 1 ? address : null,
           totalCourse: '0$',
-          paymentType: item.paymentType,
         };
       });
     }
@@ -437,9 +432,9 @@ export const claimOnchainDeposit = async phrase => {
       result.push({
         txid: deposit.txid,
         vout: deposit.vout,
-        amount: satoshiToBtc(deposit.amountSats),
-        fees: satoshiToBtc(requiredFeeRate),
-        receivedAmount: satoshiToBtc(amountReceive),
+        amount: parseBalance(deposit.amountSats, 8),
+        fees: parseBalance(requiredFeeRate, 8),
+        receivedAmount: parseBalance(amountReceive, 8),
       });
     }
     return result;
@@ -449,37 +444,21 @@ export const claimOnchainDeposit = async phrase => {
   }
 };
 
-export const approveClaimDepositRequest = async (phrase, txid, vout) => {
+export const approveClaimDepositRequest = async (phrase, txData) => {
   try {
+    const {txid, vout, fees} = txData || {};
     const sdk = await connectToSdk(phrase);
     if (!sdk) return;
-    const response = await sdk.listUnclaimedDeposits({});
-    const recommendedFees = await sdk.recommendedFees();
-    for (const deposit of response.deposits) {
-      if (
-        deposit.claimError != null &&
-        txid === deposit.txid &&
-        vout === deposit.vout
-      ) {
-        if (
-          deposit.claimError?.tag ===
-          DepositClaimError_Tags.MaxDepositClaimFeeExceeded
-        ) {
-          const requiredFeeRate =
-            deposit.claimError.inner.requiredFeeRateSatPerVbyte;
-          if (requiredFeeRate <= recommendedFees.fastestFee) {
-            const claimRequest = {
-              txid: deposit.txid,
-              vout: deposit.vout,
-              maxFee: new MaxFee.Rate({satPerVbyte: requiredFeeRate}),
-            };
-            await sdk.claimDeposit(claimRequest);
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+
+    const claimRequest = {
+      txid: txid,
+      vout: vout,
+      maxFee: new MaxFee.Rate({
+        satPerVbyte: BigInt(convertToSmallAmount(fees, 8)),
+      }),
+    };
+    await sdk.claimDeposit(claimRequest);
+    return true;
   } catch (error) {
     console.error(
       `error approving deposit request for bitcoin lightning ${error}`,
@@ -488,13 +467,9 @@ export const approveClaimDepositRequest = async (phrase, txid, vout) => {
   }
 };
 
-export const refundClaimRequest = async (
-  phrase,
-  txid,
-  vout,
-  destinationAddress,
-) => {
+export const refundClaimRequest = async (phrase, txData) => {
   try {
+    const {txid, vout, destinationAddress} = txData || {};
     const sdk = await connectToSdk(phrase);
     if (!sdk) return;
     const recommendedFees = await sdk.recommendedFees();
@@ -509,7 +484,7 @@ export const refundClaimRequest = async (
     return true;
   } catch (error) {
     console.log(JSON.stringify(error));
-    console.error(`error getting transactions for bitcoin lightning ${error}`);
+    console.error(`error refund transactions for bitcoin lightning ${error}`);
     return false;
   }
 };
