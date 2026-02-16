@@ -8,7 +8,7 @@ import {ActivityIndicator, TextInput} from 'react-native-paper';
 import * as bitcoin from 'bitcoinjs-lib';
 import {config} from 'dok-wallet-blockchain-networks/config/config';
 import IoniconIcon from 'react-native-vector-icons/Ionicons';
-import ModalConfirmTransaction from '../ModalConfirmTransaction';
+import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
 import {handleUnclaimedData} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {showToast} from 'utils/toast';
 
