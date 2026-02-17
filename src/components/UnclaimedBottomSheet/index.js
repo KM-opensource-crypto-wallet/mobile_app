@@ -12,7 +12,7 @@ const UnclaimedBottomSheet = ({bottomSheetRef, onDismiss}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const {bottom} = useSafeAreaInsets();
-  console.log('bottom', bottom);
+
   return (
     <DokBottomSheet
       bottomSheetRef={bottomSheetRef}
