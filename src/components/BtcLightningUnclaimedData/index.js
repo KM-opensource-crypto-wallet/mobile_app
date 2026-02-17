@@ -49,7 +49,6 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
           onDismiss();
         }
       } catch (error) {
-        console.log('error:', error);
         setLoadingIndex(null);
         showToast({
           type: 'errorToast',
@@ -110,7 +109,7 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
           onDismiss();
         }
       } catch (error) {
-        console.log('error:', error);
+        console.error('error in reject', error);
         setLoadingIndex(null);
       }
     },

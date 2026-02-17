@@ -11,6 +11,7 @@ import {
   OnchainConfirmationSpeed,
   MaxFee,
   Fee,
+  PaymentStatus,
 } from '@breeztech/breez-sdk-spark-react-native';
 
 import {IS_SANDBOX} from 'dok-wallet-blockchain-networks/config/config';
@@ -19,18 +20,6 @@ import {
   convertToSmallAmount,
   parseBalance,
 } from 'dok-wallet-blockchain-networks/helper';
-
-class JsEventListener {
-  constructor(callback) {
-    this.callback = callback;
-  }
-
-  onEvent = event => {
-    if (this.callback) {
-      this.callback(event);
-    }
-  };
-}
 
 let sdkInstance = null;
 let connectingPromise = null;
@@ -267,9 +256,6 @@ export const sendLightning = async phrase => {
       SendPaymentMethod_Tags.SparkAddress
     ) {
       console.log(
-        `Token ID: ${prepareSendResponse.paymentMethod.inner.tokenIdentifier}`,
-      );
-      console.log(
         `Fees: ${prepareSendResponse.paymentMethod.inner.fee} token base units`,
       );
     }
@@ -277,9 +263,6 @@ export const sendLightning = async phrase => {
       prepareSendResponse.paymentMethod?.tag ===
       SendPaymentMethod_Tags.SparkInvoice
     ) {
-      console.log(
-        `Token ID: ${prepareSendResponse.paymentMethod.inner.tokenIdentifier}`,
-      );
       console.log(
         `Fees: ${prepareSendResponse.paymentMethod.inner.fee} token base units`,
       );
@@ -307,67 +290,44 @@ export const sendLightning = async phrase => {
   }
 };
 
-export const waitForLightningConfirmation = async phrase => {
+export const waitForLightningConfirmation = async (phrase, txData) => {
   const sdk = await connectToSdk(phrase);
 
   if (!sdk) {
-    console.log('Error', 'SDK not connected');
+    console.error('Error', 'SDK not connected');
     return;
   }
+  const {transaction, interval, retries} = txData || {};
 
+  if (!transaction) {
+    console.error('No transaction id found for bitcoin lightning');
+    return null;
+  }
   return new Promise((resolve, reject) => {
-    let listenerId = null;
-    let timeoutId = null;
-    let resolved = false;
-
-    try {
-      const eventListener = new JsEventListener(async event => {
-        if (resolved) return;
-
-        if (event.tag === 'PaymentSucceeded' || event.tag === 'Synced') {
-          resolved = true;
-
-          // 🧹 cleanup
-          if (listenerId !== null) {
-            sdk.removeEventListener(listenerId);
-          }
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-          }
-
-          resolve(true);
+    let numberOfRetries = 0;
+    let timer = setInterval(async () => {
+      try {
+        numberOfRetries += 1;
+        const response = await sdk.getPayment({
+          paymentId: transaction,
+        });
+        const status = response.payment.status;
+        if (status === PaymentStatus.Completed) {
+          clearInterval(timer);
+          resolve(response);
+        } else if (status === PaymentStatus.Failed) {
+          clearInterval(timer);
+          reject('failed');
+        } else if (numberOfRetries === retries) {
+          clearInterval(timer);
+          resolve('pending');
         }
-      });
-
-      listenerId = sdk.addEventListener(eventListener);
-      // ⏱️ 90 seconds timeout
-      timeoutId = setTimeout(() => {
-        if (resolved) return;
-
-        resolved = true;
-
-        console.log('⏱️ Payment confirmation timeout (90s)');
-
-        // 🧹 cleanup
-        if (listenerId !== null) {
-          sdk.removeEventListener(listenerId);
-        }
-
-        resolve('pending');
-      }, 90_000); // 90 seconds
-    } catch (error) {
-      console.error('Error in waitForConfirmation:', error);
-
-      // 🧹 cleanup
-      if (listenerId !== null) {
-        sdk.removeEventListener(listenerId);
+      } catch (e) {
+        clearInterval(timer);
+        console.error('Error in get transaction for lightning chain', e);
+        reject(e);
       }
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-
-      reject(error);
-    }
+    }, interval);
   });
 };
 
