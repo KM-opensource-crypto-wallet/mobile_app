@@ -307,7 +307,8 @@ export const sendLightning = async phrase => {
   }
 };
 
-export const waitForLightningConfirmation = async phrase => {
+export const waitForLightningConfirmation = async (phrase, txData) => {
+  const {transaction, interval, retries} = txData || {};
   const sdk = await connectToSdk(phrase);
 
   if (!sdk) {
