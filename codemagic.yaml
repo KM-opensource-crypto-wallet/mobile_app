@@ -58,6 +58,7 @@ workflows:
           GITHUB_PAT=$GITHUB_PAT
           DOK_WALLET_GOOGLE_WEB_CLIENT_ID=$DOK_WALLET_GOOGLE_WEB_CLIENT_ID
           KIML_WALLET_GOOGLE_WEB_CLIENT_ID=$KIML_WALLET_GOOGLE_WEB_CLIENT_ID
+          BREEZ_API_KEY=$BREEZ_API_KEY
           EOF
       - name: Install yarn dependencies
         script: |
@@ -156,6 +157,7 @@ workflows:
           GITHUB_PAT=$GITHUB_PAT
           DOK_WALLET_GOOGLE_WEB_CLIENT_ID=$DOK_WALLET_GOOGLE_WEB_CLIENT_ID
           KIML_WALLET_GOOGLE_WEB_CLIENT_ID=$KIML_WALLET_GOOGLE_WEB_CLIENT_ID
+          BREEZ_API_KEY=$BREEZ_API_KEY
           EOF
       - name: Install yarn dependencies
         script: |
@@ -257,6 +259,7 @@ workflows:
           GITHUB_PAT=$GITHUB_PAT
           DOK_WALLET_GOOGLE_WEB_CLIENT_ID=$DOK_WALLET_GOOGLE_WEB_CLIENT_ID
           KIML_WALLET_GOOGLE_WEB_CLIENT_ID=$KIML_WALLET_GOOGLE_WEB_CLIENT_ID
+          BREEZ_API_KEY=$BREEZ_API_KEY
           EOF
       - name: Install yarn dependencies
         script: |
