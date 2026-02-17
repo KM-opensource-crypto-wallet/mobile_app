@@ -300,7 +300,7 @@ export const waitForLightningConfirmation = async (phrase, txData) => {
   const {transaction, interval, retries} = txData || {};
 
   if (!transaction) {
-    console.error('No transaction id found for tron');
+    console.error('No transaction id found for bitcoin lightning');
     return null;
   }
   return new Promise((resolve, reject) => {
