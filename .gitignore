@@ -72,11 +72,13 @@ android/.gradle/
 /build/
 /android/app/dokwallet/release
 /android/app/kimlwallet/release
-.vscode/settings.json
 *.apk
 
 .env
 
+# Google Services (download via: yarn setup:google-services)
+**/google-services.json
+**/GoogleService-Info.plist
 
 # testing
 /coverage
@@ -96,4 +98,3 @@ web-build/
 
 
 .claude
-.vscode

@@ -18,7 +18,6 @@ import myStyles from './SendScreenStyles';
 import SendIcon from 'assets/images/send/send.svg';
 import RecIcon from 'assets/images/send/rec.svg';
 import {useSelector, useDispatch} from 'react-redux';
-import {Provider, Portal} from 'react-native-paper';
 import CopyIcon from 'assets/images/icons/copy.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
@@ -36,7 +35,6 @@ import {
   refreshCurrentCoin,
   setIsAddMoreAddressPopupHidden,
   setSelectedDeriveAddress,
-  updateCurrentCoin,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import FastImage from '@d11/react-native-fast-image';
 import Loading from 'components/Loading';
@@ -62,6 +60,8 @@ import EntypoIcon from 'react-native-vector-icons/Entypo';
 import ModalAdvanceCustomDerivation from 'components/ModalAdvanceCustomDerivation';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {clearSelectedUTXOs} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
+import {isCustomDerivedChecked} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import UnclaimedBottomSheet from 'components/UnclaimedBottomSheet';
 
 const SendScreen = ({navigation, route}) => {
   const currentCoin = useSelector(selectCurrentCoin);
@@ -77,7 +77,9 @@ const SendScreen = ({navigation, route}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showAdvanceModal, setShowAdvanceModal] = useState(false);
+  const isCheckedStored = useSelector(isCustomDerivedChecked);
   const isCustomDerivationClicked = useRef(false);
+  const unClaimedBottomSheet = useRef();
 
   const {item} = route.params;
   const isBitcoin = isBitcoinChain(currentCoin?.chain_name);
@@ -102,9 +104,17 @@ const SendScreen = ({navigation, route}) => {
     return currentCoin?._id + currentCoin?.name + currentCoin?.chain_name;
   }, [currentCoin]);
 
+  const listOfUnClaimedDeposits = useMemo(() => {
+    return currentCoin?.listOfUnClaimedDeposits || [];
+  }, [currentCoin]);
+
   useEffect(() => {
     if (currentCoin?.address) {
-      dispatch(refreshCurrentCoin())
+      dispatch(
+        refreshCurrentCoin({
+          isFetchUnclaimDeposit: true,
+        }),
+      )
         .unwrap()
         .then(() => {
           setIsLoading(false);
@@ -120,7 +130,11 @@ const SendScreen = ({navigation, route}) => {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await dispatch(refreshCurrentCoin()).unwrap();
+    await dispatch(
+      refreshCurrentCoin({
+        isFetchUnclaimDeposit: true,
+      }),
+    ).unwrap();
     setRefreshing(false);
   }, [dispatch]);
 
@@ -154,11 +168,31 @@ const SendScreen = ({navigation, route}) => {
             address: subItem.options?.address,
             privateKey: subItem?.options?.privateKey || currentCoin?.privateKey,
           },
+          isFetchUnclaimDeposit: true,
         }),
       ).unwrap();
     },
     [currentCoin, dispatch],
   );
+
+  const onDismissAddCoinsSheet = useCallback(() => {
+    unClaimedBottomSheet?.current?.close?.();
+  }, []);
+
+  const handleCheckCustomDerivation = useCallback(() => {
+    setShowAdvanceModal(false);
+    setShowConfirmModal(true);
+    isCustomDerivationClicked.current = true;
+  }, []);
+
+  const handleCustomDerivation = useCallback(() => {
+    if (isCheckedStored) {
+      setShowConfirmModal(true);
+      isCustomDerivationClicked.current = true;
+    } else {
+      setShowAdvanceModal(true);
+    }
+  }, [isCheckedStored]);
 
   useLayoutEffect(() => {
     if (isDeriveAddressChain && !isImportWithPrivateKey) {
@@ -174,10 +208,7 @@ const SendScreen = ({navigation, route}) => {
                 />
               </MenuTrigger>
               <MenuOptions optionsContainerStyle={styles.optionsContainer}>
-                <MenuOption
-                  onSelect={() => {
-                    setShowAdvanceModal(true);
-                  }}>
+                <MenuOption onSelect={handleCustomDerivation}>
                   <View style={styles.optionMenu}>
                     <Text style={styles.optionText}>{'Custom Derivation'}</Text>
                   </View>
@@ -221,7 +252,21 @@ const SendScreen = ({navigation, route}) => {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDeriveAddressChain, isImportWithPrivateKey, navigation, theme.font]);
+  }, [
+    isDeriveAddressChain,
+    isImportWithPrivateKey,
+    navigation,
+    theme.font,
+    handleCustomDerivation,
+  ]);
+
+  useEffect(() => {
+    if (listOfUnClaimedDeposits?.length && !isLoading) {
+      setTimeout(() => {
+        unClaimedBottomSheet?.current?.present?.();
+      }, 300);
+    }
+  }, [isLoading, listOfUnClaimedDeposits?.length]);
 
   if (!currentCoin) {
     return null;
@@ -412,16 +457,19 @@ const SendScreen = ({navigation, route}) => {
         onSuccess={onSuccessOfPrivateKey}
       />
       <ModalAdvanceCustomDerivation
+        showConfirmModal={showConfirmModal}
         visible={showAdvanceModal}
-        onPressYes={() => {
-          setShowAdvanceModal(false);
-          setShowConfirmModal(true);
-          isCustomDerivationClicked.current = true;
-        }}
+        onPressYes={handleCheckCustomDerivation}
         onPressNo={() => {
           setShowAdvanceModal(false);
         }}
       />
+      {!isLoading && (
+        <UnclaimedBottomSheet
+          bottomSheetRef={ref => (unClaimedBottomSheet.current = ref)}
+          onDismiss={onDismissAddCoinsSheet}
+        />
+      )}
     </>
   );
 };

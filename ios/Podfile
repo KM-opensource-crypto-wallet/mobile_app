@@ -23,7 +23,7 @@ abstract_target 'coinswalletCommonPod' do
   pod 'SDWebImage', '5.21.0'
   # permissions_path = '../node_modules/react-native-permissions/ios'
   # pod 'Permission-Camera', :path => "#{permissions_path}/Camera"
-  pod 'OpenSSL-Universal', '1.1.2200'
+  # OpenSSL-Universal removed - QuickCrypto provides its own OpenSSL.xcframework
   pod 'TrustWalletCore', '3.2.9'
   use_react_native!(
     :path => config[:reactNativePath],
@@ -66,8 +66,8 @@ abstract_target 'coinswalletCommonPod' do
         end
 
        framework_paths = [
-         "Pods/OpenSSL-Universal/Frameworks/OpenSSL.xcframework/ios-arm64/OpenSSL.framework/OpenSSL",
-         "Pods/OpenSSL-Universal/Frameworks/OpenSSL.xcframework/ios-arm64_x86_64-maccatalyst/OpenSSL.framework/OpenSSL",
+         # OpenSSL-Universal removed - QuickCrypto provides its own OpenSSL
+         # Bitcode is deprecated since Xcode 14 and no longer required for App Store
          "Pods/BugfenderSDK/BugfenderSDK.xcframework/ios-arm64/BugfenderSDK.framework/BugfenderSDK",
          "Pods/BugfenderSDK/BugfenderSDK.xcframework/ios-arm64_x86_64-maccatalyst/BugfenderSDK.framework/BugfenderSDK"
        ]

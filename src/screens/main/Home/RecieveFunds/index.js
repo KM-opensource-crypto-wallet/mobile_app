@@ -20,17 +20,26 @@ import {CommonActions} from '@react-navigation/native';
 import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {useSelector} from 'react-redux';
-
+import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {ThemeContext} from 'theme/ThemeContext';
-import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  getCurrentWalletPhrase,
+  selectCurrentCoin,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import LightningDropDown from 'components/LightningDropDown';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const RecieveFunds = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-
+  const address = useRef('');
   const currentCoin = useSelector(selectCurrentCoin);
-  const address = currentCoin?.address;
+  const currentPhrase = useSelector(getCurrentWalletPhrase);
+  address.current = currentCoin?.address ?? '';
+  const isLightning = currentCoin?.chain_name === 'bitcoin_lightning';
+  const chain = getChain(currentCoin?.chain_name);
+  const [addressState, setAddressState] = useState('');
+  const [showBtcMainnetBanner, setShowBtcMainnetBanner] = useState(false);
   const [productQRref, setProductQRref] = useState(
     `${currentCoin?.symbol}:${address}`,
   );
@@ -66,15 +75,63 @@ const RecieveFunds = ({navigation}) => {
     navigation.dispatch(CommonActions.setParams({shareQR}));
   }, [navigation, shareQR]);
 
+  const handleLightningDropDownChange = useCallback(
+    async currentValue => {
+      try {
+        let newAddress = '';
+
+        if (currentValue === 'btc_mainnet') {
+          setShowBtcMainnetBanner(true);
+          const respAddress = await chain.generateInvoiceViaBitcoinAddress(
+            currentPhrase,
+          );
+          newAddress = respAddress?.address;
+        } else if (currentValue === 'invoice') {
+          setShowBtcMainnetBanner(false);
+          const respAddress = await chain.generateInvoiceViaBolt11(
+            currentPhrase,
+          );
+          newAddress = respAddress?.address;
+        } else if (currentValue === 'lightning_address') {
+          setShowBtcMainnetBanner(false);
+          // generateSparkAddress
+          const respAddress = await chain.generateSparkAddress(currentPhrase);
+          newAddress = respAddress?.address;
+        }
+
+        setAddressState(newAddress);
+        setProductQRref(`${currentCoin?.symbol}:${newAddress}`);
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    [chain, currentCoin?.symbol, currentPhrase],
+  );
+
   return (
     <View
       style={styles.container}
       behavior={keyboardHeight}
       scrollEnabled={false}>
       <ScrollView style={styles.section}>
+        {showBtcMainnetBanner && (
+          <View style={styles.bannerContainer}>
+            <Text style={styles.bannerText}>
+              Note: On-chain BTC deposits require 4 confirmations before the
+              balance is available. You will need to manually claim the deposit
+              once confirmed.
+            </Text>
+          </View>
+        )}
         <Text style={styles.title}>
           Receive funds by providing your address or QR code
         </Text>
+        <View style={styles.title}>
+          <LightningDropDown
+            isLightning={isLightning}
+            handleLightningDropDownChange={handleLightningDropDownChange}
+          />
+        </View>
         <Text style={styles.qrContainer}>
           <QRCode
             value={productQRref}
@@ -85,10 +142,14 @@ const RecieveFunds = ({navigation}) => {
         </Text>
         <Text style={styles.addressTitle}>YOUR ADDRESS</Text>
         <View style={styles.addressContainer}>
-          <Text style={styles.address}>{address}</Text>
+          <Text style={styles.address}>
+            {addressState ? addressState : address.current}
+          </Text>
           <TouchableOpacity
             onPress={() => {
-              Clipboard.setString(address);
+              Clipboard.setString(
+                addressState ? addressState : address.current,
+              );
             }}>
             <CopyIcon fill={theme.background} width={20} height={30} />
           </TouchableOpacity>

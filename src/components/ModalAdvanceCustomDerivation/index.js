@@ -1,8 +1,11 @@
-import React, {useContext, useCallback} from 'react';
+import React, {useContext, useCallback, useState} from 'react';
 import {Dimensions, TouchableOpacity, View} from 'react-native';
 import {Modal, Portal, Text} from 'react-native-paper';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './ModalAdvanceCustomDerivationStyles';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {updateCustomDerivedChecked} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
+import {useDispatch} from 'react-redux';
 
 const WIDTH = Dimensions.get('window').width + 80;
 const {height: screenHeight} = Dimensions.get('window');
@@ -20,15 +23,24 @@ if (isIpad) {
 
 const ModalAdvanceCustomDerivation = ({visible, onPressYes, onPressNo}) => {
   const {theme} = useContext(ThemeContext);
+  const [checked, setChecked] = useState(false);
   const styles = myStyles(theme);
+  const dispatch = useDispatch();
 
   const handlerNo = useCallback(() => {
     onPressNo?.();
   }, [onPressNo]);
 
   const handlerYes = useCallback(() => {
+    if (checked) {
+      dispatch(updateCustomDerivedChecked(true));
+    }
     onPressYes?.();
-  }, [onPressYes]);
+  }, [checked, dispatch, onPressYes]);
+
+  const handleCheckBox = useCallback(() => {
+    setChecked(prev => !prev);
+  }, []);
 
   return (
     <Portal>
@@ -50,6 +62,16 @@ const ModalAdvanceCustomDerivation = ({visible, onPressYes, onPressNo}) => {
             }
           </Text>
         </View>
+        <TouchableOpacity onPress={handleCheckBox}>
+          <View style={styles.checkboxAndText}>
+            <MaterialCommunityIcons
+              name={checked ? 'checkbox-marked' : 'checkbox-blank-outline'}
+              size={24}
+              color={checked ? theme.background : theme.gray}
+            />
+            <Text style={[{}, styles.info]}>Don't show this popup again</Text>
+          </View>
+        </TouchableOpacity>
         <View style={styles.btnList}>
           <View style={styles.learnBorder}>
             <TouchableOpacity

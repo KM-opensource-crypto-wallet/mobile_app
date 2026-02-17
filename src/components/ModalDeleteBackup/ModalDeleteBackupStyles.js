@@ -22,10 +22,9 @@ const myStyles = theme =>
     infoList: {
       padding: ITEM_PAD,
       width: ITEM_WIDTH,
-      height: modalHeight - 100,
+      minHeight: modalHeight - 60,
       display: 'flex',
       justifyContent: 'center',
-
       alignItems: 'center',
     },
     titleInfo: {
@@ -41,12 +40,13 @@ const myStyles = theme =>
       fontSize: 16,
       textAlign: 'center',
       fontFamily: 'Roboto-Regular',
+      marginTop: 16,
     },
-    checkboxAndText: {
-      marginBottom: 15,
-      justifyContent: 'center',
-      alignItems: 'center',
-      flexDirection: 'row',
+    inputStyle: {
+      height: 50,
+      maxHeight: 50,
+      width: '100%',
+      marginVertical: 8,
     },
     btnList: {
       flexDirection: 'row',

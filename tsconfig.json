@@ -1,7 +1,14 @@
 {
+  "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
+    "types": [
+      "jest"
+    ],
+    "typeRoots": [
+      "node_modules/yup"
+    ],
     "baseUrl": ".",
-    "paths": {
+     "paths": {
       "src/*": ["./src/*"],
       "dok-wallet-blockchain-networks/*": ["./dok-wallet-blockchain-networks/*"],
       "assets/*": ["./src/assets/*"],
@@ -12,6 +19,5 @@
       "myWallet/*": ["./src/myWallet/*"],
       "theme/*": ["./src/theme/*"]
     }
-  }
+  },
 }
-

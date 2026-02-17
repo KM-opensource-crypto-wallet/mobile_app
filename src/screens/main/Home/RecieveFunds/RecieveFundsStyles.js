@@ -76,6 +76,18 @@ const myStyles = theme =>
       fontFamily: 'Roboto-Regular',
       color: theme.gray,
     },
+    bannerContainer: {
+      backgroundColor: '#FFF3CD',
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 12,
+    },
+    bannerText: {
+      fontFamily: 'Roboto-Regular',
+      fontSize: 13,
+      color: '#856404',
+      textAlign: 'center',
+    },
   });
 
 export default myStyles;
