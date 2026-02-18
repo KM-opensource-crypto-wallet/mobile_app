@@ -15,15 +15,7 @@ import {
 } from '@breeztech/breez-sdk-spark-react-native';
 
 import {IS_SANDBOX} from 'dok-wallet-blockchain-networks/config/config';
-import {
-  DocumentDirectoryPath,
-  mkdir,
-  writeFile,
-  readFile,
-  unlink,
-  exists,
-  stat,
-} from 'react-native-fs';
+import {DocumentDirectoryPath, mkdir} from 'react-native-fs';
 import {
   convertToSmallAmount,
   parseBalance,
@@ -34,38 +26,6 @@ let connectingPromise = null;
 let prepareSendResponse;
 const sdkMap = new Map();
 
-const debugStorageDir = async workingDir => {
-  const testFilePath = `${workingDir}/test_write.txt`;
-  try {
-    // 1. Check if directory exists
-    const dirExists = await exists(workingDir);
-    console.log(`📁 [DEBUG] Directory exists: ${dirExists}`);
-
-    // 2. Get directory stats
-    if (dirExists) {
-      const dirStat = await stat(workingDir);
-      console.log(`📁 [DEBUG] Directory stat:`, JSON.stringify(dirStat));
-    }
-
-    // 3. Try writing a test file
-    await writeFile(testFilePath, 'breez-sdk-test', 'utf8');
-    console.log('📁 [DEBUG] Test file write: SUCCESS');
-
-    // 4. Try reading the test file back
-    const content = await readFile(testFilePath, 'utf8');
-    console.log(`📁 [DEBUG] Test file read: SUCCESS, content="${content}"`);
-
-    // 5. Cleanup test file
-    await unlink(testFilePath);
-    console.log('📁 [DEBUG] Test file cleanup: SUCCESS');
-
-    return true;
-  } catch (err) {
-    console.error('📁 [DEBUG] Storage test FAILED:', err);
-    return false;
-  }
-};
-
 const commonConnectSdk = async mnemonic => {
   try {
     const network = IS_SANDBOX ? Network.Regtest : Network.Mainnet;
@@ -73,33 +33,17 @@ const commonConnectSdk = async mnemonic => {
     config.apiKey = process.env.BREEZ_API_KEY;
     // Disable automatic claiming
     config.maxDepositClaimFee = undefined;
-
-    console.log('📁 [DEBUG] DocumentDirectoryPath:', DocumentDirectoryPath);
     const baseDir = DocumentDirectoryPath.replace('file://', '');
-    console.log('📁 [DEBUG] baseDir (after replace):', baseDir);
     const workingDir = `${baseDir}/breezSdkSpark`;
-    console.log('📁 [DEBUG] workingDir:', workingDir);
-
-    try {
-      await mkdir(workingDir);
-      console.log('📁 [DEBUG] mkdir: SUCCESS');
-    } catch (mkdirErr) {
-      console.log('📁 [DEBUG] mkdir error:', mkdirErr);
-    }
-
-    // Test if we can actually read/write to this directory
-    const storageOk = await debugStorageDir(workingDir);
-    console.log(`📁 [DEBUG] Storage test result: ${storageOk}`);
+    await mkdir(workingDir);
 
     const seed = new Seed.Mnemonic({mnemonic});
 
-    console.log('📁 [DEBUG] Calling connect with storageDir:', workingDir);
     sdkInstance = await connect({
       config,
       seed,
       storageDir: workingDir,
     });
-    console.log('📁 [DEBUG] connect: SUCCESS');
     sdkMap.set(mnemonic, sdkInstance);
     return sdkInstance;
   } catch (err) {
