@@ -15,7 +15,7 @@ import {
 } from '@breeztech/breez-sdk-spark-react-native';
 
 import {IS_SANDBOX} from 'dok-wallet-blockchain-networks/config/config';
-import {DocumentDirectoryPath} from 'react-native-fs';
+import {DocumentDirectoryPath, mkdir} from 'react-native-fs';
 import {
   convertToSmallAmount,
   parseBalance,
@@ -34,7 +34,8 @@ const commonConnectSdk = async mnemonic => {
     // Disable automatic claiming
     config.maxDepositClaimFee = undefined;
     const baseDir = DocumentDirectoryPath.replace('file://', '');
-    const workingDir = `${baseDir}breezSdkSpark`;
+    const workingDir = `${baseDir}/breezSdkSpark`;
+    await mkdir(workingDir);
 
     const seed = new Seed.Mnemonic({mnemonic});
 
