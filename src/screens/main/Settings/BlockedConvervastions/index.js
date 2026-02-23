@@ -75,7 +75,7 @@ const BlockedConversations = () => {
                     isRefreshing.current = true;
                     dispatch(
                       updateConsentState({
-                        peerAddress: item?.peerAddress,
+                        peerInboxId: item?.peerInboxId,
                         topic: item?.topic,
                         address: item?.clientAddress,
                         consentState: 'allowed',

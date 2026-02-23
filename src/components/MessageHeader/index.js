@@ -136,7 +136,7 @@ const MessageHeader = ({
               onSelect={() => {
                 dispatch(
                   updateConsentState({
-                    peerAddress: conversation?.peerAddress,
+                    peerInboxId: conversation?.peerInboxId,
                     topic: conversation?.topic,
                     address: conversation?.clientAddress,
                     consentState:

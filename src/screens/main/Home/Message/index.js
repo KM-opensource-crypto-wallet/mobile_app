@@ -142,30 +142,21 @@ const Message = ({navigation}) => {
     dispatch,
   ]);
 
-  const onSend = useCallback(async () => {
-    try {
-      if (!isErrorInMessage) {
+  const onSend = useCallback(
+    async (outgoingMessages = []) => {
+      try {
+        const messageText = outgoingMessages[0]?.text?.trim();
+        if (!messageText || isErrorInMessage) {
+          return;
+        }
         setIsSending(true);
         setIsErrorInMessage(false);
-        let resp;
-        if (replyMessage) {
-          resp = await conversationObj?.send(
-            {
-              repliedMessage: replyMessage?.text,
-              repliedMessageId: replyMessage?._id,
-              message: text,
-              senderAddress: conversation?.clientAddress,
-            },
-            // {
-            //   contentType: ContentTypeCustomReply,
-            // },
-          );
-        } else {
-          resp = await conversationObj?.send(text);
-        }
+        const resp = XMTP.sendMessage({
+          topic: conversation?.topic,
+          message: messageText,
+        });
         setIsSending(false);
         if (resp) {
-          setText('');
           setReplyMessage(null);
         } else {
           console.error('resp not get', resp);
@@ -174,22 +165,17 @@ const Message = ({navigation}) => {
             title: 'Something went wrong',
           });
         }
+      } catch (e) {
+        console.error('Error in sending message', e);
+        setIsSending(false);
+        showToast({
+          type: 'errorToast',
+          title: 'Something went wrong',
+        });
       }
-    } catch (e) {
-      console.error('Error in sending message', e);
-      setIsSending(false);
-      showToast({
-        type: 'errorToast',
-        title: 'Something went wrong',
-      });
-    }
-  }, [
-    conversation?.clientAddress,
-    conversationObj,
-    isErrorInMessage,
-    replyMessage,
-    text,
-  ]);
+    },
+    [conversation?.topic, isErrorInMessage],
+  );
 
   const onLoadMoreMessages = useCallback(() => {
     const messsageLength = messages.length;
@@ -401,189 +387,197 @@ const Message = ({navigation}) => {
           </Text>
         </View>
       ) : (
-        <GiftedChat
-          messages={messages}
-          user={{
-            _id: conversation?.clientAddress,
-          }}
-          messageContainerRef={messageContainerRef}
-          renderAvatar={null}
-          onLoadEarlier={onLoadMoreMessages}
-          isLoadingEarlier={isFetchingMoreMsg}
-          listViewProps={{
-            extraData: isMultiSelectEnable,
-          }}
-          infiniteScroll={true}
-          shouldUpdateMessage={(props, nextProps) => {
-            return (
-              JSON.stringify(props.currentMessage) !==
-                JSON.stringify(nextProps.currentMessage) ||
-              isMultiSelectEnable !== isMultiSelectedEnableRef.current ||
-              blinkingMessageId !== null ||
-              !!selectedMessageRef.current[props.currentMessage._id] !==
-                !!selectedMessages[nextProps.currentMessage._id]
-            );
-          }}
-          onPressUrl={url => {
-            try {
-              const qsObj = parseUrlQS(url);
-              if (validatePaymentUrl(url, qsObj)) {
-                const currentDate = new Date().toISOString();
-                dispatch(setPaymentData({...qsObj, date: currentDate}));
+        <>
+          {/* <Chat
+            userMessages={messages}
+            onSend={onSend}
+            clientAddress={XMTP.client?.inboxId}
+            onLoadMoreMessages={onLoadMoreMessages}
+          /> */}
+          <GiftedChat
+            messages={messages}
+            onSend={onSend}
+            textInputProps={{
+              onChangeText: localText => {
+                setIsErrorInMessage(isContainsURL(localText, messageAllowUrls));
+                setText(localText);
+              },
+            }}
+            user={{
+              _id: conversation?.clientAddress,
+            }}
+            messageContainerRef={messageContainerRef}
+            renderAvatar={null}
+            onLoadEarlier={onLoadMoreMessages}
+            isLoadingEarlier={isFetchingMoreMsg}
+            listViewProps={{
+              extraData: isMultiSelectEnable,
+            }}
+            infiniteScroll={true}
+            shouldUpdateMessage={(props, nextProps) => {
+              return (
+                JSON.stringify(props.currentMessage) !==
+                  JSON.stringify(nextProps.currentMessage) ||
+                isMultiSelectEnable !== isMultiSelectedEnableRef.current ||
+                blinkingMessageId !== null ||
+                !!selectedMessageRef.current[props.currentMessage._id] !==
+                  !!selectedMessages[nextProps.currentMessage._id]
+              );
+            }}
+            onPressUrl={url => {
+              try {
+                const qsObj = parseUrlQS(url);
+                if (validatePaymentUrl(url, qsObj)) {
+                  const currentDate = new Date().toISOString();
+                  dispatch(setPaymentData({...qsObj, date: currentDate}));
+                }
+              } catch (e) {
+                console.warn('error in getInitialUrlLink', e);
               }
-            } catch (e) {
-              console.warn('error in getInitialUrlLink', e);
-            }
-          }}
-          renderBubble={props => {
-            const isLeft = props.position === 'left';
-            const currentMessage = props.currentMessage;
-            const messageId = currentMessage?._id;
-            const isSelected = !!selectedMessages[messageId];
-            // const isBlinking = ;
-            // console.log('messageId', messageId, currentMessage.text);
+            }}
+            renderBubble={props => {
+              const isLeft = props.position === 'left';
+              const currentMessage = props.currentMessage;
+              const messageId = currentMessage?._id;
+              const isSelected = !!selectedMessages[messageId];
+              // const isBlinking = ;
+              // console.log('messageId', messageId, currentMessage.text);
 
-            return (
-              <Animated.View
-                style={{
-                  ...styles.rowView,
-                  paddingLeft: 0,
-                  ...(messageId === blinkingMessageId && animatedStyle),
-                }}>
-                <TouchableOpacity
-                  activeOpacity={0.6}
-                  style={[styles.rowView, isLeft && {paddingLeft: 0}]}
-                  onLongPress={() => onLongPressMessage(currentMessage)}
-                  onPress={() => onPressMessage(currentMessage)}>
-                  <Animated.View style={[{height: 32}, checkboxWidthStyle]}>
-                    <Animated.View style={[checkboxPositionStyle]}>
-                      <Checkbox
-                        checked={isSelected}
-                        onChange={() => onPressMessage(currentMessage)}
-                      />
-                    </Animated.View>
-                  </Animated.View>
-                  <MessagePopover
-                    onRef={ref => (popoverRef.current[messageId] = ref)}
-                    isLeft={isLeft}
-                    onPressSingleForward={() => {
-                      onPressSingleForward(currentMessage);
-                    }}
-                    onPressSingleCopy={() => {
-                      onPressSingleCopy(currentMessage);
-                    }}
-                    onPressSingleReply={() => {
-                      onPressSingleReply(currentMessage);
-                    }}
-                  />
-                  <Bubble
-                    {...props}
-                    renderCustomView={() => {
-                      return currentMessage?.repliedMessage ? (
-                        <TouchableOpacity
-                          onPress={() => onPressRepliedMessage(currentMessage)}>
-                          <View
-                            style={styles.replyContainerMessage}
-                            id={currentMessage?.id}>
-                            <Text>
-                              {currentMessage?.repliedUserId ===
-                              conversation?.clientAddress
-                                ? 'You'
-                                : 'Other'}
-                            </Text>
-                            <Text>{currentMessage?.repliedMessage}</Text>
-                          </View>
-                        </TouchableOpacity>
-                      ) : null;
-                    }}
-                    containerStyle={{
-                      ...props.containerStyle,
-                    }}
-                    onPress={() => {
-                      if (isMultiSelectEnable) {
-                        onPressMessage(currentMessage);
-                      } else {
-                        popoverRef.current[messageId].open();
-                      }
-                    }}
+              return (
+                <Animated.View
+                  style={{
+                    ...styles.rowView,
+                    paddingLeft: 0,
+                    ...(messageId === blinkingMessageId && animatedStyle),
+                  }}>
+                  <TouchableOpacity
+                    activeOpacity={0.6}
+                    style={[styles.rowView, isLeft && {paddingLeft: 0}]}
                     onLongPress={() => onLongPressMessage(currentMessage)}
-                  />
-                </TouchableOpacity>
-              </Animated.View>
-            );
-          }}
-          bottomOffset={bottom}
-          loadEarlier={!isAllMsgLoaded}
-          // renderInputToolbar={() => }
-          renderSend={() => (
-            <Send
-              label={isSending ? 'Sending' : 'Send'}
-              text={text}
-              onSend={onSend}
-              textStyle={{
-                color: isErrorInMessage || isSending ? theme.gray : '#0084ff',
-                backgroundColor: theme.backgroundColor,
-              }}
-              disabled={isErrorInMessage || isSending}
-            />
-          )}
-          {...(isErrorInMessage && {
-            renderAccessory: () => (
-              <View style={styles.messageErrorContainer}>
-                <Text style={styles.errorText}>
-                  {'Unknown link(s) are not allow to send'}
-                </Text>
-              </View>
-            ),
-          })}
-          renderChatFooter={() => {
-            return replyMessage ? (
-              <View style={styles.replyToContainer}>
-                <View style={styles.replyToContainerHeader}>
-                  <Text style={styles.replyToContainerHeaderText}>
-                    Reply to
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    style={styles.replyToContainerMessageText}>
-                    {replyMessage?.text}
+                    onPress={() => onPressMessage(currentMessage)}>
+                    <Animated.View style={[{height: 32}, checkboxWidthStyle]}>
+                      <Animated.View style={[checkboxPositionStyle]}>
+                        <Checkbox
+                          checked={isSelected}
+                          onChange={() => onPressMessage(currentMessage)}
+                        />
+                      </Animated.View>
+                    </Animated.View>
+                    <MessagePopover
+                      onRef={ref => (popoverRef.current[messageId] = ref)}
+                      isLeft={isLeft}
+                      onPressSingleForward={() => {
+                        onPressSingleForward(currentMessage);
+                      }}
+                      onPressSingleCopy={() => {
+                        onPressSingleCopy(currentMessage);
+                      }}
+                      onPressSingleReply={() => {
+                        onPressSingleReply(currentMessage);
+                      }}
+                    />
+                    <Bubble
+                      {...props}
+                      renderCustomView={() => {
+                        return currentMessage?.repliedMessage ? (
+                          <TouchableOpacity
+                            onPress={() =>
+                              onPressRepliedMessage(currentMessage)
+                            }>
+                            <View
+                              style={styles.replyContainerMessage}
+                              id={currentMessage?.id}>
+                              <Text>
+                                {currentMessage?.repliedUserId ===
+                                conversation?.clientAddress
+                                  ? 'You'
+                                  : 'Other'}
+                              </Text>
+                              <Text>{currentMessage?.repliedMessage}</Text>
+                            </View>
+                          </TouchableOpacity>
+                        ) : null;
+                      }}
+                      containerStyle={{
+                        ...props.containerStyle,
+                      }}
+                      onPress={() => {
+                        if (isMultiSelectEnable) {
+                          onPressMessage(currentMessage);
+                        } else {
+                          popoverRef.current[messageId].open();
+                        }
+                      }}
+                      onLongPress={() => onLongPressMessage(currentMessage)}
+                    />
+                  </TouchableOpacity>
+                </Animated.View>
+              );
+            }}
+            bottomOffset={bottom}
+            loadEarlier={!isAllMsgLoaded}
+            // renderInputToolbar={() => }
+            renderSend={sendProps => (
+              <Send
+                {...sendProps}
+                label={isSending ? 'Sending' : 'Send'}
+                textStyle={{
+                  color: isErrorInMessage || isSending ? theme.gray : '#0084ff',
+                  backgroundColor: theme.backgroundColor,
+                }}
+                sendButtonProps={{disabled: isErrorInMessage || isSending}}
+              />
+            )}
+            {...(isErrorInMessage && {
+              renderAccessory: () => (
+                <View style={styles.messageErrorContainer}>
+                  <Text style={styles.errorText}>
+                    {'Unknown link(s) are not allow to send'}
                   </Text>
                 </View>
-                <TouchableOpacity onPress={() => setReplyMessage(null)}>
-                  <Icon name="xmark" size={16} color={theme.gray} />
-                </TouchableOpacity>
-              </View>
-            ) : null;
-          }}
-          renderInputToolbar={props => (
-            <InputToolbar
-              {...props}
-              containerStyle={{backgroundColor: theme.backgroundColor}}
-            />
-          )}
-          renderComposer={props => (
-            <Composer
-              {...props}
-              style={{...props.style, backgroundColor: theme.backgroundColor}}
-              textInputProps={{
-                onChangeText: localText => {
-                  setIsErrorInMessage(
-                    isContainsURL(localText, messageAllowUrls),
-                  );
-                  setText(localText);
-                  props.onTextChanged(localText);
-                },
-                value: text,
-                placeholderTextColor: theme.gray,
-              }}
-              textInputStyle={{
-                color: theme.font,
-                backgroundColor: theme.backgroundColor,
-              }}
-            />
-          )}
-        />
+              ),
+            })}
+            renderChatFooter={() => {
+              return replyMessage ? (
+                <View style={styles.replyToContainer}>
+                  <View style={styles.replyToContainerHeader}>
+                    <Text style={styles.replyToContainerHeaderText}>
+                      Reply to
+                    </Text>
+                    <Text
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      style={styles.replyToContainerMessageText}>
+                      {replyMessage?.text}
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setReplyMessage(null)}>
+                    <Icon name="xmark" size={16} color={theme.gray} />
+                  </TouchableOpacity>
+                </View>
+              ) : null;
+            }}
+            renderInputToolbar={props => (
+              <InputToolbar
+                {...props}
+                containerStyle={{backgroundColor: theme.backgroundColor}}
+              />
+            )}
+            renderComposer={composerProps => (
+              <Composer
+                {...composerProps}
+                textInputProps={{
+                  ...composerProps.textInputProps,
+                  placeholderTextColor: theme.gray,
+                  style: {
+                    color: theme.font,
+                    backgroundColor: theme.backgroundColor,
+                  },
+                }}
+              />
+            )}
+          />
+        </>
       )}
       <DialogReplyFail
         visible={dialogVisible}

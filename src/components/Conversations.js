@@ -22,7 +22,8 @@ const Conversations = ({isRequest}) => {
     return conversations?.filter(conversation => {
       return isRequest
         ? conversation.consentState === 'unknown'
-        : conversation.consentState === 'allowed';
+        : conversation.consentState === 'allowed' ||
+            conversation.consentState === 'denied';
     });
   }, [conversations, isRequest]);
 

@@ -1,0 +1,62 @@
+diff --git a/node_modules/expo-modules-core/ios/Core/ExpoBridgeModule.mm b/node_modules/expo-modules-core/ios/Core/ExpoBridgeModule.mm
+index 2ed1c00..cce2f78 100644
+--- a/node_modules/expo-modules-core/ios/Core/ExpoBridgeModule.mm
++++ b/node_modules/expo-modules-core/ios/Core/ExpoBridgeModule.mm
+@@ -82,6 +82,9 @@ - (void)legacyProxyDidSetBridge:(nonnull EXNativeModulesProxy *)moduleProxy
+     // See `setBridge` method above.
+     _appContext._runtime = [EXJavaScriptRuntimeManager runtimeFromBridge:_bridge];
+   }
++  // In new architecture (bridgeless) mode, `legacyProxyDidSetBridge` is never called,
++  // so we must register modules here to ensure they are available at runtime.
++  [_appContext useModulesProvider:@"ExpoModulesProvider"];
+   return nil;
+ }
+ 
+diff --git a/node_modules/expo-modules-core/ios/JSI/EXJSIConversions.mm b/node_modules/expo-modules-core/ios/JSI/EXJSIConversions.mm
+index b33b454..e7fd6da 100644
+--- a/node_modules/expo-modules-core/ios/JSI/EXJSIConversions.mm
++++ b/node_modules/expo-modules-core/ios/JSI/EXJSIConversions.mm
+@@ -198,7 +198,7 @@ id convertJSIValueToObjCObject(jsi::Runtime &runtime, const jsi::Value &value, s
+ 
+ RCTResponseSenderBlock convertJSIFunctionToCallback(jsi::Runtime &runtime, const jsi::Function &value, std::shared_ptr<CallInvoker> jsInvoker)
+ {
+-  auto weakWrapper = CallbackWrapper::createWeak(value.getFunction(runtime), runtime, jsInvoker);
++  auto weakWrapper = facebook::react::CallbackWrapper::createWeak(value.getFunction(runtime), runtime, jsInvoker);
+   BOOL __block wrapperWasCalled = NO;
+   RCTResponseSenderBlock callback = ^(NSArray *responses) {
+     if (wrapperWasCalled) {
+diff --git a/node_modules/expo-modules-core/ios/JSI/EXJSIUtils.h b/node_modules/expo-modules-core/ios/JSI/EXJSIUtils.h
+index 407f57f..e07300e 100644
+--- a/node_modules/expo-modules-core/ios/JSI/EXJSIUtils.h
++++ b/node_modules/expo-modules-core/ios/JSI/EXJSIUtils.h
+@@ -7,6 +7,7 @@
+ #import <jsi/jsi.h>
+ #import <React/RCTBridgeModule.h>
+ #import <ReactCommon/TurboModuleUtils.h>
++#import <ReactCommon/CallInvoker.h>
+ #import <ExpoModulesCore/ObjectDeallocator.h>
+ 
+ namespace jsi = facebook::jsi;
+diff --git a/node_modules/expo-modules-core/ios/JSI/EXJSIUtils.mm b/node_modules/expo-modules-core/ios/JSI/EXJSIUtils.mm
+index a566e53..1071b16 100644
+--- a/node_modules/expo-modules-core/ios/JSI/EXJSIUtils.mm
++++ b/node_modules/expo-modules-core/ios/JSI/EXJSIUtils.mm
+@@ -2,6 +2,7 @@
+ 
+ #import <sstream>
+ 
++#import <react/bridging/CallbackWrapper.h>
+ #import <ExpoModulesCore/EXJSIConversions.h>
+ #import <ExpoModulesCore/EXJSIUtils.h>
+ #import <ExpoModulesCore/JSIUtils.h>
+@@ -12,8 +13,8 @@
+ 
+ void callPromiseSetupWithBlock(jsi::Runtime &runtime, std::shared_ptr<CallInvoker> jsInvoker, std::shared_ptr<Promise> promise, PromiseInvocationBlock setupBlock)
+ {
+-  auto weakResolveWrapper = react::CallbackWrapper::createWeak(promise->resolve_.getFunction(runtime), runtime, jsInvoker);
+-  auto weakRejectWrapper = react::CallbackWrapper::createWeak(promise->reject_.getFunction(runtime), runtime, jsInvoker);
++  auto weakResolveWrapper = facebook::react::CallbackWrapper::createWeak(promise->resolve_.getFunction(runtime), runtime, jsInvoker);
++  auto weakRejectWrapper = facebook::react::CallbackWrapper::createWeak(promise->reject_.getFunction(runtime), runtime, jsInvoker);
+ 
+   __block BOOL isSettled = NO;
+ 
