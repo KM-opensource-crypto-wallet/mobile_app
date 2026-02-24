@@ -20,6 +20,7 @@ const getOrCreateDbEncryptionKey = async () => {
     }
   } catch (e) {
     console.warn('XMTP: failed to read encryption key from storage', e);
+    throw e;
   }
   const key = crypto.randomBytes(32);
   try {
@@ -304,7 +305,9 @@ export const XMTP = {
     const finalMessages = [];
     for (const msg of tempMessages) {
       // sentNs is nanoseconds in v5 — convert to ms for Date
-      const createdAt = new Date(msg.sentNs / 1_000_000).toISOString();
+      const sentNs =
+        typeof msg.sentNs === 'bigint' ? Number(msg.sentNs) : msg.sentNs;
+      const createdAt = new Date(sentNs / 1_000_000).toISOString();
       const user = {_id: msg.senderInboxId};
       const safeStr = v => (typeof v === 'string' ? v : '');
       if (msg.contentTypeId === 'xmtp.org/text:1.0') {

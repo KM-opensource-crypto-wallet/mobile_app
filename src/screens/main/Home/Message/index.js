@@ -149,9 +149,10 @@ const Message = ({navigation}) => {
   }, [replyMessage]);
 
   useEffect(() => {
-    if (conversation?.topic) {
-      dispatch(getMessage({topic: conversation?.topic}));
+    if (!conversation?.topic) {
+      return;
     }
+    dispatch(getMessage({topic: conversation?.topic}));
     XMTP.getConversation({
       topic: conversation?.topic,
       peerAddress: conversation?.peerAddress,
@@ -680,7 +681,7 @@ const Message = ({navigation}) => {
           <GiftedChat
             messages={messages}
             onSend={onSend}
-            textInputProps={onChangeText}
+            textInputProps={{onChangeText}}
             user={user}
             isKeyboardInternallyHandled={false}
             messageContainerRef={messageContainerRef}
