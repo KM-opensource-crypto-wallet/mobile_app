@@ -1,9 +1,4 @@
-import {
-  Client,
-  PublicIdentity,
-  ReplyCodec,
-  ConsentRecord,
-} from '@xmtp/react-native-sdk';
+import {Client, PublicIdentity, ReplyCodec} from '@xmtp/react-native-sdk';
 import {IS_SANDBOX} from 'dok-wallet-blockchain-networks/config/config';
 import {ContentTypeCustomReplyCodec} from './xmtpContentReplyType';
 import crypto from 'react-native-quick-crypto';
@@ -30,6 +25,7 @@ const getOrCreateDbEncryptionKey = async () => {
   try {
     await SensitiveInfo.setItem(XMTP_DB_KEY_STORAGE, key.toString('hex'), {
       keychainService: KEYCHAIN_SERVICE,
+      accessControl: 'none',
     });
   } catch (e) {
     console.warn('XMTP: failed to persist encryption key', e);
@@ -310,10 +306,11 @@ export const XMTP = {
       // sentNs is nanoseconds in v5 — convert to ms for Date
       const createdAt = new Date(msg.sentNs / 1_000_000).toISOString();
       const user = {_id: msg.senderInboxId};
+      const safeStr = v => (typeof v === 'string' ? v : '');
       if (msg.contentTypeId === 'xmtp.org/text:1.0') {
         finalMessages.push({
           _id: msg.id,
-          text: msg.content(),
+          text: safeStr(msg.content()),
           createdAt,
           user,
         });
@@ -321,7 +318,7 @@ export const XMTP = {
         const reply = msg.content();
         finalMessages.push({
           _id: msg.id,
-          text: reply?.content?.text ?? '',
+          text: safeStr(reply?.content?.text),
           reference: reply?.reference,
           createdAt,
           user,
@@ -330,9 +327,9 @@ export const XMTP = {
         const customReply = msg.content();
         finalMessages.push({
           _id: msg.id,
-          text: customReply?.message ?? '',
+          text: safeStr(customReply?.message),
           reference: customReply?.repliedMessageId,
-          repliedMessage: customReply?.repliedMessage,
+          repliedMessage: safeStr(customReply?.repliedMessage),
           repliedUserId: customReply?.senderAddress,
           createdAt,
           user,

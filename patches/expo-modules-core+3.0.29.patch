@@ -1,3 +1,108 @@
+diff --git a/node_modules/expo-modules-core/android/build.gradle b/node_modules/expo-modules-core/android/build.gradle
+index 61ed6d6..a64e43f 100644
+--- a/node_modules/expo-modules-core/android/build.gradle
++++ b/node_modules/expo-modules-core/android/build.gradle
+@@ -1,5 +1,4 @@
+ import com.android.build.gradle.tasks.ExternalNativeBuildJsonTask
+-import expo.modules.plugin.gradle.ExpoModuleExtension
+ import groovy.json.JsonSlurper
+ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+ 
+@@ -22,15 +21,34 @@ buildscript {
+ }
+ 
+ apply plugin: 'com.android.library'
+-apply plugin: 'expo-module-gradle-plugin'
+-
+-if (shouldIncludeCompose) {
+-  apply plugin: 'org.jetbrains.kotlin.plugin.compose'
+-}
++apply plugin: 'kotlin-android'
+ 
+ group = 'host.exp.exponent'
+ version = '3.0.29'
+ 
++// Inline replacements for expo-module-gradle-plugin functionality
++def kotlinVersion = rootProject.ext.has("kotlinVersion") ? rootProject.ext.kotlinVersion : "2.1.20"
++ext.kotlinVersion = kotlinVersion
++
++// Compute React Native directory inline
++def computeReactNativeDir = {
++  def rnFromSource = rootProject.findProject(":packages:react-native:ReactAndroid")?.projectDir?.parentFile
++  if (rnFromSource) return rnFromSource
++  return new File(
++    ['node', '--print', "require.resolve('react-native/package.json')"]
++      .execute(null, rootDir).text.trim()
++  ).parentFile
++}
++
++def reactNativeDir = computeReactNativeDir()
++
++def reactNativeMinorVersion = {
++  def propsFile = new File(reactNativeDir, "ReactAndroid/gradle.properties")
++  def props = new Properties()
++  props.load(propsFile.newInputStream())
++  props.getProperty("VERSION_NAME").split("\\.")[1].toInteger()
++}.call()
++
+ def isExpoModulesCoreTests = {
+   Gradle gradle = getGradle()
+   String tskReqStr = gradle.getStartParameter().getTaskRequests().toString()
+@@ -41,8 +59,6 @@ def isExpoModulesCoreTests = {
+   return false
+ }.call()
+ 
+-def expoModuleExtension = project.extensions.getByType(ExpoModuleExtension)
+-
+ def reactNativeArchitectures() {
+   def value = project.getProperties().get("reactNativeArchitectures")
+   return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
+@@ -63,8 +79,8 @@ def isNewArchitectureEnabled = findProperty("newArchEnabled") == "true"
+ 
+ def shouldTurnWarningsIntoErrors = findProperty("EXPO_TURN_WARNINGS_INTO_ERRORS") == "true"
+ 
+-expoModule {
+-  canBePublished false
++kotlin {
++  jvmToolchain(17)
+ }
+ 
+ android {
+@@ -75,8 +91,11 @@ android {
+     ndkVersion rootProject.ext.ndkVersion
+   }
+ 
++  compileSdkVersion rootProject.ext.has("compileSdkVersion") ? rootProject.ext.compileSdkVersion : 36
+   namespace "expo.modules"
+   defaultConfig {
++    minSdkVersion rootProject.ext.has("minSdkVersion") ? rootProject.ext.minSdkVersion : 24
++    targetSdkVersion rootProject.ext.has("targetSdkVersion") ? rootProject.ext.targetSdkVersion : 36
+     consumerProguardFiles 'proguard-rules.pro'
+     versionCode 1
+     versionName "3.0.29"
+@@ -90,8 +109,8 @@ android {
+         abiFilters(*reactNativeArchitectures())
+         arguments "-DANDROID_STL=c++_shared",
+           "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
+-          "-DREACT_NATIVE_DIR=${expoModuleExtension.reactNativeDir}",
+-          "-DREACT_NATIVE_TARGET_VERSION=${expoModuleExtension.reactNativeVersion.minor}",
++          "-DREACT_NATIVE_DIR=${reactNativeDir}",
++          "-DREACT_NATIVE_TARGET_VERSION=${reactNativeMinorVersion}",
+           "-DUSE_HERMES=${USE_HERMES}",
+           "-DIS_NEW_ARCHITECTURE_ENABLED=${isNewArchitectureEnabled}",
+           "-DUNIT_TEST=${isExpoModulesCoreTests}"
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/buildOutputCleanup/buildOutputCleanup.lock b/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/buildOutputCleanup/buildOutputCleanup.lock
+new file mode 100644
+index 0000000..beffc99
+Binary files /dev/null and b/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/buildOutputCleanup/buildOutputCleanup.lock differ
+diff --git a/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/buildOutputCleanup/cache.properties b/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/buildOutputCleanup/cache.properties
+new file mode 100644
+index 0000000..381d125
+--- /dev/null
++++ b/node_modules/expo-modules-core/expo-module-gradle-plugin/.gradle/buildOutputCleanup/cache.properties
+@@ -0,0 +1,2 @@
++#Tue Feb 24 18:28:38 IST 2026
++gradle.version=9.0.0
 diff --git a/node_modules/expo-modules-core/ios/Core/ExpoBridgeModule.mm b/node_modules/expo-modules-core/ios/Core/ExpoBridgeModule.mm
 index 2ed1c00..cce2f78 100644
 --- a/node_modules/expo-modules-core/ios/Core/ExpoBridgeModule.mm

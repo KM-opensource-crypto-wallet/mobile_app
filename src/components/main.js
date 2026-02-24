@@ -75,6 +75,7 @@ import dayjs from 'dayjs';
 import axios from 'axios';
 import {isTestFlight} from 'react-native-test-flight';
 import {setAdjustPan} from 'rn-android-keyboard-adjust';
+import {KeyboardProvider} from 'react-native-keyboard-controller';
 import {
   getAndroidLatestVersion,
   getDisableMessage,
@@ -370,39 +371,43 @@ const Main = () => {
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
-      <StatusBar
-        backgroundColor={theme.backgroundColor}
-        barStyle={
-          theme.backgroundColor === '#121212' ? 'light-content' : 'dark-content'
-        }
-      />
-      {disableMessage ? (
-        <DisableComponent />
-      ) : (
-        <NavigationContainer
-          ref={navigationRef}
-          onReady={() => {
-            MainNavigation.setNavigationObject(navigationRef.current);
-          }}>
-          <MenuProvider SafeAreaComponent={SafeAreaView}>
-            <BottomSheetModalProvider>{routing}</BottomSheetModalProvider>
-            {(!IS_KIML_WALLET || !IS_ANDROID) && (
-              <ModalAppUpdate visible={showUpdateModal} />
-            )}
-            {IS_KIML_WALLET && IS_ANDROID && (
-              <ModalApkDownload visible={showUpdateModal} />
-            )}
-          </MenuProvider>
-          <LoginModal
-            visible={loginModalVisible}
-            onClose={() => {
-              setLoginModalVisible(false);
-            }}
-          />
-        </NavigationContainer>
-      )}
-      {/*<Delete />*/}
-      {isLoading && <Spinner />}
+      <KeyboardProvider>
+        <StatusBar
+          backgroundColor={theme.backgroundColor}
+          barStyle={
+            theme.backgroundColor === '#121212'
+              ? 'light-content'
+              : 'dark-content'
+          }
+        />
+        {disableMessage ? (
+          <DisableComponent />
+        ) : (
+          <NavigationContainer
+            ref={navigationRef}
+            onReady={() => {
+              MainNavigation.setNavigationObject(navigationRef.current);
+            }}>
+            <MenuProvider SafeAreaComponent={SafeAreaView}>
+              <BottomSheetModalProvider>{routing}</BottomSheetModalProvider>
+              {(!IS_KIML_WALLET || !IS_ANDROID) && (
+                <ModalAppUpdate visible={showUpdateModal} />
+              )}
+              {IS_KIML_WALLET && IS_ANDROID && (
+                <ModalApkDownload visible={showUpdateModal} />
+              )}
+            </MenuProvider>
+            <LoginModal
+              visible={loginModalVisible}
+              onClose={() => {
+                setLoginModalVisible(false);
+              }}
+            />
+          </NavigationContainer>
+        )}
+        {/*<Delete />*/}
+        {isLoading && <Spinner />}
+      </KeyboardProvider>
     </GestureHandlerRootView>
   );
 };

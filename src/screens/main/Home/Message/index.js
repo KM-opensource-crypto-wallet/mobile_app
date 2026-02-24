@@ -13,7 +13,7 @@ import {
   InputToolbar,
   Send,
 } from 'react-native-gifted-chat';
-import {Text, TouchableOpacity, View} from 'react-native';
+import {KeyboardAvoidingView, Text, TouchableOpacity, View} from 'react-native';
 import myStyles from 'screens/main/Home/Message/MessageStyles';
 import {ThemeContext} from 'theme/ThemeContext';
 import {isContainsURL} from 'dok-wallet-blockchain-networks/helper';
@@ -21,6 +21,7 @@ import {shallowEqual, useDispatch, useSelector} from 'react-redux';
 import {
   getMessage,
   getMoreMessages,
+  addSentMessage,
 } from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
 import {
   getMessageData,
@@ -38,15 +39,14 @@ import {showToast} from 'utils/toast';
 import {getMessageAllowUrls} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
 import {useIsFocused} from '@react-navigation/native';
 import {IS_ANDROID} from 'utils/dimensions';
-import {setAdjustPan, setAdjustResize} from 'rn-android-keyboard-adjust';
+import {setAdjustPan, setAdjustNothing} from 'rn-android-keyboard-adjust';
 
 import Clipboard from '@react-native-clipboard/clipboard';
 import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
-import Checkbox from 'components/Checkbox';
 import MessageHeader from 'components/MessageHeader';
 import MessagePopover from 'components/MessagePopover';
 import Icon from 'react-native-vector-icons/FontAwesome6';
-// import {ContentTypeCustomReply} from 'utils/xmtpContentReplyType';
+import {ContentTypeCustomReply} from 'utils/xmtpContentReplyType';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -57,11 +57,17 @@ import Animated, {
 } from 'react-native-reanimated';
 import DialogReplyFail from 'components/DialogReplyFail';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import {useHeaderHeight} from '@react-navigation/elements';
+import Checkbox from 'components/Checkbox';
 
 const Message = ({navigation}) => {
+  const headerHeight = useHeaderHeight();
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const conversation = useSelector(getSelectedConversations, shallowEqual);
+  let user = {
+    _id: XMTP.client?.inboxId,
+  };
   const dispatch = useDispatch();
   const messageData = useSelector(getMessageData);
   const isFetchingMsg = useSelector(isFetchingMessages);
@@ -71,7 +77,22 @@ const Message = ({navigation}) => {
   const isFocused = useIsFocused();
   const [pendingScrollMessageId, setPendingScrollMessageId] = useState(null);
   const messages = useMemo(() => {
-    return messageData[conversation?.topic] || [];
+    const raw = messageData[conversation?.topic] || [];
+    const seen = new Set();
+    return raw
+      .filter(msg => {
+        if (seen.has(msg._id)) {
+          return false;
+        }
+        seen.add(msg._id);
+        return true;
+      })
+      .map(msg => ({
+        ...msg,
+        text: typeof msg.text === 'string' ? msg.text : '',
+        repliedMessage:
+          typeof msg.repliedMessage === 'string' ? msg.repliedMessage : '',
+      }));
   }, [conversation?.topic, messageData]);
   const [conversationObj, setConversationObj] = useState(null);
   const [text, setText] = useState('');
@@ -87,25 +108,26 @@ const Message = ({navigation}) => {
   const checkboxPosition = useSharedValue(-40); // initial width
   const popoverRef = useRef({});
   const [replyMessage, setReplyMessage] = useState(null);
+  const replyMessageRef = useRef(null);
+  const conversationObjRef = useRef(null);
   const [blinkingMessageId, setBlinkingMessageId] = useState(null);
   const blinkOpacity = useSharedValue(1);
   const [dialogVisible, setDialogVisible] = useState(false);
 
-  // Define the animated style
-  const checkboxWidthStyle = useAnimatedStyle(() => {
+  useAnimatedStyle(() => {
     return {
       width: withTiming(checkboxContainerWidth.value, {
-        duration: 250, // duration of the animation
+        duration: 250,
       }),
     };
   });
 
-  const checkboxPositionStyle = useAnimatedStyle(() => {
+  useAnimatedStyle(() => {
     return {
       transform: [
         {
           translateX: withTiming(checkboxPosition.value, {
-            duration: 250, // duration of the animation
+            duration: 250,
           }),
         },
       ],
@@ -115,7 +137,7 @@ const Message = ({navigation}) => {
   useEffect(() => {
     if (IS_ANDROID) {
       if (isFocused) {
-        setAdjustResize();
+        setAdjustNothing();
       } else {
         setAdjustPan();
       }
@@ -123,17 +145,22 @@ const Message = ({navigation}) => {
   }, [isFocused]);
 
   useEffect(() => {
+    replyMessageRef.current = replyMessage;
+  }, [replyMessage]);
+
+  useEffect(() => {
     if (conversation?.topic) {
       dispatch(getMessage({topic: conversation?.topic}));
     }
-    setConversationObj(
-      XMTP.getConversation({
-        topic: conversation?.topic,
-        peerAddress: conversation?.peerAddress,
-        createdAt: conversation?.createdAt,
-        version: conversation?.version,
-      }),
-    );
+    XMTP.getConversation({
+      topic: conversation?.topic,
+      peerAddress: conversation?.peerAddress,
+      createdAt: conversation?.createdAt,
+      version: conversation?.version,
+    }).then(conv => {
+      setConversationObj(conv);
+      conversationObjRef.current = conv;
+    });
   }, [
     conversation?.createdAt,
     conversation?.peerAddress,
@@ -151,12 +178,42 @@ const Message = ({navigation}) => {
         }
         setIsSending(true);
         setIsErrorInMessage(false);
-        const resp = XMTP.sendMessage({
-          topic: conversation?.topic,
-          message: messageText,
-        });
+        const currentReply = replyMessageRef.current;
+        const conv = conversationObjRef.current;
+        let resp;
+        if (currentReply && conv) {
+          resp = await conv.send(
+            {
+              repliedMessage: currentReply?.text,
+              repliedMessageId: currentReply?._id,
+              message: messageText,
+              senderAddress: currentReply?.user?._id,
+            },
+            {contentType: ContentTypeCustomReply},
+          );
+        } else {
+          resp = await XMTP.sendMessage({
+            topic: conversation?.topic,
+            message: messageText,
+          });
+        }
         setIsSending(false);
+        setText('');
         if (resp) {
+          const newMessage = {
+            _id: resp,
+            text: messageText,
+            createdAt: new Date().toISOString(),
+            user: {_id: XMTP.client?.inboxId},
+            ...(currentReply && {
+              reference: currentReply?._id,
+              repliedMessage: currentReply?.text,
+              repliedUserId: currentReply?.user?._id,
+            }),
+          };
+          dispatch(
+            addSentMessage({topic: conversation?.topic, message: newMessage}),
+          );
           setReplyMessage(null);
         } else {
           console.error('resp not get', resp);
@@ -174,7 +231,7 @@ const Message = ({navigation}) => {
         });
       }
     },
-    [conversation?.topic, isErrorInMessage],
+    [conversation?.topic, dispatch, isErrorInMessage],
   );
 
   const onLoadMoreMessages = useCallback(() => {
@@ -208,7 +265,7 @@ const Message = ({navigation}) => {
   const scrollToMessage = useCallback(
     messageId => {
       const messageIndex = messages.findIndex(item => item._id === messageId);
-      if (messageIndex !== -1) {
+      if (messageIndex !== -1 && messageContainerRef.current) {
         messageContainerRef.current.scrollToIndex({
           index: messageIndex,
           animated: true,
@@ -362,6 +419,235 @@ const Message = ({navigation}) => {
     });
   }, [navigation, selectedMessages]);
 
+  const onChangeText = useCallback(
+    localText => {
+      setIsErrorInMessage(isContainsURL(localText, messageAllowUrls));
+      setText(localText);
+    },
+    [messageAllowUrls],
+  );
+
+  const onShouldUpdateMessage = useCallback(
+    (props, nextProps) => {
+      return (
+        JSON.stringify(props.currentMessage) !==
+          JSON.stringify(nextProps.currentMessage) ||
+        isMultiSelectEnable !== isMultiSelectedEnableRef.current ||
+        blinkingMessageId !== null ||
+        !!selectedMessageRef.current[props.currentMessage._id] !==
+          !!selectedMessages[nextProps.currentMessage._id]
+      );
+    },
+    [blinkingMessageId, isMultiSelectEnable, selectedMessages],
+  );
+
+  const onPressUrl = useCallback(
+    url => {
+      try {
+        const qsObj = parseUrlQS(url);
+        if (validatePaymentUrl(url, qsObj)) {
+          const currentDate = new Date().toISOString();
+          dispatch(setPaymentData({...qsObj, date: currentDate}));
+        }
+      } catch (e) {
+        console.warn('error in getInitialUrlLink', e);
+      }
+    },
+    [dispatch],
+  );
+
+  const checkboxWidthStyle = useAnimatedStyle(() => {
+    return {
+      width: withTiming(checkboxContainerWidth.value, {
+        duration: 250, // duration of the animation
+      }),
+    };
+  });
+
+  const checkboxPositionStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          translateX: withTiming(checkboxPosition.value, {
+            duration: 250, // duration of the animation
+          }),
+        },
+      ],
+    };
+  });
+
+  const onRenderBubble = useCallback(
+    props => {
+      const isLeft = props.position === 'left';
+      const currentMessage = props.currentMessage;
+      const messageId = currentMessage?._id;
+      const isSelected = !!selectedMessages[messageId];
+      // const isBlinking = ;
+      // console.log('messageId', messageId, currentMessage.text);
+
+      return (
+        <Animated.View
+          style={[
+            styles.rowView,
+            {paddingLeft: 0},
+            messageId === blinkingMessageId && animatedStyle,
+          ]}>
+          <TouchableOpacity
+            activeOpacity={0.6}
+            style={[styles.rowView, isLeft && {paddingLeft: 0}]}
+            onLongPress={() => onLongPressMessage(currentMessage)}
+            onPress={() => onPressMessage(currentMessage)}>
+            {isSelected && (
+              <Animated.View style={[{height: 32}, checkboxWidthStyle]}>
+                <Animated.View style={[checkboxPositionStyle]}>
+                  <Checkbox
+                    checked={isSelected}
+                    onChange={() => onPressMessage(currentMessage)}
+                  />
+                </Animated.View>
+              </Animated.View>
+            )}
+            <MessagePopover
+              onRef={ref => (popoverRef.current[messageId] = ref)}
+              isLeft={isLeft}
+              onPressSingleForward={() => {
+                onPressSingleForward(currentMessage);
+              }}
+              onPressSingleCopy={() => {
+                onPressSingleCopy(currentMessage);
+              }}
+              onPressSingleReply={() => {
+                onPressSingleReply(currentMessage);
+              }}
+            />
+            <Bubble
+              {...props}
+              renderCustomView={() => {
+                const repliedText =
+                  typeof currentMessage?.repliedMessage === 'string'
+                    ? currentMessage.repliedMessage
+                    : '';
+                return repliedText ? (
+                  <TouchableOpacity
+                    onPress={() => onPressRepliedMessage(currentMessage)}>
+                    <View
+                      style={styles.replyContainerMessage}
+                      id={currentMessage?.id}>
+                      <Text>
+                        {currentMessage?.repliedUserId ===
+                        conversation?.clientAddress
+                          ? 'You'
+                          : 'Other'}
+                      </Text>
+                      <Text>{repliedText}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ) : null;
+              }}
+              containerStyle={{
+                ...props.containerStyle,
+              }}
+              onPressMessage={() => {
+                if (isMultiSelectEnable) {
+                  onPressMessage(currentMessage);
+                } else {
+                  popoverRef.current[messageId].open();
+                }
+              }}
+              onLongPressMessage={() => onLongPressMessage(currentMessage)}
+            />
+          </TouchableOpacity>
+        </Animated.View>
+      );
+    },
+    [
+      animatedStyle,
+      blinkingMessageId,
+      checkboxPositionStyle,
+      checkboxWidthStyle,
+      conversation?.clientAddress,
+      isMultiSelectEnable,
+      onLongPressMessage,
+      onPressMessage,
+      onPressRepliedMessage,
+      onPressSingleCopy,
+      onPressSingleForward,
+      onPressSingleReply,
+      selectedMessages,
+      styles.replyContainerMessage,
+      styles.rowView,
+    ],
+  );
+
+  const onRenderSend = useCallback(
+    sendProps => (
+      <Send
+        {...sendProps}
+        label={isSending ? 'Sending' : 'Send'}
+        textStyle={{
+          color: isErrorInMessage || isSending ? theme.gray : '#0084ff',
+          backgroundColor: theme.backgroundColor,
+        }}
+        sendButtonProps={{disabled: isErrorInMessage || isSending}}
+      />
+    ),
+    [isErrorInMessage, isSending, theme.backgroundColor, theme.gray],
+  );
+
+  const onRenderChatFooter = useCallback(() => {
+    return replyMessage ? (
+      <View style={styles.replyToContainer}>
+        <View style={styles.replyToContainerHeader}>
+          <Text style={styles.replyToContainerHeaderText}>Reply to</Text>
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={styles.replyToContainerMessageText}>
+            {replyMessage?.text}
+          </Text>
+        </View>
+        <TouchableOpacity onPress={() => setReplyMessage(null)}>
+          <Icon name="xmark" size={16} color={theme.gray} />
+        </TouchableOpacity>
+      </View>
+    ) : null;
+  }, [
+    replyMessage,
+    styles.replyToContainer,
+    styles.replyToContainerHeader,
+    styles.replyToContainerHeaderText,
+    styles.replyToContainerMessageText,
+    theme.gray,
+  ]);
+
+  const onRenderInputToolbar = useCallback(
+    props => (
+      <InputToolbar
+        {...props}
+        containerStyle={{backgroundColor: theme.backgroundColor}}
+      />
+    ),
+    [theme.backgroundColor],
+  );
+
+  const onRenderComposer = useCallback(
+    composerProps => (
+      <Composer
+        {...composerProps}
+        textInputProps={{
+          ...composerProps.textInputProps,
+          placeholderTextColor: theme.gray,
+          style: {
+            color: theme.font,
+            backgroundColor: theme.backgroundColor,
+          },
+        }}
+      />
+    ),
+    [theme.backgroundColor, theme.font, theme.gray],
+  );
+
+  let listViewProps = {extraData: isMultiSelectEnable};
   if (!conversation) {
     return null;
   }
@@ -387,147 +673,28 @@ const Message = ({navigation}) => {
           </Text>
         </View>
       ) : (
-        <>
-          {/* <Chat
-            userMessages={messages}
-            onSend={onSend}
-            clientAddress={XMTP.client?.inboxId}
-            onLoadMoreMessages={onLoadMoreMessages}
-          /> */}
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoidingView}
+          behavior="padding"
+          keyboardVerticalOffset={IS_ANDROID ? 0 : headerHeight}>
           <GiftedChat
             messages={messages}
             onSend={onSend}
-            textInputProps={{
-              onChangeText: localText => {
-                setIsErrorInMessage(isContainsURL(localText, messageAllowUrls));
-                setText(localText);
-              },
-            }}
-            user={{
-              _id: conversation?.clientAddress,
-            }}
+            textInputProps={onChangeText}
+            user={user}
+            isKeyboardInternallyHandled={false}
             messageContainerRef={messageContainerRef}
             renderAvatar={null}
             onLoadEarlier={onLoadMoreMessages}
             isLoadingEarlier={isFetchingMoreMsg}
-            listViewProps={{
-              extraData: isMultiSelectEnable,
-            }}
+            listViewProps={listViewProps}
             infiniteScroll={true}
-            shouldUpdateMessage={(props, nextProps) => {
-              return (
-                JSON.stringify(props.currentMessage) !==
-                  JSON.stringify(nextProps.currentMessage) ||
-                isMultiSelectEnable !== isMultiSelectedEnableRef.current ||
-                blinkingMessageId !== null ||
-                !!selectedMessageRef.current[props.currentMessage._id] !==
-                  !!selectedMessages[nextProps.currentMessage._id]
-              );
-            }}
-            onPressUrl={url => {
-              try {
-                const qsObj = parseUrlQS(url);
-                if (validatePaymentUrl(url, qsObj)) {
-                  const currentDate = new Date().toISOString();
-                  dispatch(setPaymentData({...qsObj, date: currentDate}));
-                }
-              } catch (e) {
-                console.warn('error in getInitialUrlLink', e);
-              }
-            }}
-            renderBubble={props => {
-              const isLeft = props.position === 'left';
-              const currentMessage = props.currentMessage;
-              const messageId = currentMessage?._id;
-              const isSelected = !!selectedMessages[messageId];
-              // const isBlinking = ;
-              // console.log('messageId', messageId, currentMessage.text);
-
-              return (
-                <Animated.View
-                  style={{
-                    ...styles.rowView,
-                    paddingLeft: 0,
-                    ...(messageId === blinkingMessageId && animatedStyle),
-                  }}>
-                  <TouchableOpacity
-                    activeOpacity={0.6}
-                    style={[styles.rowView, isLeft && {paddingLeft: 0}]}
-                    onLongPress={() => onLongPressMessage(currentMessage)}
-                    onPress={() => onPressMessage(currentMessage)}>
-                    <Animated.View style={[{height: 32}, checkboxWidthStyle]}>
-                      <Animated.View style={[checkboxPositionStyle]}>
-                        <Checkbox
-                          checked={isSelected}
-                          onChange={() => onPressMessage(currentMessage)}
-                        />
-                      </Animated.View>
-                    </Animated.View>
-                    <MessagePopover
-                      onRef={ref => (popoverRef.current[messageId] = ref)}
-                      isLeft={isLeft}
-                      onPressSingleForward={() => {
-                        onPressSingleForward(currentMessage);
-                      }}
-                      onPressSingleCopy={() => {
-                        onPressSingleCopy(currentMessage);
-                      }}
-                      onPressSingleReply={() => {
-                        onPressSingleReply(currentMessage);
-                      }}
-                    />
-                    <Bubble
-                      {...props}
-                      renderCustomView={() => {
-                        return currentMessage?.repliedMessage ? (
-                          <TouchableOpacity
-                            onPress={() =>
-                              onPressRepliedMessage(currentMessage)
-                            }>
-                            <View
-                              style={styles.replyContainerMessage}
-                              id={currentMessage?.id}>
-                              <Text>
-                                {currentMessage?.repliedUserId ===
-                                conversation?.clientAddress
-                                  ? 'You'
-                                  : 'Other'}
-                              </Text>
-                              <Text>{currentMessage?.repliedMessage}</Text>
-                            </View>
-                          </TouchableOpacity>
-                        ) : null;
-                      }}
-                      containerStyle={{
-                        ...props.containerStyle,
-                      }}
-                      onPress={() => {
-                        if (isMultiSelectEnable) {
-                          onPressMessage(currentMessage);
-                        } else {
-                          popoverRef.current[messageId].open();
-                        }
-                      }}
-                      onLongPress={() => onLongPressMessage(currentMessage)}
-                    />
-                  </TouchableOpacity>
-                </Animated.View>
-              );
-            }}
+            shouldUpdateMessage={onShouldUpdateMessage}
+            onPressUrl={onPressUrl}
+            renderBubble={onRenderBubble}
             bottomOffset={bottom}
             loadEarlier={!isAllMsgLoaded}
-            // renderInputToolbar={() => }
-            renderSend={sendProps => (
-              <Send
-                {...sendProps}
-                label={isSending ? 'Sending' : 'Send'}
-                textStyle={{
-                  color: isErrorInMessage || isSending ? theme.gray : '#0084ff',
-                  backgroundColor: theme.backgroundColor,
-                }}
-                sendButtonProps={{disabled: isErrorInMessage || isSending}}
-              />
-            )}
+            renderSend={onRenderSend}
             {...(isErrorInMessage && {
               renderAccessory: () => (
                 <View style={styles.messageErrorContainer}>
@@ -537,47 +704,11 @@ const Message = ({navigation}) => {
                 </View>
               ),
             })}
-            renderChatFooter={() => {
-              return replyMessage ? (
-                <View style={styles.replyToContainer}>
-                  <View style={styles.replyToContainerHeader}>
-                    <Text style={styles.replyToContainerHeaderText}>
-                      Reply to
-                    </Text>
-                    <Text
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                      style={styles.replyToContainerMessageText}>
-                      {replyMessage?.text}
-                    </Text>
-                  </View>
-                  <TouchableOpacity onPress={() => setReplyMessage(null)}>
-                    <Icon name="xmark" size={16} color={theme.gray} />
-                  </TouchableOpacity>
-                </View>
-              ) : null;
-            }}
-            renderInputToolbar={props => (
-              <InputToolbar
-                {...props}
-                containerStyle={{backgroundColor: theme.backgroundColor}}
-              />
-            )}
-            renderComposer={composerProps => (
-              <Composer
-                {...composerProps}
-                textInputProps={{
-                  ...composerProps.textInputProps,
-                  placeholderTextColor: theme.gray,
-                  style: {
-                    color: theme.font,
-                    backgroundColor: theme.backgroundColor,
-                  },
-                }}
-              />
-            )}
+            renderChatFooter={onRenderChatFooter}
+            renderInputToolbar={onRenderInputToolbar}
+            renderComposer={onRenderComposer}
           />
-        </>
+        </KeyboardAvoidingView>
       )}
       <DialogReplyFail
         visible={dialogVisible}

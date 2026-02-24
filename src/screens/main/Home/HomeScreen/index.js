@@ -277,7 +277,11 @@ const HomeScreen = ({navigation, route}) => {
                 (MainNavigation?.getCurrentRouteName() === 'Message' &&
                   selectedTopicRef.current !== topic))
             ) {
-              const peerAddress = message.senderAddress;
+              const matchedConversation = conversationsRef.current?.find(
+                item => item?.topic === topic,
+              );
+              const peerAddress =
+                matchedConversation?.peerAddress ?? message.senderInboxId;
               const title =
                 conversationNameRef.current &&
                 Object.prototype.hasOwnProperty.call(
@@ -288,8 +292,8 @@ const HomeScreen = ({navigation, route}) => {
                   : getCustomizePublicAddress(peerAddress);
               showToast({
                 type: 'messageToast',
-                title,
-                message: message.content(),
+                title: title,
+                message: formattedMessages[0]?.text ?? '',
                 position: 'top',
                 onPress: () => {
                   dispatch(

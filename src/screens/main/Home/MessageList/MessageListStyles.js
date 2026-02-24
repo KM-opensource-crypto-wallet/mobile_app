@@ -20,6 +20,9 @@ const myStyles = theme =>
       fontWeight: '500',
       textTransform: 'none',
     },
+    tabBarFontFocusedStyle: {
+      fontWeight: 'bold',
+    },
     badgeView: {
       height: 24,
       width: 24,
