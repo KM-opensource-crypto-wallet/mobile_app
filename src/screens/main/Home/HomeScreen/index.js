@@ -268,7 +268,7 @@ const HomeScreen = ({navigation, route}) => {
               }),
             );
             if (
-              address !== message.senderAddress &&
+              XMTP.client?.inboxId !== message.senderInboxId &&
               !!conversationsRef.current?.find(
                 item =>
                   item?.topic === topic && item?.consentState !== 'denied',
