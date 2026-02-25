@@ -241,6 +241,7 @@
     "typescript": "^5.8.3"
   },
   "resolutions": {
+    "@react-native-community/cli-config-android": "20.1.2",
     "react-native-permissions": "^5.4.4",
     "elliptic": "^6.6.1",
     "tar": "7.5.4",
