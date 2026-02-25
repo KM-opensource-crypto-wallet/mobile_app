@@ -19,8 +19,13 @@ const getOrCreateDbEncryptionKey = async () => {
       return Buffer.from(stored, 'hex');
     }
   } catch (e) {
-    console.warn('XMTP: failed to read encryption key from storage', e);
-    throw e;
+    const msg = e?.message ?? '';
+    if (msg.includes('not found')) {
+      // Android throws when the key doesn't exist yet — treat as a cache miss
+    } else {
+      console.warn('XMTP: failed to read encryption key from storage', e);
+      throw e;
+    }
   }
   const key = crypto.randomBytes(32);
   try {
@@ -155,8 +160,8 @@ export const XMTP = {
       }
       const messages = await conversation.messages({
         limit,
-        ...(before && {beforeNs: before}),
-        ...(after && {afterNs: after}),
+        ...(before && {beforeNs: new Date(before).getTime() * 1_000_000}),
+        ...(after && {afterNs: new Date(after).getTime() * 1_000_000}),
       });
       return XMTP.formatMessage(messages);
     } catch (error) {
@@ -300,6 +305,29 @@ export const XMTP = {
     }
   },
 
+  sendReply: async ({topic, replyData}) => {
+    try {
+      if (!XMTP.client) {
+        console.warn('XMTP: Please initialize client first');
+        return null;
+      }
+      const conversation =
+        await XMTP.client.conversations.findConversationByTopic(topic);
+      if (!conversation) {
+        return null;
+      }
+      return await conversation.send({
+        reply: {
+          reference: replyData.repliedMessageId || '',
+          content: {text: replyData.message},
+        },
+      });
+    } catch (error) {
+      console.log('XMTP sendReply error:', error);
+      return null;
+    }
+  },
+
   formatMessage: messages => {
     const tempMessages = Array.isArray(messages) ? messages : [];
     const finalMessages = [];
@@ -327,16 +355,40 @@ export const XMTP = {
           user,
         });
       } else if (msg.contentTypeId === 'com.dok.wallet/customReply:1.1') {
-        const customReply = msg.content();
-        finalMessages.push({
-          _id: msg.id,
-          text: safeStr(customReply?.message),
-          reference: customReply?.repliedMessageId,
-          repliedMessage: safeStr(customReply?.repliedMessage),
-          repliedUserId: customReply?.senderAddress,
-          createdAt,
-          user,
-        });
+        try {
+          const customReply = msg.content();
+          finalMessages.push({
+            _id: msg.id,
+            text: safeStr(customReply?.message),
+            reference: customReply?.repliedMessageId,
+            repliedMessage: safeStr(customReply?.repliedMessage),
+            repliedUserId: customReply?.senderAddress,
+            createdAt,
+            user,
+          });
+        } catch (e) {
+          try {
+            const encodedJSON = msg.nativeContent?.encoded;
+            const encoded = encodedJSON ? JSON.parse(encodedJSON) : null;
+            if (encoded?.parameters) {
+              finalMessages.push({
+                _id: msg.id,
+                text: safeStr(encoded.parameters.message),
+                reference: encoded.parameters.repliedMessageId,
+                repliedMessage: safeStr(encoded.parameters.repliedMessage),
+                repliedUserId: encoded.parameters.senderAddress,
+                createdAt,
+                user,
+              });
+            }
+          } catch (innerErr) {
+            console.warn(
+              'XMTP: failed to decode custom reply message',
+              msg.id,
+              innerErr,
+            );
+          }
+        }
       }
     }
     return finalMessages;

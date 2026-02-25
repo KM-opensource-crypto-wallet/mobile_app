@@ -46,7 +46,6 @@ import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
 import MessageHeader from 'components/MessageHeader';
 import MessagePopover from 'components/MessagePopover';
 import Icon from 'react-native-vector-icons/FontAwesome6';
-import {ContentTypeCustomReply} from 'utils/xmtpContentReplyType';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -114,6 +113,12 @@ const Message = ({navigation}) => {
   const blinkOpacity = useSharedValue(1);
   const [dialogVisible, setDialogVisible] = useState(false);
 
+  const messagesById = useMemo(() => {
+    const map = new Map();
+    messages.forEach(m => map.set(m._id, m));
+    return map;
+  }, [messages]);
+
   useAnimatedStyle(() => {
     return {
       width: withTiming(checkboxContainerWidth.value, {
@@ -180,18 +185,17 @@ const Message = ({navigation}) => {
         setIsSending(true);
         setIsErrorInMessage(false);
         const currentReply = replyMessageRef.current;
-        const conv = conversationObjRef.current;
         let resp;
-        if (currentReply && conv) {
-          resp = await conv.send(
-            {
+        if (currentReply) {
+          resp = await XMTP.sendReply({
+            topic: conversation?.topic,
+            replyData: {
               repliedMessage: currentReply?.text,
               repliedMessageId: currentReply?._id,
               message: messageText,
               senderAddress: currentReply?.user?._id,
             },
-            {contentType: ContentTypeCustomReply},
-          );
+          });
         } else {
           resp = await XMTP.sendMessage({
             topic: conversation?.topic,
@@ -524,19 +528,21 @@ const Message = ({navigation}) => {
             <Bubble
               {...props}
               renderCustomView={() => {
-                const repliedText =
-                  typeof currentMessage?.repliedMessage === 'string'
-                    ? currentMessage.repliedMessage
-                    : '';
+                const reference = currentMessage?.reference;
+                const directRepliedText = currentMessage?.repliedMessage;
+                const lookupMsg =
+                  !directRepliedText && reference
+                    ? messagesById.get(reference) ?? null
+                    : null;
+                const repliedText = directRepliedText || lookupMsg?.text || '';
+                const repliedUserId =
+                  currentMessage?.repliedUserId || lookupMsg?.user?._id;
                 return repliedText ? (
                   <TouchableOpacity
                     onPress={() => onPressRepliedMessage(currentMessage)}>
-                    <View
-                      style={styles.replyContainerMessage}
-                      id={currentMessage?.id}>
+                    <View style={styles.replyContainerMessage}>
                       <Text>
-                        {currentMessage?.repliedUserId ===
-                        conversation?.clientAddress
+                        {repliedUserId === conversation?.clientAddress
                           ? 'You'
                           : 'Other'}
                       </Text>
@@ -568,6 +574,7 @@ const Message = ({navigation}) => {
       checkboxWidthStyle,
       conversation?.clientAddress,
       isMultiSelectEnable,
+      messagesById,
       onLongPressMessage,
       onPressMessage,
       onPressRepliedMessage,

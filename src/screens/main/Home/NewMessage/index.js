@@ -15,7 +15,10 @@ import {IS_ANDROID} from 'utils/dimensions';
 import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {XMTP} from 'utils/xmtp';
 import {showToast} from 'utils/toast';
-import {setSelectedConversation} from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
+import {
+  setSelectedConversation,
+  addConversation,
+} from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
 import {useDispatch} from 'react-redux';
 
 const NewMessage = ({navigation, route}) => {
@@ -51,13 +54,49 @@ const NewMessage = ({navigation, route}) => {
             const conversation = await XMTP.newConversation({
               address: validAddress || address,
             });
+            if (!conversation) {
+              showToast({
+                type: 'errorToast',
+                title: 'Something went wrong',
+                message: 'Failed to create conversation',
+              });
+              setIsSubmitting(false);
+              return;
+            }
             const formattedConversation = await XMTP.formatConversation([
               conversation,
             ]);
+            const formattedConv = formattedConversation?.[0];
+            if (!formattedConv) {
+              showToast({
+                type: 'errorToast',
+                title: 'Something went wrong',
+                message: 'Failed to format conversation',
+              });
+              setIsSubmitting(false);
+              return;
+            }
+            const clientAddress = formattedConv.clientAddress?.toLowerCase();
+            if (!clientAddress) {
+              showToast({
+                type: 'errorToast',
+                title: 'Something went wrong',
+                message: 'Missing client address',
+              });
+              setIsSubmitting(false);
+              return;
+            }
+            dispatch(
+              addConversation({
+                topic: formattedConv.topic,
+                address: clientAddress,
+                conversationData: formattedConv,
+              }),
+            );
             dispatch(
               setSelectedConversation({
-                address: formattedConversation[0].clientAddress,
-                topic: formattedConversation[0].topic,
+                address: clientAddress,
+                topic: formattedConv.topic,
               }),
             );
             navigation.replace('Message');
