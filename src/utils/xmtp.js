@@ -67,50 +67,72 @@ const clearXmtpDatabase = async () => {
 export const XMTP = {
   client: null,
 
-  initializeClient: async ({wallet, address}) => {
-    try {
-      const signer = {
-        getIdentifier: async () =>
-          new PublicIdentity(wallet.address, 'ETHEREUM'),
-        getChainId: () => undefined,
-        getBlockNumber: () => undefined,
-        signerType: () => 'EOA',
-        signMessage: async message => {
-          const sig = await wallet.signMessage(message);
-          return {signature: Buffer.from(sig.replace('0x', ''), 'hex')};
-        },
-      };
-      if (XMTP.client?.publicIdentity?.identifier !== address?.toLowerCase()) {
-        const createClient = async () => {
-          const dbEncryptionKey = await getOrCreateDbEncryptionKey();
-          return Client.create(signer, {
-            env: XMTP_ENV,
-            dbEncryptionKey,
-            codecs: [new ReplyCodec(), new ContentTypeCustomReplyCodec()],
-          });
-        };
-        try {
-          XMTP.client = await createClient();
-        } catch (storageError) {
-          if (
-            storageError?.message?.includes('PRAGMA key') ||
-            storageError?.message?.includes('Storage error')
-          ) {
-            console.warn(
-              'XMTP: stale database detected, clearing and retrying',
-            );
-            await clearXmtpDatabase();
-            XMTP.client = await createClient();
-          } else {
-            throw storageError;
-          }
+  _initChain: Promise.resolve(null),
+
+  initializeClient: ({wallet, address}) => {
+    XMTP._initChain = XMTP._initChain
+      .catch(() => null)
+      .then(async () => {
+        if (
+          XMTP.client?.publicIdentity?.identifier === address?.toLowerCase()
+        ) {
+          return XMTP.client;
         }
-      }
-      return XMTP.client;
-    } catch (error) {
-      console.log('XMTP initializeClient error:', error);
-      return null;
-    }
+        try {
+          const signer = {
+            getIdentifier: async () =>
+              new PublicIdentity(wallet.address, 'ETHEREUM'),
+            getChainId: () => undefined,
+            getBlockNumber: () => undefined,
+            signerType: () => 'EOA',
+            signMessage: async message => {
+              const sig = await wallet.signMessage(message);
+              return {signature: Buffer.from(sig.replace('0x', ''), 'hex')};
+            },
+          };
+          // Drop the old native client so its streaming connections and
+          // sign-event listeners don't interfere with the new wallet's
+          // signing ceremony.
+          if (XMTP.client) {
+            try {
+              XMTP.unSubscribeStream();
+              await Client.dropClient(XMTP.client.installationId);
+            } catch (e) {
+              console.warn('XMTP: failed to drop previous client', e);
+            }
+            XMTP.client = null;
+          }
+          const createClient = async () => {
+            const dbEncryptionKey = await getOrCreateDbEncryptionKey();
+            return Client.create(signer, {
+              env: XMTP_ENV,
+              dbEncryptionKey,
+              codecs: [new ReplyCodec(), new ContentTypeCustomReplyCodec()],
+            });
+          };
+          try {
+            XMTP.client = await createClient();
+          } catch (storageError) {
+            if (
+              storageError?.message?.includes('PRAGMA key') ||
+              storageError?.message?.includes('Storage error')
+            ) {
+              console.warn(
+                'XMTP: stale database detected, clearing and retrying',
+              );
+              await clearXmtpDatabase();
+              XMTP.client = await createClient();
+            } else {
+              throw storageError;
+            }
+          }
+          return XMTP.client;
+        } catch (error) {
+          console.log('XMTP initializeClient error:', error);
+          return null;
+        }
+      });
+    return XMTP._initChain;
   },
 
   getClient: () => XMTP.client,
