@@ -115,7 +115,9 @@ const Message = ({navigation}) => {
 
   const messagesById = useMemo(() => {
     const map = new Map();
-    messages.forEach(m => map.set(m._id, m));
+    messages.forEach(m => {
+      map.set(m._id, m);
+    });
     return map;
   }, [messages]);
 

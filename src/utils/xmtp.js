@@ -35,6 +35,7 @@ const getOrCreateDbEncryptionKey = async () => {
     });
   } catch (e) {
     console.warn('XMTP: failed to persist encryption key', e);
+    throw e;
   }
   return key;
 };
