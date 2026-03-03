@@ -24,6 +24,7 @@ import {
   isBitcoinChain,
   isEVMChain,
   isValidDerivePath,
+  validateSupportedChain,
 } from 'dok-wallet-blockchain-networks/helper';
 import {
   addCustomDeriveAddress,
@@ -88,6 +89,9 @@ export const CustomDerivation = () => {
 
   const derivationData = useMemo(() => {
     const chainName = currentCoin?.chain_name;
+    if (!validateSupportedChain(chainName)) {
+      return [customObj];
+    }
     const convertedChainName = isEVMChain(chainName) ? 'ethereum' : chainName;
 
     const availableDerivePath = allDerivePath[convertedChainName] || [];
@@ -170,6 +174,9 @@ export const CustomDerivation = () => {
     }),
     onSubmit: async submittedValue => {
       try {
+        if (!validateSupportedChain(currentCoin?.chain_name)) {
+          return;
+        }
         setIsSubmitting(true);
         const {selectedDerivationOptions, customDerivePath} = submittedValue;
         const chainName = isEVMChain(currentCoin?.chain_name)
