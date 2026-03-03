@@ -21,6 +21,7 @@ import {
   allDerivePath,
   customObj,
   getCustomizePublicAddress,
+  isBitcoinChain,
   isEVMChain,
   isValidDerivePath,
 } from 'dok-wallet-blockchain-networks/helper';
@@ -195,7 +196,9 @@ export const CustomDerivation = () => {
     },
   });
 
-  const isAtLimit = (currentCoin?.deriveAddresses?.length ?? 0) >= 100;
+  const isAtLimit =
+    isBitcoinChain(currentCoin?.chain_name) &&
+    (currentCoin?.deriveAddresses?.length ?? 0) >= 100;
   const isDisabled = !values?.selectedDerivationOptions || isAtLimit;
 
   const HeaderComponent = useCallback(() => {

@@ -51,11 +51,7 @@ export const addCustomDeriveAddressToWallet = async (
   derivePath,
 ) => {
   try {
-    if (
-      chain_name === 'bitcoin' ||
-      chain_name === 'bitcoin_legacy' ||
-      chain_name === 'bitcoin_segwit'
-    ) {
+    if (chain_name === 'bitcoin_legacy' || chain_name === 'bitcoin_segwit') {
       return await BitcoinChain().createCustomDerivedAddress({
         chain_name,
         mnenomincs,
