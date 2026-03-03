@@ -1,7 +1,5 @@
 import {StyleSheet} from 'react-native';
-import {SCREEN_WIDTH} from 'utils/dimensions';
 
-const PopoverWidth = 180;
 const myStyles = theme =>
   StyleSheet.create({
     mainView: {
@@ -37,7 +35,7 @@ const myStyles = theme =>
       width: 180,
       paddingHorizontal: 0,
       marginHorizontal: 0,
-      marginLeft: SCREEN_WIDTH - PopoverWidth - 16,
+      marginLeft: 0,
       backgroundColor: theme.secondaryBackgroundColor,
       shadowColor: '#000',
       shadowOpacity: 0.3,
