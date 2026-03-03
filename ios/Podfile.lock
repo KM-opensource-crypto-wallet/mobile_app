@@ -4051,7 +4051,7 @@ SPEC CHECKSUMS:
   AppAuth: 1c1a8afa7e12f2ec3a294d9882dfa5ab7d3cb063
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
-  breeztech-breez-sdk-spark-react-native: ebe1210f31d5c3ffab8e76bebf86a701f71834b7
+  breeztech-breez-sdk-spark-react-native: 7f84a167e12e251c858f5d3e0785dc88d4d49bf8
   BugfenderSDK: 01831192d8bfe81912f104b903510f1c93fb3592
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   fast_float: b32c788ed9c6a8c584d114d0047beda9664e7cc6
@@ -4162,6 +4162,7 @@ SPEC CHECKSUMS:
   RNCClipboard: 4b58c780f63676367640f23c8e114e9bd0cf86ac
   RNDeviceInfo: 36d7f232bfe7c9b5c494cb7793230424ed32c388
   RNFastImage: b076a6378b1ce90debc27a927a437db3652bef14
+  RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
   RNGestureHandler: cd4be101cfa17ea6bbd438710caa02e286a84381
   RNGoogleSignin: 4122717989e2544988cb4cec3e917da3ebc969a5
   RNInAppBrowser: 6d3eb68d471b9834335c664704719b8be1bfdb20
@@ -4183,6 +4184,7 @@ SPEC CHECKSUMS:
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   SwiftProtobuf: e02f51c8c2df5845657aee2d4de9d61bf50ef788
   TrustWalletCore: 33400e9cf939277435b4e2e6c21daaa1afe26c7c
+  uniffi-bindgen-react-native: 018090e6c342b31e1189eb4d098860e9d44caa86
   VisionCamera: b51af005669c6642dd1b4fca434eda4c1778de87
   Yoga: 5456bb010373068fc92221140921b09d126b116e
 

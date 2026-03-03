@@ -293,6 +293,7 @@ const SendScreen = ({navigation, route}) => {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }>
             {isDeriveAddressChain &&
+              !isBitcoin &&
               !isImportWithPrivateKey &&
               !isAddMoreAddressPopupHide && (
                 <View style={styles.syncView}>

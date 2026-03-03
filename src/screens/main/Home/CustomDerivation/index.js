@@ -53,7 +53,7 @@ export const CustomDerivation = () => {
     const availableDerivePath = allDerivePath[convertedChainName] || [];
     const make50DerivePath = [];
     for (let i = 0; i < availableDerivePath.length; i++) {
-      for (let j = 1; j <= 50; j++) {
+      for (let j = 0; j <= 50; j++) {
         if (
           convertedChainName === 'ethereum' &&
           availableDerivePath[i]?.label?.includes('Ledger')
@@ -85,6 +85,30 @@ export const CustomDerivation = () => {
           make50DerivePath.push({
             label: `Ledger (m/44'/195'/${j}'/0/0)`,
             value: `m/44'/195'/${j}'/0/0`,
+          });
+        } else if (
+          convertedChainName === 'bitcoin' &&
+          availableDerivePath[i]?.label?.includes('Ledger')
+        ) {
+          make50DerivePath.push({
+            label: `Ledger (m/84'/0'/${j}'/0/0)`,
+            value: `m/84'/0'/${j}'/0/0`,
+          });
+        } else if (
+          convertedChainName === 'bitcoin_segwit' &&
+          availableDerivePath[i]?.label?.includes('Ledger')
+        ) {
+          make50DerivePath.push({
+            label: `Ledger (m/49'/0'/${j}'/0/0)`,
+            value: `m/49'/0'/${j}'/0/0`,
+          });
+        } else if (
+          convertedChainName === 'bitcoin_legacy' &&
+          availableDerivePath[i]?.label?.includes('Ledger')
+        ) {
+          make50DerivePath.push({
+            label: `Ledger (m/44'/0'/${j}'/0/0)`,
+            value: `m/44'/0'/${j}'/0/0`,
           });
         }
       }
@@ -189,7 +213,8 @@ export const CustomDerivation = () => {
     },
   });
 
-  const isDisabled = !values?.selectedDerivationOptions;
+  const isAtLimit = (currentCoin?.deriveAddresses?.length ?? 0) >= 100;
+  const isDisabled = !values?.selectedDerivationOptions || isAtLimit;
 
   const HeaderComponent = useCallback(() => {
     return (
@@ -251,6 +276,11 @@ export const CustomDerivation = () => {
                 )}
               </>
             )}
+            {isAtLimit && (
+              <Text style={styles.textConfirm}>
+                {'Maximum limit of 100 accounts reached'}
+              </Text>
+            )}
             <TouchableOpacity
               disabled={isDisabled || isSubmitting}
               style={[
@@ -277,6 +307,7 @@ export const CustomDerivation = () => {
     handleBlur,
     handleChange,
     handleSubmit,
+    isAtLimit,
     isDisabled,
     isSubmitting,
     setFieldValue,
