@@ -36,6 +36,44 @@ import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
 import Toast from 'react-native-toast-message';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
+const DERIVATION_CONFIG = {
+  ethereum: {
+    Ledger: j => `m/44'/60'/${j}'/0/0`,
+    Metamask: j => `m/44'/60'/0'/0/${j}`,
+  },
+  solana: {
+    Ledger: j => `m/44'/501'/${j}'`,
+  },
+  tron: {
+    Ledger: j => `m/44'/195'/${j}'/0/0`,
+  },
+  bitcoin: {
+    Ledger: j => `m/84'/0'/${j}'/0/0`,
+  },
+  bitcoin_segwit: {
+    Ledger: j => `m/49'/0'/${j}'/0/0`,
+  },
+  bitcoin_legacy: {
+    Ledger: j => `m/44'/0'/${j}'/0/0`,
+  },
+};
+
+const generatePaths = (chain, label) => {
+  const config = DERIVATION_CONFIG[chain];
+  if (!config) return [];
+
+  const type = Object.keys(config).find(key => label?.includes(key));
+  if (!type) return [];
+
+  return Array.from({length: 51}, (_, j) => {
+    const path = config[type](j);
+    return {
+      label: `${type} (${path})`,
+      value: path,
+    };
+  });
+};
+
 export const CustomDerivation = () => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
@@ -50,69 +88,13 @@ export const CustomDerivation = () => {
   const derivationData = useMemo(() => {
     const chainName = currentCoin?.chain_name;
     const convertedChainName = isEVMChain(chainName) ? 'ethereum' : chainName;
+
     const availableDerivePath = allDerivePath[convertedChainName] || [];
-    const make50DerivePath = [];
-    for (let i = 0; i < availableDerivePath.length; i++) {
-      for (let j = 0; j <= 50; j++) {
-        if (
-          convertedChainName === 'ethereum' &&
-          availableDerivePath[i]?.label?.includes('Ledger')
-        ) {
-          make50DerivePath.push({
-            label: `Ledger (m/44'/60'/${j}'/0/0)`,
-            value: `m/44'/60'/${j}'/0/0`,
-          });
-        } else if (
-          convertedChainName === 'ethereum' &&
-          availableDerivePath[i]?.label?.includes('Metamask')
-        ) {
-          make50DerivePath.push({
-            label: `Metamask (m/44'/60'/0'/0/${j})`,
-            value: `m/44'/60'/0'/0/${j}`,
-          });
-        } else if (
-          convertedChainName === 'solana' &&
-          availableDerivePath[i]?.label?.includes('Ledger')
-        ) {
-          make50DerivePath.push({
-            label: `Ledger (m/44'/501'/${j}')`,
-            value: `m/44'/501'/${j}'`,
-          });
-        } else if (
-          convertedChainName === 'tron' &&
-          availableDerivePath[i]?.label?.includes('Ledger')
-        ) {
-          make50DerivePath.push({
-            label: `Ledger (m/44'/195'/${j}'/0/0)`,
-            value: `m/44'/195'/${j}'/0/0`,
-          });
-        } else if (
-          convertedChainName === 'bitcoin' &&
-          availableDerivePath[i]?.label?.includes('Ledger')
-        ) {
-          make50DerivePath.push({
-            label: `Ledger (m/84'/0'/${j}'/0/0)`,
-            value: `m/84'/0'/${j}'/0/0`,
-          });
-        } else if (
-          convertedChainName === 'bitcoin_segwit' &&
-          availableDerivePath[i]?.label?.includes('Ledger')
-        ) {
-          make50DerivePath.push({
-            label: `Ledger (m/49'/0'/${j}'/0/0)`,
-            value: `m/49'/0'/${j}'/0/0`,
-          });
-        } else if (
-          convertedChainName === 'bitcoin_legacy' &&
-          availableDerivePath[i]?.label?.includes('Ledger')
-        ) {
-          make50DerivePath.push({
-            label: `Ledger (m/44'/0'/${j}'/0/0)`,
-            value: `m/44'/0'/${j}'/0/0`,
-          });
-        }
-      }
-    }
+
+    const make50DerivePath = availableDerivePath.flatMap(item =>
+      generatePaths(convertedChainName, item?.label),
+    );
+
     return [customObj, ...make50DerivePath];
   }, [currentCoin?.chain_name]);
 
