@@ -66,8 +66,8 @@ const generatePaths = (chain, label) => {
   const type = Object.keys(config).find(key => label?.includes(key));
   if (!type) return [];
 
-  return Array.from({length: 51}, (_, j) => {
-    const path = config[type](j);
+  return Array.from({length: 50}, (_, j) => {
+    const path = config[type](j + 1);
     return {
       label: `${type} (${path})`,
       value: path,
