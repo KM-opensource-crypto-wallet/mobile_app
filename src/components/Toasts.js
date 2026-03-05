@@ -39,6 +39,19 @@ const toastConfig = theme => {
             </Text>
           </View>
         </View>
+        {!!props?.onViewTransaction && (
+          <TouchableOpacity
+            style={myStyles.viewTransactionBtn}
+            onPress={() => {
+              Toast.hide();
+              props.onViewTransaction();
+            }}>
+            <Text style={myStyles.viewTransactionText}>
+              View Transaction Details
+            </Text>
+            <IoniconsIcon name={'chevron-forward'} size={14} color={'white'} />
+          </TouchableOpacity>
+        )}
         <View style={myStyles.progressBottomBorder} />
       </View>
     ),
@@ -182,9 +195,24 @@ const Toasts = ({bottomOffset = 0}) => {
 const styles = theme =>
   StyleSheet.create({
     progressView: {
-      height: 90,
+      minHeight: 90,
       width: '100%',
       backgroundColor: theme.toastBackground,
+    },
+    viewTransactionBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      paddingHorizontal: 14,
+      paddingBottom: 8,
+      gap: 4,
+    },
+    viewTransactionText: {
+      fontSize: 13,
+      color: 'white',
+      fontFamily: 'Roboto',
+      fontWeight: '600',
+      textDecorationLine: 'underline',
     },
     containerView: {
       flex: 1,
