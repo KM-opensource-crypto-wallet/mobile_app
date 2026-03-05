@@ -78,6 +78,7 @@ import AddressBook from 'components/AddressBook';
 import AddIcon from 'assets/images/sidebarIcons/Add.svg';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import CustomRPC from 'components/CustomRPC';
+import TransactionDetails from 'components/TransactionDetails';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -843,6 +844,21 @@ export const useRoute = isAuth => {
           component={TransactionList}
           options={({navigation}) => ({
             title: `${currentCoin?.name || ''} Transactions`,
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+            cardStyleInterpolator: forFade,
+          })}
+        />
+        <Stack.Screen
+          name="TransactionDetails"
+          component={TransactionDetails}
+          options={({navigation}) => ({
+            title: `${currentCoin?.name || ''} Transaction`,
             headerLeft: () => (
               <TouchableOpacity
                 style={styles.headerLeftStyle}

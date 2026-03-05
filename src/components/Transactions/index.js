@@ -111,6 +111,12 @@ const Transactions = ({renderList, selectedAddress}) => {
     );
   }, [dispatch, navigation]);
 
+  const handleOnPress = useCallback(
+    async item => {
+      navigation.navigate('TransactionDetails', {transaction: item});
+    },
+    [navigation],
+  );
   return (
     <>
       <ScrollView>
@@ -131,17 +137,10 @@ const Transactions = ({renderList, selectedAddress}) => {
               return (
                 <TouchableOpacity
                   style={styles.section}
-                  onPress={async () => {
-                    InAppBrowser.open(item?.url, inAppBrowserOptions).then();
-                    // const supported = await Linking.canOpenURL(item.url);
-
-                    // if (supported) {
-                    //   // Opening the link with some app, if the URL scheme is "http" the web link should be opened by some browser in the mobile
-                    //   await Linking.openURL(item.url);
-                    // } else {
-                    //   console.log(`Don't know how to open this URL: ${item.url}`);
-                    // }
-                  }}
+                  // onPress={async () => {
+                  //   InAppBrowser.open(item?.url, inAppBrowserOptions).then();
+                  // }}
+                  onPress={() => handleOnPress(item)}
                   key={index}>
                   <>
                     <View style={styles.list}>
