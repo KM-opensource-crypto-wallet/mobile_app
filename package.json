@@ -244,6 +244,7 @@
     "@react-native-community/cli": "20.1.2",
     "@react-native-community/cli-platform-android": "20.1.2",
     "@react-native-community/cli-platform-ios": "20.1.2",
+    "@react-native-community/cli-config-android": "20.1.2",
     "react-native-permissions": "^5.4.4",
     "elliptic": "^6.6.1",
     "tar": "7.5.4",
