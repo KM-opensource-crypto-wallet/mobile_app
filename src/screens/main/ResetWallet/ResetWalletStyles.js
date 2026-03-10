@@ -50,44 +50,56 @@ const myStyles = theme =>
       fontFamily: 'Roboto-Regular',
     },
     btnList: {
-      marginTop: 20,
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      alignItems: 'center',
-      paddingVertical: 12,
+      marginTop: 24,
+      gap: 16,
     },
-    btn: {
-      borderRadius: 10,
+    // Full-width horizontal card
+    card: {
+      flexDirection: 'row',
+      borderRadius: 18,
+      overflow: 'hidden',
+      backgroundColor: theme.cardBackground ?? theme.backgroundColor,
+      borderWidth: 1,
+      borderColor: '#E0E0E0',
+    },
+    // Image section (left side of card)
+    imageBox: {
       width: 150,
       height: 150,
-    },
-    shadow: {
-      ...Platform.select({
-        ios: {
-          shadowColor: '#C0C0C0',
-          shadowOffset: {width: 0, height: 10},
-          shadowOpacity: 1,
-          shadowRadius: 5,
-        },
-        android: {
-          shadowColor: theme.font,
-          elevation: 20,
-        },
-      }),
     },
     textBox: {
       position: 'absolute',
       left: '3%',
       bottom: '3%',
     },
-    textBox2: {
-      position: 'absolute',
-      left: '5%',
-      bottom: '3%',
+    // Text section (right side of card)
+    cardContent: {
+      flex: 1,
+      paddingHorizontal: 14,
+      paddingVertical: 16,
+      justifyContent: 'center',
+    },
+    cardTitle: {
+      fontSize: 16,
+      fontFamily: 'Roboto-Regular',
+      fontWeight: '700',
+      color: theme.font,
+      marginBottom: 6,
+    },
+    cardSubtitle: {
+      fontSize: 12,
+      fontFamily: 'Roboto-Regular',
+      color: theme.gray,
+      lineHeight: 17,
     },
     textBtn: {
       fontSize: 17,
       fontFamily: 'Roboto-Regular',
+    },
+    textBox2: {
+      position: 'absolute',
+      left: '5%',
+      bottom: '3%',
     },
   });
 
