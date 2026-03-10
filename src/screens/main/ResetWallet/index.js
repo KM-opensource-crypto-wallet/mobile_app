@@ -82,7 +82,7 @@ const ResetWallet = ({navigation, route}) => {
                     <Text
                       style={{
                         ...styles.textBtn,
-                        color: theme.backgroundColor,
+                        color: 'white',
                       }}>
                       Wallet
                     </Text>
