@@ -1,8 +1,5 @@
 import {StyleSheet, Dimensions} from 'react-native';
 
-// const {width: screenWidth} = Dimensions.get('window');
-// const inputWidth = screenWidth / 1.1;
-
 const {width: screenWidth} = Dimensions.get('window');
 
 const isIpad = screenWidth >= 768;

@@ -94,15 +94,15 @@ const AddCustomRPC = ({navigation, route}) => {
       const customRpcUrl = values?.customRpcUrl;
       const selectedWallets = values?.wallets?.filter(item => item.isSelected);
       if (chain_name && customRpcUrl) {
-        // const {isValid, error} = await validateRpcUrl(customRpcUrl);
-        // if (!isValid) {
-        //   showToast({
-        //     type: 'error',
-        //     title: 'Invalid RPC URL',
-        //     message: error,
-        //   });
-        //   return;
-        // }
+        const {isValid, error} = await validateRpcUrl(customRpcUrl);
+        if (!isValid) {
+          showToast({
+            type: 'error',
+            title: 'Invalid RPC URL',
+            message: error,
+          });
+          return;
+        }
         const payload = {
           chain_name,
           chain_display_name,
@@ -275,11 +275,11 @@ const AddCustomRPC = ({navigation, route}) => {
                   <TouchableOpacity
                     style={[
                       styles.button,
-                      // !isValid && {
-                      //   backgroundColor: theme.gray,
-                      // },
+                      !isValid && {
+                        backgroundColor: theme.gray,
+                      },
                     ]}
-                    // disabled={!isValid}
+                    disabled={!isValid}
                     onPress={handleSubmit}>
                     <Text style={styles.buttonTitle}>Save</Text>
                   </TouchableOpacity>
