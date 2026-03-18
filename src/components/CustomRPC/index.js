@@ -17,6 +17,7 @@ import {
 import EntypoIcon from 'react-native-vector-icons/Entypo';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FastImage from '@d11/react-native-fast-image';
+import {useNavigation} from '@react-navigation/native';
 
 const chainLogoMap = {
   aptos: require('../../assets/chain_logo/aptos.png'),
@@ -47,7 +48,8 @@ const chainLogoMap = {
   sei: require('../../assets/chain_logo/sei.png'),
 };
 
-const CustomRPC = ({navigation}) => {
+const CustomRPC = () => {
+  const navigation = useNavigation();
   const {theme} = useContext(ThemeContext);
   const {bottom} = useSafeAreaInsets();
   const styles = myStyles(theme, bottom);

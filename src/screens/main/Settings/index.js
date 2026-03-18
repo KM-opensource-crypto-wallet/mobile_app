@@ -40,7 +40,6 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {getFingerprintName} from 'dok-wallet-blockchain-networks/helper';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome6';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const Settings = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -288,7 +287,7 @@ const Settings = ({navigation}) => {
               borderBottomWidth: 0.5,
               borderBottomColor: theme.gray,
             }}>
-            <Ionicons
+            <IoniconsIcon
               name={'link-outline'}
               resizeMode={'contain'}
               size={24}
