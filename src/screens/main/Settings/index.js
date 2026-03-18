@@ -40,6 +40,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {getFingerprintName} from 'dok-wallet-blockchain-networks/helper';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome6';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const Settings = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -278,6 +279,28 @@ const Settings = ({navigation}) => {
             </View>
           </TouchableOpacity>
           <Text style={styles.title}>Wallet Settings</Text>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('CustomRPC');
+            }}
+            style={{
+              ...styles.btn,
+              borderBottomWidth: 0.5,
+              borderBottomColor: theme.gray,
+            }}>
+            <Ionicons
+              name={'link-outline'}
+              resizeMode={'contain'}
+              size={24}
+              color={theme.font}
+            />
+            <View style={[{...styles.box, flex: 1}]}>
+              <Text style={styles.btnTitle}>Custom RPC</Text>
+              <Text style={styles.btnText} numberOfLines={2}>
+                Add your custom RPC URLs.
+              </Text>
+            </View>
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
               navigation.navigate('AddressBook');

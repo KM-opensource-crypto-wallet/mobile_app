@@ -72,9 +72,11 @@ import ForwardMessage from 'components/ForwardMessage';
 import PrivacyMode from 'screens/main/Settings/PrivacyMode';
 import SellCrypto from 'screens/main/SellCrypto';
 import AddAddress from 'screens/main/Settings/AddressBook/AddAddress';
+import AddCustomRPC from 'screens/main/Settings/AddCustomRPC';
 import AddressBook from 'components/AddressBook';
 import AddIcon from 'assets/images/sidebarIcons/Add.svg';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import CustomRPC from 'components/CustomRPC';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -510,10 +512,55 @@ export const useRoute = isAuth => {
           })}
         />
         <Stack.Screen
+          name="CustomRPC"
+          component={CustomRPC}
+          options={({navigation}) => ({
+            title: 'Custom RPC',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+            headerRight: () => (
+              <TouchableOpacity
+                style={styles.headerRightStyle}
+                hitSlop={{left: 4, right: 4, top: 4, bottom: 4}}
+                onPress={() => {
+                  navigation.navigate('AddCustomRPC');
+                }}>
+                <Ionicons
+                  name={'person-add'}
+                  resizeMode={'contain'}
+                  size={24}
+                  color={theme.font}
+                />
+              </TouchableOpacity>
+            ),
+            cardStyleInterpolator: forFade,
+          })}
+        />
+        <Stack.Screen
           name="AddAddress"
           component={AddAddress}
           options={({navigation}) => ({
             title: 'Add Address',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+            cardStyleInterpolator: forFade,
+          })}
+        />
+        <Stack.Screen
+          name="AddCustomRPC"
+          component={AddCustomRPC}
+          options={({navigation}) => ({
+            title: 'Add Custom RPC',
             headerLeft: () => (
               <TouchableOpacity
                 style={styles.headerLeftStyle}
