@@ -41,9 +41,9 @@ const RpcErrorToast = ({
     onDismiss?.();
     MainNavigation.navigate({
       name: 'AddCustomRPC',
-      params: {chain_name, chain_display_name: chainDisplayName},
+      params: {chain_name, chain_display_name: displayName},
     });
-  }, [chain_name, chainDisplayName, onDismiss]);
+  }, [onDismiss, chain_name, displayName]);
 
   const onPressUseDefault = useCallback(() => {
     dispatch(

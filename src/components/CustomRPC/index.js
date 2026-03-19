@@ -207,11 +207,13 @@ const CustomRPC = () => {
         initialNumToRender={20}
         maxToRenderPerBatch={20}
         windowSize={10}
-        ListEmptyComponent={EmptyView({
-          text: 'No Custom RPC URL is available',
-          buttonText: 'Add Custom RPC',
-          onPressButton: () => navigation.navigate('AddCustomRPC'),
-        })}
+        ListEmptyComponent={
+          <EmptyView
+            text="No Custom RPC URL is available"
+            buttonText="Add Custom RPC"
+            onPressButton={() => navigation.navigate('AddCustomRPC')}
+          />
+        }
       />
     </View>
   );
