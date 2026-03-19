@@ -6,7 +6,11 @@ import {MainNavigation} from 'utils/navigation';
 import myStyles from './RpcErrorToastStyles';
 import {useDispatch, useSelector} from 'react-redux';
 import {deleteCustomRpc} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSlice';
-import {selectCurrentWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  selectCoinsForCurrentWallet,
+  selectCurrentWallet,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectCustomRpcUrlByChainAndWallet} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSelectors';
 
 const RpcErrorToast = ({
   visible,
@@ -19,7 +23,19 @@ const RpcErrorToast = ({
   const styles = myStyles(theme);
   const dispatch = useDispatch();
   const currentWallet = useSelector(selectCurrentWallet);
-  const displayName = chainDisplayName || chain_name;
+  const walletCoins = useSelector(selectCoinsForCurrentWallet);
+  const customRpcUrl = useSelector(
+    selectCustomRpcUrlByChainAndWallet(chain_name, currentWallet?.clientId),
+  );
+
+  const nativeCoin = walletCoins.find(
+    c => c?.chain_name === chain_name && c?.type === 'coin',
+  );
+  const displayName =
+    chainDisplayName ||
+    nativeCoin?.chain_display_name ||
+    nativeCoin?.name ||
+    chain_name;
 
   const onPressChangeRpc = useCallback(() => {
     onDismiss?.();
@@ -63,9 +79,9 @@ const RpcErrorToast = ({
             </Text>
           </View>
 
-          <Text style={styles.message} numberOfLines={2}>
+          <Text style={styles.message} numberOfLines={3}>
             {hasCustomRpc
-              ? 'Custom RPC is not responding. Revert to the default endpoint?'
+              ? `Custom RPC is not responding. Revert to the default endpoint?\n${customRpcUrl}`
               : 'Default RPC is not responding. Set a custom RPC endpoint.'}
           </Text>
 

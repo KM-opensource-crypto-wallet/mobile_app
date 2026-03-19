@@ -136,14 +136,7 @@ const Main = () => {
   const lastUpdateCheckTimestamp = useSelector(getLastUpdateCheckTimestamp);
 
   const fetchAndCompareRpcUrls = useCallback(() => {
-    fetchRPCUrl().then(resp => {
-      setTimeout(() => {
-        compareRpcUrls();
-      }, 1000);
-    });
-    compareRpcUrlsIntervalRef.current = setInterval(() => {
-      compareRpcUrls();
-    }, 1000 * 60 * 10);
+    fetchRPCUrl();
   }, []);
 
   const fetchFeesInfo = useCallback(() => {
@@ -346,7 +339,6 @@ const Main = () => {
             setLoginModalVisible(true);
           }
           checkInAppUpdates();
-          compareRpcUrls();
           fetchFeesInfo();
         } else if (nextAppState === 'background') {
           lockTimeSet.current = addMinutes(lockTimeRef.current).toISOString();
