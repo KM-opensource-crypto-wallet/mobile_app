@@ -94,7 +94,7 @@ const AddCustomRPC = ({navigation, route}) => {
       const customRpcUrl = values?.customRpcUrl;
       const selectedWallets = values?.wallets?.filter(item => item.isSelected);
       if (chain_name && customRpcUrl) {
-        const {isValid, error} = await validateRpcUrl(customRpcUrl);
+        const {isValid, error} = await validateRpcUrl(customRpcUrl, chain_name);
         if (!isValid) {
           showToast({
             type: 'error',
