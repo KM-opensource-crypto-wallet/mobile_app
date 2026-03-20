@@ -94,12 +94,22 @@ const AddCustomRPC = ({navigation, route}) => {
       const customRpcUrl = values?.customRpcUrl;
       const selectedWallets = values?.wallets?.filter(item => item.isSelected);
       if (chain_name && customRpcUrl) {
-        const {isValid, error} = await validateRpcUrl(customRpcUrl, chain_name);
-        if (!isValid) {
+        let validationResult;
+        try {
+          validationResult = await validateRpcUrl(customRpcUrl, chain_name);
+        } catch (err) {
+          showToast({
+            type: 'error',
+            title: 'Validation Error',
+            message: 'Failed to validate RPC URL. Please try again.',
+          });
+          return;
+        }
+        if (!validationResult.isValid) {
           showToast({
             type: 'error',
             title: 'Invalid RPC URL',
-            message: error,
+            message: validationResult.error,
           });
           return;
         }
