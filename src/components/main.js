@@ -41,10 +41,7 @@ import {isReduxStoreLoaded} from 'dok-wallet-blockchain-networks/redux/walletCon
 import {selectWalletConnectSessions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {clearWalletConnectStorageCache} from 'utils/asyncStorage';
 import LoginModal from 'components/LoginModal';
-import {
-  compareRpcUrls,
-  fetchRPCUrl,
-} from 'dok-wallet-blockchain-networks/rpcUrls/rpcUrls';
+import {fetchRPCUrl} from 'dok-wallet-blockchain-networks/rpcUrls/rpcUrls';
 import {
   fetchSupportedBuyCryptoCurrency,
   setCountry,
@@ -137,6 +134,9 @@ const Main = () => {
 
   const fetchAndCompareRpcUrls = useCallback(() => {
     fetchRPCUrl();
+    compareRpcUrlsIntervalRef.current = setInterval(() => {
+      fetchRPCUrl();
+    }, 1000 * 60 * 10);
   }, []);
 
   const fetchFeesInfo = useCallback(() => {
@@ -339,6 +339,7 @@ const Main = () => {
             setLoginModalVisible(true);
           }
           checkInAppUpdates();
+          fetchRPCUrl();
           fetchFeesInfo();
         } else if (nextAppState === 'background') {
           lockTimeSet.current = addMinutes(lockTimeRef.current).toISOString();
