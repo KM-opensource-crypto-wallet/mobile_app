@@ -67,7 +67,6 @@ const ModalAddToken = ({
 
   const dispatch = useDispatch();
   const chainRef = useRef();
-  const previousTimerRef = useRef(null);
   const keyboardHeight = useKeyboardHeight();
 
   const chain_name = useSelector(selectWalletChainName);

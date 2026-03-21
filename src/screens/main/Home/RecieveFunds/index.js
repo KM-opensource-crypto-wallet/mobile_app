@@ -29,7 +29,6 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import LightningDropDown from 'components/LightningDropDown';
 import {
-  getCustomRPCKey,
   getCustomRPCWithData,
   selectAllCustomRpc,
 } from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSelectors';
@@ -122,7 +121,14 @@ const RecieveFunds = ({navigation}) => {
         console.log(error);
       }
     },
-    [currentCoin?.symbol, currentPhrase],
+    [
+      allCustomRPC,
+      currentCoin?.chain_name,
+      currentCoin?.symbol,
+      currentPhrase,
+      currentWallet?.clientId,
+      currentWallet?.phrase,
+    ],
   );
 
   return (

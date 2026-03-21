@@ -91,7 +91,7 @@ const NewMessage = ({navigation, route}) => {
         });
       }
     },
-    [dispatch, navigation, phrase],
+    [customRpcUrl, dispatch, navigation, phrase],
   );
 
   return (
