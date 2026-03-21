@@ -1,5 +1,5 @@
 import React, {useCallback, useContext, useMemo, useRef} from 'react';
-import {Text, TouchableOpacity} from 'react-native';
+import {Keyboard, Text, TouchableOpacity} from 'react-native';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './WalletsPickerStyles';
 import ArrowDown from 'assets/images/buy/arrow-down.svg';
@@ -25,6 +25,7 @@ const WalletsPicker = ({wallets, onChange, onSelectAll}) => {
   }, []);
 
   const presentBottomSheet = useCallback(() => {
+    Keyboard.dismiss();
     bottomSheetRef.current?.close?.();
     bottomSheetRef.current?.present?.();
   }, []);
