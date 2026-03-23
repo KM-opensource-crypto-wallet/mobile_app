@@ -8,6 +8,12 @@ import {
   clearLegacySecureStorage,
   getLegacySecureValue,
 } from 'myWallet/wallet.service';
+import {registerShowToast} from 'dok-wallet-blockchain-networks/helper/toast';
+import Toast from 'react-native-toast-message';
+
+registerShowToast(({type, props, visibilityTime, autoHide}) =>
+  Toast.show({type, props, visibilityTime, autoHide}),
+);
 
 export default function App() {
   const [isMigrating, setIsMigrating] = useState(IS_ANDROID);
