@@ -59,6 +59,15 @@ const CopyRow = ({value, displayValue, styles, theme}) => (
 
 const TransactionDetails = ({route}) => {
   const initialTransaction = route?.params?.transaction;
+  // NOTE: Need to modify the has extraction logic
+  // const txHash =
+  //   initialTransaction?.url?.split('/tx/')[1] || initialTransaction.link; // ETH, BTC, BNB
+  const txHash =
+    initialTransaction?.url?.split('/tx/')[1]?.split('?')[0] ||
+    initialTransaction.link; // SOL
+  // const txHash =
+  //   initialTransaction?.url?.split('/transaction/')[1]?.split('#')[0] ||
+  //   initialTransaction.link; // TRX
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const dispatch = useDispatch();
@@ -81,21 +90,43 @@ const TransactionDetails = ({route}) => {
     setRefreshing(true);
     try {
       const result = await dispatch(
-        refreshCurrentCoin({fetchTransaction: true}),
+        refreshCurrentCoin({fetchTransaction: true, txHash}),
       ).unwrap();
-      // If refreshCurrentCoin returns updated coin data, use it directly:
-      const updatedTransactions =
-        result?.transactions || currentCoin?.transactions;
-      const updated = updatedTransactions?.find(
-        tx => tx.link === initialTransaction?.link,
-      );
-      if (updated) {
-        setTransaction(updated);
+      const recentTransaction = result?.updatedCurrentCoin?.recentTransaction;
+      if (recentTransaction) {
+        const {
+          hash,
+          from,
+          to,
+          amount,
+          totalCourse,
+          blockTimestamp,
+          gasUsed,
+          gasPrice,
+          status,
+        } = recentTransaction.data;
+        const date = blockTimestamp
+          ? new Date(parseInt(blockTimestamp, 16) * 1000).toISOString()
+          : initialTransaction.date;
+        setTransaction({
+          ...initialTransaction,
+          hash,
+          from,
+          to,
+          amount: amount,
+          // fee,
+          date,
+          status: status,
+          link: hash,
+          totalCourse,
+        });
       }
+    } catch (e) {
+      console.error('Error refreshing transaction', e);
     } finally {
       setRefreshing(false);
     }
-  }, [currentCoin?.transactions, dispatch, initialTransaction?.link]);
+  }, [dispatch, initialTransaction, txHash]);
 
   const onViewExplorer = useCallback(() => {
     if (transaction?.url) {
@@ -125,6 +156,7 @@ const TransactionDetails = ({route}) => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }>
+        {/* <Text>{JSON.stringify(transaction, null, 2)}</Text> */}
         {/* Hero */}
         <View style={styles.hero}>
           <View style={[styles.iconCircle, {backgroundColor: iconBgColor}]}>
@@ -202,7 +234,7 @@ const TransactionDetails = ({route}) => {
             </>
           )}
 
-          {transaction.fee != null && (
+          {/* {transaction.fee != null && (
             <>
               <View style={styles.divider} />
               <View style={styles.row}>
@@ -213,7 +245,7 @@ const TransactionDetails = ({route}) => {
                 </Text>
               </View>
             </>
-          )}
+          )} */}
         </View>
 
         {/* Explorer button */}
