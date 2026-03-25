@@ -1,5 +1,5 @@
 import {NativeModules} from 'react-native';
-import {BitcoinChain} from 'dok-wallet-blockchain-networks/cryptoChain/chains/BitcoinChain';
+import {IS_SANDBOX} from 'dok-wallet-blockchain-networks/config/config';
 let {NativeKeygen} = NativeModules;
 
 if (!NativeKeygen) {
@@ -38,7 +38,11 @@ export const createWallet = async (chain_name, phrase, isSandbox) => {
 
 export const addDeriveAddresses = async (chain_name, mnenomincs) => {
   try {
-    return await NativeKeygen.getDeriveAddresses(chain_name, mnenomincs, false);
+    return await NativeKeygen.getDeriveAddresses(
+      chain_name,
+      mnenomincs,
+      IS_SANDBOX,
+    );
   } catch (e) {
     console.error('Failed to create Wallet with chain: ', chain_name, ' ', e);
     throw e;
@@ -51,19 +55,13 @@ export const addCustomDeriveAddressToWallet = async (
   derivePath,
 ) => {
   try {
-    if (chain_name === 'bitcoin_legacy' || chain_name === 'bitcoin_segwit') {
-      return await BitcoinChain().createCustomDerivedAddress({
-        chain_name,
-        mnenomincs,
-        derivePath,
-      });
-    } else {
-      return await NativeKeygen.addCustomDerivation(
-        chain_name,
-        mnenomincs,
-        derivePath,
-      );
-    }
+    const resp = await NativeKeygen.addCustomDerivation(
+      chain_name,
+      mnenomincs,
+      derivePath,
+      IS_SANDBOX,
+    );
+    return resp;
   } catch (e) {
     console.error('Failed to add custom derivation: ', chain_name, ' ', e);
     throw e;

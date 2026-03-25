@@ -11,11 +11,11 @@ import WalletCore
 
 class BitcoinCoin: CoinFactory.Coin {
   private var addressIndex: Int = 0
-  
+
   override init(mnemonic: String) {
     super.init(mnemonic: mnemonic)
   }
-  
+
   override func getNewAddress(isTestNet:Bool) -> String {
     var derivation = Derivation.bitcoinSegwit;
     if(isTestNet){
@@ -25,7 +25,7 @@ class BitcoinCoin: CoinFactory.Coin {
     addressIndex += 1
     return address
   }
-  
+
   override func getExtendedPublicKey(isTestNet:Bool) -> String {
     var derivation = Derivation.bitcoinSegwit;
     var version = HDVersion.zpub;
@@ -36,7 +36,7 @@ class BitcoinCoin: CoinFactory.Coin {
     let extendedKey = wallet.getExtendedPublicKeyDerivation(purpose: .bip84, coin: .bitcoin, derivation: derivation, version: version);
     return extendedKey
   }
-  
+
   override func getExtendedPrivateKey(isTestNet:Bool) -> String {
     var derivation = Derivation.bitcoinSegwit;
     var version = HDVersion.zprv;
@@ -47,9 +47,9 @@ class BitcoinCoin: CoinFactory.Coin {
     let extendedKey = wallet.getExtendedPrivateKeyDerivation(purpose: .bip84, coin: .bitcoin, derivation: derivation, version: version);
     return extendedKey
   }
-  
+
   override func getPrivateKey(isTestNet:Bool) -> String {
-    
+
     var derivation = Derivation.bitcoinSegwit;
     if(isTestNet){
       derivation =  Derivation.bitcoinTestnet
@@ -57,19 +57,46 @@ class BitcoinCoin: CoinFactory.Coin {
     let privateKeyBytes = wallet.getKeyDerivation(coin: .bitcoin, derivation: derivation).data
     return Utils.convertToWif(data: privateKeyBytes, isTestNet: isTestNet, prefix: [0x80], testNetPrefix: [0xef])
   }
-  
+
   override func signTransaction(rawData: String) -> String {
     // Implement the logic to sign a Bitcoin transaction using the provided raw data
     return ""
   }
 
-  override func addCustomDerivation(derivePath:String) -> NSMutableDictionary {
+  override func addCustomDerivation(derivePath:String, isTestNet:Bool) -> NSMutableDictionary {
       let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: derivePath)
-      let address = CoinType.bitcoin.deriveAddress(privateKey: privateKey)
+      let publicKey = privateKey.getPublicKeySecp256k1(compressed: true)
+      let address: String
+      if isTestNet {
+        address = AnyAddress(publicKey: publicKey, coin: .bitcoin, derivation: .bitcoinTestnet).description
+      } else {
+          address = CoinType.bitcoin.deriveAddress(privateKey: privateKey)
+      }
       let yourAuxDic: NSMutableDictionary = [:]
       yourAuxDic["derivePath"] = derivePath
-      yourAuxDic["privateKey"] = privateKey.data.hexString
+      yourAuxDic["privateKey"] = Utils.convertToWif(data: privateKey.data, isTestNet: isTestNet, prefix: [0x80], testNetPrefix: [0xef])
       yourAuxDic["address"] = address
       return yourAuxDic;
+  }
+
+  override func getDeriveAddresses(isTestNet: Bool) -> NSMutableArray {
+    let result = NSMutableArray()
+    for i in 0..<20 {
+      let derivePath = "m/84'/0'/0'/\(i)/0"
+      let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: derivePath)
+      let publicKey = privateKey.getPublicKeySecp256k1(compressed: true)
+      let address: String
+      if isTestNet {
+        address = AnyAddress(publicKey: publicKey, coin: .bitcoin, derivation: .bitcoinTestnet).description
+      } else {
+        address = CoinType.bitcoin.deriveAddress(privateKey: privateKey)
+      }
+      let dict: NSMutableDictionary = [:]
+      dict["derivePath"] = derivePath
+      dict["privateKey"] = Utils.convertToWif(data: privateKey.data, isTestNet: isTestNet, prefix: [0x80], testNetPrefix: [0xef])
+      dict["address"] = address
+      result.add(dict)
+    }
+    return result
   }
 }

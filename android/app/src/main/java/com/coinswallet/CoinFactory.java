@@ -55,7 +55,10 @@ public class CoinFactory {
         public ReadableArray getDeriveAddresses(){
             return null;
         };
-        public ReadableMap addCustomDerivation(String derivePath){
+        public ReadableArray getDeriveAddresses(Boolean isTestNet){
+            return getDeriveAddresses();
+        };
+        public ReadableMap addCustomDerivation(String derivePath, Boolean isTestNet){
             return null;
         };
         public abstract String signTransaction(String rawData);

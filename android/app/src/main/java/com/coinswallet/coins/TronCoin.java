@@ -54,7 +54,7 @@ public class TronCoin extends CoinFactory.Coin {
     }
 
     @Override
-    public ReadableMap addCustomDerivation(String derivePath) {
+    public ReadableMap addCustomDerivation(String derivePath, Boolean isTestNet) {
         WritableMap obj = Arguments.createMap();
         PrivateKey tempPrivateKey = wallet.getKey(CoinType.TRON,derivePath);
         String address = CoinType.TRON.deriveAddress(tempPrivateKey);

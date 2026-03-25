@@ -52,6 +52,8 @@ public class NativeKeygenModule extends ReactContextBaseJavaModule {
     CoinFactory.registerCoin("bitcoin_cash", BitcoinCashCoin::new);
     CoinFactory.registerCoin("cardano", CardanoCoin::new);
     CoinFactory.registerCoin("filecoin", FilecoinCoin::new);
+    CoinFactory.registerCoin("bitcoin_legacy", BitcoinLegacyCoin::new);
+    CoinFactory.registerCoin("bitcoin_segwit", BitcoinSegwitCoin::new);
     // Add similar lines for other coin classes
   }
 
@@ -105,6 +107,9 @@ public class NativeKeygenModule extends ReactContextBaseJavaModule {
       result.putString("publicKey", coin.getPublicKeyHex());
       result.putString("extendedPublicKey", coin.getExtendedPublicKey(isTestNet));
       result.putString("extendedPrivateKey", coin.getExtendedPrivateKey(isTestNet));
+      if(coinName.equals("bitcoin") || coinName.equals("bitcoin_legacy") || coinName.equals("bitcoin_segwit")){
+          result.putArray("deriveAddresses", coin.getDeriveAddresses(isTestNet));
+      }
       promise.resolve(result);
     } catch (Exception e) {
       promise.reject("E_INVALID_MNEMONIC", e);
@@ -121,14 +126,14 @@ public class NativeKeygenModule extends ReactContextBaseJavaModule {
         coins.put(mnemonic + ":" + coinName, coin); // Store the coin instance
       }
       WritableMap result = Arguments.createMap();
-      result.putArray("deriveAddresses", coin.getDeriveAddresses());
+      result.putArray("deriveAddresses", coin.getDeriveAddresses(isTestNet));
       promise.resolve(result);
     } catch (Exception e) {
       promise.reject("E_INVALID_MNEMONIC", e);
     }
   }
   @ReactMethod
-  public void addCustomDerivation(String coinName, String mnemonic,String derivePath, Promise promise) {
+  public void addCustomDerivation(String coinName, String mnemonic,String derivePath,Boolean isTestNet, Promise promise) {
     try {
       CoinFactory.Coin coin;
       coin = coins.get(mnemonic + ":" + coinName); // Check if we already have an instance of this coin
@@ -137,7 +142,7 @@ public class NativeKeygenModule extends ReactContextBaseJavaModule {
         coins.put(mnemonic + ":" + coinName, coin); // Store the coin instance
       }
       WritableMap result = Arguments.createMap();
-      result.putMap("account", coin.addCustomDerivation(derivePath));
+      result.putMap("account", coin.addCustomDerivation(derivePath, isTestNet));
       promise.resolve(result);
     } catch (Exception e) {
       promise.reject("E_INVALID_MNEMONIC", e);

@@ -57,7 +57,10 @@ class CoinFactory {
     func getDeriveAddresses() -> NSMutableArray {
       return []
     }
-    func addCustomDerivation(derivePath:String) -> NSMutableDictionary {
+    func getDeriveAddresses(isTestNet: Bool) -> NSMutableArray {
+      return getDeriveAddresses()
+    }
+    func addCustomDerivation(derivePath:String, isTestNet:Bool) -> NSMutableDictionary {
       var params: NSMutableDictionary = [:]
       return params
     }
