@@ -273,7 +273,7 @@
     "@zondax/filecoin-signing-tools": "0.20.1"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "packageManager": "yarn@1.22.22",
   "react-native": {

@@ -174,7 +174,7 @@ const Toasts = ({bottomOffset = 0}) => {
     <Toast
       config={toastConfig(theme)}
       position={'bottom'}
-      topOffset={top + 44}
+      topOffset={top}
       {...(bottomOffset ? {bottomOffset} : {})}
     />
   );

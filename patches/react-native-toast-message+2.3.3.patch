@@ -1,0 +1,15 @@
+diff --git a/node_modules/react-native-toast-message/lib/src/components/AnimatedContainer.styles.js b/node_modules/react-native-toast-message/lib/src/components/AnimatedContainer.styles.js
+index 9ab2b7f..d2b75b7 100644
+--- a/node_modules/react-native-toast-message/lib/src/components/AnimatedContainer.styles.js
++++ b/node_modules/react-native-toast-message/lib/src/components/AnimatedContainer.styles.js
+@@ -5,7 +5,9 @@ export const styles = StyleSheet.create({
+         left: 0,
+         right: 0,
+         alignItems: 'center',
+-        justifyContent: 'center'
++        justifyContent: 'center',
++        zIndex: 99999,
++        elevation: 99999
+     },
+     top: {
+         top: 0
