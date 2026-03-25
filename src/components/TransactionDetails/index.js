@@ -1,5 +1,5 @@
 import {ThemeContext} from 'theme/ThemeContext';
-import React, {useCallback, useContext, useState} from 'react';
+import React, {useCallback, useContext, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -59,15 +59,7 @@ const CopyRow = ({value, displayValue, styles, theme}) => (
 
 const TransactionDetails = ({route}) => {
   const initialTransaction = route?.params?.transaction;
-  // NOTE: Need to modify the has extraction logic
-  // const txHash =
-  //   initialTransaction?.url?.split('/tx/')[1] || initialTransaction.link; // ETH, BTC, BNB
-  const txHash =
-    initialTransaction?.url?.split('/tx/')[1]?.split('?')[0] ||
-    initialTransaction.link; // SOL
-  // const txHash =
-  //   initialTransaction?.url?.split('/transaction/')[1]?.split('#')[0] ||
-  //   initialTransaction.link; // TRX
+  const txHash = initialTransaction.link || '';
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const dispatch = useDispatch();
@@ -77,16 +69,7 @@ const TransactionDetails = ({route}) => {
   const [refreshing, setRefreshing] = useState(false);
   const [transaction, setTransaction] = useState(initialTransaction);
 
-  const isReceived =
-    transaction?.to?.toUpperCase() === currentCoin?.address?.toUpperCase();
-
-  const statusKey = transaction?.status?.toUpperCase();
-  const statusConfig = STATUS_CONFIG[statusKey] || {
-    label: transaction?.status || '—',
-    color: theme.gray,
-  };
-
-  const onRefresh = useCallback(async () => {
+  const fetchTransaction = useCallback(async () => {
     setRefreshing(true);
     try {
       const result = await dispatch(
@@ -95,7 +78,7 @@ const TransactionDetails = ({route}) => {
       const recentTransaction = result?.updatedCurrentCoin?.recentTransaction;
       if (recentTransaction) {
         const {
-          hash,
+          link,
           from,
           to,
           amount,
@@ -110,14 +93,12 @@ const TransactionDetails = ({route}) => {
           : initialTransaction.date;
         setTransaction({
           ...initialTransaction,
-          hash,
           from,
           to,
           amount: amount,
-          // fee,
           date,
           status: status,
-          link: hash,
+          link: link,
           totalCourse,
         });
       }
@@ -127,6 +108,26 @@ const TransactionDetails = ({route}) => {
       setRefreshing(false);
     }
   }, [dispatch, initialTransaction, txHash]);
+
+  useEffect(() => {
+    fetchTransaction();
+    const interval = setInterval(fetchTransaction, 30000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const isReceived =
+    transaction?.to?.toUpperCase() === currentCoin?.address?.toUpperCase();
+
+  const statusKey = transaction?.status?.toUpperCase();
+  const statusConfig = STATUS_CONFIG[statusKey] || {
+    label: transaction?.status || '—',
+    color: theme.gray,
+  };
+
+  const onRefresh = useCallback(() => {
+    fetchTransaction();
+  }, [fetchTransaction]);
 
   const onViewExplorer = useCallback(() => {
     if (transaction?.url) {
