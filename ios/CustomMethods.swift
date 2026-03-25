@@ -70,6 +70,12 @@ extension Data {
     CoinFactory.registerCoin(name: "filecoin") { mnemonic in
       return FilecoinCoin(mnemonic: mnemonic)
     }
+    CoinFactory.registerCoin(name: "bitcoin_legacy") { mnemonic in
+      return BitcoinLegacyCoin(mnemonic: mnemonic)
+    }
+    CoinFactory.registerCoin(name: "bitcoin_segwit") { mnemonic in
+      return BitcoinSegwitCoin(mnemonic: mnemonic)
+    }
   }
 
   @objc static func requiresMainQueueSetup() -> Bool { return true }
@@ -125,15 +131,17 @@ extension Data {
       let publicKeyHex = unwrappedCoin.getPublicKeyHash()
       let extendedPublicKey = unwrappedCoin.getExtendedPublicKey(isTestNet: isTestNet )
       let extendedPrivateKey = unwrappedCoin.getExtendedPrivateKey(isTestNet: isTestNet )
-      let result: [String: Any] = [
+    
+      var result: [String: Any] = [
         "address": unwrappedCoin.getNewAddress(isTestNet: isTestNet),
         "privateKey": privateKeyHex,
         "publicKey": publicKeyHex,
         "extendedPublicKey": extendedPublicKey,
         "extendedPrivateKey": extendedPrivateKey
       ]
-      // Handle the 'result' dictionary as needed
-
+      if coinName == "bitcoin" || coinName == "bitcoin_legacy" || coinName == "bitcoin_segwit" {
+        result["deriveAddresses"] = unwrappedCoin.getDeriveAddresses(isTestNet: isTestNet)
+      }
       resolve(result)
     } else {
       reject("0","E_INVALID_COIN", NSError(domain: "", code: 0, userInfo: nil))
@@ -153,7 +161,7 @@ extension Data {
       coins[mnemonic + ":" + coinName] = coin
     }
     if let unwrappedCoin = coin {
-      let deriveAddresses = unwrappedCoin.getDeriveAddresses()
+      let deriveAddresses = unwrappedCoin.getDeriveAddresses(isTestNet: isTestNet)
       let result: [String: Any] = [
         "deriveAddresses": deriveAddresses,
       ]
@@ -168,6 +176,7 @@ extension Data {
     _ coinName: String,
     mnemonic: String,
     derivePath: String,
+    isTestNet: Bool,
     resolver resolve: RCTPromiseResolveBlock,
     rejecter reject: RCTPromiseRejectBlock
   ) -> Void {
@@ -177,7 +186,7 @@ extension Data {
         coins[mnemonic + ":" + coinName] = coin
       }
       if let unwrappedCoin = coin {
-        let createAccount = unwrappedCoin.addCustomDerivation(derivePath: derivePath )
+        let createAccount = unwrappedCoin.addCustomDerivation(derivePath: derivePath, isTestNet: isTestNet )
         let result: [String: Any] = [
           "account": createAccount,
         ]

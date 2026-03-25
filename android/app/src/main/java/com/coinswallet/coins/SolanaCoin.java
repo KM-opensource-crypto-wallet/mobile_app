@@ -60,7 +60,7 @@ public class SolanaCoin extends CoinFactory.Coin {
     }
 
     @Override
-    public ReadableMap addCustomDerivation(String derivePath) {
+    public ReadableMap addCustomDerivation(String derivePath, Boolean isTestNet) {
         WritableMap obj = Arguments.createMap();
         PrivateKey tempPrivateKey = wallet.getKey(CoinType.SOLANA,derivePath);
         String address = CoinType.SOLANA.deriveAddress(tempPrivateKey);

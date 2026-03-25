@@ -1,9 +1,8 @@
-// BitcoinCoin.java
+// BitcoinLegacyCoin.java
 package com.coinswallet.coins;
 
 import com.coinswallet.CoinFactory;
 import com.coinswallet.Utils;
-
 
 import wallet.core.jni.AnyAddress;
 import wallet.core.jni.Derivation;
@@ -19,79 +18,59 @@ import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import wallet.core.jni.PrivateKey;
 
-public class BitcoinCoin extends CoinFactory.Coin {
+public class BitcoinLegacyCoin extends CoinFactory.Coin {
     private final HDWallet wallet;
     byte[] prefix = new byte[]{(byte) 0x80};
     byte[] testnetPrefix = new byte[]{(byte) 0xef};
 
-    public BitcoinCoin(String mnemonic) {
+    public BitcoinLegacyCoin(String mnemonic) {
         super(mnemonic);
         this.wallet = super.wallet;
     }
 
     @Override
     public String getNewAddress(Boolean isTestNet) {
-        // Derive a new private key for each call
-        Derivation derivation = Derivation.BITCOINSEGWIT;
-        if (isTestNet) {
-            derivation = Derivation.BITCOINTESTNET;
-        }
+        Derivation derivation = isTestNet ? Derivation.BITCOINTESTNET : Derivation.BITCOINLEGACY;
         return wallet.getAddressDerivation(CoinType.BITCOIN, derivation);
     }
 
     @Override
     public String getPrivateKey(Boolean isTestNet) {
-        Derivation derivation = Derivation.BITCOINSEGWIT;
-        if (isTestNet) {
-            derivation = Derivation.BITCOINTESTNET;
-        }
-        byte[] privateKeyBytes = wallet.getKeyDerivation(CoinType.BITCOIN,derivation).data();
-        return Utils.convertPrivateKeytoWIF(privateKeyBytes,isTestNet,prefix,testnetPrefix);
+        Derivation derivation = isTestNet ? Derivation.BITCOINTESTNET : Derivation.BITCOINLEGACY;
+        byte[] privateKeyBytes = wallet.getKeyDerivation(CoinType.BITCOIN, derivation).data();
+        return Utils.convertPrivateKeytoWIF(privateKeyBytes, isTestNet, prefix, testnetPrefix);
     }
 
     @Override
     public String getExtendedPublicKey(Boolean isTestNet) {
-        Derivation derivation = Derivation.BITCOINSEGWIT;
-        HDVersion version = HDVersion.ZPUB;
-        if(isTestNet){
-            derivation =  Derivation.BITCOINTESTNET;
-        }
-        return wallet.getExtendedPublicKeyDerivation(Purpose.BIP84,CoinType.BITCOIN,derivation,version);
+        return wallet.getExtendedPublicKey(Purpose.BIP44, CoinType.BITCOIN, HDVersion.XPUB);
     }
 
     @Override
     public String getExtendedPrivateKey(Boolean isTestNet) {
-        Derivation derivation = Derivation.BITCOINSEGWIT;
-        HDVersion version = HDVersion.ZPRV;
-        if(isTestNet){
-            derivation =  Derivation.BITCOINTESTNET;
-        }
-        return wallet.getExtendedPrivateKeyDerivation(Purpose.BIP84,CoinType.BITCOIN,derivation,version);
+        return wallet.getExtendedPrivateKey(Purpose.BIP44, CoinType.BITCOIN, HDVersion.XPRV);
     }
-
 
     @Override
     public String signTransaction(String rawData) {
-        // You need to implement this method according to the specific requirements of
-        // Bitcoin transactions.
         return null;
     }
 
     @Override
     public ReadableMap addCustomDerivation(String derivePath, Boolean isTestNet) {
         WritableMap obj = Arguments.createMap();
-        PrivateKey tempPrivateKey = wallet.getKey(CoinType.BITCOIN,derivePath);
+        PrivateKey tempPrivateKey = wallet.getKey(CoinType.BITCOIN, derivePath);
         PublicKey publicKey = tempPrivateKey.getPublicKeySecp256k1(true);
-        String address = "";
-        if(isTestNet){
-            address = new AnyAddress(publicKey,CoinType.BITCOIN, Derivation.BITCOINTESTNET).description();
-        }else{
-            address = CoinType.BITCOIN.deriveAddress(tempPrivateKey);
+        String address;
+        if (isTestNet) {
+            address = new AnyAddress(publicKey, CoinType.BITCOIN, Derivation.BITCOINTESTNET).description();
+        } else {
+            address = new AnyAddress(publicKey, CoinType.BITCOIN, Derivation.BITCOINLEGACY).description();
         }
-        String privateKeyString =  Utils.convertPrivateKeytoWIF(tempPrivateKey.data(), isTestNet,prefix,testnetPrefix);;
-        obj.putString("address",address);
-        obj.putString("derivePath",derivePath);
-        obj.putString("privateKey",privateKeyString);
+        String privateKeyString = Utils.convertPrivateKeytoWIF(tempPrivateKey.data(), isTestNet, prefix, testnetPrefix);
+        obj.putString("address", address);
+        obj.putString("derivePath", derivePath);
+        obj.putString("privateKey", privateKeyString);
         return obj;
     }
 
@@ -99,14 +78,14 @@ public class BitcoinCoin extends CoinFactory.Coin {
     public ReadableArray getDeriveAddresses(Boolean isTestNet) {
         WritableArray result = Arguments.createArray();
         for (int i = 0; i < 20; i++) {
-            String derivePath = "m/84'/0'/0'/" + i + "/0";
+            String derivePath = "m/44'/0'/0'/" + i + "/0";
             PrivateKey tempPrivateKey = wallet.getKey(CoinType.BITCOIN, derivePath);
             PublicKey publicKey = tempPrivateKey.getPublicKeySecp256k1(true);
             String address;
             if (isTestNet) {
                 address = new AnyAddress(publicKey, CoinType.BITCOIN, Derivation.BITCOINTESTNET).description();
             } else {
-                address = CoinType.BITCOIN.deriveAddress(tempPrivateKey);
+                address = new AnyAddress(publicKey, CoinType.BITCOIN, Derivation.BITCOINLEGACY).description();
             }
             WritableMap obj = Arguments.createMap();
             obj.putString("derivePath", derivePath);

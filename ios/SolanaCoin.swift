@@ -53,7 +53,7 @@ class SolanaCoin: CoinFactory.Coin {
   }
 
 
-  override func addCustomDerivation(derivePath:String) -> NSMutableDictionary {
+  override func addCustomDerivation(derivePath:String,isTestNet:Bool) -> NSMutableDictionary {
       let privateKey = wallet.getKey(coin: .solana, derivationPath: derivePath)
       let address = CoinType.solana.deriveAddress(privateKey: privateKey)
       let yourAuxDic: NSMutableDictionary = [:]

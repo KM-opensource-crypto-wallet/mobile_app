@@ -10431,17 +10431,11 @@ fast-text-encoding@1.0.6, fast-text-encoding@^1.0.6:
   resolved "https://registry.yarnpkg.com/fast-text-encoding/-/fast-text-encoding-1.0.6.tgz#0aa25f7f638222e3396d72bf936afcf1d42d6867"
   integrity sha512-VhXlQgj9ioXCqGstD37E/HBeqEGV/qOD/kmbVG8h5xKBYvM1L3lR1Zn4555cQ8GkYbJa8aJSipLPndE1k6zK2w==
 
-fast-xml-builder@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/fast-xml-builder/-/fast-xml-builder-1.0.0.tgz#a485d7e8381f1db983cf006f849d1066e2935241"
-  integrity sha512-fpZuDogrAgnyt9oDDz+5DBz0zgPdPZz6D4IR7iESxRXElrlGTRkHJ9eEt+SACRJwT0FNFrt71DFQIUFBJfX/uQ==
-
 fast-xml-parser@^5.3.6:
-  version "5.4.2"
-  resolved "https://registry.yarnpkg.com/fast-xml-parser/-/fast-xml-parser-5.4.2.tgz#7fc66463b59260b0c5fd57edf46148a418bde68b"
-  integrity sha512-pw/6pIl4k0CSpElPEJhDppLzaixDEuWui2CUQQBH/ECDf7+y6YwA4Gf7Tyb0Rfe4DIMuZipYj4AEL0nACKglvQ==
+  version "5.3.7"
+  resolved "https://registry.yarnpkg.com/fast-xml-parser/-/fast-xml-parser-5.3.7.tgz#81694e71ff0e568cbb6befade342f2a7e58aa1d9"
+  integrity sha512-JzVLro9NQv92pOM/jTCR6mHlJh2FGwtomH8ZQjhFj/R29P2Fnj38OgPJVtcvYw6SuKClhgYuwUZf5b3rd8u2mA==
   dependencies:
-    fast-xml-builder "^1.0.0"
     strnum "^2.1.2"
 
 fastest-levenshtein@^1.0.16:
@@ -15542,10 +15536,10 @@ react-native-localize@^3.6.0:
   resolved "https://registry.yarnpkg.com/react-native-localize/-/react-native-localize-3.6.1.tgz#35e42681119c2594e3b358f53399cc666a9d49f6"
   integrity sha512-0kVFUh8TWeh+8p13yVIDjbcdxR2ZOfPBFNcY/VBh/3/g8KfvXywY/XJkCuCVrX5dCLumMi3aXmy+MmJNy4IaYQ==
 
-react-native-nitro-modules@^0.33.2:
-  version "0.33.2"
-  resolved "https://registry.yarnpkg.com/react-native-nitro-modules/-/react-native-nitro-modules-0.33.2.tgz#7b1fb3c945779a238e7130448ba415f523a61e9b"
-  integrity sha512-ZlfOe6abODeHv/eZf8PxeSkrxIUhEKha6jaAAA9oXy7I6VPr7Ff4dUsAq3cyF3kX0L6qt2Dh9nzD2NdSsDwGpA==
+react-native-nitro-modules@^0.35.2:
+  version "0.35.2"
+  resolved "https://registry.yarnpkg.com/react-native-nitro-modules/-/react-native-nitro-modules-0.35.2.tgz#75fbcd42a73d93540c0069d42098d9dc6c12ea7e"
+  integrity sha512-97cZcCh3ZAuWAfutel2Q3qLfc45XXh7F9Ei5tEjahP0kV3q8hQelwLIulKXmjN+f0JI5Zf/wCsfwwdVWYU2tKA==
 
 react-native-pager-view@^6.9.1:
   version "6.9.1"
@@ -15585,21 +15579,21 @@ react-native-qrcode-svg@^6.3.20:
     qrcode "^1.5.4"
     text-encoding "^0.7.0"
 
-react-native-quick-base64@2.2.2, react-native-quick-base64@^2.0.5:
+react-native-quick-base64@^2.0.5, react-native-quick-base64@^2.2.2:
   version "2.2.2"
   resolved "https://registry.yarnpkg.com/react-native-quick-base64/-/react-native-quick-base64-2.2.2.tgz#52005a0b455b04acc1c6ff3eb8fa220401656aae"
   integrity sha512-WLHSifHLoamr2kF00Gov0W9ud6CfPshe1rmqWTquVIi9c62qxOaJCFVDrXFZhEBU8B8PvGLVuOlVKH78yhY0Fg==
 
-react-native-quick-crypto@^1.0.7:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/react-native-quick-crypto/-/react-native-quick-crypto-1.0.7.tgz#2806cdf37f7670f3065ec3e8c90cb7ab5df43c16"
-  integrity sha512-X+lsYZosVIYOE8JqNyfImrdBeGHGfovbDiuu8pAkneDg1E/f+891HpA3G/vr1an31WVTUkS5YJQ4UpL52Xa81A==
+react-native-quick-crypto@^1.0.18:
+  version "1.0.18"
+  resolved "https://registry.yarnpkg.com/react-native-quick-crypto/-/react-native-quick-crypto-1.0.18.tgz#6030d6ddf2223570f324324d8a62581ca988c033"
+  integrity sha512-VjBLW2PasOUSxAqy2IDNvLqBez9NwTDBecwCpuz0F5WkzPDGZ4CuZEFGyL1qfkjwok11F0x3IyMrmCyFBAtOCQ==
   dependencies:
     "@craftzdog/react-native-buffer" "6.1.0"
     events "3.3.0"
-    react-native-quick-base64 "2.2.2"
     readable-stream "4.5.2"
     safe-buffer "^5.2.1"
+    string_decoder "^1.3.0"
     util "0.12.5"
 
 react-native-randombytes@^2.2.0:
@@ -17246,9 +17240,9 @@ strip-json-comments@~2.0.1:
   integrity sha512-4gB8na07fecVVkOI6Rs4e7T6NOTki5EmL7TUduTs6bu3EdnSycntVJ4re8kgZA+wx9IueI2Y11bfbgwtzuE0KQ==
 
 strnum@^2.1.2:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/strnum/-/strnum-2.2.0.tgz#8b582b637e4621f62ff714493e0ce30846f903a6"
-  integrity sha512-Y7Bj8XyJxnPAORMZj/xltsfo55uOiyHcU2tnAVzHUnSJR/KsEX+9RoDeXEnsXtl/CX4fAcrt64gZ13aGaWPeBg==
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/strnum/-/strnum-2.1.2.tgz#a5e00ba66ab25f9cafa3726b567ce7a49170937a"
+  integrity sha512-l63NF9y/cLROq/yqKXSLtcMeeyOfnSQlfMSlzFt/K73oIaD8DGaQWd7Z34X9GPiKqP5rbSh84Hl4bOlLcjiSrQ==
 
 superstruct@^2.0.2:
   version "2.0.2"
