@@ -146,7 +146,9 @@ const Transactions = ({renderList, selectedAddress}) => {
                     <View style={styles.list}>
                       <View style={styles.box}>
                         <View style={styles.item}>
-                          <Text style={styles.title}>{item.link}</Text>
+                          <Text style={styles.title}>
+                            {item.link.substring(0, 13) + '...'}
+                          </Text>
                           <View style={{flexDirection: 'row'}}>
                             <Text style={styles.text}>
                               {dayjs(item.date).format('DD.MM.YYYY')}
