@@ -11,6 +11,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import RpcErrorToast from 'components/RpcErrorToast';
 
 const toastConfig = theme => {
   const myStyles = styles(theme);
@@ -130,6 +131,15 @@ const toastConfig = theme => {
         </View>
         <View style={myStyles.warningBottomBorder} />
       </View>
+    ),
+    rpcError: ({props}) => (
+      <RpcErrorToast
+        visible={true}
+        chain_name={props?.chain_name}
+        chainDisplayName={props?.chainDisplayName}
+        hasCustomRpc={props?.hasCustomRpc}
+        onDismiss={() => Toast.hide()}
+      />
     ),
     messageToast: ({text1, text2, ...props}) => (
       <TouchableOpacity

@@ -21,8 +21,10 @@ import {
   allDerivePath,
   customObj,
   getCustomizePublicAddress,
+  isBitcoinChain,
   isEVMChain,
   isValidDerivePath,
+  validateSupportedChain,
 } from 'dok-wallet-blockchain-networks/helper';
 import {
   addCustomDeriveAddress,
@@ -35,6 +37,44 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
 import Toast from 'react-native-toast-message';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
+
+const DERIVATION_CONFIG = {
+  ethereum: {
+    Ledger: j => `m/44'/60'/${j}'/0/0`,
+    Metamask: j => `m/44'/60'/0'/0/${j}`,
+  },
+  solana: {
+    Ledger: j => `m/44'/501'/${j}'`,
+  },
+  tron: {
+    Ledger: j => `m/44'/195'/${j}'/0/0`,
+  },
+  bitcoin: {
+    Ledger: j => `m/84'/0'/${j}'/0/0`,
+  },
+  bitcoin_segwit: {
+    Ledger: j => `m/49'/0'/${j}'/0/0`,
+  },
+  bitcoin_legacy: {
+    Ledger: j => `m/44'/0'/${j}'/0/0`,
+  },
+};
+
+const generatePaths = (chain, label) => {
+  const config = DERIVATION_CONFIG[chain];
+  if (!config) return [];
+
+  const type = Object.keys(config).find(key => label?.includes(key));
+  if (!type) return [];
+
+  return Array.from({length: 50}, (_, j) => {
+    const path = config[type](j + 1);
+    return {
+      label: `${type} (${path})`,
+      value: path,
+    };
+  });
+};
 
 export const CustomDerivation = () => {
   const {theme} = useContext(ThemeContext);
@@ -49,46 +89,17 @@ export const CustomDerivation = () => {
 
   const derivationData = useMemo(() => {
     const chainName = currentCoin?.chain_name;
-    const convertedChainName = isEVMChain(chainName) ? 'ethereum' : chainName;
-    const availableDerivePath = allDerivePath[convertedChainName] || [];
-    const make50DerivePath = [];
-    for (let i = 0; i < availableDerivePath.length; i++) {
-      for (let j = 1; j <= 50; j++) {
-        if (
-          convertedChainName === 'ethereum' &&
-          availableDerivePath[i]?.label?.includes('Ledger')
-        ) {
-          make50DerivePath.push({
-            label: `Ledger (m/44'/60'/${j}'/0/0)`,
-            value: `m/44'/60'/${j}'/0/0`,
-          });
-        } else if (
-          convertedChainName === 'ethereum' &&
-          availableDerivePath[i]?.label?.includes('Metamask')
-        ) {
-          make50DerivePath.push({
-            label: `Metamask (m/44'/60'/0'/0/${j})`,
-            value: `m/44'/60'/0'/0/${j}`,
-          });
-        } else if (
-          convertedChainName === 'solana' &&
-          availableDerivePath[i]?.label?.includes('Ledger')
-        ) {
-          make50DerivePath.push({
-            label: `Ledger (m/44'/501'/${j}')`,
-            value: `m/44'/501'/${j}'`,
-          });
-        } else if (
-          convertedChainName === 'tron' &&
-          availableDerivePath[i]?.label?.includes('Ledger')
-        ) {
-          make50DerivePath.push({
-            label: `Ledger (m/44'/195'/${j}'/0/0)`,
-            value: `m/44'/195'/${j}'/0/0`,
-          });
-        }
-      }
+    if (!validateSupportedChain(chainName)) {
+      return [customObj];
     }
+    const convertedChainName = isEVMChain(chainName) ? 'ethereum' : chainName;
+
+    const availableDerivePath = allDerivePath[convertedChainName] || [];
+
+    const make50DerivePath = availableDerivePath.flatMap(item =>
+      generatePaths(convertedChainName, item?.label),
+    );
+
     return [customObj, ...make50DerivePath];
   }, [currentCoin?.chain_name]);
 
@@ -163,6 +174,9 @@ export const CustomDerivation = () => {
     }),
     onSubmit: async submittedValue => {
       try {
+        if (!validateSupportedChain(currentCoin?.chain_name)) {
+          return;
+        }
         setIsSubmitting(true);
         const {selectedDerivationOptions, customDerivePath} = submittedValue;
         const chainName = isEVMChain(currentCoin?.chain_name)
@@ -189,7 +203,10 @@ export const CustomDerivation = () => {
     },
   });
 
-  const isDisabled = !values?.selectedDerivationOptions;
+  const isAtLimit =
+    isBitcoinChain(currentCoin?.chain_name) &&
+    (currentCoin?.deriveAddresses?.length ?? 0) >= 100;
+  const isDisabled = !values?.selectedDerivationOptions || isAtLimit;
 
   const HeaderComponent = useCallback(() => {
     return (
@@ -251,6 +268,11 @@ export const CustomDerivation = () => {
                 )}
               </>
             )}
+            {isAtLimit && (
+              <Text style={styles.textConfirm}>
+                {'Maximum limit of 100 accounts reached'}
+              </Text>
+            )}
             <TouchableOpacity
               disabled={isDisabled || isSubmitting}
               style={[
@@ -277,6 +299,7 @@ export const CustomDerivation = () => {
     handleBlur,
     handleChange,
     handleSubmit,
+    isAtLimit,
     isDisabled,
     isSubmitting,
     setFieldValue,

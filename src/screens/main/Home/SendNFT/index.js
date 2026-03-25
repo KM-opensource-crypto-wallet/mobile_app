@@ -37,12 +37,17 @@ import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
 import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import {isNameSupportChain} from 'dok-wallet-blockchain-networks/helper';
+import {
+  getCustomRPCWithData,
+  selectAllCustomRpc,
+} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSelectors';
 
 const SendNFT = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const selectedNft = useSelector(getSelectedNft);
   const selectedWallet = useSelector(selectCurrentWallet);
+  const allCustomRPC = useSelector(selectAllCustomRpc);
 
   const qrAddress = route?.params?.qrAddress;
   const qrAmount = route?.params?.qrAmount;
@@ -89,7 +94,16 @@ const SendNFT = ({navigation, route}) => {
 
   const handleSubmitForm = async values => {
     // setAmountInput(values.amount);
-    const currentChain = getChain(selectedNft?.coin?.chain_name);
+    const customRPC = getCustomRPCWithData(
+      allCustomRPC,
+      selectedNft?.coin?.chain_name,
+      selectedWallet?.clientId,
+    );
+    const currentChain = getChain(
+      selectedNft?.coin?.chain_name,
+      selectedWallet?.phrase,
+      customRPC,
+    );
     const isValid = await currentChain.isValidAddress({address: values?.send});
     let validAddress = null;
     if (!isValid && isNameSupportChain(selectedNft?.coin?.chain_name)) {

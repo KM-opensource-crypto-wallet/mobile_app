@@ -54,6 +54,10 @@ import {isBitcoinChain} from 'dok-wallet-blockchain-networks/helper';
 import {parseBoolean} from 'utils/common';
 import {addBatchTransaction} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
 import {v4} from 'uuid';
+import {
+  getCustomRPCWithData,
+  selectAllCustomRpc,
+} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSelectors';
 
 const SendFunds = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
@@ -70,6 +74,7 @@ const SendFunds = ({navigation, route}) => {
   const meta = route?.params?.meta;
   const localCurrency = useSelector(getLocalCurrency);
   const currentWallet = useSelector(selectCurrentWallet);
+  const allCustomRPC = useSelector(selectAllCustomRpc);
   const transferData = useSelector(getTransferData);
   const isBitcoin = isBitcoinChain(currentCoin?.chain_name);
   const uuid = useMemo(() => {
@@ -183,7 +188,16 @@ const SendFunds = ({navigation, route}) => {
 
   const addToBatch = useCallback(async () => {
     const values = formikRef.current.values;
-    const currentChain = getChain(currentCoin?.chain_name);
+    const customRPC = getCustomRPCWithData(
+      allCustomRPC,
+      currentCoin?.chain_name,
+      currentWallet?.clientId,
+    );
+    const currentChain = getChain(
+      currentCoin?.chain_name,
+      currentWallet?.phrase,
+      customRPC,
+    );
     const isValid = await currentChain.isValidAddress({address: values?.send});
     let validAddress = null;
     if (!isValid && isNameSupportChain(currentCoin?.chain_name)) {
@@ -209,7 +223,15 @@ const SendFunds = ({navigation, route}) => {
     } else {
       formikRef?.current?.setFieldError('send', 'address is not valid');
     }
-  }, [currentCoin, dispatch, navigation, uuid]);
+  }, [
+    allCustomRPC,
+    currentCoin,
+    currentWallet?.clientId,
+    currentWallet?.phrase,
+    dispatch,
+    navigation,
+    uuid,
+  ]);
 
   const handleSubmitForm = async values => {
     if (
@@ -266,7 +288,16 @@ const SendFunds = ({navigation, route}) => {
       setModal(true);
       return;
     }
-    const currentChain = getChain(currentCoin?.chain_name);
+    const customRPC = getCustomRPCWithData(
+      allCustomRPC,
+      currentCoin?.chain_name,
+      currentWallet?.clientId,
+    );
+    const currentChain = getChain(
+      currentCoin?.chain_name,
+      currentWallet?.phrase,
+      customRPC,
+    );
     const isValid = await currentChain.isValidAddress({address: values?.send});
     let validAddress = null;
     if (!isValid && isNameSupportChain(currentCoin?.chain_name)) {

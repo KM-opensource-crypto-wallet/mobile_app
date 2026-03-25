@@ -27,10 +27,17 @@ import {
   isEVMChain,
 } from 'dok-wallet-blockchain-networks/helper';
 import {addToken} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {selectWalletChainName} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  selectCurrentWallet,
+  selectWalletChainName,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {ThemeContext} from 'theme/ThemeContext';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {
+  getCustomRPCWithData,
+  selectAllCustomRpc,
+} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSelectors';
 
 const ModalAddToken = ({
   navigation,
@@ -39,6 +46,8 @@ const ModalAddToken = ({
   contractAddress,
   selectedNetwork,
 }) => {
+  const currentWallet = useSelector(selectCurrentWallet);
+  const allCustomRPC = useSelector(selectAllCustomRpc);
   const {bottom} = useSafeAreaInsets();
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme, bottom);
@@ -58,7 +67,6 @@ const ModalAddToken = ({
 
   const dispatch = useDispatch();
   const chainRef = useRef();
-  const previousTimerRef = useRef(null);
   const keyboardHeight = useKeyboardHeight();
 
   const chain_name = useSelector(selectWalletChainName);
@@ -68,8 +76,18 @@ const ModalAddToken = ({
   // -------------------------------------
   useEffect(() => {
     if (networkInput?.value) {
-      chainRef.current = getChain(networkInput?.value);
+      const customRPC = getCustomRPCWithData(
+        allCustomRPC,
+        networkInput?.value,
+        currentWallet?.clientId,
+      );
+      chainRef.current = getChain(
+        networkInput?.value,
+        currentWallet?.phrase,
+        customRPC,
+      );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [networkInput]);
 
   useEffect(() => {

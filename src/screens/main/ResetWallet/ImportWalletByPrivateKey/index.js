@@ -35,6 +35,7 @@ const ImportWalletByPrivateKey = ({navigation, route}) => {
         const chainName = networkInput?.value;
         const privateKey = values?.privateKey;
         if (chainName && privateKey) {
+          // here is is fine if mnemonic and custom rpc not passed because wallet is not created
           const chain = getChain(chainName);
           const isValid = await chain.isValidPrivateKey({privateKey});
           if (isValid) {
