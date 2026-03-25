@@ -1,7 +1,5 @@
 import {StyleSheet} from 'react-native';
-import {SCREEN_WIDTH} from 'utils/dimensions';
 
-const PopoverWidth = 180;
 const myStyles = theme =>
   StyleSheet.create({
     mainView: {
@@ -37,29 +35,41 @@ const myStyles = theme =>
       width: 180,
       paddingHorizontal: 0,
       marginHorizontal: 0,
-      marginLeft: SCREEN_WIDTH - PopoverWidth - 16,
-      shadowColor: 'black',
+      marginLeft: 0,
+      backgroundColor: theme.secondaryBackgroundColor,
+      shadowColor: '#000',
       shadowOpacity: 0.3,
-      shadowOffset: {width: 0, height: 0},
-      shadowRadius: 5,
-      borderRadius: 10,
+      shadowOffset: {width: 0, height: 6},
+      shadowRadius: 14,
+      elevation: 14,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: theme.whiteOutline,
+    },
+    iconContainer: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.lightBackground,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     optionMenu: {
       width: '100%',
-      height: 55,
+      height: 58,
       alignItems: 'center',
-      backgroundColor: theme.backgroundColor,
+      backgroundColor: 'transparent',
       flexDirection: 'row',
       gap: 12,
-      paddingHorizontal: 12,
+      paddingHorizontal: 14,
       borderBottomWidth: 1,
-      borderBottomColor: theme.gray,
+      borderBottomColor: theme.whiteOutline,
     },
     optionText: {
       color: theme.font,
       fontSize: 14,
       fontFamily: 'Roboto-Regular',
-      fontWeight: '700',
+      fontWeight: '500',
     },
   });
 

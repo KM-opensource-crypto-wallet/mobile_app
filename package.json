@@ -91,6 +91,7 @@
     "@xchainjs/xchain-crypto": "^1.0.6",
     "@xchainjs/xchain-thorchain": "^3.0.13",
     "@xchainjs/xchain-util": "^2.0.5",
+    "@xmtp/react-native-sdk": "^5.6.0",
     "add": "^2.0.6",
     "assert": "^1.5.1",
     "asyncstorage-down": "^4.2.0",
@@ -272,7 +273,7 @@
     "@zondax/filecoin-signing-tools": "0.20.1"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "packageManager": "yarn@1.22.22",
   "react-native": {

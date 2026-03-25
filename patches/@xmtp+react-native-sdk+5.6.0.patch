@@ -1,0 +1,23 @@
+diff --git a/node_modules/@xmtp/react-native-sdk/ios/ExpoModulesProvider.swift b/node_modules/@xmtp/react-native-sdk/ios/ExpoModulesProvider.swift
+new file mode 100644
+index 0000000..37baab9
+--- /dev/null
++++ b/node_modules/@xmtp/react-native-sdk/ios/ExpoModulesProvider.swift
+@@ -0,0 +1,17 @@
++// This file registers XMTP and other Expo native modules with expo-modules-core.
++// It is compiled as part of XMTPReactNative pod (which already depends on ExpoModulesCore),
++// avoiding any module-system conflicts in the main app target.
++//
++// AppContext.modulesProvider(withName:) looks up "ExpoModulesProvider" via NSClassFromString.
++// The @objc(ExpoModulesProvider) annotation registers this class under that exact ObjC name.
++
++import ExpoModulesCore
++
++@objc(ExpoModulesProvider)
++public class ExpoModulesProvider: ModulesProvider {
++  public override func getModuleClasses() -> [AnyModule.Type] {
++    return [
++      XMTPModule.self,
++    ]
++  }
++}

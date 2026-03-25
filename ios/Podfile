@@ -21,6 +21,12 @@ abstract_target 'coinswalletCommonPod' do
 
   config = use_native_modules!
   pod 'SDWebImage', '5.21.0'
+  # expo-modules-core disables React Native auto-linking (react-native.config.js sets ios: null),
+  # so ExpoModulesCore and all pods it enables must be declared explicitly here.
+  pod 'ExpoModulesCore', :path => '../node_modules/expo-modules-core'
+  pod 'XMTPReactNative', :path => '../node_modules/@xmtp/react-native-sdk/ios'
+  pod 'CSecp256k1', :modular_headers => true
+  pod 'SQLCipher', :modular_headers => true
   # permissions_path = '../node_modules/react-native-permissions/ios'
   # pod 'Permission-Camera', :path => "#{permissions_path}/Camera"
   # OpenSSL-Universal removed - QuickCrypto provides its own OpenSSL.xcframework

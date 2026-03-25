@@ -41,7 +41,7 @@ const ForwardMessage = ({navigation, route}) => {
   }, []);
 
   const onPressCancel = useCallback(() => {
-    navigation.navigate('MessageList');
+    navigation.goBack();
   }, [navigation]);
 
   const onPressConversation = useCallback(
@@ -62,7 +62,7 @@ const ForwardMessage = ({navigation, route}) => {
   const onPressForward = useCallback(() => {
     const selectedConversations = Object.values(selectedConversation);
     dispatch(forwardMessages({messages, conversations: selectedConversations}));
-    navigation.navigate('MessageList');
+    navigation.goBack();
   }, [dispatch, messages, navigation, selectedConversation]);
 
   return (

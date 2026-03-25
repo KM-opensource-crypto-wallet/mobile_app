@@ -44,12 +44,15 @@ const RenderTabBar = props => {
   return (
     <TabBar
       {...props}
-      renderLabel={({route, focused}) => (
+      activeColor={theme.background}
+      inactiveColor={theme.font}
+      renderLabel={({route, focused, color}) => (
         <View style={{width: '100%'}}>
           <Text
             style={[
               styles.tabBarFontStyle,
-              focused && {fontWeight: 'bold', color: theme.background},
+              {color},
+              focused && styles.tabBarFontFocusedStyle,
             ]}>
             {route.title}
           </Text>

@@ -74,7 +74,7 @@ const MessageOption = ({icon, text, onSelect, styles}) => (
       accessibilityRole="button"
       accessibilityLabel="Copy message"
       accessibilityHint="Copies the selected message to clipboard">
-      {icon}
+      <View style={styles.iconContainer}>{icon}</View>
       <Text style={styles.optionText}>{text}</Text>
     </View>
   </MenuOption>

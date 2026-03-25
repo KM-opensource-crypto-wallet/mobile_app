@@ -69,7 +69,8 @@ const ConversationItem = ({
           </Text>
         </View>
         <Text style={styles.message} numberOfLines={1}>
-          {lastMessage?.text || 'No message yet'}
+          {(typeof lastMessage?.text === 'string' && lastMessage.text) ||
+            'No message yet'}
         </Text>
       </View>
       {!isCheckbox && (

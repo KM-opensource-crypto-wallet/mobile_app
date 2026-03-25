@@ -74,6 +74,16 @@ const myStyles = theme =>
       fontWeight: '600',
       color: theme.borderActiveColor,
     },
+    keyboardAvoidingView: {
+      flex: 1,
+      paddingTop: 10,
+    },
+    textInput: {
+      color: theme.font,
+      backgroundColor: theme.backgroundColor,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+    },
   });
 
 export default myStyles;
