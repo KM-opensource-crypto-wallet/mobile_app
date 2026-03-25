@@ -293,6 +293,28 @@ const Settings = ({navigation}) => {
           <Text style={styles.title}>Wallet Settings</Text>
           <TouchableOpacity
             onPress={() => {
+              navigation.navigate('CustomRPC');
+            }}
+            style={{
+              ...styles.btn,
+              borderBottomWidth: 0.5,
+              borderBottomColor: theme.gray,
+            }}>
+            <IoniconsIcon
+              name={'link-outline'}
+              resizeMode={'contain'}
+              size={24}
+              color={theme.font}
+            />
+            <View style={[{...styles.box, flex: 1}]}>
+              <Text style={styles.btnTitle}>Custom RPC</Text>
+              <Text style={styles.btnText} numberOfLines={2}>
+                Add your custom RPC URLs.
+              </Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
               navigation.navigate('AddressBook');
             }}
             style={{

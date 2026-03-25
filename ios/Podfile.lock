@@ -10,6 +10,35 @@ PODS:
     - GoogleUtilities/UserDefaults (~> 8.0)
     - PromisesObjC (~> 2.4)
   - boost (1.84.0)
+  - breeztech-breez-sdk-spark-react-native (0.7.14):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - uniffi-bindgen-react-native (= 0.28.3-5)
+    - Yoga
   - BugfenderSDK (2.0.1)
   - DoubleConversion (1.1.6)
   - fast_float (8.0.0)
@@ -3072,6 +3101,8 @@ PODS:
     - SDWebImageWebPCoder (~> 0.14)
     - SocketRocket
     - Yoga
+  - RNFS (2.20.0):
+    - React-Core
   - RNGestureHandler (2.30.0):
     - boost
     - DoubleConversion
@@ -3617,6 +3648,8 @@ PODS:
     - TrustWalletCore/Types
   - TrustWalletCore/Types (3.2.9):
     - SwiftProtobuf
+  - uniffi-bindgen-react-native (0.28.3-5):
+    - React-Core
   - VisionCamera (4.7.3):
     - VisionCamera/Core (= 4.7.3)
     - VisionCamera/React (= 4.7.3)
@@ -3627,6 +3660,7 @@ PODS:
 
 DEPENDENCIES:
   - boost (from `../node_modules/react-native/third-party-podspecs/boost.podspec`)
+  - "breeztech-breez-sdk-spark-react-native (from `../node_modules/@breeztech/breez-sdk-spark-react-native`)"
   - DoubleConversion (from `../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
   - fast_float (from `../node_modules/react-native/third-party-podspecs/fast_float.podspec`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
@@ -3728,6 +3762,7 @@ DEPENDENCIES:
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - "RNFastImage (from `../node_modules/@d11/react-native-fast-image`)"
+  - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNInAppBrowser (from `../node_modules/react-native-inappbrowser-reborn`)
@@ -3769,10 +3804,13 @@ SPEC REPOS:
     - SocketRocket
     - SwiftProtobuf
     - TrustWalletCore
+    - uniffi-bindgen-react-native
 
 EXTERNAL SOURCES:
   boost:
     :podspec: "../node_modules/react-native/third-party-podspecs/boost.podspec"
+  breeztech-breez-sdk-spark-react-native:
+    :path: "../node_modules/@breeztech/breez-sdk-spark-react-native"
   DoubleConversion:
     :podspec: "../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec"
   fast_float:
@@ -3974,6 +4012,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-device-info"
   RNFastImage:
     :path: "../node_modules/@d11/react-native-fast-image"
+  RNFS:
+    :path: "../node_modules/react-native-fs"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNGoogleSignin:
@@ -4011,6 +4051,7 @@ SPEC CHECKSUMS:
   AppAuth: 1c1a8afa7e12f2ec3a294d9882dfa5ab7d3cb063
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
+  breeztech-breez-sdk-spark-react-native: ebe1210f31d5c3ffab8e76bebf86a701f71834b7
   BugfenderSDK: 01831192d8bfe81912f104b903510f1c93fb3592
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   fast_float: b32c788ed9c6a8c584d114d0047beda9664e7cc6
@@ -4121,6 +4162,7 @@ SPEC CHECKSUMS:
   RNCClipboard: 962296f7af77f6c039b683e21c2e2255af9c05df
   RNDeviceInfo: 53f9c84e28e854a308d3e548e25ef120b4615531
   RNFastImage: e75f88269b52687d6907db4f04f50095a6b1c921
+  RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
   RNGestureHandler: 77eecab5fd636666ca73a55bb61e2f1a685b7e84
   RNGoogleSignin: 545fbb4f7210aff29ff67f29f2be1c88f02c9a0f
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
@@ -4142,6 +4184,7 @@ SPEC CHECKSUMS:
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   SwiftProtobuf: e02f51c8c2df5845657aee2d4de9d61bf50ef788
   TrustWalletCore: 33400e9cf939277435b4e2e6c21daaa1afe26c7c
+  uniffi-bindgen-react-native: 018090e6c342b31e1189eb4d098860e9d44caa86
   VisionCamera: 68d40255fa8866e815cbbb063730102d3da276fd
   Yoga: 5456bb010373068fc92221140921b09d126b116e
 

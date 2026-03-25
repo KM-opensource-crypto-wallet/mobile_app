@@ -27,7 +27,10 @@ import {
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {useDispatch, useSelector} from 'react-redux';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  selectAllWallets,
+  selectCurrentWallet,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import WalletsPicker from 'components/WalletsPicker';
 import Checkbox from 'components/Checkbox';
 import {getAddressBook} from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSelector';
@@ -37,6 +40,10 @@ import {
   updateAddressBook,
 } from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSlice';
 import {string, object, array, boolean} from 'yup';
+import {
+  getCustomRPCWithData,
+  selectAllCustomRpc,
+} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSelectors';
 
 const validationSchema = (previousObj, existedNames) => {
   return object().shape({
@@ -96,6 +103,8 @@ const validationSchema = (previousObj, existedNames) => {
 const AddAddress = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
+  const currentWallet = useSelector(selectCurrentWallet);
+  const allCustomRPC = useSelector(selectAllCustomRpc);
   const previousData = useMemo(() => {
     return {
       id: route?.params?.id,
@@ -161,7 +170,12 @@ const AddAddress = ({navigation, route}) => {
         const name = values?.name;
         const label = values?.label || '';
         if (chain_name && address && name) {
-          const chain = getChain(chain_name);
+          const customRPC = getCustomRPCWithData(
+            allCustomRPC,
+            chain_name,
+            currentWallet?.clientId,
+          );
+          const chain = getChain(chain_name, currentWallet?.phrase, customRPC);
           const isValid = await chain.isValidAddress({address});
           if (isValid) {
             const payload = {
@@ -189,7 +203,14 @@ const AddAddress = ({navigation, route}) => {
         }
       }
     },
-    [dispatch, navigation, previousData?.id],
+    [
+      allCustomRPC,
+      currentWallet?.clientId,
+      currentWallet?.phrase,
+      dispatch,
+      navigation,
+      previousData?.id,
+    ],
   );
 
   const toggleWalletSelect = useCallback(walletClientId => {
