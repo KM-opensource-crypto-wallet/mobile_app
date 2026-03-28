@@ -29,59 +29,71 @@ const ResetWallet = ({navigation, route}) => {
           <TouchableOpacity onPress={() => navigation.navigate('LearnReset')}>
             <Text style={styles.learnText}>Learn more</Text>
           </TouchableOpacity>
+
           <View style={styles.btnList}>
+            {/* Create Wallet */}
             <TouchableOpacity
-              activeOpacity={1}
-              onPress={() => {
-                navigation.navigate('CreateWallet');
-              }}
-              style={{
-                ...styles.btn,
-                ...styles.shadow,
-              }}>
-              <View pointerEvents="none">
-                <CREATE_WALLET height={150} width={150} />
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('CreateWallet')}
+              style={styles.card}>
+              <View style={styles.imageBox}>
+                <View pointerEvents="none">
+                  <CREATE_WALLET height={150} width={150} />
+                  <View style={styles.textBox}>
+                    <Text style={{...styles.textBtn, color: theme.font}}>
+                      Create
+                    </Text>
+                    <Text
+                      style={{
+                        ...styles.textBtn,
+                        color: theme.backgroundColor,
+                      }}>
+                      Wallet
+                    </Text>
+                  </View>
+                </View>
               </View>
-              <View style={styles.textBox}>
-                <Text style={{...styles.textBtn, color: theme.font}}>
-                  Create
-                </Text>
-                <Text
-                  style={{
-                    ...styles.textBtn,
-                    color: theme.backgroundColor,
-                  }}>
-                  Wallet
+              <View style={styles.cardContent}>
+                <Text style={styles.cardTitle}>Create Wallet</Text>
+                <Text style={styles.cardSubtitle}>
+                  Generate a brand-new wallet with a fresh 12-word seed phrase.
                 </Text>
               </View>
             </TouchableOpacity>
 
+            {/* Import Wallet */}
             <TouchableOpacity
-              activeOpacity={1}
+              activeOpacity={0.85}
               onPress={() =>
                 navigation.navigate('ImportWallet', {isAdd: !!isFromOnBoarding})
               }
-              style={{
-                ...styles.btn,
-                ...styles.shadow,
-              }}>
-              <View pointerEvents="none">
-                <IMPORT_WALLET height={150} width={150} />
+              style={styles.card}>
+              <View style={styles.imageBox}>
+                <View pointerEvents="none">
+                  <IMPORT_WALLET height={150} width={150} />
+                  <View style={styles.textBox2}>
+                    <Text
+                      style={{
+                        ...styles.textBtn,
+                        color: theme.background,
+                      }}>
+                      Import
+                    </Text>
+                    <Text
+                      style={{
+                        ...styles.textBtn,
+                        color: 'white',
+                      }}>
+                      Wallet
+                    </Text>
+                  </View>
+                </View>
               </View>
-              <View style={styles.textBox2}>
-                <Text
-                  style={{
-                    ...styles.textBtn,
-                    color: theme.background,
-                  }}>
-                  Import
-                </Text>
-                <Text
-                  style={{
-                    ...styles.textBtn,
-                    color: theme.backgroundColor,
-                  }}>
-                  Wallet
+              <View style={styles.cardContent}>
+                <Text style={styles.cardTitle}>Import Wallet</Text>
+                <Text style={styles.cardSubtitle}>
+                  Restore an existing wallet using your seed phrase or private
+                  key.
                 </Text>
               </View>
             </TouchableOpacity>

@@ -16,7 +16,12 @@ import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {XMTP} from 'utils/xmtp';
 import {showToast} from 'utils/toast';
 import {setSelectedConversation} from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
+import {
+  getCurrentWalletPhrase,
+  selectCurrentWallet,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectCustomRpcUrlByChainAndWallet} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSelectors';
 
 const NewMessage = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
@@ -25,6 +30,11 @@ const NewMessage = ({navigation, route}) => {
   const data = route?.params?.data;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useDispatch();
+  const phrase = useSelector(getCurrentWalletPhrase);
+  const currentWallet = useSelector(selectCurrentWallet);
+  const customRpcUrl = useSelector(
+    selectCustomRpcUrlByChainAndWallet('ethereum', currentWallet?.clientId),
+  );
 
   useEffect(() => {
     if (data) {
@@ -37,7 +47,7 @@ const NewMessage = ({navigation, route}) => {
       try {
         setIsSubmitting(true);
         const address = values?.address;
-        const chain = getChain('ethereum');
+        const chain = getChain('ethereum', phrase, customRpcUrl);
         const isValid = await chain.isValidAddress({address});
         let validAddress = null;
         if (!isValid) {
@@ -81,7 +91,7 @@ const NewMessage = ({navigation, route}) => {
         });
       }
     },
-    [dispatch, navigation],
+    [customRpcUrl, dispatch, navigation, phrase],
   );
 
   return (

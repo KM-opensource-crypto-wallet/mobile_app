@@ -25,19 +25,25 @@ import {ThemeContext} from 'theme/ThemeContext';
 import {
   getCurrentWalletPhrase,
   selectCurrentCoin,
+  selectCurrentWallet,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import LightningDropDown from 'components/LightningDropDown';
+import {
+  getCustomRPCWithData,
+  selectAllCustomRpc,
+} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSelectors';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const RecieveFunds = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const address = useRef('');
+  const currentWallet = useSelector(selectCurrentWallet);
   const currentCoin = useSelector(selectCurrentCoin);
   const currentPhrase = useSelector(getCurrentWalletPhrase);
+  const allCustomRPC = useSelector(selectAllCustomRpc);
   address.current = currentCoin?.address ?? '';
   const isLightning = currentCoin?.chain_name === 'bitcoin_lightning';
-  const chain = getChain(currentCoin?.chain_name);
   const [addressState, setAddressState] = useState('');
   const [showBtcMainnetBanner, setShowBtcMainnetBanner] = useState(false);
   const [productQRref, setProductQRref] = useState(
@@ -78,6 +84,16 @@ const RecieveFunds = ({navigation}) => {
   const handleLightningDropDownChange = useCallback(
     async currentValue => {
       try {
+        const customRPC = getCustomRPCWithData(
+          allCustomRPC,
+          currentCoin?.chain_name,
+          currentWallet?.clientId,
+        );
+        const chain = getChain(
+          currentCoin?.chain_name,
+          currentWallet?.phrase,
+          customRPC,
+        );
         let newAddress = '';
 
         if (currentValue === 'btc_mainnet') {
@@ -105,7 +121,14 @@ const RecieveFunds = ({navigation}) => {
         console.log(error);
       }
     },
-    [chain, currentCoin?.symbol, currentPhrase],
+    [
+      allCustomRPC,
+      currentCoin?.chain_name,
+      currentCoin?.symbol,
+      currentPhrase,
+      currentWallet?.clientId,
+      currentWallet?.phrase,
+    ],
   );
 
   return (

@@ -35,6 +35,10 @@
 		D279746B2BDBE24500FE26D5 /* TonCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D279746A2BDBE24500FE26D5 /* TonCoin.swift */; };
 		D28CC4A82B5FCE7800E18851 /* CosmosCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D28CC4A72B5FCE7800E18851 /* CosmosCoin.swift */; };
 		D28DFD542D8B0B4600C77B6F /* deep_link_icon.png in Resources */ = {isa = PBXBuildFile; fileRef = D28DFD532D8B0B4600C77B6F /* deep_link_icon.png */; };
+		D29B7C6D2F73AB0A005D5385 /* BitcoinLegacyCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29B7C6B2F73AB0A005D5385 /* BitcoinLegacyCoin.swift */; };
+		D29B7C6E2F73AB0A005D5385 /* BitcoinSegwitCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29B7C6C2F73AB0A005D5385 /* BitcoinSegwitCoin.swift */; };
+		D29B7C6F2F73AB0A005D5385 /* BitcoinLegacyCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29B7C6B2F73AB0A005D5385 /* BitcoinLegacyCoin.swift */; };
+		D29B7C702F73AB0A005D5385 /* BitcoinSegwitCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29B7C6C2F73AB0A005D5385 /* BitcoinSegwitCoin.swift */; };
 		D2C1E4212BDFB5EC00C33CCC /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D2C1E4202BDFB5EC00C33CCC /* PrivacyInfo.xcprivacy */; };
 		D2CBB6602AE62DB1004945E4 /* Litecoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2CBB65F2AE62DB0004945E4 /* Litecoin.swift */; };
 		D2D4AE3B2C06FBCE00DA419A /* AptosCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D4AE3A2C06FBCD00DA419A /* AptosCoin.swift */; };
@@ -104,6 +108,8 @@
 		D279746A2BDBE24500FE26D5 /* TonCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TonCoin.swift; sourceTree = "<group>"; };
 		D28CC4A72B5FCE7800E18851 /* CosmosCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CosmosCoin.swift; sourceTree = "<group>"; };
 		D28DFD532D8B0B4600C77B6F /* deep_link_icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = deep_link_icon.png; sourceTree = "<group>"; };
+		D29B7C6B2F73AB0A005D5385 /* BitcoinLegacyCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitcoinLegacyCoin.swift; sourceTree = "<group>"; };
+		D29B7C6C2F73AB0A005D5385 /* BitcoinSegwitCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitcoinSegwitCoin.swift; sourceTree = "<group>"; };
 		D2C1E4202BDFB5EC00C33CCC /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		D2CBB65F2AE62DB0004945E4 /* Litecoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Litecoin.swift; sourceTree = "<group>"; };
 		D2D4AE3A2C06FBCD00DA419A /* AptosCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AptosCoin.swift; sourceTree = "<group>"; };
@@ -174,6 +180,8 @@
 		3F1834FC2A4F185A004B7D37 /* coins */ = {
 			isa = PBXGroup;
 			children = (
+				D29B7C6B2F73AB0A005D5385 /* BitcoinLegacyCoin.swift */,
+				D29B7C6C2F73AB0A005D5385 /* BitcoinSegwitCoin.swift */,
 				D2DCDED92DD2053A001131F7 /* FilecoinCoin.swift */,
 				D27914502DBCC1ED007F80E9 /* CardanoCoin.swift */,
 				D2D4AE3A2C06FBCD00DA419A /* AptosCoin.swift */,
@@ -419,13 +427,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-coinswallet/Pods-coinswalletCommonPod-coinswallet-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-coinswallet/Pods-coinswalletCommonPod-coinswallet-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -440,13 +444,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-coinswallet/Pods-coinswalletCommonPod-coinswallet-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-coinswallet/Pods-coinswalletCommonPod-coinswallet-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -521,13 +521,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-kimlwallet/Pods-coinswalletCommonPod-kimlwallet-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-kimlwallet/Pods-coinswalletCommonPod-kimlwallet-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -542,13 +538,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-kimlwallet/Pods-coinswalletCommonPod-kimlwallet-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-coinswalletCommonPod-kimlwallet/Pods-coinswalletCommonPod-kimlwallet-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -572,6 +564,8 @@
 				D22953622B3ED65100E1794E /* ThorCoin.swift in Sources */,
 				3F911F082A502908000E5820 /* TronCoin.swift in Sources */,
 				D26968C92CA6B1C400052999 /* BitcoinCashCoin.swift in Sources */,
+				D29B7C6F2F73AB0A005D5385 /* BitcoinLegacyCoin.swift in Sources */,
+				D29B7C702F73AB0A005D5385 /* BitcoinSegwitCoin.swift in Sources */,
 				D2F828102AB1EAEF004381E3 /* commonExternsion.swift in Sources */,
 				3F1834FB2A4F1470004B7D37 /* CoinFactory.swift in Sources */,
 				3F911F052A501CAE000E5820 /* EthereumCoin.swift in Sources */,
@@ -601,6 +595,8 @@
 				D2E7E5AD2DC8CB0E00A414F5 /* ThorCoin.swift in Sources */,
 				D2E7E5AE2DC8CB0E00A414F5 /* TronCoin.swift in Sources */,
 				D2E7E5AF2DC8CB0E00A414F5 /* BitcoinCashCoin.swift in Sources */,
+				D29B7C6D2F73AB0A005D5385 /* BitcoinLegacyCoin.swift in Sources */,
+				D29B7C6E2F73AB0A005D5385 /* BitcoinSegwitCoin.swift in Sources */,
 				D2E7E5B02DC8CB0E00A414F5 /* commonExternsion.swift in Sources */,
 				D2E7E5B12DC8CB0E00A414F5 /* CoinFactory.swift in Sources */,
 				D2E7E5B22DC8CB0E00A414F5 /* EthereumCoin.swift in Sources */,
@@ -628,7 +624,7 @@
 				CODE_SIGN_ENTITLEMENTS = dokwallet/coinswallet.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development: Divyang Khatri (ZBWJFA97F3)";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 9HJ6G8C9BU;
 				ENABLE_BITCODE = NO;
@@ -639,7 +635,7 @@
 					"@executable_path/Frameworks",
 					"$(inherited)",
 				);
-				MARKETING_VERSION = 1.74;
+				MARKETING_VERSION = 2.34;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -669,7 +665,7 @@
 				CODE_SIGN_ENTITLEMENTS = dokwallet/coinswallet.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution: Moreover4u2 Ltd (9HJ6G8C9BU)";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 9HJ6G8C9BU;
 				INFOPLIST_FILE = dokwallet/Info.plist;
@@ -679,7 +675,7 @@
 					"@executable_path/Frameworks",
 					"$(inherited)",
 				);
-				MARKETING_VERSION = 1.74;
+				MARKETING_VERSION = 2.34;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

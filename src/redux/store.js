@@ -18,7 +18,8 @@ import {extraDataSlice} from 'dok-wallet-blockchain-networks/redux/extraData/ext
 import {messageSlice} from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
 import {sellCryptoSlice} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
 import {addressBookSlice} from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSlice';
-import {batchTransactionSlice} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
+import {batchTransactionSlice} from '../../dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
+import {customRpcSlice} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSlice';
 import {coinSyncSlice} from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSlice.js';
 
 const storage = createSensitiveStorage({
@@ -59,6 +60,7 @@ const rootReducer = persistCombineReducers(config, {
   [sellCryptoSlice.name]: sellCryptoSlice.reducer,
   [addressBookSlice.name]: addressBookSlice.reducer,
   [batchTransactionSlice.name]: batchTransactionSlice.reducer,
+  [customRpcSlice.name]: customRpcSlice.reducer,
   [coinSyncSlice.name]: coinSyncSlice.reducer,
 });
 
