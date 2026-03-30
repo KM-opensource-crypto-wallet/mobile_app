@@ -10,6 +10,7 @@ const CoinSyncProgress = ({
   currentCoin,
   isSyncing,
   status,
+  syncingWalletName,
 }) => {
   const styles = myStyles(theme);
   const isCreatingWallets = status === 'creating_wallets';
@@ -104,10 +105,22 @@ const CoinSyncProgress = ({
         </AnimatedCircularProgress>
       </View>
       <Text style={styles.mainText}>{statusText}</Text>
-      {isSyncing && currentCoin && (
-        <Text style={styles.currentCoinText} numberOfLines={1}>
-          {currentCoin.name} ({currentCoin.symbol})
+      {syncingWalletName && (isSyncing || isCompleted) ? (
+        <Text style={styles.walletNameText} numberOfLines={1}>
+          Scanning: {syncingWalletName}
         </Text>
+      ) : null}
+      {isSyncing && currentCoin && (
+        <View style={styles.currentCoinContainer}>
+          <Text style={styles.currentCoinText} numberOfLines={1}>
+            {currentCoin.name} ({currentCoin.symbol})
+          </Text>
+          {currentCoin.chain_display_name && (
+            <Text style={styles.chainNameText} numberOfLines={1}>
+              {currentCoin.chain_display_name}
+            </Text>
+          )}
+        </View>
       )}
     </View>
   );

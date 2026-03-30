@@ -55,24 +55,7 @@ export const myStyles = theme =>
       fontFamily: 'Roboto-Regular',
       fontWeight: '700',
     },
-    scanButton: {
-      backgroundColor: theme.background,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderRadius: 20,
-      alignItems: 'center',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      marginLeft: 8,
-    },
-    scanButtonActive: {
-      backgroundColor: theme.background + 'DD',
-    },
-    scanButtonTitle: {
-      color: 'white',
-      fontSize: 13,
-      fontFamily: 'Roboto-Regular',
-      fontWeight: '600',
-      marginLeft: 4,
+    closeButton: {
+      marginLeft: 12,
     },
   });

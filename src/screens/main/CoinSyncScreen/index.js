@@ -4,7 +4,6 @@ import {
   FlatList,
   Text,
   BackHandler,
-  ScrollView,
   TouchableOpacity,
 } from 'react-native';
 import {ThemeContext} from 'theme/ThemeContext';
@@ -20,6 +19,7 @@ import {
   selectSelectedCount,
   selectCoinsWithBalanceCount,
   selectSyncingWalletIndex,
+  selectSyncingWalletName,
 } from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSelectors';
 import {
   syncAllCoins,
@@ -27,7 +27,10 @@ import {
   resetCoinSync,
   toggleCoinSelection,
 } from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSlice';
-import {addOrToggleCoinInWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {
+  addCoinsToWallet,
+  addOrToggleCoinInWallet,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {showToast} from 'utils/toast';
 import CoinSyncItem from 'components/CoinSyncItem';
 import InteractionBlocker from 'components/InteractionBlocker';
@@ -55,6 +58,7 @@ const CoinSyncScreen = () => {
   const isSyncing = useSelector(selectIsSyncing);
   const selectedCount = useSelector(selectSelectedCount);
   const syncingWalletIndex = useSelector(selectSyncingWalletIndex);
+  const syncingWalletName = useSelector(selectSyncingWalletName);
 
   // Derived state
   const isCompleted = status === 'completed';
@@ -71,10 +75,7 @@ const CoinSyncScreen = () => {
   // Block back during wallet creation
   useEffect(() => {
     const onBackPress = () => {
-      if (isCreatingWallets) {
-        return true;
-      }
-      return false;
+      return isCreatingWallets;
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -118,20 +119,12 @@ const CoinSyncScreen = () => {
       navigation.goBack();
       return;
     }
-
-    for (const coin of selectedCoins) {
-      try {
-        await dispatch(
-          addOrToggleCoinInWallet({
-            ...coin,
-            walletIndex: syncingWalletIndex,
-            forceInWallet: true,
-          }),
-        );
-      } catch (err) {
-        console.error('Error adding coin:', err);
-      }
-    }
+    dispatch(
+      addCoinsToWallet({
+        coins: selectedCoins,
+        walletIndex: syncingWalletIndex,
+      }),
+    );
     showToast({
       type: 'successToast',
       title: 'Coins Added',
@@ -188,7 +181,11 @@ const CoinSyncScreen = () => {
                 color={isCreatingWallets ? theme.gray : theme.font}
               />
             </TouchableOpacity>
-            <Text style={styles.title}>{'Sync Coin Balances'}</Text>
+            <Text style={styles.title} numberOfLines={1}>
+              {syncingWalletName && (isSyncing || isCompleted)
+                ? `Sync - ${syncingWalletName}`
+                : 'Sync Coin Balances'}
+            </Text>
             <View style={styles.placeholder} />
           </View>
 
@@ -207,6 +204,7 @@ const CoinSyncScreen = () => {
                   currentCoin={currentCoin}
                   isSyncing={isSyncing}
                   status={status}
+                  syncingWalletName={syncingWalletName}
                 />
 
                 {coinsWithBalanceCount > 0 && (

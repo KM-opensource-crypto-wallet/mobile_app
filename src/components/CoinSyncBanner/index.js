@@ -2,7 +2,7 @@ import React, {useCallback, useContext} from 'react';
 import {View, Text, TouchableOpacity, ActivityIndicator} from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {ThemeContext} from 'theme/ThemeContext';
-import {useSelector} from 'react-redux';
+import {useSelector, useDispatch} from 'react-redux';
 import {useNavigation} from '@react-navigation/native';
 import {AnimatedCircularProgress} from 'react-native-circular-progress';
 import {
@@ -10,44 +10,82 @@ import {
   selectCoinSyncProgress,
   selectIsCreatingWallets,
   selectIsFetching,
+  selectIsBannerDismissed,
+  selectSyncingWalletName,
+  selectCoinSyncStatus,
 } from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSelectors';
+import {dismissBanner} from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSlice';
 import {myStyles} from './CoinSyncBannerStyles';
+import {isCoinsScanTimestampValid} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 
 const CoinSyncBanner = () => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const navigation = useNavigation();
+  const dispatch = useDispatch();
 
   const isSyncing = useSelector(selectIsSyncing);
   const progress = useSelector(selectCoinSyncProgress);
   const isCreatingWallets = useSelector(selectIsCreatingWallets);
   const isFetching = useSelector(selectIsFetching);
+  const isBannerDismissed = useSelector(selectIsBannerDismissed);
+  const syncingWalletName = useSelector(selectSyncingWalletName);
+  const status = useSelector(selectCoinSyncStatus);
+  const isCompleted = status === 'completed';
+  const isFailed = status === 'error';
+
+  const isValidTimestamp = useSelector(isCoinsScanTimestampValid);
 
   const progressPercent =
     progress.totalCoins > 0
       ? (progress.completedCoins / progress.totalCoins) * 100
       : 0;
 
-  // Get subtitle text based on current state
   const getSubtitleText = () => {
     if (isFetching) {
-      return 'Loading coins...';
+      return 'Preparing asset scan...';
     }
     if (isCreatingWallets) {
-      return 'Creating wallets...';
+      return 'Adding discovered assets...';
     }
     if (isSyncing) {
-      return `${progress.completedCoins} of ${progress.totalCoins} coins scanned`;
+      const walletPrefix = syncingWalletName ? `${syncingWalletName} - ` : '';
+      return `${walletPrefix}${progress.completedCoins} of ${progress.totalCoins} assets checked`;
     }
-    return 'Discover coins with existing balances';
+
+    if (isCompleted) {
+      const walletPrefix = syncingWalletName ? `${syncingWalletName} - ` : '';
+      return `${walletPrefix}${progress.completedCoins} are completed`;
+    }
+    if (isFailed) {
+      const walletPrefix = syncingWalletName ? `${syncingWalletName} - ` : '';
+      return `${walletPrefix} coins scan is failed`;
+    }
+    return 'Scan 200+ coins to find your assets';
   };
 
   const onPressScan = useCallback(() => {
     navigation.navigate('CoinSyncScreen');
   }, [navigation]);
 
+  const onPressClose = useCallback(() => {
+    dispatch(dismissBanner());
+  }, [dispatch]);
+
+  if (
+    (!isValidTimestamp || isBannerDismissed) &&
+    !isSyncing &&
+    !isCompleted &&
+    !isFailed
+  ) {
+    return null;
+  }
+
   return (
-    <View style={styles.bannerView}>
+    <TouchableOpacity
+      style={styles.bannerView}
+      activeOpacity={0.7}
+      onPress={onPressScan}>
       <View style={styles.contentContainer}>
         <View style={styles.iconContainer}>
           {isFetching || isCreatingWallets ? (
@@ -69,7 +107,13 @@ const CoinSyncBanner = () => {
             </AnimatedCircularProgress>
           ) : (
             <MaterialCommunityIcons
-              name="wallet-plus"
+              name={
+                isCompleted
+                  ? 'check-circle'
+                  : isFailed
+                  ? 'error'
+                  : 'wallet-plus'
+              }
               size={24}
               color={theme.background}
             />
@@ -77,26 +121,38 @@ const CoinSyncBanner = () => {
         </View>
         <View style={styles.textContainer}>
           <Text style={styles.bannerTitle} numberOfLines={1}>
-            {isSyncing ? 'Syncing Coins...' : 'Sync Coin Balances'}
+            {isSyncing
+              ? 'Scanning Assets...'
+              : isCompleted
+              ? 'Scan Completed'
+              : isFailed
+              ? 'Scan Failed'
+              : 'Find My Assets'}
           </Text>
           <Text style={styles.bannerSubtitle} numberOfLines={1}>
             {getSubtitleText()}
           </Text>
         </View>
       </View>
-      <TouchableOpacity
-        style={[styles.scanButton, isSyncing && styles.scanButtonActive]}
-        onPress={onPressScan}>
+      {!isSyncing ? (
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={onPressClose}
+          hitSlop={{top: 10, right: 10, bottom: 10, left: 10}}>
+          <MaterialCommunityIcons
+            name="close-circle"
+            size={22}
+            color={theme.gray}
+          />
+        </TouchableOpacity>
+      ) : (
         <MaterialCommunityIcons
-          name={isSyncing ? 'eye-outline' : 'magnify'}
-          size={18}
-          color="white"
+          name="chevron-right"
+          size={24}
+          color={theme.gray}
         />
-        <Text style={styles.scanButtonTitle}>
-          {isSyncing ? 'View' : 'Scan'}
-        </Text>
-      </TouchableOpacity>
-    </View>
+      )}
+    </TouchableOpacity>
   );
 };
 

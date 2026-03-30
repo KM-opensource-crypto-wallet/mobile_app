@@ -42,6 +42,7 @@ import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
 import Toast from 'react-native-toast-message';
 import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
 import {
+  delay,
   getCustomizePublicAddress,
   isBitcoinChain,
   isDeriveAddressSupportChain,
@@ -154,6 +155,7 @@ const SendScreen = ({navigation, route}) => {
 
   const onChangeSelectedAddress = useCallback(
     async subItem => {
+      console.log('subitems', subItem);
       dispatch(
         setSelectedDeriveAddress({
           address: subItem.options?.address,
