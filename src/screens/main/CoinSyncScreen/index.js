@@ -1,4 +1,4 @@
-import React, {useCallback, useContext, useMemo} from 'react';
+import React, {useCallback, useContext, useMemo, useEffect} from 'react';
 import {
   View,
   FlatList,
@@ -27,10 +27,7 @@ import {
   resetCoinSync,
   toggleCoinSelection,
 } from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSlice';
-import {
-  addCoinsToWallet,
-  addOrToggleCoinInWallet,
-} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {addCoinsToWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {showToast} from 'utils/toast';
 import CoinSyncItem from 'components/CoinSyncItem';
 import InteractionBlocker from 'components/InteractionBlocker';
@@ -40,7 +37,6 @@ import CoinSyncEmptyState from 'components/CoinSyncEmptyState';
 import myStyles from './CoinSyncScreenStyles';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
-import {useEffect} from 'react';
 
 const CoinSyncScreen = () => {
   const {theme} = useContext(ThemeContext);

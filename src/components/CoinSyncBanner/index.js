@@ -37,8 +37,8 @@ const CoinSyncBanner = () => {
   const isValidTimestamp = useSelector(isCoinsScanTimestampValid);
 
   const progressPercent =
-    progress.totalCoins > 0
-      ? (progress.completedCoins / progress.totalCoins) * 100
+    progress?.totalCoins > 0
+      ? (progress?.completedCoins / progress?.totalCoins) * 100
       : 0;
 
   const getSubtitleText = () => {
@@ -50,12 +50,12 @@ const CoinSyncBanner = () => {
     }
     if (isSyncing) {
       const walletPrefix = syncingWalletName ? `${syncingWalletName} - ` : '';
-      return `${walletPrefix}${progress.completedCoins} of ${progress.totalCoins} assets checked`;
+      return `${walletPrefix}${progress?.completedCoins} of ${progress?.totalCoins} assets checked`;
     }
 
     if (isCompleted) {
       const walletPrefix = syncingWalletName ? `${syncingWalletName} - ` : '';
-      return `${walletPrefix}${progress.completedCoins} are completed`;
+      return `${walletPrefix}${progress?.completedCoins} are completed`;
     }
     if (isFailed) {
       const walletPrefix = syncingWalletName ? `${syncingWalletName} - ` : '';
