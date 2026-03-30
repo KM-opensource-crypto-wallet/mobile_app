@@ -22,10 +22,10 @@ const CoinSyncProgress = ({
     if (isCompleted) {
       return 100;
     }
-    return progress.totalCoins > 0
-      ? (progress.completedCoins / progress.totalCoins) * 100
+    return progress?.totalCoins > 0
+      ? (progress?.completedCoins / progress?.totalCoins) * 100
       : 0;
-  }, [isCompleted, progress.completedCoins, progress.totalCoins]);
+  }, [isCompleted, progress?.completedCoins, progress?.totalCoins]);
 
   const statusText = useMemo(() => {
     if (isFetching) {
@@ -35,7 +35,7 @@ const CoinSyncProgress = ({
       return 'Creating wallets...';
     }
     if (isSyncing) {
-      return `Scanning ${progress.completedCoins} of ${progress.totalCoins}`;
+      return `Scanning ${progress?.completedCoins} of ${progress?.totalCoins}`;
     }
     if (isCompleted) {
       return 'Sync Complete!';
@@ -50,8 +50,8 @@ const CoinSyncProgress = ({
     isSyncing,
     isCompleted,
     isError,
-    progress.completedCoins,
-    progress.totalCoins,
+    progress?.completedCoins,
+    progress?.totalCoins,
   ]);
 
   const renderProgressContent = () => {
