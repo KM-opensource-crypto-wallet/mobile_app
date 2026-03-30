@@ -84,6 +84,7 @@ import {IS_KIML_WALLET, WALLET_CONNECT_DATA} from 'utils/wlData';
 import {ThemeContext} from 'theme/ThemeContext';
 import ModalApkDownload from 'components/ModalApkDownload';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import CoinSyncWidget from 'components/CoinSyncWidget';
 
 const unsecureRoute = [
   'ContactUs',
@@ -395,6 +396,7 @@ const Main = () => {
         </NavigationContainer>
       )}
       {/*<Delete />*/}
+      <CoinSyncWidget />
       {isLoading && <Spinner />}
     </GestureHandlerRootView>
   );
