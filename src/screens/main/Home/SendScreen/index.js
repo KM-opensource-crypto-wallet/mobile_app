@@ -155,7 +155,6 @@ const SendScreen = ({navigation, route}) => {
 
   const onChangeSelectedAddress = useCallback(
     async subItem => {
-      console.log('subitems', subItem);
       dispatch(
         setSelectedDeriveAddress({
           address: subItem.options?.address,
