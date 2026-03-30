@@ -48,7 +48,9 @@ const CoinSyncItem = ({coin, theme, isSelectable, isSelected, onToggle}) => {
             </Text>
           </View>
           <View style={styles.itemNumber}>
-            <Text style={styles.title}>{totalBalance || '0'} {symbol}</Text>
+            <Text style={styles.title}>
+              {totalBalance || '0'} {symbol}
+            </Text>
             <Text style={styles.text}>
               {currencySymbol[localCurrency] || ''}
               {totalBalanceCourse}
