@@ -112,7 +112,7 @@ const Transactions = ({renderList, selectedAddress}) => {
   }, [dispatch, navigation]);
 
   const handleOnPress = useCallback(
-    async item => {
+    item => {
       navigation.navigate('TransactionDetails', {transaction: item});
     },
     [navigation],
@@ -144,11 +144,9 @@ const Transactions = ({renderList, selectedAddress}) => {
                       <View style={styles.box}>
                         <View style={styles.item}>
                           <Text style={styles.title}>
-                            {item?.link
-                              ? item.link.length > 13
-                                ? `${item.link.substring(0, 13)}...`
-                                : item.link
-                              : '—'}
+                            {item.link
+                              ? item.link.substring(0, 13) + '...'
+                              : ''}
                           </Text>
                           <View style={{flexDirection: 'row'}}>
                             <Text style={styles.text}>

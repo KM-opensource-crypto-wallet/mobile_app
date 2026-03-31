@@ -59,7 +59,7 @@ const CopyRow = ({value, displayValue, styles, theme}) => (
 
 const TransactionDetails = ({route}) => {
   const initialTransaction = route?.params?.transaction;
-  const txHash = initialTransaction?.link || '';
+  const txHash = initialTransaction.link || '';
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const dispatch = useDispatch();
@@ -84,8 +84,6 @@ const TransactionDetails = ({route}) => {
           amount,
           totalCourse,
           blockTimestamp,
-          gasUsed,
-          gasPrice,
           status,
         } = recentTransaction.data;
         const date = blockTimestamp
@@ -157,7 +155,6 @@ const TransactionDetails = ({route}) => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }>
-        {/* <Text>{JSON.stringify(transaction, null, 2)}</Text> */}
         {/* Hero */}
         <View style={styles.hero}>
           <View style={[styles.iconCircle, {backgroundColor: iconBgColor}]}>
@@ -235,18 +232,6 @@ const TransactionDetails = ({route}) => {
             </>
           )}
 
-          {/* {transaction.fee != null && (
-            <>
-              <View style={styles.divider} />
-              <View style={styles.row}>
-                <Text style={styles.rowLabel}>Network Fee</Text>
-                <Text style={styles.rowValue}>
-                  {transaction.fee}{' '}
-                  {currentCoin?.chain_symbol || currentCoin?.symbol}
-                </Text>
-              </View>
-            </>
-          )} */}
         </View>
 
         {/* Explorer button */}
