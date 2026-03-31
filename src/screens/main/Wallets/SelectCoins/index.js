@@ -39,7 +39,10 @@ import {
   isAllCoinsLoading,
   isSearchAllCoinsLoading,
 } from 'dok-wallet-blockchain-networks/redux/currency/currencySelectors';
-import {createWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {
+  createWallet,
+  addEVMAndTronDeriveAddresses,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {
   isBitcoinChain,
   validateSupportedChain,
@@ -343,6 +346,8 @@ const SelectCoins = ({navigation, route}) => {
           selectedCoins: selectedCoinArray,
         }),
       ).unwrap();
+
+      dispatch(addEVMAndTronDeriveAddresses({silent: true}));
 
       navigation.reset({
         index: 0,

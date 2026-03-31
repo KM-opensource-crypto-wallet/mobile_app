@@ -2,6 +2,10 @@ import {IS_ANDROID} from 'utils/dimensions';
 import {getBuildNumber, getVersion} from 'react-native-device-info';
 import crypto from 'react-native-quick-crypto';
 import {Linking} from 'react-native';
+import {Platform} from 'react-native';
+import {LogLevel, OneSignal} from 'react-native-onesignal';
+import {getUniqueId} from 'react-native-device-info';
+import {ONESIGNAL_APP_ID} from 'utils/wlData';
 
 export const inAppBrowserOptions = IS_ANDROID
   ? {
@@ -170,4 +174,27 @@ export const Constants = {
     subTitle:
       'You have one more attempt if you type a wrong password again your wallet will delete completely.',
   },
+};
+
+export const initOneSignal = async () => {
+  try {
+    const deviceId = await getUniqueId();
+
+    OneSignal.Debug.setLogLevel(LogLevel.Verbose);
+    OneSignal.initialize(ONESIGNAL_APP_ID);
+
+    if (Platform.OS === 'ios' || Number(Platform.Version) >= 33) {
+      OneSignal.Notifications.requestPermission(false);
+    }
+
+    OneSignal.login(deviceId);
+    OneSignal.User.pushSubscription.optIn();
+
+    const fcmToken = await OneSignal.User.pushSubscription.getTokenAsync();
+    console.log('FCM token:', fcmToken);
+    return fcmToken;
+  } catch (error) {
+    console.error('OneSignal init error:', error);
+    return null;
+  }
 };

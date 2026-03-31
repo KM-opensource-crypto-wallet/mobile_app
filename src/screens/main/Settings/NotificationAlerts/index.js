@@ -7,21 +7,35 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {View, FlatList, Text, Alert, Platform, Linking} from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  Alert,
+  Platform,
+  Linking,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './NotificationAlertsStyles';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import KeyboardHeightView from 'components/KeyboardHeightView';
 import {useDispatch, useSelector} from 'react-redux';
-import {getNotificationAlerts} from 'redux/notificationAlerts/notificationAlertsSelector';
+import {getNotificationAlerts} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSelector';
 import {Searchbar} from 'react-native-paper';
 import NotificationAlertItem from 'components/NotificationAlertItem';
 import ModalConfirm from 'components/ModalConfirm';
-import {deleteNotificationAlert} from 'redux/notificationAlerts/notificationAlertsSlice';
+import {
+  deleteAlertThunk,
+  fetchSubscriptionsThunk,
+} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
+import {useFocusEffect} from '@react-navigation/native';
 import EmptyView from 'components/EmptyView';
-import OneSignalManager from 'utils/oneSignalManager';
-import {TouchableOpacity} from 'react-native';
+import {OneSignal} from 'react-native-onesignal';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {showToast} from 'utils/toast';
 
 const MAX_ALERTS = 20;
 
@@ -32,8 +46,32 @@ const NotificationAlerts = ({navigation}) => {
   const notificationAlerts = useSelector(getNotificationAlerts);
   const [searchText, setSearchText] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const selectedItemRef = useRef(null);
   const dispatch = useDispatch();
+
+  const fetchAlerts = useCallback(
+    async ({refreshing = false} = {}) => {
+      refreshing ? setIsRefreshing(true) : setIsLoading(true);
+      const action = await dispatch(fetchSubscriptionsThunk());
+      if (fetchSubscriptionsThunk.rejected.match(action)) {
+        showToast({
+          type: 'errorToast',
+          title: 'Failed to fetch alerts',
+          message: action.payload || 'Something went wrong. Please try again.',
+        });
+      }
+      refreshing ? setIsRefreshing(false) : setIsLoading(false);
+    },
+    [dispatch],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchAlerts();
+    }, [fetchAlerts]),
+  );
 
   const data = useMemo(() => {
     if (!searchText) {
@@ -45,26 +83,17 @@ const NotificationAlerts = ({navigation}) => {
         item.coinSymbol?.toLowerCase()?.includes(query) ||
         item.coinName?.toLowerCase()?.includes(query) ||
         item.walletName?.toLowerCase()?.includes(query) ||
-        item.address?.toLowerCase()?.includes(query),
+        item.wallet?.toLowerCase()?.includes(query),
     );
   }, [searchText, notificationAlerts]);
 
   const checkPermissionAndNavigate = useCallback(async () => {
-    if (notificationAlerts.length >= MAX_ALERTS) {
-      Alert.alert(
-        'Maximum Alerts Reached',
-        `You can have up to ${MAX_ALERTS} notification alerts. Please delete an existing alert first.`,
-      );
-      return;
-    }
-
-    const hasPermission = await OneSignalManager.hasNotificationPermission();
+    const hasPermission = await OneSignal.Notifications.getPermissionAsync();
     if (hasPermission) {
       navigation.navigate('AddNotificationAlert');
       return;
     }
-
-    const granted = await OneSignalManager.requestNotificationPermission();
+    const granted = await OneSignal.Notifications.requestPermission(false);
     if (granted) {
       navigation.navigate('AddNotificationAlert');
     } else {
@@ -75,18 +104,15 @@ const NotificationAlerts = ({navigation}) => {
           {text: 'Cancel', style: 'cancel'},
           {
             text: 'Open Settings',
-            onPress: () => {
-              if (Platform.OS === 'ios') {
-                Linking.openURL('app-settings:');
-              } else {
-                Linking.openSettings();
-              }
-            },
+            onPress: () =>
+              Platform.OS === 'ios'
+                ? Linking.openURL('app-settings:')
+                : Linking.openSettings(),
           },
         ],
       );
     }
-  }, [navigation, notificationAlerts.length]);
+  }, [navigation]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -95,12 +121,7 @@ const NotificationAlerts = ({navigation}) => {
           style={styles.headerRightButton}
           hitSlop={{left: 4, right: 4, top: 4, bottom: 4}}
           onPress={checkPermissionAndNavigate}>
-          <Ionicons
-            name={'add-circle-outline'}
-            resizeMode={'contain'}
-            size={24}
-            color={theme.font}
-          />
+          <Ionicons name={'add-circle-outline'} size={24} color={theme.font} />
         </TouchableOpacity>
       ),
     });
@@ -110,15 +131,29 @@ const NotificationAlerts = ({navigation}) => {
 
   const onPressYes = useCallback(() => {
     setShowConfirmModal(false);
-    if (selectedItemRef.current) {
-      dispatch(deleteNotificationAlert(selectedItemRef.current));
-      OneSignalManager.removeTag(`alert_${selectedItemRef.current.id}`);
+    const item = selectedItemRef.current;
+    if (!item) {
+      return;
     }
+    dispatch(deleteAlertThunk({item})).then(action => {
+      if (deleteAlertThunk.fulfilled.match(action)) {
+        showToast({
+          type: 'successToast',
+          title: 'Alert deleted',
+          message: `${item.coinSymbol} alert has been removed.`,
+        });
+      } else {
+        showToast({
+          type: 'errorToast',
+          title: 'Failed to delete alert',
+          message: 'Please check your connection and try again.',
+        });
+      }
+    });
+    OneSignal.User.removeTag(`alert_${item.id}`);
   }, [dispatch]);
 
-  const onPressNo = useCallback(() => {
-    setShowConfirmModal(false);
-  }, []);
+  const onPressNo = useCallback(() => setShowConfirmModal(false), []);
 
   const onPressDelete = useCallback(item => {
     selectedItemRef.current = item;
@@ -126,9 +161,7 @@ const NotificationAlerts = ({navigation}) => {
   }, []);
 
   const onPressEdit = useCallback(
-    item => {
-      navigation.navigate('AddNotificationAlert', {alert: item});
-    },
+    item => navigation.navigate('AddNotificationAlert', {alert: item}),
     [navigation],
   );
 
@@ -156,28 +189,42 @@ const NotificationAlerts = ({navigation}) => {
         />
       </View>
       <Text style={styles.counterText}>
-        {`${notificationAlerts.length}/${MAX_ALERTS} alerts`}
+        {notificationAlerts.length}/{MAX_ALERTS} alerts
       </Text>
-      <FlatList
-        bounces={false}
-        keyboardShouldPersistTaps={'always'}
-        style={styles.flatlistStyle}
-        contentContainerStyle={styles.contentContainerStyle}
-        keyExtractor={keyExtractor}
-        data={data}
-        renderItem={renderItem}
-        initialNumToRender={20}
-        maxToRenderPerBatch={20}
-        windowSize={10}
-        ListEmptyComponent={EmptyView({
-          text: 'No notification alerts configured',
-          buttonText: 'Add Alert',
-          onPressButton: checkPermissionAndNavigate,
-        })}
-      />
+      {isLoading ? (
+        <ActivityIndicator
+          size="large"
+          color={theme.primary}
+          style={styles.loader}
+        />
+      ) : (
+        <FlatList
+          keyboardShouldPersistTaps={'always'}
+          style={styles.flatlistStyle}
+          contentContainerStyle={styles.contentContainerStyle}
+          keyExtractor={keyExtractor}
+          data={data}
+          renderItem={renderItem}
+          initialNumToRender={20}
+          maxToRenderPerBatch={20}
+          windowSize={10}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={() => fetchAlerts({refreshing: true})}
+              tintColor={theme.primary}
+            />
+          }
+          ListEmptyComponent={EmptyView({
+            text: 'No notification alerts configured',
+            buttonText: 'Add Alert',
+            onPressButton: checkPermissionAndNavigate,
+          })}
+        />
+      )}
       <KeyboardHeightView />
       <ModalConfirm
-        title={`Delete alert for ${selectedItemRef?.current?.coinSymbol}?`}
+        title={`Delete alert for ${selectedItemRef.current?.coinSymbol}?`}
         description={'This alert will be permanently removed.'}
         onPressNo={onPressNo}
         onPressYes={onPressYes}

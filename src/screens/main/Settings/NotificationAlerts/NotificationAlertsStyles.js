@@ -51,6 +51,10 @@ const myStyles = (theme, bottom) =>
     searchInputMinHeight: {
       minHeight: 0,
     },
+    loader: {
+      flex: 1,
+      alignSelf: 'center',
+    },
   });
 
 export default myStyles;

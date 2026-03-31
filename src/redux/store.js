@@ -19,7 +19,7 @@ import {messageSlice} from 'dok-wallet-blockchain-networks/redux/messages/messag
 import {sellCryptoSlice} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
 import {addressBookSlice} from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSlice';
 import {batchTransactionSlice} from '../../dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
-import {notificationAlertsSlice} from 'redux/notificationAlerts/notificationAlertsSlice';
+import {notificationAlertsSlice} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
 import {customRpcSlice} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSlice';
 
 const storage = createSensitiveStorage({

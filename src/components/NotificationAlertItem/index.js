@@ -59,7 +59,7 @@ const NotificationAlertItem = ({item, onPressDelete, onPressEdit}) => {
           {item.walletName}
         </Text>
         <Text style={styles.address} numberOfLines={1}>
-          {truncateAddress(item.address)}
+          {truncateAddress(item.wallet)}
         </Text>
         <Text style={styles.minAmount}>
           {`Min: ${item.minAmount} ${item.coinSymbol}`}

@@ -1,14 +1,14 @@
 import React, {useContext} from 'react';
-import {View, StyleSheet, Image} from 'react-native';
+import {View, StyleSheet} from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
 import ChainIcon from 'components/ChainIcon/ChainIcon';
 import {ThemeContext} from 'theme/ThemeContext';
 
-const CoinIcon = ({item}) => {
+const CoinIcon = ({item, hideMargin}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   return (
-    <View style={styles.iconBox}>
+    <View style={[styles.iconBox, hideMargin && styles.hideMargin]}>
       {item?.icon && (
         <FastImage
           source={{uri: item?.icon}}
@@ -39,6 +39,9 @@ const myStyles = theme =>
       height: '100%',
       width: '100%',
       borderRadius: 20,
+    },
+    hideMargin: {
+      marginRight: 0,
     },
   });
 
