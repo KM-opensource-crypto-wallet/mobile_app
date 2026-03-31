@@ -1,5 +1,11 @@
 import {ThemeContext} from 'theme/ThemeContext';
-import React, {useCallback, useContext, useEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   Text,
@@ -68,6 +74,7 @@ const TransactionDetails = ({route}) => {
 
   const [refreshing, setRefreshing] = useState(false);
   const [transaction, setTransaction] = useState(initialTransaction);
+  const statusRef = useRef(initialTransaction?.status);
 
   const fetchTransaction = useCallback(async () => {
     setRefreshing(true);
@@ -87,10 +94,13 @@ const TransactionDetails = ({route}) => {
           gasUsed,
           gasPrice,
           status,
+          blockNumber,
+          confirmations,
         } = recentTransaction.data;
         const date = blockTimestamp
           ? new Date(parseInt(blockTimestamp, 16) * 1000).toISOString()
           : initialTransaction.date;
+        statusRef.current = status;
         setTransaction({
           ...initialTransaction,
           from,
@@ -100,6 +110,8 @@ const TransactionDetails = ({route}) => {
           status: status,
           link: link,
           totalCourse,
+          blockNumber: blockNumber,
+          confirmations,
         });
       }
     } catch (e) {
@@ -111,7 +123,13 @@ const TransactionDetails = ({route}) => {
 
   useEffect(() => {
     fetchTransaction();
-    const interval = setInterval(fetchTransaction, 30000);
+    const interval = setInterval(() => {
+      if (statusRef.current?.toUpperCase() === 'SUCCESS') {
+        clearInterval(interval);
+        return;
+      }
+      fetchTransaction();
+    }, 30000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -204,6 +222,25 @@ const TransactionDetails = ({route}) => {
             </>
           )}
 
+          {transaction.blockNumber != null && (
+            <>
+              <View style={styles.divider} />
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Block no.</Text>
+                <Text style={styles.rowValue}>{transaction.blockNumber}</Text>
+              </View>
+            </>
+          )}
+
+          {transaction.confirmations != null && (
+            <>
+              <View style={styles.divider} />
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>No. of Confirmation</Text>
+                <Text style={styles.rowValue}>{transaction.confirmations}</Text>
+              </View>
+            </>
+          )}
           {!!transaction.link && (
             <View style={styles.row}>
               <Text style={styles.rowLabel}>Tx Hash</Text>
