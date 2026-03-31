@@ -82,6 +82,19 @@ const toastConfig = theme => {
             </Text>
           </View>
         </View>
+        {!!props?.onViewTransaction && (
+          <TouchableOpacity
+            style={myStyles.viewTransactionBtn}
+            onPress={() => {
+              Toast.hide();
+              props.onViewTransaction();
+            }}>
+            <Text style={myStyles.viewTransactionText}>
+              View Transaction Details
+            </Text>
+            <IoniconsIcon name={'chevron-forward'} size={14} color={'white'} />
+          </TouchableOpacity>
+        )}
         <View style={myStyles.successBottomBorder} />
       </View>
     ),
