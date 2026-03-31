@@ -137,9 +137,6 @@ const Transactions = ({renderList, selectedAddress}) => {
               return (
                 <TouchableOpacity
                   style={styles.section}
-                  // onPress={async () => {
-                  //   InAppBrowser.open(item?.url, inAppBrowserOptions).then();
-                  // }}
                   onPress={() => handleOnPress(item)}
                   key={index}>
                   <>
@@ -147,7 +144,11 @@ const Transactions = ({renderList, selectedAddress}) => {
                       <View style={styles.box}>
                         <View style={styles.item}>
                           <Text style={styles.title}>
-                            {item.link.substring(0, 13) + '...'}
+                            {item?.link
+                              ? item.link.length > 13
+                                ? `${item.link.substring(0, 13)}...`
+                                : item.link
+                              : '—'}
                           </Text>
                           <View style={{flexDirection: 'row'}}>
                             <Text style={styles.text}>
