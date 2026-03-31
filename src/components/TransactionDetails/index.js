@@ -59,7 +59,7 @@ const CopyRow = ({value, displayValue, styles, theme}) => (
 
 const TransactionDetails = ({route}) => {
   const initialTransaction = route?.params?.transaction;
-  const txHash = initialTransaction.link || '';
+  const txHash = initialTransaction?.link || '';
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const dispatch = useDispatch();
