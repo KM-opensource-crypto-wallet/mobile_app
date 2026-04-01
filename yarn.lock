@@ -15548,6 +15548,13 @@ react-native-nitro-modules@^0.35.2:
   resolved "https://registry.yarnpkg.com/react-native-nitro-modules/-/react-native-nitro-modules-0.35.2.tgz#75fbcd42a73d93540c0069d42098d9dc6c12ea7e"
   integrity sha512-97cZcCh3ZAuWAfutel2Q3qLfc45XXh7F9Ei5tEjahP0kV3q8hQelwLIulKXmjN+f0JI5Zf/wCsfwwdVWYU2tKA==
 
+react-native-onesignal@5.3.1:
+  version "5.3.1"
+  resolved "https://registry.yarnpkg.com/react-native-onesignal/-/react-native-onesignal-5.3.1.tgz#bbc20a376a453abb7e7cb0b3f203481ca27d3ffc"
+  integrity sha512-mkuUkBn+b5OmIrw1anS/FnQxM+S8Vox4z62PVa16MXU0iXOksAMGdNvJSRlnGQHO8yZOw9eb6ngzbAIaSqZQrA==
+  dependencies:
+    invariant "^2.2.4"
+
 react-native-pager-view@^6.9.1:
   version "6.9.1"
   resolved "https://registry.yarnpkg.com/react-native-pager-view/-/react-native-pager-view-6.9.1.tgz#a9e6d9323935cc2ae1d46d7816b66f76dc3eff8e"
