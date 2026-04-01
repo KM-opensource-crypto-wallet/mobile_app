@@ -36,32 +36,35 @@ const STATUS_CONFIG = {
 };
 
 const truncateAddress = address => {
-  if (!address || address.length <= 16) {
-    return address;
+  if (!address || typeof address !== 'string' || address.length <= 16) {
+    return typeof address === 'string' ? address : undefined;
   }
   return `${address.slice(0, 8)}...${address.slice(-8)}`;
 };
 
-const CopyRow = ({value, displayValue, styles, theme}) => (
-  <TouchableOpacity
-    style={styles.rowValueRow}
-    onPress={() => {
-      if (value) {
-        Clipboard.setString(value);
-        showToast({type: 'success', title: 'Copied to clipboard'});
-      }
-    }}>
-    <Text style={styles.rowValue} numberOfLines={1}>
-      {displayValue || truncateAddress(value)}
-    </Text>
-    <IoniconIcon
-      name="copy-outline"
-      size={16}
-      color={theme.gray}
-      style={styles.copyIcon}
-    />
-  </TouchableOpacity>
-);
+const CopyRow = ({value, displayValue, styles, theme}) => {
+  const stringValue = typeof value === 'string' ? value : undefined;
+  return (
+    <TouchableOpacity
+      style={styles.rowValueRow}
+      onPress={() => {
+        if (stringValue) {
+          Clipboard.setString(stringValue);
+          showToast({type: 'success', title: 'Copied to clipboard'});
+        }
+      }}>
+      <Text style={styles.rowValue} numberOfLines={1}>
+        {displayValue || truncateAddress(stringValue)}
+      </Text>
+      <IoniconIcon
+        name="copy-outline"
+        size={16}
+        color={theme.gray}
+        style={styles.copyIcon}
+      />
+    </TouchableOpacity>
+  );
+};
 
 const TransactionDetails = ({route}) => {
   const initialTransaction = route?.params?.transaction;
@@ -69,7 +72,8 @@ const TransactionDetails = ({route}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const dispatch = useDispatch();
-  const currentCoin = useSelector(selectCurrentCoin);
+  const reduxCurrentCoin = useSelector(selectCurrentCoin);
+  const currentCoin = initialTransaction?.currentCoin || reduxCurrentCoin;
   const localCurrency = useSelector(getLocalCurrency);
 
   const [refreshing, setRefreshing] = useState(false);
