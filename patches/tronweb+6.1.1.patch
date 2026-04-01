@@ -11,39 +11,6 @@ index 195745f..26d1195 100644
          return chainParameter;
      }
      /**
-diff --git a/node_modules/tronweb/lib/commonjs/package.json b/node_modules/tronweb/lib/commonjs/package.json
-index b731bd6..46bff21 100644
---- a/node_modules/tronweb/lib/commonjs/package.json
-+++ b/node_modules/tronweb/lib/commonjs/package.json
-@@ -1 +1,27 @@
--{"type": "commonjs"}
-+{
-+  "type": "commonjs",
-+  "react-native": {
-+    "zlib": "browserify-zlib",
-+    "http": "@tradle/react-native-http",
-+    "https": "https-browserify",
-+    "fs": "react-native-level-fs",
-+    "_stream_transform": "readable-stream/transform",
-+    "_stream_readable": "readable-stream/readable",
-+    "_stream_writable": "readable-stream/writable",
-+    "_stream_duplex": "readable-stream/duplex",
-+    "_stream_passthrough": "readable-stream/passthrough",
-+    "stream": "stream-browserify"
-+  },
-+  "browser": {
-+    "zlib": "browserify-zlib",
-+    "http": "@tradle/react-native-http",
-+    "https": "https-browserify",
-+    "fs": "react-native-level-fs",
-+    "_stream_transform": "readable-stream/transform",
-+    "_stream_readable": "readable-stream/readable",
-+    "_stream_writable": "readable-stream/writable",
-+    "_stream_duplex": "readable-stream/duplex",
-+    "_stream_passthrough": "readable-stream/passthrough",
-+    "stream": "stream-browserify"
-+  }
-+}
 diff --git a/node_modules/tronweb/lib/esm/lib/trx.js b/node_modules/tronweb/lib/esm/lib/trx.js
 index 9d549e5..9ddf9de 100644
 --- a/node_modules/tronweb/lib/esm/lib/trx.js
@@ -57,39 +24,6 @@ index 9d549e5..9ddf9de 100644
          return chainParameter;
      }
      /**
-diff --git a/node_modules/tronweb/lib/esm/package.json b/node_modules/tronweb/lib/esm/package.json
-index 6990891..4595ca8 100644
---- a/node_modules/tronweb/lib/esm/package.json
-+++ b/node_modules/tronweb/lib/esm/package.json
-@@ -1 +1,27 @@
--{"type": "module"}
-+{
-+  "type": "module",
-+  "react-native": {
-+    "zlib": "browserify-zlib",
-+    "http": "@tradle/react-native-http",
-+    "https": "https-browserify",
-+    "fs": "react-native-level-fs",
-+    "_stream_transform": "readable-stream/transform",
-+    "_stream_readable": "readable-stream/readable",
-+    "_stream_writable": "readable-stream/writable",
-+    "_stream_duplex": "readable-stream/duplex",
-+    "_stream_passthrough": "readable-stream/passthrough",
-+    "stream": "stream-browserify"
-+  },
-+  "browser": {
-+    "zlib": "browserify-zlib",
-+    "http": "@tradle/react-native-http",
-+    "https": "https-browserify",
-+    "fs": "react-native-level-fs",
-+    "_stream_transform": "readable-stream/transform",
-+    "_stream_readable": "readable-stream/readable",
-+    "_stream_writable": "readable-stream/writable",
-+    "_stream_duplex": "readable-stream/duplex",
-+    "_stream_passthrough": "readable-stream/passthrough",
-+    "stream": "stream-browserify"
-+  }
-+}
 diff --git a/node_modules/tronweb/src/lib/trx.ts b/node_modules/tronweb/src/lib/trx.ts
 index 79fd825..333e442 100644
 --- a/node_modules/tronweb/src/lib/trx.ts
