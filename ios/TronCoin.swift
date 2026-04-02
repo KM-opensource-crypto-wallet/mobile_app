@@ -42,7 +42,7 @@ class TronCoin: CoinFactory.Coin {
       return result;
     }
   
-  override func addCustomDerivation(derivePath:String) -> NSMutableDictionary {
+  override func addCustomDerivation(derivePath:String,isTestNet:Bool) -> NSMutableDictionary {
       let privateKey = wallet.getKey(coin: .tron, derivationPath: derivePath)
       let address = CoinType.tron.deriveAddress(privateKey: privateKey)
       let yourAuxDic: NSMutableDictionary = [:]

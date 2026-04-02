@@ -41,6 +41,7 @@ RCT_EXTERN_METHOD(addCustomDerivation:
                   (NSString *) coinName
                   mnemonic: (NSString *)mnemonic
                   derivePath: (NSString) derivePath
+                  isTestNet: (BOOL) isTestnet
                   resolver: (RCTPromiseResolveBlock) resolve
                   rejecter: (RCTPromiseRejectBlock) reject
                   )

@@ -40,7 +40,7 @@ class EthereumCoin: CoinFactory.Coin {
       return result;
     }
   
-  override func addCustomDerivation(derivePath:String) -> NSMutableDictionary {
+  override func addCustomDerivation(derivePath:String,isTestNet:Bool) -> NSMutableDictionary {
       let privateKey = wallet.getKey(coin: .ethereum, derivationPath: derivePath)
       let address = CoinType.ethereum.deriveAddress(privateKey: privateKey)
       let yourAuxDic: NSMutableDictionary = [:]

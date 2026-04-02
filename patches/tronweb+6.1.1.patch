@@ -1,0 +1,41 @@
+diff --git a/node_modules/tronweb/lib/commonjs/lib/trx.js b/node_modules/tronweb/lib/commonjs/lib/trx.js
+index 195745f..26d1195 100644
+--- a/node_modules/tronweb/lib/commonjs/lib/trx.js
++++ b/node_modules/tronweb/lib/commonjs/lib/trx.js
+@@ -730,7 +730,7 @@ class Trx {
+      * Lists all parameters available for network modification proposals.
+      */
+     async getChainParameters() {
+-        const { chainParameter = [] } = await this.tronWeb.fullNode.request('wallet/getchainparameters', {}, 'post');
++        const { chainParameter = [] } = await this.tronWeb.fullNode.request('wallet/getchainparameters', null, 'get');
+         return chainParameter;
+     }
+     /**
+diff --git a/node_modules/tronweb/lib/esm/lib/trx.js b/node_modules/tronweb/lib/esm/lib/trx.js
+index 9d549e5..9ddf9de 100644
+--- a/node_modules/tronweb/lib/esm/lib/trx.js
++++ b/node_modules/tronweb/lib/esm/lib/trx.js
+@@ -726,7 +726,7 @@ export class Trx {
+      * Lists all parameters available for network modification proposals.
+      */
+     async getChainParameters() {
+-        const { chainParameter = [] } = await this.tronWeb.fullNode.request('wallet/getchainparameters', {}, 'post');
++        const { chainParameter = [] } = await this.tronWeb.fullNode.request('wallet/getchainparameters', null, 'get');
+         return chainParameter;
+     }
+     /**
+diff --git a/node_modules/tronweb/src/lib/trx.ts b/node_modules/tronweb/src/lib/trx.ts
+index 79fd825..333e442 100644
+--- a/node_modules/tronweb/src/lib/trx.ts
++++ b/node_modules/tronweb/src/lib/trx.ts
+@@ -1047,8 +1047,8 @@ export class Trx {
+     async getChainParameters(): Promise<ChainParameter[]> {
+         const { chainParameter = [] } = await this.tronWeb.fullNode.request<{ chainParameter: ChainParameter[] }>(
+             'wallet/getchainparameters',
+-            {},
+-            'post'
++            null,
++            'get'
+         );
+         return chainParameter;
+     }

@@ -221,6 +221,7 @@ const Wallets = ({navigation}) => {
 
         <View style={styles.container}>
           <DraggableFlatList
+            bounces={false}
             keyboardShouldPersistTaps={'always'}
             data={searchQuery ? searchWallets : allWallets}
             contentContainerStyle={{flexGrow: 1}}

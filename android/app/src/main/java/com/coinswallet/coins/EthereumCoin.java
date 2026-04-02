@@ -57,7 +57,7 @@ public class EthereumCoin extends CoinFactory.Coin {
        return results;
     }
     @Override
-    public ReadableMap addCustomDerivation(String derivePath) {
+    public ReadableMap addCustomDerivation(String derivePath, Boolean isTestNet) {
         WritableMap obj = Arguments.createMap();
         PrivateKey tempPrivateKey = wallet.getKey(CoinType.ETHEREUM,derivePath);
         String address = CoinType.ETHEREUM.deriveAddress(tempPrivateKey);
