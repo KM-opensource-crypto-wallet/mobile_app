@@ -36,7 +36,12 @@ import {
   createIfNotExistsMasterClientId,
   resetCoinsToDefaultAddressForPrivacyMode,
   resetNfts,
+  setCurrentCoin,
+  setCurrentWalletIndex,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {store} from 'redux/store';
+import {OneSignal} from 'react-native-onesignal';
 import {isReduxStoreLoaded} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSelectors';
 import {selectWalletConnectSessions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {clearWalletConnectStorageCache} from 'utils/asyncStorage';
@@ -56,7 +61,6 @@ import {getCountry} from 'react-native-localize';
 import {MenuProvider} from 'react-native-popup-menu';
 import {
   getQueryParams,
-  parseJson,
   parseUrlQS,
   validatePaymentUrl,
   validateWCUrl,
@@ -65,6 +69,7 @@ import {
   setIsUpdateAvailable,
   setIsWalletConnectInitialized,
   setPaymentData,
+  setRouteStateData,
   setWcUri,
 } from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
 import ModalAppUpdate from 'components/ModalAppUpdates';
@@ -80,7 +85,11 @@ import DisableComponent from 'components/DisableComponent';
 import {getLastUpdateCheckTimestamp} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 import {setLastUpdateCheckTimestamp} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {getFeesInfo} from 'dok-wallet-blockchain-networks/feesInfo/feesInfo';
-import {IS_KIML_WALLET, WALLET_CONNECT_DATA} from 'utils/wlData';
+import {
+  IS_KIML_WALLET,
+  ONESIGNAL_APP_ID,
+  WALLET_CONNECT_DATA,
+} from 'utils/wlData';
 import {ThemeContext} from 'theme/ThemeContext';
 import ModalApkDownload from 'components/ModalApkDownload';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -360,6 +369,63 @@ const Main = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const handleNotificationData = useCallback(
+    data => {
+      if (!data?.chainName || !data?.coin) {
+        return;
+      }
+      const wallets = selectAllWallets(store.getState());
+      const walletIndex = data.walletId
+        ? wallets.findIndex(w => w.clientId === data.walletId)
+        : wallets.findIndex(w =>
+            w.coins?.some(
+              c =>
+                c.chain_name === data.chainName &&
+                c.symbol === data.coin &&
+                c.isInWallet,
+            ),
+          );
+      if (walletIndex === -1) {
+        return;
+      }
+      const coin = wallets[walletIndex].coins?.find(
+        c =>
+          c.chain_name === data.chainName &&
+          c.symbol === data.coin &&
+          c.isInWallet,
+      );
+      if (!coin) {
+        return;
+      }
+      dispatch(setCurrentWalletIndex(walletIndex));
+      dispatch(setCurrentCoin(coin._id));
+      dispatch(setRouteStateData({navigateToTransactionList: true}));
+      MainNavigation.reset({
+        index: 0,
+        routes: [{name: 'Sidebar'}],
+      });
+    },
+    [dispatch],
+  );
+
+  const onNotificationClick = useCallback(
+    event => {
+      const data = event?.notification?.additionalData;
+      console.log('notification data: ', data);
+      handleNotificationData(data);
+    },
+    [handleNotificationData],
+  );
+
+  useEffect(() => {
+    OneSignal.initialize(ONESIGNAL_APP_ID);
+    OneSignal.Notifications.addEventListener('click', onNotificationClick);
+    return () => {
+      OneSignal.Notifications.removeEventListener('click', onNotificationClick);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const {theme} = useContext(ThemeContext);
 
   return (

@@ -36,6 +36,7 @@ import EmptyView from 'components/EmptyView';
 import {OneSignal} from 'react-native-onesignal';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {showToast} from 'utils/toast';
+import {initOneSignal} from 'utils/common';
 
 const MAX_ALERTS = 20;
 
@@ -94,6 +95,7 @@ const NotificationAlerts = ({navigation}) => {
       return;
     }
     const granted = await OneSignal.Notifications.requestPermission(false);
+    initOneSignal();
     if (granted) {
       navigation.navigate('AddNotificationAlert');
     } else {
@@ -150,7 +152,6 @@ const NotificationAlerts = ({navigation}) => {
         });
       }
     });
-    OneSignal.User.removeTag(`alert_${item.id}`);
   }, [dispatch]);
 
   const onPressNo = useCallback(() => setShowConfirmModal(false), []);

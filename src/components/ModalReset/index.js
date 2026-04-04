@@ -20,6 +20,7 @@ import {resetCurrentTransferData} from 'dok-wallet-blockchain-networks/redux/cur
 import {resetBatchTransactions} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
 import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
 import googleDrive from '../../utils/googleDriveBackup';
+import {OneSignal} from 'react-native-onesignal';
 
 const WIDTH = Dimensions.get('window').width + 80;
 
@@ -61,6 +62,7 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
       dispatch(resetWallet());
       dispatch(resetCurrentTransferData());
       dispatch(resetBatchTransactions());
+      OneSignal.logout();
       await googleDrive.googleSignOut();
       hideModal(false);
       dispatch(logOutSuccess());

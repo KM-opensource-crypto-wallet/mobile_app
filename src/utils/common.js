@@ -190,9 +190,8 @@ export const initOneSignal = async () => {
     OneSignal.login(deviceId);
     OneSignal.User.pushSubscription.optIn();
 
-    const fcmToken = await OneSignal.User.pushSubscription.getTokenAsync();
-    console.log('FCM token:', fcmToken);
-    return fcmToken;
+    const onesignalId = await OneSignal.User.getOnesignalId();
+    return onesignalId;
   } catch (error) {
     console.error('OneSignal init error:', error);
     return null;

@@ -18,7 +18,6 @@ import {
   updateAlertThunk,
 } from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
 import {v4} from 'uuid';
-import {OneSignal} from 'react-native-onesignal';
 import {showToast} from 'utils/toast';
 import {initOneSignal} from 'utils/common';
 import {
@@ -288,7 +287,7 @@ const AddNotificationAlert = ({navigation, route}) => {
           backendId: existingAlert.backendId ?? null,
           ...basePayload(entry, key, addressMap[key] || existingAlert.wallet),
         };
-        await dispatch(updateAlertThunk({payload})).unwrap();
+        await dispatch(updateAlertThunk({payload, oneSignalPlayerId})).unwrap();
         showToast({
           type: 'successToast',
           title: 'Alert updated',
@@ -311,21 +310,27 @@ const AddNotificationAlert = ({navigation, route}) => {
           ).unwrap();
         });
         const results = await Promise.allSettled(promises);
-        const failedCount = results.filter(r => r.status === 'rejected').length;
-        const successCount = results.length - failedCount;
+        const failed = results.filter(r => r.status === 'rejected');
+        const successCount = results.length - failed.length;
         const s = n => (n > 1 ? 's' : '');
+        if (successCount === 0) {
+          const reason = failed[0]?.reason?.message || failed[0]?.reason;
+          showToast({
+            type: 'errorToast',
+            title: 'Failed to create alerts',
+            message:
+              typeof reason === 'string'
+                ? reason
+                : 'Please check your connection and try again.',
+          });
+          return;
+        }
         showToast(
-          successCount === 0
+          failed.length > 0
             ? {
                 type: 'errorToast',
-                title: 'Failed to create alerts',
-                message: 'Please check your connection and try again.',
-              }
-            : failedCount > 0
-            ? {
-                type: 'errorToast',
-                title: `${failedCount} alert${s(failedCount)} failed`,
-                message: `${successCount} created, ${failedCount} could not be saved.`,
+                title: `${failed.length} alert${s(failed.length)} failed`,
+                message: `${successCount} created, ${failed.length} could not be saved.`,
               }
             : {
                 type: 'successToast',
@@ -334,12 +339,9 @@ const AddNotificationAlert = ({navigation, route}) => {
                   'You will receive notifications for the selected coins.',
               },
         );
-        if (successCount === 0) {
-          return;
-        }
       }
       isDoneRef.current = true;
-      navigation.replace('NotificationAlerts');
+      navigation.goBack();
     } catch (err) {
       showToast({
         type: 'errorToast',
