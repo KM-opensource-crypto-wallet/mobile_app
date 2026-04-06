@@ -141,6 +141,7 @@ const Main = () => {
   const compareRpcUrlsIntervalRef = useRef(null);
   const disableMessage = useSelector(getDisableMessage);
   const lastUpdateCheckTimestamp = useSelector(getLastUpdateCheckTimestamp);
+  const [pendingNotificationData, setPendingNotificationData] = useState(null);
 
   const fetchAndCompareRpcUrls = useCallback(() => {
     fetchRPCUrl();
@@ -408,14 +409,23 @@ const Main = () => {
     [dispatch],
   );
 
-  const onNotificationClick = useCallback(
-    event => {
-      const data = event?.notification?.additionalData;
-      console.log('notification data: ', data);
-      handleNotificationData(data);
-    },
-    [handleNotificationData],
-  );
+  const onNotificationClick = useCallback(event => {
+    const data = event?.notification?.additionalData;
+    if (!data?.chainName || !data?.coin) {
+      return;
+    }
+    // Store notification data and show login modal
+    setPendingNotificationData(data);
+    setLoginModalVisible(true);
+  }, []);
+
+  const handleNotificationLoginSuccess = useCallback(() => {
+    if (pendingNotificationData) {
+      handleNotificationData(pendingNotificationData);
+      setPendingNotificationData(null);
+    }
+    setLoginModalVisible(false);
+  }, [pendingNotificationData, handleNotificationData]);
 
   useEffect(() => {
     OneSignal.initialize(ONESIGNAL_APP_ID);
@@ -456,7 +466,11 @@ const Main = () => {
           <LoginModal
             visible={loginModalVisible}
             onClose={() => {
-              setLoginModalVisible(false);
+              if (pendingNotificationData) {
+                handleNotificationLoginSuccess();
+              } else {
+                setLoginModalVisible(false);
+              }
             }}
           />
         </NavigationContainer>

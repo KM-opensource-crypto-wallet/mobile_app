@@ -1,4 +1,4 @@
-import {StyleSheet} from 'react-native';
+import {StyleSheet, Platform} from 'react-native';
 import {SCREEN_WIDTH} from 'utils/dimensions';
 
 const myStyles = (theme, bottom) =>
@@ -54,6 +54,80 @@ const myStyles = (theme, bottom) =>
     loader: {
       flex: 1,
       alignSelf: 'center',
+    },
+    permissionContainer: {
+      flex: 1,
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      marginTop: '30%',
+      backgroundColor: theme.backgroundColor,
+    },
+    permissionCard: {
+      alignItems: 'center',
+      backgroundColor: theme.secondaryBackgroundColor,
+      borderRadius: 16,
+      paddingHorizontal: 24,
+      paddingVertical: 40,
+      width: '100%',
+      ...Platform.select({
+        ios: {
+          shadowColor: theme.font,
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.12,
+          shadowRadius: 8,
+        },
+        android: {
+          shadowColor: theme.font,
+          elevation: 6,
+        },
+      }),
+    },
+    iconContainer: {
+      marginBottom: 24,
+      opacity: 0.9,
+    },
+    permissionTitle: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: theme.font,
+      fontFamily: 'Roboto-Bold',
+      marginBottom: 12,
+      textAlign: 'center',
+    },
+    permissionDescription: {
+      fontSize: 14,
+      color: theme.gray,
+      fontFamily: 'Roboto-Regular',
+      textAlign: 'center',
+      marginBottom: 32,
+      lineHeight: 20,
+    },
+    settingsButton: {
+      backgroundColor: theme.background,
+      width: SCREEN_WIDTH / 2,
+      height: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 12,
+      ...Platform.select({
+        ios: {
+          shadowColor: theme.background,
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+        },
+        android: {
+          shadowColor: theme.background,
+          elevation: 8,
+        },
+      }),
+    },
+    settingsButtonText: {
+      fontWeight: '600',
+      color: 'white',
+      fontSize: 16,
+      fontFamily: 'Roboto-Medium',
     },
   });
 

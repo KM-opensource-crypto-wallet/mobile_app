@@ -2,6 +2,7 @@
 import React, {
   useCallback,
   useContext,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -17,6 +18,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  AppState,
 } from 'react-native';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './NotificationAlertsStyles';
@@ -49,6 +51,8 @@ const NotificationAlerts = ({navigation}) => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasNotificationPermission, setHasNotificationPermission] =
+    useState(true);
   const selectedItemRef = useRef(null);
   const dispatch = useDispatch();
 
@@ -67,6 +71,34 @@ const NotificationAlerts = ({navigation}) => {
     },
     [dispatch],
   );
+
+  const checkNotificationPermission = useCallback(async () => {
+    const hasPermission = await OneSignal.Notifications.getPermissionAsync();
+    setHasNotificationPermission(hasPermission);
+  }, []);
+
+  const handleAppStateChange = useCallback(
+    appState => {
+      if (appState === 'active') {
+        checkNotificationPermission();
+      }
+    },
+    [checkNotificationPermission],
+  );
+
+  useEffect(() => {
+    const appStateSubscription = AppState.addEventListener(
+      'change',
+      handleAppStateChange,
+    );
+    return () => {
+      appStateSubscription.remove();
+    };
+  }, [handleAppStateChange]);
+
+  useEffect(() => {
+    checkNotificationPermission();
+  }, [checkNotificationPermission]);
 
   useFocusEffect(
     useCallback(() => {
@@ -95,8 +127,8 @@ const NotificationAlerts = ({navigation}) => {
       return;
     }
     const granted = await OneSignal.Notifications.requestPermission(false);
-    initOneSignal();
     if (granted) {
+      await initOneSignal();
       navigation.navigate('AddNotificationAlert');
     } else {
       Alert.alert(
@@ -177,51 +209,93 @@ const NotificationAlerts = ({navigation}) => {
     [onPressDelete, onPressEdit],
   );
 
+  const openSettings = useCallback(() => {
+    Platform.OS === 'ios'
+      ? Linking.openURL('app-settings:')
+      : Linking.openSettings();
+  }, []);
+
+  const renderPermissionMessage = useCallback(
+    () => (
+      <View style={styles.permissionContainer}>
+        <View style={styles.permissionCard}>
+          <View style={styles.iconContainer}>
+            <Ionicons
+              name="notifications-off-circle"
+              size={80}
+              color={theme.background}
+            />
+          </View>
+          <Text style={styles.permissionTitle}>Notifications Disabled</Text>
+          <Text style={styles.permissionDescription}>
+            You've turned off notification permissions. Enable them to receive
+            important alerts about your transactions and wallet activities.
+          </Text>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            activeOpacity={0.75}
+            onPress={openSettings}>
+            <Text style={styles.settingsButtonText}>Open Settings</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    ),
+    [styles, theme.background, openSettings],
+  );
+
   return (
     <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Searchbar
-          placeholder="Search alerts"
-          value={searchText}
-          style={styles.input}
-          onChangeText={setSearchText}
-          autoFocus={false}
-          inputStyle={styles.searchInputMinHeight}
-        />
-      </View>
-      <Text style={styles.counterText}>
-        {notificationAlerts.length}/{MAX_ALERTS} alerts
-      </Text>
-      {isLoading ? (
-        <ActivityIndicator
-          size="large"
-          color={theme.primary}
-          style={styles.loader}
-        />
+      {hasNotificationPermission && (
+        <View style={styles.headerContainer}>
+          <Searchbar
+            placeholder="Search alerts"
+            value={searchText}
+            style={styles.input}
+            onChangeText={setSearchText}
+            autoFocus={false}
+            inputStyle={styles.searchInputMinHeight}
+          />
+        </View>
+      )}
+      {!hasNotificationPermission ? (
+        renderPermissionMessage()
       ) : (
-        <FlatList
-          keyboardShouldPersistTaps={'always'}
-          style={styles.flatlistStyle}
-          contentContainerStyle={styles.contentContainerStyle}
-          keyExtractor={keyExtractor}
-          data={data}
-          renderItem={renderItem}
-          initialNumToRender={20}
-          maxToRenderPerBatch={20}
-          windowSize={10}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={() => fetchAlerts({refreshing: true})}
-              tintColor={theme.primary}
+        <>
+          <Text style={styles.counterText}>
+            {notificationAlerts.length}/{MAX_ALERTS} alerts
+          </Text>
+          {isLoading ? (
+            <ActivityIndicator
+              size="large"
+              color={theme.primary}
+              style={styles.loader}
             />
-          }
-          ListEmptyComponent={EmptyView({
-            text: 'No notification alerts configured',
-            buttonText: 'Add Alert',
-            onPressButton: checkPermissionAndNavigate,
-          })}
-        />
+          ) : (
+            <FlatList
+              keyboardShouldPersistTaps={'always'}
+              style={styles.flatlistStyle}
+              contentContainerStyle={styles.contentContainerStyle}
+              keyExtractor={keyExtractor}
+              data={data}
+              renderItem={renderItem}
+              initialNumToRender={20}
+              maxToRenderPerBatch={20}
+              windowSize={10}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={() => fetchAlerts({refreshing: true})}
+                  tintColor={theme.primary}
+                />
+              }
+              ListEmptyComponent={EmptyView({
+                text: 'No notification alerts configured',
+                buttonText: 'Add Alert',
+                onPressButton: checkPermissionAndNavigate,
+              })}
+            />
+          )}
+        </>
       )}
       <KeyboardHeightView />
       <ModalConfirm

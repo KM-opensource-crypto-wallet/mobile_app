@@ -131,7 +131,6 @@ const myStyles = theme =>
       alignItems: 'center',
       justifyContent: 'center',
       marginVertical: 20,
-      marginHorizontal: 16,
     },
     buttonDisabled: {
       backgroundColor: theme.gray,
