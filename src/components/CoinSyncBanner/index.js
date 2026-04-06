@@ -16,7 +16,10 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSelectors';
 import {dismissBanner} from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSlice';
 import {myStyles} from './CoinSyncBannerStyles';
-import {isCoinsScanTimestampValid} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  isCoinsScanTimestampValid,
+  selectCurrentWalletClientId,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 
 const CoinSyncBanner = () => {
   const {theme} = useContext(ThemeContext);
@@ -35,6 +38,7 @@ const CoinSyncBanner = () => {
   const isFailed = status === 'error';
 
   const isValidTimestamp = useSelector(isCoinsScanTimestampValid);
+  const currentWalletClientId = useSelector(selectCurrentWalletClientId);
 
   const progressPercent =
     progress?.totalCoins > 0
@@ -69,8 +73,8 @@ const CoinSyncBanner = () => {
   }, [navigation]);
 
   const onPressClose = useCallback(() => {
-    dispatch(dismissBanner());
-  }, [dispatch]);
+    dispatch(dismissBanner(currentWalletClientId));
+  }, [dispatch, currentWalletClientId]);
 
   if (
     (!isValidTimestamp || isBannerDismissed) &&
