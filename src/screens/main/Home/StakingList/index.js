@@ -209,7 +209,17 @@ const StakingList = ({navigation}) => {
                         ]}
                         disabled={!!unstakingDisableText}
                         onPress={() => {
+                          const stakedAmount = currentCoin?.stakingBalance;
+                          const fiatAmount = multiplyBNWithFixed(
+                            stakedAmount,
+                            currentCoin?.currencyRate,
+                            2,
+                          );
                           navigation.navigate('WithdrawStaking', {
+                            selectedStake: {
+                              amount: stakedAmount,
+                              fiatAmount,
+                            },
                             isDeactivateStaking: true,
                           });
                         }}>

@@ -50,6 +50,7 @@ import {
   isEip7702SupportedChain,
   isPrivateKeyNotSupportedChain,
   isStakingChain,
+  getStakignKey,
 } from 'dok-wallet-blockchain-networks/helper';
 import DokDropdown from 'components/DokDropdown';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -91,8 +92,11 @@ const SendScreen = ({navigation, route}) => {
 
   const {item} = route.params;
   const isBitcoin = isBitcoinChain(currentCoin?.chain_name);
-  const isStaking =
-    isStakingChain(currentCoin?.chain_name) && currentCoin?.type === 'coin';
+  const stakingKey = getStakignKey(
+    currentCoin?.chain_name,
+    currentCoin?.symbol,
+  );
+  const isStaking = isStakingChain(stakingKey);
   const isDelegationAvailable =
     !!currentCoin?.isDelegationAvailable &&
     isEip7702SupportedChain(currentCoin?.chain_name);
