@@ -176,12 +176,23 @@ export const Constants = {
   },
 };
 
-export const initOneSignal = async () => {
-  try {
-    const deviceId = await getUniqueId();
+let _oneSignalInitialized = false;
 
-    OneSignal.Debug.setLogLevel(LogLevel.Verbose);
-    OneSignal.initialize(ONESIGNAL_APP_ID);
+export const initOneSignal = async () => {
+  if (!ONESIGNAL_APP_ID) {
+    console.warn('initOneSignal: ONESIGNAL_APP_ID is not defined, skipping.');
+    return null;
+  }
+  try {
+    if (!_oneSignalInitialized) {
+      if (__DEV__) {
+        OneSignal.Debug.setLogLevel(LogLevel.Verbose);
+      }
+      OneSignal.initialize(ONESIGNAL_APP_ID);
+      _oneSignalInitialized = true;
+    }
+
+    const deviceId = await getUniqueId();
 
     if (Platform.OS === 'ios' || Number(Platform.Version) >= 33) {
       OneSignal.Notifications.requestPermission(false);

@@ -61,6 +61,7 @@ import {getCountry} from 'react-native-localize';
 import {MenuProvider} from 'react-native-popup-menu';
 import {
   getQueryParams,
+  initOneSignal,
   parseUrlQS,
   validatePaymentUrl,
   validateWCUrl,
@@ -85,11 +86,7 @@ import DisableComponent from 'components/DisableComponent';
 import {getLastUpdateCheckTimestamp} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 import {setLastUpdateCheckTimestamp} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {getFeesInfo} from 'dok-wallet-blockchain-networks/feesInfo/feesInfo';
-import {
-  IS_KIML_WALLET,
-  ONESIGNAL_APP_ID,
-  WALLET_CONNECT_DATA,
-} from 'utils/wlData';
+import {IS_KIML_WALLET, WALLET_CONNECT_DATA} from 'utils/wlData';
 import {ThemeContext} from 'theme/ThemeContext';
 import ModalApkDownload from 'components/ModalApkDownload';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -428,7 +425,7 @@ const Main = () => {
   }, [pendingNotificationData, handleNotificationData]);
 
   useEffect(() => {
-    OneSignal.initialize(ONESIGNAL_APP_ID);
+    initOneSignal();
     OneSignal.Notifications.addEventListener('click', onNotificationClick);
     return () => {
       OneSignal.Notifications.removeEventListener('click', onNotificationClick);

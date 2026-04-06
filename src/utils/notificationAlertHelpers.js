@@ -21,26 +21,16 @@ export const getDefaultMinAmount = coin => {
   const tempValues = validateNumberInInput(MIN_USD_AMOUNT?.toString(), 2);
   const tempAmount = new BigNumber(tempValues)
     .dividedBy(new BigNumber(coin?.currencyRate))
-    .toFixed(Number(coin?.decimal));
+    .toFixed(Number(coin?.decimal) || 0);
   return tempAmount;
 };
 
 export const isAmountBelowThreshold = (amount, coin) => {
-  console.log(
-    '[threshold] amount:',
-    amount,
-    'currencyRate:',
-    coin?.currencyRate,
-    'symbol:',
-    coin?.symbol,
-  );
   if (!coin?.currencyRate || Number(coin.currencyRate) === 0) {
-    console.log('[threshold] skipped - no currencyRate');
     return false;
   }
   const bnAmount = new BigNumber(amount);
   if (!bnAmount.isFinite() || bnAmount.isNaN()) {
-    console.log('[threshold] skipped - invalid amount');
     return false;
   }
   const usdAmount = bnAmount
@@ -48,12 +38,6 @@ export const isAmountBelowThreshold = (amount, coin) => {
     .absoluteValue()
     .decimalPlaces(0, BigNumber.ROUND_HALF_UP);
 
-  console.log(
-    '[threshold] usdAmount:',
-    usdAmount.toString(),
-    'result:',
-    usdAmount.isLessThan(MIN_USD_AMOUNT),
-  );
   return usdAmount.isLessThan(MIN_USD_AMOUNT);
 };
 
@@ -62,6 +46,9 @@ export const buildAddressOptions = coin => {
     return coin.deriveAddresses
       .filter(d => d?.address)
       .map(d => ({label: truncateAddress(d.address), value: d.address}));
+  }
+  if (!coin.address) {
+    return [];
   }
   return [{label: truncateAddress(coin.address), value: coin.address}];
 };

@@ -10,7 +10,7 @@ const FetchCoinLoader = ({visible, theme}) => {
   }
 
   return (
-    <Modal visible={visible} transparent={true}>
+    <Modal visible={visible} transparent={true} onRequestClose={() => {}}>
       <View style={styles.overlay}>
         <View style={styles.container}>
           <ActivityIndicator size="large" color={theme.background} />

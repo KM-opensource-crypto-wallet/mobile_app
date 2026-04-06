@@ -65,6 +65,7 @@ const NotificationCoinStep = ({
         renderItem={renderItem}
         keyExtractor={entry => coinKey(entry.walletClientId, entry.coin._id)}
         bounces={false}
+        keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No coins found</Text>
