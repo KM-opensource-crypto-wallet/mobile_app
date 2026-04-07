@@ -209,7 +209,8 @@ const StakingList = ({navigation}) => {
                         ]}
                         disabled={!!unstakingDisableText}
                         onPress={() => {
-                          const stakedAmount = currentCoin?.stakingBalance;
+                          const stakedAmount =
+                            currentCoin?.stakingBalance || '0';
                           const fiatAmount = multiplyBNWithFixed(
                             stakedAmount,
                             currentCoin?.currencyRate,
