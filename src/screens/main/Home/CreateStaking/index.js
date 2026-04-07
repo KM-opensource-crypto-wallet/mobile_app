@@ -163,7 +163,7 @@ const CreateStaking = ({navigation}) => {
             initialValues={{
               amount: '',
               currencyAmount: '',
-              validatorPubKey: null,
+              validatorPubKey: validatorList?.[0] || null,
               resourceType: isResourceSupport ? resourceData[1] : null,
             }}
             validationSchema={getValidationSchemaForCreateStaking(
