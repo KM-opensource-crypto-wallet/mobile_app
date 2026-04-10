@@ -639,9 +639,11 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = dokwallet/coinswallet.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 9HJ6G8C9BU;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 9HJ6G8C9BU;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = dokwallet/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Dok Wallet";
@@ -659,6 +661,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.dok.wallet;
 				PRODUCT_NAME = "Dok Wallet";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = DokWalletDevProfile;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
@@ -678,9 +681,11 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = dokwallet/coinswallet.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 9HJ6G8C9BU;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 9HJ6G8C9BU;
 				INFOPLIST_FILE = dokwallet/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Dok Wallet";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -697,6 +702,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.dok.wallet;
 				PRODUCT_NAME = "Dok Wallet";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = DokWalletDistProfile;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
@@ -880,10 +886,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = kimlwallet/kimlwallet.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Development: Divyang Khatri (75XS4RJ248)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development: Divyang Khatri (75XS4RJ248)";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N9US926Q47;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = N9US926Q47;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = kimlwallet/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "KIML Wallet";
@@ -901,6 +909,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.kimlwallet;
 				PRODUCT_NAME = "KIML Wallet";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = kiml_wallet_dev_profile;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
