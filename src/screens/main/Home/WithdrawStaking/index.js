@@ -22,6 +22,7 @@ import {currencySymbol} from 'data/currency';
 import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import BigNumber from 'bignumber.js';
 import {
+  isEVMChain,
   isHaveResourceTypeInCreateStakingScreen,
   isValidatorSupportCreateStakingScreen,
   multiplyBNWithFixed,
@@ -55,6 +56,9 @@ const WithdrawStaking = ({navigation, route}) => {
     return isValidatorSupportCreateStakingScreen(currentCoin?.chain_name);
   }, [currentCoin?.chain_name]);
 
+  const isEVMStaking =
+    isDeactivateStaking && isEVMChain(currentCoin?.chain_name);
+
   const isResourceSupport = useMemo(() => {
     return isHaveResourceTypeInCreateStakingScreen(currentCoin?.chain_name);
   }, [currentCoin?.chain_name]);
@@ -62,6 +66,31 @@ const WithdrawStaking = ({navigation, route}) => {
   const resourceData = useMemo(() => {
     return isResourceSupport ? resourcesData[currentCoin?.chain_name] : null;
   }, [isResourceSupport, currentCoin?.chain_name]);
+
+  const stakingProviderList = useMemo(() => {
+    if (!isEVMStaking) {
+      return [];
+    }
+    const staking = Array.isArray(currentCoin?.staking)
+      ? currentCoin.staking
+      : [];
+    return staking.map(item => ({
+      label: item?.validatorInfo?.name,
+      value: item?.validatorInfo?.name,
+      stakedAmount: item?.stakedAmount,
+      fiatAmount: multiplyBNWithFixed(
+        item?.stakedAmount,
+        currentCoin?.currencyRate,
+        2,
+      ),
+    }));
+  }, [isEVMStaking, currentCoin?.staking, currentCoin?.currencyRate]);
+
+  const [selectedProvider, setSelectedProvider] = useState(
+    stakingProviderList.find(p => p.value === selectedStake?.providerName) ||
+      stakingProviderList[0] ||
+      null,
+  );
 
   const [state, setState] = useState({
     resourceType:
@@ -72,12 +101,17 @@ const WithdrawStaking = ({navigation, route}) => {
   });
   const {amount, currencyAmount, errors, resourceType} = state;
   const availableAmount = useMemo(() => {
+    if (isEVMStaking) {
+      return selectedProvider?.stakedAmount || '0';
+    }
     return selectedStake?.amount?.toString()
       ? selectedStake?.amount?.toString()
       : state?.resourceType?.value === 'ENERGY'
       ? currentCoin?.energyBalance
       : currentCoin?.bandwidthBalance;
   }, [
+    isEVMStaking,
+    selectedProvider?.stakedAmount,
     currentCoin?.bandwidthBalance,
     currentCoin?.energyBalance,
     selectedStake?.amount,
@@ -140,6 +174,9 @@ const WithdrawStaking = ({navigation, route}) => {
           validatorPubKey: selectedStake?.validator_address,
           stakingAddress: selectedStake?.staking_address,
           validatorName: selectedStake?.validatorInfo?.name,
+          stakingProviderName: isEVMStaking
+            ? selectedProvider?.value
+            : selectedStake?.providerName || selectedStake?.validatorInfo?.name,
           currentCoin,
           amount: validateBigNumberStr(amount),
           resourceType: resourceType?.value,
@@ -157,6 +194,9 @@ const WithdrawStaking = ({navigation, route}) => {
           isDeactivateStaking: isDeactivateStaking,
           isStakingRewards: isStakingRewards,
           resourceType: resourceType?.value,
+          stakingProviderName: isEVMStaking
+            ? selectedProvider?.value
+            : selectedStake?.providerName || selectedStake?.validatorInfo?.name,
         }),
       );
       dispatch(setExchangeSuccess(false));
@@ -396,7 +436,27 @@ const WithdrawStaking = ({navigation, route}) => {
                         </Text>
                       )}
                     </View>
-                    {isValidatorSupport && (
+                    {isEVMStaking && stakingProviderList.length > 0 && (
+                      <View style={styles.boxInput}>
+                        <Text style={styles.listTitle}>Staking Provider</Text>
+                        <DokDropdown
+                          titleStyle={{color: theme.primary}}
+                          placeholder={'Select provider'}
+                          title={''}
+                          data={stakingProviderList}
+                          onChangeValue={item => {
+                            setSelectedProvider(item);
+                            setState(prev => ({
+                              ...prev,
+                              amount: item?.stakedAmount || '0',
+                              currencyAmount: item?.fiatAmount || '0',
+                            }));
+                          }}
+                          value={selectedProvider?.value}
+                        />
+                      </View>
+                    )}
+                    {isValidatorSupport && !isEVMStaking && (
                       <View style={styles.boxInput}>
                         <Text style={styles.listTitle}>Validator</Text>
                         <StakingItem item={selectedStake} isWithdraw={false} />

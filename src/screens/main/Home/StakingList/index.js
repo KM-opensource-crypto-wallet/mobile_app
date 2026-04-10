@@ -220,6 +220,7 @@ const StakingList = ({navigation}) => {
                             selectedStake: {
                               amount: stakedAmount,
                               fiatAmount,
+                              providerName: staking[0]?.validatorInfo?.name,
                             },
                             isDeactivateStaking: true,
                           });

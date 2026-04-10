@@ -118,6 +118,7 @@ const CreateStaking = ({navigation}) => {
       setCurrentTransferData({
         validatorPubKey: values?.validatorPubKey?.value,
         validatorName: values?.validatorPubKey?.label,
+        stakingProviderName: values?.validatorPubKey?.label,
         currentCoin,
         amount: validateBigNumberStr(values?.amount),
         resourceType: values?.resourceType?.value,
