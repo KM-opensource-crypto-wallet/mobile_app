@@ -100,6 +100,7 @@ const TransactionDetails = ({route}) => {
           status,
           blockNumber,
           confirmations,
+          paymentType,
         } = recentTransaction.data;
         const date = blockTimestamp
           ? new Date(parseInt(blockTimestamp, 16) * 1000).toISOString()
@@ -116,6 +117,7 @@ const TransactionDetails = ({route}) => {
           totalCourse,
           blockNumber: blockNumber,
           confirmations,
+          ...(paymentType != null && {paymentType}),
         });
       }
     } catch (e) {
@@ -139,7 +141,9 @@ const TransactionDetails = ({route}) => {
   }, []);
 
   const isReceived =
-    transaction?.to?.toUpperCase() === currentCoin?.address?.toUpperCase();
+    transaction?.paymentType != null
+      ? transaction.paymentType === 1
+      : transaction?.to?.toUpperCase() === currentCoin?.address?.toUpperCase();
 
   const statusKey = transaction?.status?.toUpperCase();
   const statusConfig = STATUS_CONFIG[statusKey] || {

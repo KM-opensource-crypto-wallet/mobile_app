@@ -361,6 +361,7 @@ export const getLightningTransactions = async phrase => {
           date: Number(item?.timestamp) * 1000,
           from: item.paymentType === 1 ? null : address,
           to: item.paymentType === 1 ? address : null,
+          paymentType: item.paymentType,
           totalCourse: '0$',
         };
       });
@@ -395,6 +396,7 @@ export const getLightningTransaction = async (phrase, txHash) => {
         date: Number(item?.timestamp) * 1000,
         from: item.paymentType === 1 ? null : undefined,
         to: item.paymentType === 1 ? undefined : null,
+        paymentType: item.paymentType,
         totalCourse: '0$',
       },
     };
