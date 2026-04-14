@@ -287,7 +287,7 @@ const createIOSIntegrityHeaders = async requestConfig => {
     );
 
     // Rotate: clear stored registration, run fresh challenge + register
-    // await clearIOSRegistration();
+    await clearIOSRegistration();
 
     // let freshKeyId;
     // try {
