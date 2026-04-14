@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Provider} from 'react-redux';
 import {store} from 'redux/store';
 import {Provider as PaperProvider} from 'react-native-paper';
@@ -14,15 +14,28 @@ import {
   setupDokApiIntegrity,
 } from 'utils/apiIntegrity';
 
+// Register interceptors at module load time so they are guaranteed to be
+// present before any component renders or dispatches an API call.
+// (React fires children's useEffect before parents', so doing this inside
+// a useEffect would leave a window where Main's effects fire unprotected.)
+setupDokApiIntegrity(DokApi);
+
 export default function MainApp() {
+  const [integrityReady, setIntegrityReady] = useState(false);
+
   const onError = useCallback((error, stackTrace) => {
     console.error('Error in app', error.message);
     console.error('Error in app stacktrace', stackTrace);
   }, []);
 
   useEffect(() => {
-    setupDokApiIntegrity(DokApi);
-    initializeDokApiIntegrity();
+    // Pre-warm the platform token provider (Android) / pre-register the device
+    // (iOS) before allowing child components to mount and fire API calls.
+    // .finally() ensures the gate opens even if initialization fails gracefully.
+
+    initializeDokApiIntegrity().finally(() => {
+      setIntegrityReady(true);
+    });
   }, []);
 
   return (
@@ -31,7 +44,7 @@ export default function MainApp() {
         <PaperProvider>
           <ThemeProvider>
             <SafeAreaProvider>
-              <Main />
+              {integrityReady && <Main />}
               <Toasts />
             </SafeAreaProvider>
           </ThemeProvider>

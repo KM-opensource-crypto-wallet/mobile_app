@@ -189,7 +189,7 @@ export default function Sidebar({navigation, route}) {
             ),
           })}
         />
-        {IS_IOS && IS_DOK_WALLET ? (
+        {IS_IOS ? (
           <Drawer.Screen
             name="SelectCountry"
             component={SelectCountry}
@@ -222,7 +222,7 @@ export default function Sidebar({navigation, route}) {
               ),
             })}
           />
-        ) : IS_DOK_WALLET || IS_ANDROID ? (
+        ) : IS_ANDROID ? (
           <Drawer.Screen
             name="BuyCrypto"
             component={BuyCrypto}
