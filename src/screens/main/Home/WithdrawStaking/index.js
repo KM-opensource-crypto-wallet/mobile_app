@@ -87,7 +87,11 @@ const WithdrawStaking = ({navigation, route}) => {
   }, [isEVMStaking, currentCoin?.staking, currentCoin?.currencyRate]);
 
   const [selectedProvider, setSelectedProvider] = useState(
-    stakingProviderList.find(p => p.value === selectedStake?.providerName) ||
+    stakingProviderList.find(
+      p =>
+        p.value === selectedStake?.providerName ||
+        p.value === selectedStake?.validatorInfo?.name,
+    ) ||
       stakingProviderList[0] ||
       null,
   );
@@ -95,7 +99,7 @@ const WithdrawStaking = ({navigation, route}) => {
   const [state, setState] = useState({
     resourceType:
       isResourceSupport && isDeactivateStaking ? resourceData?.[1] : null,
-    amount: selectedStake?.amount || '0',
+    amount: selectedStake?.stakedAmount || selectedStake?.amount || '0',
     currencyAmount: selectedStake?.fiatAmount || '0',
     errors: {},
   });
@@ -187,6 +191,8 @@ const WithdrawStaking = ({navigation, route}) => {
         calculateEstimateFee({
           isFetchNonce: true,
           fromAddress: currentCoin?.address,
+          contractAddress:
+            selectedStake?.validator_address || currentCoin?.contractAddress,
           amount: validateBigNumberStr(amount),
           validatorPubKey: selectedStake?.validator_address,
           stakingAddress: selectedStake?.staking_address,
@@ -439,27 +445,17 @@ const WithdrawStaking = ({navigation, route}) => {
                     {isEVMStaking && stakingProviderList.length > 0 && (
                       <View style={styles.boxInput}>
                         <Text style={styles.listTitle}>Staking Provider</Text>
-                        <DokDropdown
-                          titleStyle={{color: theme.primary}}
-                          placeholder={'Select provider'}
-                          title={''}
-                          data={stakingProviderList}
-                          onChangeValue={item => {
-                            setSelectedProvider(item);
-                            setState(prev => ({
-                              ...prev,
-                              amount: item?.stakedAmount || '0',
-                              currencyAmount: item?.fiatAmount || '0',
-                            }));
-                          }}
-                          value={selectedProvider?.value}
-                        />
+                        <StakingItem item={selectedStake} isWithdraw={false} />
                       </View>
                     )}
                     {isValidatorSupport && !isEVMStaking && (
                       <View style={styles.boxInput}>
                         <Text style={styles.listTitle}>Validator</Text>
-                        <StakingItem item={selectedStake} isWithdraw={false} />
+                        <StakingItem
+                          item={selectedStake}
+                          isWithdraw={false}
+                          showReward={false}
+                        />
                       </View>
                     )}
                     {isResourceSupport && !hideResource && (

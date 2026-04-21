@@ -4,6 +4,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 const {width: screenWidth} = Dimensions.get('window');
 const itemWidth = screenWidth / 1.4;
 import FastImage from '@d11/react-native-fast-image';
+import {formatNumber} from 'utils/common';
 
 const ValidatorOptionItem = ({item, currentCoin}) => {
   const {theme} = useContext(ThemeContext);
@@ -33,7 +34,7 @@ const ValidatorOptionItem = ({item, currentCoin}) => {
             </Text>
           )}
           <Text style={[myStyles.text]} numberOfLines={1}>
-            {`STAKE ${Math.round(item?.options?.activated_stake)} ${
+            {`STAKE ${formatNumber(item.options.totalStaked)} ${
               currentCoin?.symbol
             }`}
           </Text>
