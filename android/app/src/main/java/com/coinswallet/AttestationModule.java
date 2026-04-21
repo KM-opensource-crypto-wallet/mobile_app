@@ -57,7 +57,11 @@ public class AttestationModule extends ReactContextBaseJavaModule {
             KeyStore keyStore = KeyStore.getInstance(KEYSTORE_PROVIDER);
             keyStore.load(null);
 
-            byte[] publicKeyBytes = keyStore.getCertificate(KEY_ALIAS).getPublicKey().getEncoded();
+            java.security.cert.Certificate leafCert = keyStore.getCertificate(KEY_ALIAS);
+            if (leafCert == null) {
+                throw new Exception("Key generation succeeded but certificate not found in Keystore for alias: " + KEY_ALIAS);
+            }
+            byte[] publicKeyBytes = leafCert.getPublicKey().getEncoded();
             String publicKeyB64 = Base64.encodeToString(publicKeyBytes, Base64.NO_WRAP);
             String apkHash = getApkSigningHash();
 
@@ -142,9 +146,10 @@ public class AttestationModule extends ReactContextBaseJavaModule {
                 kpg.initialize(strongBoxSpec);
                 kpg.generateKeyPair();
                 return; // StrongBox succeeded
+            } catch (android.security.keystore.StrongBoxUnavailableException e) {
+                android.util.Log.i("AttestationModule", "StrongBox unavailable, falling back to TEE", e);
             } catch (Exception e) {
-                // StrongBox unavailable (emulator, or device without dedicated chip).
-                // Fall through to TEE attempt below.
+                android.util.Log.w("AttestationModule", "StrongBox key generation failed with non-StrongBox error, falling back to TEE", e);
             }
         }
 

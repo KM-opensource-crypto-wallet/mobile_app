@@ -20,7 +20,10 @@ index 1234567..abcdefg 100644
      } catch (_: NumberFormatException) {
        ModuleException.WRONG_GOOGLE_CLOUD_PROJECT_NUMBER_FORMAT.reject(promise)
 -    } catch (e: Exception) {
-+    } catch (e: Throwable) {
++    } catch (e: Exception) {
++      // Catch Exception (not Throwable) so JVM fatal errors (OutOfMemoryError,
++      // StackOverflowError, LinkageError) propagate instead of being swallowed
++      // into a rejected promise, which would leave the JVM in an undefined state.
        ModuleException.PREPARE_FAILED.reject(
          promise, Pair(ERROR_USER_INFO_KEY, getExceptionMessageOrEmpty(e))
        )

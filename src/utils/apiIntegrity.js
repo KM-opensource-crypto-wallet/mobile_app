@@ -45,13 +45,18 @@ const INTEGRITY_STORAGE_KEYS = {
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const ATTEST_WORKER_URL = config.ATTEST_WORKER_BASE_URL.replace(/\/$/, '');
+const ATTEST_WORKER_URL =
+  typeof config.ATTEST_WORKER_BASE_URL === 'string' &&
+  config.ATTEST_WORKER_BASE_URL
+    ? config.ATTEST_WORKER_BASE_URL.replace(/\/$/, '')
+    : '';
 const ANDROID_PROJECT_NUMBER =
   process.env.DOK_ANDROID_PLAY_INTEGRITY_PROJECT_NUMBER ?? '';
 
 // ─── Module-level state ───────────────────────────────────────────────────────
 
 let requestInterceptorId = null;
+let responseInterceptorId = null;
 let androidPreparePromise = null;
 // Serializes concurrent iOS registration attempts (prevents duplicate registrations)
 let iosRegistrationPromise = null;
@@ -522,7 +527,7 @@ const prepareAndroidIntegrity = async () => {
 
 // Per-request ECDSA headers for kimlwallet-android.
 // Ensures device is registered, then signs a fresh nonce:ts pair.
-const createKimlwalletAndroidHeaders = async () => {
+const createKimlwalletAndroidHeaders = async requestConfig => {
   const appName = getAppName();
 
   let keyId;
@@ -538,10 +543,11 @@ const createKimlwalletAndroidHeaders = async () => {
 
   const nonce = crypto.randomBytes(16).toString('hex');
   const ts = String(Math.floor(Date.now() / 1000));
+  const requestHash = createRequestHash(requestConfig);
 
   let sig;
   try {
-    sig = await AttestationModule.sign(`${nonce}:${ts}`);
+    sig = await AttestationModule.sign(`${requestHash}:${nonce}:${ts}`);
   } catch (err) {
     console.warn('[integrity] kimlwallet-android sign failed:', err?.message);
     return {};
@@ -561,7 +567,7 @@ const createAndroidIntegrityHeaders = async requestConfig => {
 
   // kimlwallet-android: sideloaded — use Keystore-backed ECDSA instead of Play Integrity
   if (appName === 'kimlwallet-android') {
-    return createKimlwalletAndroidHeaders();
+    return createKimlwalletAndroidHeaders(requestConfig);
   }
 
   let isReady = false;
@@ -726,7 +732,7 @@ export const setupDokApiIntegrity = dokApi => {
               '[integrity] kimlwallet-android rejected — clearing registration and retrying',
             );
             androidRegistrationPermanentlyFailed = false;
-            clearAndroidRegistration();
+            await clearAndroidRegistration();
           } else {
             console.warn(
               '[integrity] CF Worker rejected Android token — resetting prepare promise and retrying',
