@@ -3984,6 +3984,11 @@
     borc "^2.1.1"
     leb128 "0.0.5"
 
+"@pagopa/io-react-native-integrity@^0.3.2":
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/@pagopa/io-react-native-integrity/-/io-react-native-integrity-0.3.2.tgz#09a382127cbad5b372992e6ea530b2c8cf0f315d"
+  integrity sha512-399Wfz9uzVOMVwW8GfDHmQEI9p6NBx6w7dHSDQsVsGKfxToxueagQWAkx1sMGyTH0Pomk8k0OIKfoXSqzF1gMA==
+
 "@peculiar/asn1-schema@^2.3.13", "@peculiar/asn1-schema@^2.3.8":
   version "2.6.0"
   resolved "https://registry.yarnpkg.com/@peculiar/asn1-schema/-/asn1-schema-2.6.0.tgz#0dca1601d5b0fed2a72fed7a5f1d0d7dbe3a6f82"

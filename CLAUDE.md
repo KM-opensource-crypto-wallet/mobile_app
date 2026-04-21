@@ -183,6 +183,11 @@ The app integrates with multiple blockchain networks via `dok-wallet-blockchain-
   - Redux slices for currency, wallets, transfers, exchange, settings
   - Helper functions (`helper.js`): `isEVMChain`, `isBitcoinChain`, `validateSupportedChain`, `isFeesOptionChain`, `GAS_CURRENCY`
 - **Sensitive Storage**: Uses `react-native-sensitive-info` for private keys
+- **Integrity / Attestation**: Dok API integrity is centralized in `dok-wallet-blockchain-networks/config/dokApi.js`
+  - Shared `DokApi` request interception attaches platform integrity headers
+  - Android uses Play Integrity standard requests
+  - iOS uses App Attest registration + assertion generation
+  - Secure storage is used only for persisting the iOS App Attest key registration state
 - **Node Polyfills**: Uses `rn-nodeify` for crypto, stream, etc.
 - **CI/CD**: Codemagic configuration in `codemagic.yaml`
 - **Theming**: Context-based theming via `ThemeContext`
@@ -205,3 +210,5 @@ Key selectors and slices from `dok-wallet-blockchain-networks/redux/`:
 - Patches are stored in the `patches/` directory
 - Component imports use path aliases (e.g., `import X from 'components/X'`)
 - Bottom sheets use `@gorhom/bottom-sheet` with `DokBottomSheet` wrapper
+- New app services should prefer small feature folders under `src/` instead of adding more code into the blockchain submodule unless the concern is truly shared chain logic.
+- `DokApi` is the app/backend seam. Cross-cutting backend request headers should be attached there rather than scattered across individual service calls.

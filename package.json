@@ -55,6 +55,7 @@
     "@moralisweb3/common-evm-utils": "^2.27.2",
     "@moralisweb3/common-sol-utils": "^2.27.2",
     "@nodefactory/filecoin-address": "^1.0.1",
+    "@pagopa/io-react-native-integrity": "^0.3.2",
     "@polkadot/api": "^16.5.4",
     "@polkadot/keyring": "^14.0.1",
     "@react-native-async-storage/async-storage": "^2.2.0",
