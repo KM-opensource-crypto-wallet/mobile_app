@@ -1,0 +1,28 @@
+diff --git a/node_modules/@pagopa/io-react-native-integrity/android/src/main/java/com/pagopa/ioreactnativeintegrity/IoReactNativeIntegrityModule.kt b/node_modules/@pagopa/io-react-native-integrity/android/src/main/java/com/pagopa/ioreactnativeintegrity/IoReactNativeIntegrityModule.kt
+index 1234567..abcdefg 100644
+--- a/node_modules/@pagopa/io-react-native-integrity/android/src/main/java/com/pagopa/ioreactnativeintegrity/IoReactNativeIntegrityModule.kt
++++ b/node_modules/@pagopa/io-react-native-integrity/android/src/main/java/com/pagopa/ioreactnativeintegrity/IoReactNativeIntegrityModule.kt
+@@ -105,7 +105,7 @@ class IoReactNativeIntegrityModule(reactContext: ReactApplicationContext) :
+   @ReactMethod
+   fun prepareIntegrityToken(cloudProjectNumber: String, promise: Promise) {
+     try {
+       val cpn = cloudProjectNumber.toLong()
+       val standardIntegrityManager = IntegrityManagerFactory.createStandard(reactApplicationContext)
+       standardIntegrityManager.prepareIntegrityToken(
+         StandardIntegrityManager.PrepareIntegrityTokenRequest.builder().setCloudProjectNumber(cpn)
+           .build()
+       ).addOnSuccessListener { res -> integrityTokenProvider = res; promise.resolve(null) }
+         .addOnFailureListener { ex ->
+           ModuleException.PREPARE_FAILED.reject(
+             promise, Pair(ERROR_USER_INFO_KEY, getExceptionMessageOrEmpty(ex))
+           )
+         }
+     } catch (_: NumberFormatException) {
+       ModuleException.WRONG_GOOGLE_CLOUD_PROJECT_NUMBER_FORMAT.reject(promise)
+-    } catch (e: Exception) {
++    } catch (e: Throwable) {
+       ModuleException.PREPARE_FAILED.reject(
+         promise, Pair(ERROR_USER_INFO_KEY, getExceptionMessageOrEmpty(e))
+       )
+     }
+   }

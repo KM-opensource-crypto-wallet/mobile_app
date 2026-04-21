@@ -10,6 +10,9 @@ import {
   prepareIntegrityToken,
   requestIntegrityToken,
 } from '@pagopa/io-react-native-integrity';
+import {NativeModules} from 'react-native';
+
+const {AttestationModule} = NativeModules;
 import {wlName} from 'utils/wlData';
 import {config} from 'dok-wallet-blockchain-networks/config/config';
 
@@ -36,6 +39,8 @@ export const INTEGRITY_HEADERS = {
 const INTEGRITY_STORAGE_KEYS = {
   iosKeyId: 'integrity_ios_key_id',
   iosRegistered: 'integrity_ios_registered', // stored as the string 'true'
+  androidKeyId: 'integrity_android_key_id', // server-assigned fingerprint key ID
+  androidRegistered: 'integrity_android_registered', // stored as the string 'true'
 };
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -47,7 +52,6 @@ const ANDROID_PROJECT_NUMBER =
 // ─── Module-level state ───────────────────────────────────────────────────────
 
 let requestInterceptorId = null;
-let responseInterceptorId = null;
 let androidPreparePromise = null;
 // Serializes concurrent iOS registration attempts (prevents duplicate registrations)
 let iosRegistrationPromise = null;
@@ -61,9 +65,23 @@ let iosAssertionChain = Promise.resolve();
 // for the full initialization (iOS registration / Android prepare) before
 // the request interceptor tries to attach integrity headers.
 let integrityInitPromise = null;
-// Once true, no further challenge/register calls are made this session.
-// Prevents retry loops when the backend rejects registration.
-let registrationPermanentlyFailed = false;
+// Per-platform permanent failure flags.
+// Keeps iOS and Android failures isolated so one platform's failure
+// doesn't block the other platform's registration in the same session.
+let iosRegistrationPermanentlyFailed = false;
+let androidRegistrationPermanentlyFailed = false;
+
+// ─── In-memory key ID caches ──────────────────────────────────────────────────
+//
+// After first successful registration (or storage read), the keyId is held in
+// memory so subsequent API requests skip 2 storage reads per call.
+// Cleared on re-registration or key rotation so the next call re-reads storage.
+let cachedIosKeyId = null;
+let cachedAndroidKeyId = null;
+
+// isAttestationServiceAvailable() result — does not change within an app session.
+// Cached after first check to avoid a native async call on every iOS request.
+let iosAttestationAvailable = null;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -72,7 +90,16 @@ const storageOptions = {
   keychainService: process.env.REDUX_KEYCHAIN_NAME,
 };
 
-const getStorageValue = key => getItem(key, storageOptions);
+// On Android react-native-sensitive-info throws when a key doesn't exist
+// (rather than returning null like iOS does). Wrapping in try/catch normalises
+// the behaviour across platforms so callers can simply check for null.
+const getStorageValue = async key => {
+  try {
+    return await getItem(key, storageOptions);
+  } catch {
+    return null;
+  }
+};
 const setStorageValue = (key, value) => setItem(key, value, storageOptions);
 const removeStorageValue = key => deleteItem(key, storageOptions);
 
@@ -109,6 +136,7 @@ const getOrCreateKeyId = async () => {
 };
 
 const clearIOSRegistration = async () => {
+  cachedIosKeyId = null;
   await removeStorageValue(INTEGRITY_STORAGE_KEYS.iosKeyId);
   await removeStorageValue(INTEGRITY_STORAGE_KEYS.iosRegistered);
 };
@@ -163,7 +191,7 @@ const registerIOSDevice = async () => {
     let detail = '';
     try {
       const err = await registerResp.json();
-      detail = err?.error ?? '';
+      detail = err?.detail ?? err?.error ?? '';
     } catch {
       // ignore parse error
     }
@@ -181,7 +209,7 @@ const registerIOSDevice = async () => {
 const ensureIOSRegistered = async () => {
   // Permanent failure: registration was attempted and failed this session.
   // Don't retry — prevents hammering the challenge/register endpoints.
-  if (registrationPermanentlyFailed) {
+  if (iosRegistrationPermanentlyFailed) {
     console.warn(
       '[integrity] ensureIOSRegistered: permanently failed this session, skipping',
     );
@@ -196,6 +224,11 @@ const ensureIOSRegistered = async () => {
     return iosRegistrationPromise;
   }
 
+  // Memory cache: skip storage reads for every request after first registration.
+  if (cachedIosKeyId) {
+    return cachedIosKeyId;
+  }
+
   const [storedKeyId, isRegistered] = await Promise.all([
     getStorageValue(INTEGRITY_STORAGE_KEYS.iosKeyId),
     getStorageValue(INTEGRITY_STORAGE_KEYS.iosRegistered),
@@ -207,14 +240,19 @@ const ensureIOSRegistered = async () => {
   }
 
   if (storedKeyId && isRegistered === 'true') {
+    cachedIosKeyId = storedKeyId;
     return storedKeyId;
   }
 
   iosRegistrationPromise = registerIOSDevice()
+    .then(keyId => {
+      cachedIosKeyId = keyId;
+      return keyId;
+    })
     .catch(err => {
       // Mark permanently failed so future calls skip registration entirely.
       // .catch before .finally ensures the rejection re-propagates to callers.
-      registrationPermanentlyFailed = true;
+      iosRegistrationPermanentlyFailed = true;
       console.error(
         '[integrity] ensureIOSRegistered: registration failed, marked permanent:',
         err?.message,
@@ -246,13 +284,15 @@ const generateSerializedAssertion = (requestHash, keyId) => {
 // ─── iOS: per-request integrity headers ──────────────────────────────────────
 
 const createIOSIntegrityHeaders = async requestConfig => {
-  let isAvailable = false;
-  try {
-    isAvailable = await isAttestationServiceAvailable();
-  } catch {
-    return {};
+  // Cache availability check — result never changes within an app session.
+  if (iosAttestationAvailable === null) {
+    try {
+      iosAttestationAvailable = await isAttestationServiceAvailable();
+    } catch {
+      iosAttestationAvailable = false;
+    }
   }
-  if (!isAvailable) {
+  if (!iosAttestationAvailable) {
     return {};
   }
 
@@ -286,38 +326,173 @@ const createIOSIntegrityHeaders = async requestConfig => {
       firstError?.message,
     );
 
-    // Rotate: clear stored registration, run fresh challenge + register
+    // Rotate: clear stored registration so the next request triggers fresh
+    // challenge + register. Return {} for this request — x-app-name is still
+    // sent by the interceptor; the proof will be present on the retry.
     await clearIOSRegistration();
-
-    // let freshKeyId;
-    // try {
-    //   freshKeyId = await ensureIOSRegistered();
-    // } catch (rotationError) {
-    //   console.warn(
-    //     '[integrity] iOS re-registration failed:',
-    //     rotationError?.message,
-    //   );
-    //   return {};
-    // }
-    //
-    // try {
-    //   const assertion = await generateSerializedAssertion(
-    //     requestHash,
-    //     freshKeyId,
-    //   );
-    //   return {
-    //     [INTEGRITY_HEADERS.appName]: appName,
-    //     [INTEGRITY_HEADERS.proof]: assertion,
-    //     [INTEGRITY_HEADERS.keyId]: freshKeyId,
-    //   };
-    // } catch (retryError) {
-    //   console.warn(
-    //     '[integrity] iOS assertion failed after re-registration:',
-    //     retryError?.message,
-    //   );
-    //   return {};
-    // }
+    return {};
   }
+};
+
+// ─── kimlwallet-android: Keystore-backed ECDSA registration ──────────────────
+//
+// Mirrors registerIOSDevice exactly — same flow, same storage pattern.
+// Uses AttestationModule (native Kotlin) instead of @pagopa/io-react-native-integrity.
+
+const registerAndroidDevice = async () => {
+  const appName = getAppName();
+
+  if (!ATTEST_WORKER_URL) {
+    throw new Error('ATTEST_WORKER_URL is not configured');
+  }
+
+  if (!AttestationModule) {
+    throw new Error(
+      'AttestationModule native module is not available — rebuild the app to link it',
+    );
+  }
+
+  // 1. Request a server-side challenge
+  const challengeResp = await fetch(`${ATTEST_WORKER_URL}/attest/challenge`, {
+    method: 'GET',
+    headers: {'x-app-name': appName},
+  });
+
+  if (!challengeResp.ok) {
+    throw new Error(`Challenge request failed: ${challengeResp.status}`);
+  }
+
+  const challengeJson = await challengeResp.json();
+  const challengeId = challengeJson.challengeId;
+  const challenge = challengeJson.challenge;
+
+  if (typeof challenge !== 'string' || !challenge) {
+    throw new Error(
+      `Challenge response missing 'challenge' field — got: ${JSON.stringify(
+        challengeJson,
+      )}`,
+    );
+  }
+
+  // 2. Generate a fresh Android Keystore EC key pair with the server challenge
+  //    embedded via setAttestationChallenge(). This produces a certificate chain
+  //    rooted at Google's hardware CA — emulators cannot replicate it.
+  let keyId, publicKey, apkHash, certChain;
+  try {
+    ({keyId, publicKey, apkHash, certChain} = await AttestationModule.register(
+      challenge,
+    ));
+  } catch (nativeErr) {
+    throw new Error(
+      `AttestationModule.register failed: ${nativeErr?.message ?? nativeErr}`,
+    );
+  }
+
+  // 3. Sign "challenge:apkHash" with the Keystore-backed private key.
+  // Android SHA256withECDSA applies SHA-256 internally — the CF Worker must
+  // verify with crypto.verify('SHA256', Buffer.from(data,'utf8'), spkiKey, derSig).
+  const dataToSign = `${challenge}:${apkHash}`;
+  let attestation;
+  try {
+    attestation = await AttestationModule.sign(dataToSign);
+  } catch (signErr) {
+    throw new Error(
+      `AttestationModule.sign failed: ${signErr?.message ?? signErr}`,
+    );
+  }
+
+  // 4. Register with CF Worker — Worker verifies ECDSA sig, APK hash, and cert chain
+  const registerResp = await fetch(`${ATTEST_WORKER_URL}/attest/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-app-name': appName,
+      'x-platform': 'android',
+    },
+    body: JSON.stringify({
+      keyId,
+      attestation,
+      challengeId,
+      publicKey,
+      apkHash,
+      certChain,
+    }),
+  });
+
+  if (!registerResp.ok) {
+    let detail = '';
+    try {
+      const err = await registerResp.json();
+      detail = err?.detail ?? err?.error ?? '';
+    } catch {
+      // ignore parse error
+    }
+    throw new Error(`Registration failed (${registerResp.status}): ${detail}`);
+  }
+
+  // 5. Persist server-assigned key ID (fingerprint of publicKey) and registration flag
+  const {keyId: deviceKeyId} = await registerResp.json();
+  await setStorageValue(INTEGRITY_STORAGE_KEYS.androidKeyId, deviceKeyId);
+  await setStorageValue(INTEGRITY_STORAGE_KEYS.androidRegistered, 'true');
+
+  return deviceKeyId;
+};
+
+// Serializes concurrent kimlwallet-android registration attempts.
+let androidRegistrationPromise = null;
+
+const clearAndroidRegistration = async () => {
+  cachedAndroidKeyId = null;
+  await removeStorageValue(INTEGRITY_STORAGE_KEYS.androidKeyId);
+  await removeStorageValue(INTEGRITY_STORAGE_KEYS.androidRegistered);
+};
+
+const ensureKimlwalletAndroidRegistered = async () => {
+  if (androidRegistrationPermanentlyFailed) {
+    throw new Error('Android registration permanently failed this session');
+  }
+
+  if (androidRegistrationPromise) {
+    return androidRegistrationPromise;
+  }
+
+  // Memory cache: skip storage reads for every request after first registration.
+  if (cachedAndroidKeyId) {
+    return cachedAndroidKeyId;
+  }
+
+  const [storedKeyId, isRegistered] = await Promise.all([
+    getStorageValue(INTEGRITY_STORAGE_KEYS.androidKeyId),
+    getStorageValue(INTEGRITY_STORAGE_KEYS.androidRegistered),
+  ]);
+
+  if (androidRegistrationPromise) {
+    return androidRegistrationPromise;
+  }
+
+  if (storedKeyId && isRegistered === 'true') {
+    cachedAndroidKeyId = storedKeyId;
+    return storedKeyId;
+  }
+
+  androidRegistrationPromise = registerAndroidDevice()
+    .then(keyId => {
+      cachedAndroidKeyId = keyId;
+      return keyId;
+    })
+    .catch(err => {
+      androidRegistrationPermanentlyFailed = true;
+      console.error(
+        '[integrity] ensureKimlwalletAndroidRegistered: registration failed:',
+        err?.message,
+      );
+      throw err;
+    })
+    .finally(() => {
+      androidRegistrationPromise = null;
+    });
+
+  return androidRegistrationPromise;
 };
 
 // ─── Android: per-request integrity headers ───────────────────────────────────
@@ -345,12 +520,48 @@ const prepareAndroidIntegrity = async () => {
   return true;
 };
 
+// Per-request ECDSA headers for kimlwallet-android.
+// Ensures device is registered, then signs a fresh nonce:ts pair.
+const createKimlwalletAndroidHeaders = async () => {
+  const appName = getAppName();
+
+  let keyId;
+  try {
+    keyId = await ensureKimlwalletAndroidRegistered();
+  } catch (err) {
+    console.warn(
+      '[integrity] kimlwallet-android registration failed:',
+      err?.message,
+    );
+    return {};
+  }
+
+  const nonce = crypto.randomBytes(16).toString('hex');
+  const ts = String(Math.floor(Date.now() / 1000));
+
+  let sig;
+  try {
+    sig = await AttestationModule.sign(`${nonce}:${ts}`);
+  } catch (err) {
+    console.warn('[integrity] kimlwallet-android sign failed:', err?.message);
+    return {};
+  }
+
+  return {
+    [INTEGRITY_HEADERS.appName]: appName,
+    [INTEGRITY_HEADERS.keyId]: keyId,
+    [INTEGRITY_HEADERS.proof]: sig,
+    'x-nonce': nonce,
+    'x-ts': ts,
+  };
+};
+
 const createAndroidIntegrityHeaders = async requestConfig => {
   const appName = getAppName();
 
-  // kimlwallet-android is not published to the Play Store — bypass entirely
+  // kimlwallet-android: sideloaded — use Keystore-backed ECDSA instead of Play Integrity
   if (appName === 'kimlwallet-android') {
-    return {};
+    return createKimlwalletAndroidHeaders();
   }
 
   let isReady = false;
@@ -436,9 +647,6 @@ export const setupDokApiIntegrity = dokApi => {
 
   requestInterceptorId = dokApi.interceptors.request.use(
     async requestConfig => {
-      const label = `${requestConfig?.method?.toUpperCase()} ${
-        requestConfig?.url
-      }`;
       if (requestConfig?.skipIntegrity) {
         return requestConfig;
       }
@@ -449,13 +657,16 @@ export const setupDokApiIntegrity = dokApi => {
         await integrityInitPromise;
       }
 
-      const headers = await getIntegrityHeaders(requestConfig);
-      if (!Object.keys(headers).length) {
-        return requestConfig;
-      }
-
       requestConfig.headers = requestConfig.headers ?? {};
-      Object.assign(requestConfig.headers, headers);
+      // Always attach x-app-name so the CF Worker can identify the app even
+      // when a full integrity proof cannot be generated (e.g. simulator, Play
+      // Services unavailable). The proof headers are added only when available.
+      requestConfig.headers[INTEGRITY_HEADERS.appName] = getAppName();
+
+      const headers = await getIntegrityHeaders(requestConfig);
+      if (Object.keys(headers).length) {
+        Object.assign(requestConfig.headers, headers);
+      }
       return requestConfig;
     },
     error => Promise.reject(error),
@@ -476,7 +687,7 @@ export const setupDokApiIntegrity = dokApi => {
             );
           } else if (
             !iosRegistrationPromise &&
-            !registrationPermanentlyFailed
+            !iosRegistrationPermanentlyFailed
           ) {
             // DEVICE_NOT_FOUND / ASSERTION_FAILED: re-register.
             // Set iosRegistrationPromise SYNCHRONOUSLY before any await so that
@@ -488,7 +699,7 @@ export const setupDokApiIntegrity = dokApi => {
             iosRegistrationPromise = clearIOSRegistration()
               .then(() => registerIOSDevice())
               .catch(err => {
-                registrationPermanentlyFailed = true;
+                iosRegistrationPermanentlyFailed = true;
                 console.error(
                   '[integrity] re-registration failed, marked permanent:',
                   err?.message,
@@ -498,7 +709,7 @@ export const setupDokApiIntegrity = dokApi => {
               .finally(() => {
                 iosRegistrationPromise = null;
               });
-          } else if (registrationPermanentlyFailed) {
+          } else if (iosRegistrationPermanentlyFailed) {
             console.warn(
               '[integrity] integrity rejected but registration permanently failed — skipping re-registration',
             );
@@ -508,10 +719,20 @@ export const setupDokApiIntegrity = dokApi => {
             );
           }
         } else if (Platform.OS === 'android') {
-          console.warn(
-            '[integrity] CF Worker rejected Android token — resetting prepare promise and retrying',
-          );
-          androidPreparePromise = null;
+          if (getAppName() === 'kimlwallet-android') {
+            // DEVICE_NOT_FOUND: server lost the key record — clear local state
+            // and allow re-registration on the next ensureKimlwalletAndroidRegistered call.
+            console.warn(
+              '[integrity] kimlwallet-android rejected — clearing registration and retrying',
+            );
+            androidRegistrationPermanentlyFailed = false;
+            clearAndroidRegistration();
+          } else {
+            console.warn(
+              '[integrity] CF Worker rejected Android token — resetting prepare promise and retrying',
+            );
+            androidPreparePromise = null;
+          }
         }
 
         // Retry once. The request interceptor calls ensureIOSRegistered() which
@@ -531,8 +752,16 @@ export const setupDokApiIntegrity = dokApi => {
 // so the integrityReady gate in MainApp only opens after the handshake is done.
 const _doInitialize = async () => {
   if (Platform.OS === 'android') {
-    // kimlwallet-android: skip entirely (not on Play Store)
+    // kimlwallet-android: sideloaded — run one-time Keystore registration
     if (getAppName() === 'kimlwallet-android') {
+      try {
+        await ensureKimlwalletAndroidRegistered();
+      } catch (error) {
+        console.error(
+          '[integrity] Failed to register kimlwallet-android device',
+          error,
+        );
+      }
       return;
     }
     try {
