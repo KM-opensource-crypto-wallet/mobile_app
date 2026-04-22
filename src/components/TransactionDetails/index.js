@@ -95,8 +95,6 @@ const TransactionDetails = ({route}) => {
           amount,
           totalCourse,
           blockTimestamp,
-          gasUsed,
-          gasPrice,
           status,
           blockNumber,
           confirmations,
@@ -183,7 +181,6 @@ const TransactionDetails = ({route}) => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }>
-        {/* <Text>{JSON.stringify(transaction, null, 2)}</Text> */}
         {/* Hero */}
         <View style={styles.hero}>
           <View style={[styles.iconCircle, {backgroundColor: iconBgColor}]}>

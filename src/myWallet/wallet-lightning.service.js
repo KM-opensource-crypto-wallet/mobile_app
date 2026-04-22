@@ -351,8 +351,7 @@ export const getLightningTransactions = async phrase => {
     const transactions = response.payments;
     if (Array.isArray(transactions)) {
       return transactions.map(item => {
-        const txHash = item?.id;
-        item?.details.inner?.txId || item?.details.inner?.paymentHash || 'N/A';
+        const txHash = item?.id || 'N/A';
         return {
           amount: item.amount,
           link: txHash,

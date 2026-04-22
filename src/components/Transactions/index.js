@@ -19,8 +19,6 @@ import {
   selectCurrentCoin,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import dayjs from 'dayjs';
-import {InAppBrowser} from 'react-native-inappbrowser-reborn';
-import {inAppBrowserOptions} from 'utils/common';
 import {
   isPendingTransactionSupportedChain,
   isTransactionListNotSupported,
@@ -112,7 +110,7 @@ const Transactions = ({renderList, selectedAddress}) => {
   }, [dispatch, navigation]);
 
   const handleOnPress = useCallback(
-    async item => {
+    item => {
       navigation.navigate('TransactionDetails', {transaction: item});
     },
     [navigation],
@@ -137,6 +135,9 @@ const Transactions = ({renderList, selectedAddress}) => {
               return (
                 <TouchableOpacity
                   style={styles.section}
+                  // onPress={async () => {
+                  //   InAppBrowser.open(item?.url, inAppBrowserOptions).then();
+                  // }}
                   onPress={() => handleOnPress(item)}
                   key={index}>
                   <>
@@ -144,11 +145,7 @@ const Transactions = ({renderList, selectedAddress}) => {
                       <View style={styles.box}>
                         <View style={styles.item}>
                           <Text style={styles.title}>
-                            {item?.link
-                              ? item.link.length > 13
-                                ? `${item.link.substring(0, 13)}...`
-                                : item.link
-                              : '—'}
+                            {item.link ? item.link.substring(0, 13) + '...' : ''}
                           </Text>
                           <View style={{flexDirection: 'row'}}>
                             <Text style={styles.text}>
