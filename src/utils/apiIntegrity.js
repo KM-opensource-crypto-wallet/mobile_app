@@ -504,6 +504,7 @@ const ensureKimlwalletAndroidRegistered = async () => {
 
 const prepareAndroidIntegrity = async () => {
   if (!ANDROID_PROJECT_NUMBER) {
+    console.warn('[integrity] Android project number not configured');
     return false;
   }
 
