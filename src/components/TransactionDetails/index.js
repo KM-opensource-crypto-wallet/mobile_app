@@ -15,9 +15,12 @@ import {
 } from 'react-native';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {useDispatch, useSelector} from 'react-redux';
-import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  selectCurrentCoin,
+  selectCurrentCoinRecentTransaction,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import {refreshCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {fetchTransactionByHash} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {currencySymbol} from 'data/currency';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {InAppBrowser} from 'react-native-inappbrowser-reborn';
@@ -75,57 +78,52 @@ const TransactionDetails = ({route}) => {
   const reduxCurrentCoin = useSelector(selectCurrentCoin);
   const currentCoin = initialTransaction?.currentCoin || reduxCurrentCoin;
   const localCurrency = useSelector(getLocalCurrency);
-
+  const reduxRecentTransaction = useSelector(
+    selectCurrentCoinRecentTransaction,
+  );
   const [refreshing, setRefreshing] = useState(false);
-  const [transaction, setTransaction] = useState(initialTransaction);
   const statusRef = useRef(initialTransaction?.status);
+
+  const recentTx =
+    reduxRecentTransaction?.data?.link === txHash
+      ? reduxRecentTransaction?.data
+      : null;
+  const transaction = recentTx
+    ? {
+        ...initialTransaction,
+        from: recentTx.from,
+        to: recentTx.to,
+        amount: recentTx.amount,
+        date: recentTx.blockTimestamp
+          ? new Date(parseInt(recentTx.blockTimestamp, 16) * 1000).toISOString()
+          : initialTransaction.date,
+        status: recentTx.status,
+        link: recentTx.link,
+        totalCourse: recentTx.totalCourse,
+        blockNumber: recentTx.blockNumber,
+        confirmations: recentTx.confirmations,
+        ...(recentTx.paymentType != null && {
+          paymentType: recentTx.paymentType,
+        }),
+      }
+    : initialTransaction;
+
+  useEffect(() => {
+    if (recentTx?.status) {
+      statusRef.current = recentTx.status;
+    }
+  }, [recentTx?.status]);
 
   const fetchTransaction = useCallback(async () => {
     setRefreshing(true);
     try {
-      const result = await dispatch(
-        refreshCurrentCoin({fetchTransaction: true, txHash}),
-      ).unwrap();
-      const recentTransaction = result?.updatedCurrentCoin?.recentTransaction;
-      if (recentTransaction) {
-        const {
-          link,
-          from,
-          to,
-          amount,
-          totalCourse,
-          blockTimestamp,
-          gasUsed,
-          gasPrice,
-          status,
-          blockNumber,
-          confirmations,
-          paymentType,
-        } = recentTransaction.data;
-        const date = blockTimestamp
-          ? new Date(parseInt(blockTimestamp, 16) * 1000).toISOString()
-          : initialTransaction.date;
-        statusRef.current = status;
-        setTransaction({
-          ...initialTransaction,
-          from,
-          to,
-          amount: amount,
-          date,
-          status: status,
-          link: link,
-          totalCourse,
-          blockNumber: blockNumber,
-          confirmations,
-          ...(paymentType != null && {paymentType}),
-        });
-      }
+      await dispatch(fetchTransactionByHash({txHash}));
     } catch (e) {
       console.error('Error refreshing transaction', e);
     } finally {
       setRefreshing(false);
     }
-  }, [dispatch, initialTransaction, txHash]);
+  }, [dispatch, txHash]);
 
   useEffect(() => {
     fetchTransaction();
