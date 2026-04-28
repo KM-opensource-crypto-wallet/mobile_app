@@ -37,10 +37,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProviderSlice';
 import Loading from 'components/Loading';
 import {APP_VERSION, inAppBrowserOptions} from 'utils/common';
-import {
-  getBuyCryptoUrl,
-  getIPAddress,
-} from 'dok-wallet-blockchain-networks/service/dokApi';
+import {getBuyCryptoUrl} from 'dok-wallet-blockchain-networks/service/dokApi';
 import {
   validateNumber,
   validateNumberInInput,
@@ -118,10 +115,6 @@ const CryptoProviders = () => {
         return;
       }
       const isAvailable = await InAppBrowser.isAvailable();
-      let ipAddress = null;
-      if (item?.provider_name === 'simplex') {
-        ipAddress = await getIPAddress();
-      }
       if (isAvailable) {
         const url = item?.extraData?.url;
         if (item?.extraData?.url) {
@@ -132,7 +125,6 @@ const CryptoProviders = () => {
             selectedCoin,
             fiatCurrency,
             amount,
-            ipAddress,
             payment_method: paymentMethod,
             appVersion: APP_VERSION,
             from_device: Platform.OS,

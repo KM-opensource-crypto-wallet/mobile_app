@@ -2,14 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>aps-environment</key>
+	<string>development</string>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>applinks:www.kimlview.xyz</string>
-		<string>applinks:kimlview.xyz</string>
-		<string>applinks:www.app.kimlwallet.com</string>
-		<string>applinks:app.kimlwallet.com</string>
+		<string>applinks:dokwallet.app</string>
+		<string>applinks:www.dokwallet.app</string>
 	</array>
 	<key>com.apple.developer.devicecheck.appattest-environment</key>
-	<string>production</string>
+	<string>development</string>
 </dict>
 </plist>
