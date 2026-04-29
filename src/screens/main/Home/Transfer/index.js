@@ -447,6 +447,15 @@ const Transfer = ({navigation, route}) => {
         numberOfStakeAccount: isStakingScreen
           ? transferData?.currentCoin?.staking?.length || 0
           : null,
+        validatorName: isStakingScreen ? transferData?.validatorName : null,
+        displayValidators: isVoteStakingScreen
+          ? transferData?.displayValidators
+          : null,
+        nftName: isSendNFT
+          ? transferData?.selectedNFT?.name || transferData?.selectedNFT?.symbol
+          : null,
+        nftTokenId: isSendNFT ? transferData?.selectedNFT?.token_id : null,
+        nftImage: isSendNFT ? transferData?.selectedNFT?.metadata?.image : null,
         phrase,
         navigation,
       }),
@@ -470,6 +479,11 @@ const Transfer = ({navigation, route}) => {
     transferData?.resourceType,
     transferData?.selectedVotes,
     transferData?.stakingAddress,
+    transferData?.validatorName,
+    transferData?.displayValidators,
+    transferData?.selectedNFT?.name,
+    transferData?.selectedNFT?.symbol,
+    transferData?.selectedNFT?.metadata?.image,
     customNonce,
     isSendFundScreen,
     isStakingScreen,

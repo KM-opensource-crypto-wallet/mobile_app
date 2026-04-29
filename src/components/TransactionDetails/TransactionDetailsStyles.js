@@ -136,6 +136,72 @@ const myStyles = theme =>
       fontFamily: 'Roboto-Medium',
       fontWeight: '600',
     },
+    heroSubLabel: {
+      fontSize: 14,
+      color: theme.gray,
+      fontFamily: 'Roboto-Regular',
+      marginBottom: 12,
+    },
+    nftHeroImage: {
+      width: 80,
+      height: 80,
+      borderRadius: 12,
+      marginBottom: 12,
+    },
+    batchCard: {
+      backgroundColor: theme.backgroundColor,
+      marginHorizontal: 16,
+      borderRadius: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      marginBottom: 12,
+    },
+    batchItem: {
+      paddingVertical: 12,
+    },
+    batchItemRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 4,
+    },
+    batchItemCoin: {
+      fontSize: 14,
+      color: theme.font,
+      fontFamily: 'Roboto-Medium',
+      fontWeight: '600',
+    },
+    batchItemAmount: {
+      fontSize: 14,
+      color: theme.font,
+      fontFamily: 'Roboto-Regular',
+    },
+    batchItemTo: {
+      fontSize: 12,
+      color: theme.gray,
+      fontFamily: 'Roboto-Regular',
+    },
+    validatorItem: {
+      paddingVertical: 12,
+    },
+    validatorItemRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    validatorItemName: {
+      fontSize: 14,
+      color: theme.font,
+      fontFamily: 'Roboto-Regular',
+      flex: 1,
+      marginRight: 8,
+    },
+    validatorItemVotes: {
+      fontSize: 14,
+      color: theme.font,
+      fontFamily: 'Roboto-Medium',
+      fontWeight: '600',
+    },
   });
 
 export default myStyles;
