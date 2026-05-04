@@ -150,18 +150,24 @@ const TransactionDetails = ({route}) => {
     transaction?.isCreateStaking ||
     transaction?.isWithdrawStaking ||
     transaction?.isDeactivateStaking ||
-    transaction?.isStakingRewards
+    transaction?.isStakingRewards ||
+    transaction?.transactionType === 'stake' ||
+    transaction?.transactionType === 'unstake' ||
+    transaction?.transactionType === 'withdraw'
   );
   const isVoteTx = !!transaction?.isCreateVote;
   const isRegularTx = !isNFT && !isBatchTx && !isStakingTx && !isVoteTx;
 
-  const stakingLabel = transaction?.isCreateStaking
-    ? 'Staking'
-    : transaction?.isWithdrawStaking
-    ? 'Unstaking'
-    : transaction?.isDeactivateStaking
-    ? 'Deactivated Staking'
-    : 'Claimed Rewards';
+  const stakingLabel =
+    transaction?.isCreateStaking || transaction?.transactionType === 'stake'
+      ? 'Staking'
+      : transaction?.isWithdrawStaking ||
+        transaction?.transactionType === 'withdraw'
+      ? 'Withdraw'
+      : transaction?.isDeactivateStaking ||
+        transaction?.transactionType === 'unstake'
+      ? 'Unstaking'
+      : 'Claimed Rewards';
 
   // ── Regular tx helpers ──────────────────────────────────────────────────────
 

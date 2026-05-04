@@ -363,6 +363,7 @@ export const getLightningTransactions = async phrase => {
           to: item.paymentType === 1 ? address : null,
           paymentType: item.paymentType,
           totalCourse: '0$',
+          transactionType: 'regular',
         };
       });
     }

@@ -19,10 +19,14 @@ import SortTransactions from 'components/SortTransactions';
 import FilterIcon from 'assets/images/icons/filter-list.svg';
 
 import {ThemeContext} from 'theme/ThemeContext';
-import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  selectCurrentCoin,
+  selectTransactionsByType,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {refreshCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {
   getAddressDetailsUrl,
+  isBitcoinChain,
   isPendingTransactionSupportedChain,
 } from 'dok-wallet-blockchain-networks/helper';
 import {InAppBrowser} from 'react-native-inappbrowser-reborn';
@@ -31,18 +35,34 @@ import {inAppBrowserOptions} from 'utils/common';
 import {useNavigation} from '@react-navigation/native';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
+const ALL_TRANSACTION_TYPES = [
+  {label: 'All', value: 'all'},
+  {label: 'Regular', value: 'regular'},
+  {label: 'Stake', value: 'stake'},
+  {label: 'Unstake', value: 'unstake'},
+  {label: 'Withdraw', value: 'withdraw'},
+  {label: 'Batch', value: 'batch'},
+];
+
 const TransactionList = () => {
   const currentCoin = useSelector(selectCurrentCoin);
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-  const allTransactions = currentCoin?.transactions;
   const [modalVisible, setModalVisible] = useState(false);
   const [sort, setSort] = useState('Date Descending');
   const [filter, setFilter] = useState('None');
+  // const allTransactions = currentCoin?.transactions;
+  const [selectedType, setSelectedType] = useState('all');
   const [renderList, setRenderList] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const navigation = useNavigation();
+
+  const transactionsSelector = useMemo(
+    () => selectTransactionsByType(selectedType),
+    [selectedType],
+  );
+  const typedTransactions = useSelector(transactionsSelector);
 
   const isSupportUpdateTransaction = useMemo(() => {
     return (
@@ -50,6 +70,35 @@ const TransactionList = () => {
       currentCoin?.type === 'coin'
     );
   }, [currentCoin?.chain_name, currentCoin?.type]);
+
+  const transactionTypes = useMemo(() => {
+    const chain = currentCoin?.chain_name;
+    if (chain === 'tron') {
+      return ALL_TRANSACTION_TYPES.filter(t => t.value !== 'batch');
+    }
+    const ALL_ONLY_CHAINS = [
+      'ton',
+      'stellar',
+      'aptos',
+      'cardano',
+      'cosmos',
+      'filecoin',
+      'hedera',
+      'polkadot',
+      'ripple',
+      'solana',
+      'tezos',
+      'thorchain',
+      'bitcoin_lightning',
+      'litecoin',
+      'dogecoin',
+      'bitcoin_cash',
+    ];
+    if (ALL_ONLY_CHAINS.includes(chain) || isBitcoinChain(chain)) {
+      return ALL_TRANSACTION_TYPES.filter(t => t.value === 'all');
+    }
+    return ALL_TRANSACTION_TYPES;
+  }, [currentCoin?.chain_name]);
 
   const dispatch = useDispatch();
 
@@ -64,7 +113,7 @@ const TransactionList = () => {
         .then(() => {
           setIsLoading(false);
         })
-        .catch(e => {
+        .catch(() => {
           setIsLoading(false);
         });
     }
@@ -74,8 +123,8 @@ const TransactionList = () => {
   const address = currentCoin?.address;
 
   useEffect(() => {
-    setRenderList(allTransactions);
-  }, [allTransactions]);
+    setRenderList(typedTransactions);
+  }, [typedTransactions]);
 
   const onPressViewAll = useCallback(() => {
     const chain_name = currentCoin?.chain_name;
@@ -98,8 +147,8 @@ const TransactionList = () => {
       const mineAddress = currentCoin?.address;
       setSort(sortValue);
       setFilter(filterValue);
-      const allTempTransactions = Array.isArray(allTransactions)
-        ? [...allTransactions]
+      const allTempTransactions = Array.isArray(typedTransactions)
+        ? [...typedTransactions]
         : [];
       const parseTransaction = JSON.parse(JSON.stringify(allTempTransactions));
 
@@ -127,9 +176,8 @@ const TransactionList = () => {
       });
 
       setRenderList(sortedData);
-      // const
     },
-    [currentCoin?.address, allTransactions],
+    [currentCoin?.address, typedTransactions],
   );
 
   const onRefresh = useCallback(async () => {
@@ -137,6 +185,12 @@ const TransactionList = () => {
     await dispatch(refreshCurrentCoin({fetchTransaction: true})).unwrap();
     setRefreshing(false);
   }, [dispatch]);
+
+  const onPressTypeTab = useCallback(value => {
+    setSelectedType(value);
+    setSort('Date Descending');
+    setFilter('None');
+  }, []);
 
   if (!currentCoin) {
     return null;
@@ -176,6 +230,36 @@ const TransactionList = () => {
                 </TouchableOpacity>
               </View>
             </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.typeFilterScrollView}
+              contentContainerStyle={styles.typeFilterRow}>
+              {transactionTypes.map(item => {
+                const isActive = selectedType === item.value;
+                return (
+                  <TouchableOpacity
+                    key={item.value}
+                    style={
+                      isActive
+                        ? styles.typeFilterTabActive
+                        : styles.typeFilterTab
+                    }
+                    onPress={() => onPressTypeTab(item.value)}>
+                    <Text
+                      numberOfLines={1}
+                      style={
+                        isActive
+                          ? styles.typeFilterTabTextActive
+                          : styles.typeFilterTabText
+                      }>
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
             <View style={styles.borderBox}>
               <View style={styles.sortList}>
                 <View>

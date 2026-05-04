@@ -63,6 +63,41 @@ const myStyles = theme =>
       fontSize: 14,
       fontFamily: 'Roboto-Regular',
     },
+    typeFilterScrollView: {
+      flexGrow: 0,
+    },
+    typeFilterRow: {
+      flexDirection: 'row',
+      paddingHorizontal: 20,
+      paddingVertical: 8,
+      gap: 8,
+      alignItems: 'center',
+    },
+    typeFilterTab: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.gray,
+    },
+    typeFilterTabActive: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.blue,
+      backgroundColor: theme.blue,
+    },
+    typeFilterTabText: {
+      fontSize: 13,
+      fontFamily: 'Roboto-Regular',
+      color: theme.font,
+    },
+    typeFilterTabTextActive: {
+      fontSize: 13,
+      fontFamily: 'Roboto-Regular',
+      color: '#ffffff',
+    },
   });
 
 export default myStyles;
