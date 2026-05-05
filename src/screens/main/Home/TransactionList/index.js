@@ -76,6 +76,11 @@ const TransactionList = () => {
     if (chain === 'tron') {
       return ALL_TRANSACTION_TYPES.filter(t => t.value !== 'batch');
     }
+    if (chain === 'solana') {
+      return ALL_TRANSACTION_TYPES.filter(t =>
+        ['all', 'stake', 'unstake', 'withdraw'].includes(t.value),
+      );
+    }
     const ALL_ONLY_CHAINS = [
       'ton',
       'stellar',
@@ -86,7 +91,6 @@ const TransactionList = () => {
       'hedera',
       'polkadot',
       'ripple',
-      'solana',
       'tezos',
       'thorchain',
       'bitcoin_lightning',
