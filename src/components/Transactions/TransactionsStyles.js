@@ -31,6 +31,11 @@ const myStyles = theme =>
     item: {
       alignItems: 'flex-start',
     },
+    linkRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
     itemNumber: {
       alignItems: 'flex-end',
     },

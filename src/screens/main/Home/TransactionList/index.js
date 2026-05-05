@@ -56,6 +56,7 @@ const TransactionList = () => {
   const [renderList, setRenderList] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hideSmallTx, setHideSmallTx] = useState(false);
   const navigation = useNavigation();
 
   const transactionsSelector = useMemo(
@@ -147,25 +148,44 @@ const TransactionList = () => {
   }, [navigation]);
 
   const onPressApply = useCallback(
-    (sortValue, filterValue) => {
+    (sortValue, filterValue, hideSmallTxValue) => {
       const mineAddress = currentCoin?.address;
       setSort(sortValue);
       setFilter(filterValue);
+      setHideSmallTx(hideSmallTxValue);
       const allTempTransactions = Array.isArray(typedTransactions)
         ? [...typedTransactions]
         : [];
       const parseTransaction = JSON.parse(JSON.stringify(allTempTransactions));
 
       const filterTempTransactions = parseTransaction.filter(mainTran => {
-        if (filterValue === 'None') {
-          return true;
-        } else if (filterValue === 'Received') {
-          return mineAddress?.toUpperCase() === mainTran?.to?.toUpperCase();
+        if (filterValue === 'Received') {
+          if (mineAddress?.toUpperCase() !== mainTran?.to?.toUpperCase()) {
+            return false;
+          }
         } else if (filterValue === 'Send') {
-          return mineAddress?.toUpperCase() === mainTran?.from?.toUpperCase();
+          if (mineAddress?.toUpperCase() !== mainTran?.from?.toUpperCase()) {
+            return false;
+          }
         } else if (filterValue === 'Pending') {
-          return mainTran.status?.toUpperCase() !== 'SUCCESS';
+          if (mainTran.status?.toUpperCase() === 'SUCCESS') {
+            return false;
+          }
         }
+        if (
+          hideSmallTxValue &&
+          currentCoin?.currencyRate &&
+          currentCoin?.decimal &&
+          mainTran.transactionType !== 'stake' &&
+          mainTran.transactionType !== 'unstake'
+        ) {
+          const usdValue =
+            Number(mainTran.amount) * Number(currentCoin.currencyRate);
+          if (usdValue < 1) {
+            return false;
+          }
+        }
+        return true;
       });
       const sortedData = filterTempTransactions?.sort(function (a, b) {
         if (sortValue === 'Date Descending') {
@@ -181,7 +201,7 @@ const TransactionList = () => {
 
       setRenderList(sortedData);
     },
-    [currentCoin?.address, typedTransactions],
+    [currentCoin, typedTransactions],
   );
 
   const onRefresh = useCallback(async () => {
@@ -194,6 +214,7 @@ const TransactionList = () => {
     setSelectedType(value);
     setSort('Date Descending');
     setFilter('None');
+    setHideSmallTx(false);
   }, []);
 
   if (!currentCoin) {
@@ -275,6 +296,12 @@ const TransactionList = () => {
                     <Text>
                       <Text style={styles.sortTitle}>Filter by:</Text>
                       <Text style={styles.titleItem}>{filter}</Text>
+                    </Text>
+                  )}
+                  {hideSmallTx && (
+                    <Text>
+                      <Text style={styles.sortTitle}>Hiding:</Text>
+                      <Text style={styles.titleItem}>{'< $1'}</Text>
                     </Text>
                   )}
                 </View>

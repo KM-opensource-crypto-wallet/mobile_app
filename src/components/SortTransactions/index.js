@@ -1,5 +1,5 @@
 import React, {useState, useContext, useCallback} from 'react';
-import {View, TouchableOpacity, Dimensions, Text} from 'react-native';
+import {View, TouchableOpacity, Dimensions, Text, Switch} from 'react-native';
 import myStyles from './SortTransactionsStyles';
 import {Modal} from 'react-native-paper';
 import {CheckBox} from '@rneui/themed';
@@ -35,10 +35,11 @@ const SortTransactions = ({visible, hideModal, onPressAppy}) => {
 
   const [value, setValue] = useState('Date Descending');
   const [status, setStatus] = useState('None');
+  const [hideSmallTx, setHideSmallTx] = useState(false);
 
   const handleSumbit = () => {
     hideModal(false);
-    onPressAppy(value, status);
+    onPressAppy(value, status, hideSmallTx);
   };
 
   const sortList = [
@@ -171,6 +172,16 @@ const SortTransactions = ({visible, hideModal, onPressAppy}) => {
             <Text style={styles.item}>{el.label}</Text>
           </View>
         ))}
+
+        <View style={styles.toggleRow}>
+          <Text style={styles.item}>Hide transactions &lt; $1</Text>
+          <Switch
+            value={hideSmallTx}
+            onValueChange={setHideSmallTx}
+            trackColor={{false: theme.carouselPoints, true: theme.background}}
+            thumbColor={'white'}
+          />
+        </View>
 
         <TouchableOpacity style={styles.btnSubmit} onPress={handleSumbit}>
           <Text style={styles.btnSubmitTitle}>Apply</Text>

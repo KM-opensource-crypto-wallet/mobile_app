@@ -143,13 +143,28 @@ const Transactions = ({renderList, selectedAddress}) => {
                     <View style={styles.list}>
                       <View style={styles.box}>
                         <View style={styles.item}>
-                          <Text style={styles.title}>
-                            {item?.link
-                              ? item.link.length > 13
-                                ? `${item.link.substring(0, 13)}...`
-                                : item.link
-                              : '—'}
-                          </Text>
+                          <View style={styles.linkRow}>
+                            <IoniconIcon
+                              name={
+                                isReceived
+                                  ? 'arrow-down-circle-outline'
+                                  : 'arrow-up-circle-outline'
+                              }
+                              size={20}
+                              color={isReceived ? 'green' : 'red'}
+                            />
+                            <Text style={styles.title}>
+                              {item.transactionType === 'stake' ||
+                              item.transactionType === 'unstake' ||
+                              item.transactionType === 'smartContract'
+                                ? 'Smart Contract Call'
+                                : item?.link
+                                ? item.link.length > 13
+                                  ? `${item.link.substring(0, 13)}...`
+                                  : item.link
+                                : '—'}
+                            </Text>
+                          </View>
                           <View style={{flexDirection: 'row'}}>
                             <Text style={styles.text}>
                               {dayjs(item.date).format('DD.MM.YYYY')}

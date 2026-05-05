@@ -68,6 +68,13 @@ const myStyles = theme =>
       flexDirection: 'row',
       justifyContent: 'flex-start',
     },
+    toggleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+    },
     btnSubmit: {
       backgroundColor: theme.background,
       width: itemWidth - 10,
