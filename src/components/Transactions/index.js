@@ -132,8 +132,33 @@ const Transactions = ({renderList, selectedAddress}) => {
         ) : (
           <>
             {list?.map((item, index) => {
+              const txType = item?.transactionType;
               const isReceived =
-                item?.to?.toUpperCase() === selectedAddress?.toUpperCase();
+                txType === 'unstake' || txType === 'withdraw'
+                  ? true
+                  : txType === 'stake'
+                  ? false
+                  : item?.to?.toUpperCase() === selectedAddress?.toUpperCase();
+              const aerrowIconName = isReceived ? 'arrow-down' : 'arrow-up';
+              const aerrowIconColor = isReceived ? 'green' : 'red';
+              const isStaking =
+                item.transactionType === 'stake' ||
+                item.transactionType === 'unstake';
+              const title =
+                txType === 'stake'
+                  ? 'Stake'
+                  : txType === 'withdraw'
+                  ? 'Withdraw'
+                  : txType === 'unstake'
+                  ? 'Unstake'
+                  : txType === 'smartContract'
+                  ? 'Smart Contract Call'
+                  : item?.link
+                  ? item.link.length > 13
+                    ? `${item.link.substring(0, 13)}...`
+                    : item.link
+                  : '—';
+
               return (
                 <TouchableOpacity
                   style={styles.section}
@@ -144,26 +169,20 @@ const Transactions = ({renderList, selectedAddress}) => {
                       <View style={styles.box}>
                         <View style={styles.item}>
                           <View style={styles.linkRow}>
-                            <IoniconIcon
-                              name={
-                                isReceived
-                                  ? 'arrow-down-circle-outline'
-                                  : 'arrow-up-circle-outline'
-                              }
-                              size={20}
-                              color={isReceived ? 'green' : 'red'}
-                            />
-                            <Text style={styles.title}>
-                              {item.transactionType === 'stake' ||
-                              item.transactionType === 'unstake' ||
-                              item.transactionType === 'smartContract'
-                                ? 'Smart Contract Call'
-                                : item?.link
-                                ? item.link.length > 13
-                                  ? `${item.link.substring(0, 13)}...`
-                                  : item.link
-                                : '—'}
-                            </Text>
+                            {isStaking ? (
+                              <IoniconIcon
+                                name={'document-text-sharp'}
+                                size={20}
+                                color={'green'}
+                              />
+                            ) : (
+                              <IoniconIcon
+                                name={aerrowIconName}
+                                size={20}
+                                color={aerrowIconColor}
+                              />
+                            )}
+                            <Text style={styles.title}>{title}</Text>
                           </View>
                           <View style={{flexDirection: 'row'}}>
                             <Text style={styles.text}>
