@@ -3,6 +3,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -72,7 +73,7 @@ const CopyRow = ({value, displayValue, styles, theme}) => {
   );
 };
 
-const TransactionDetails = ({route}) => {
+const TransactionDetails = ({route, navigation}) => {
   const initialTransaction = route?.params?.transaction;
   const txHash = initialTransaction?.link || '';
   const {theme} = useContext(ThemeContext);
@@ -87,6 +88,13 @@ const TransactionDetails = ({route}) => {
   const [refreshing, setRefreshing] = useState(false);
   const [nftImageError, setNftImageError] = useState(false);
   const statusRef = useRef(initialTransaction?.status);
+
+  useLayoutEffect(() => {
+    const title = initialTransaction?.isNFT
+      ? 'NFT Transfer'
+      : `${currentCoin?.name || ''} Transaction`;
+    navigation.setOptions({title});
+  }, [navigation, currentCoin?.name, initialTransaction?.isNFT]);
 
   const recentTx =
     reduxRecentTransaction?.data?.link === txHash
@@ -118,10 +126,17 @@ const TransactionDetails = ({route}) => {
     }
   }, [recentTx?.status]);
 
+  const currentCoinRef = useRef(currentCoin);
+
   const fetchTransaction = useCallback(async () => {
     setRefreshing(true);
     try {
-      await dispatch(fetchTransactionByHash({txHash}));
+      await dispatch(
+        fetchTransactionByHash({
+          txHash,
+          currentCoin: currentCoinRef.current,
+        }),
+      ).unwrap();
     } catch (e) {
       console.error('Error refreshing transaction', e);
     } finally {
@@ -132,7 +147,8 @@ const TransactionDetails = ({route}) => {
   useEffect(() => {
     fetchTransaction();
     const interval = setInterval(() => {
-      if (statusRef.current?.toUpperCase() === 'SUCCESS') {
+      const upperStatus = statusRef.current?.toUpperCase();
+      if (upperStatus === 'SUCCESS' || upperStatus === 'FAILED') {
         clearInterval(interval);
         return;
       }
