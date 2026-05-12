@@ -23,6 +23,8 @@ import {
   selectCurrentCoin,
   selectTransactionsByType,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {getHideSmallTransactions} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {setHideSmallTransactions} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
 import {refreshCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {
   getAddressDetailsUrl,
@@ -46,6 +48,7 @@ const ALL_TRANSACTION_TYPES = [
 
 const TransactionList = () => {
   const currentCoin = useSelector(selectCurrentCoin);
+  const hideSmallTransactions = useSelector(getHideSmallTransactions);
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const [modalVisible, setModalVisible] = useState(false);
@@ -56,7 +59,9 @@ const TransactionList = () => {
   const [renderList, setRenderList] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [hideSmallTx, setHideSmallTx] = useState(false);
+  const [hideSmallTx, setHideSmallTx] = useState(
+    hideSmallTransactions ?? false,
+  );
   const navigation = useNavigation();
 
   const transactionsSelector = useMemo(
@@ -153,6 +158,7 @@ const TransactionList = () => {
       setSort(sortValue);
       setFilter(filterValue);
       setHideSmallTx(hideSmallTxValue);
+      dispatch(setHideSmallTransactions(hideSmallTxValue));
       const allTempTransactions = Array.isArray(typedTransactions)
         ? [...typedTransactions]
         : [];
@@ -201,7 +207,7 @@ const TransactionList = () => {
 
       setRenderList(sortedData);
     },
-    [currentCoin, typedTransactions],
+    [currentCoin, dispatch, typedTransactions],
   );
 
   const onRefresh = useCallback(async () => {
