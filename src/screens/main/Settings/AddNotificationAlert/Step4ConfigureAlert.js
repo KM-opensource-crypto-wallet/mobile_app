@@ -142,8 +142,7 @@ const AddNotificationAlertConfig = ({navigation, route}) => {
     setConfigCoinKey(key);
     setNotifyOnReceive(existingAlert.notifyOnReceive ?? true);
     setNotifyOnSend(existingAlert.notifyOnSend ?? true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isEditMode, existingAlert, allWallets]);
 
   const currentMinAmount = configCoinKey
     ? minAmountMap[configCoinKey] ?? ''

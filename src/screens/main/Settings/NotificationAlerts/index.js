@@ -158,6 +158,7 @@ const NotificationAlerts = ({navigation}) => {
     }
     const granted = await OneSignal.Notifications.requestPermission(false);
     if (granted) {
+      setHasNotificationPermission(true);
       await initOneSignal();
       navigation.navigate('AddNotificationAlert');
     } else {
