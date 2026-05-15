@@ -41,6 +41,7 @@ import {showToast} from 'utils/toast';
 import {initOneSignal} from 'utils/common';
 
 const MAX_ALERTS = 20;
+const FIFTEEN_MIN_MS = 15 * 60 * 1000;
 
 const NotificationAlerts = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -53,8 +54,37 @@ const NotificationAlerts = ({navigation}) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasNotificationPermission, setHasNotificationPermission] =
     useState(true);
+  const [dismissedAlertId, setDismissedAlertId] = useState(null);
   const selectedItemRef = useRef(null);
   const dispatch = useDispatch();
+
+  const latestCreatedAlert = useMemo(
+    () =>
+      notificationAlerts
+        .filter(a => a.createdAt)
+        .sort((a, b) => b.createdAt - a.createdAt)[0] ?? null,
+    [notificationAlerts],
+  );
+
+  const showBanner =
+    !!latestCreatedAlert && latestCreatedAlert.id !== dismissedAlertId;
+
+  useEffect(() => {
+    if (!showBanner || !latestCreatedAlert?.createdAt) {
+      return;
+    }
+    const remaining =
+      latestCreatedAlert.createdAt + FIFTEEN_MIN_MS - Date.now();
+    if (remaining <= 0) {
+      setDismissedAlertId(latestCreatedAlert.id);
+      return;
+    }
+    const timer = setTimeout(
+      () => setDismissedAlertId(latestCreatedAlert.id),
+      remaining,
+    );
+    return () => clearTimeout(timer);
+  }, [latestCreatedAlert?.id, latestCreatedAlert?.createdAt, showBanner]);
 
   const fetchAlerts = useCallback(
     async ({refreshing = false} = {}) => {
@@ -194,7 +224,7 @@ const NotificationAlerts = ({navigation}) => {
   }, []);
 
   const onPressEdit = useCallback(
-    item => navigation.navigate('AddNotificationAlert', {alert: item}),
+    item => navigation.navigate('AddNotificationAlertConfig', {alert: item}),
     [navigation],
   );
 
@@ -261,6 +291,23 @@ const NotificationAlerts = ({navigation}) => {
         renderPermissionMessage()
       ) : (
         <>
+          {showBanner && (
+            <View style={styles.bannerContainer}>
+              <Ionicons
+                name="time-outline"
+                size={18}
+                color={theme.background}
+              />
+              <Text style={styles.bannerText}>
+                Your new alert may take up to 15 minutes to activate.
+              </Text>
+              <TouchableOpacity
+                hitSlop={{left: 8, right: 8, top: 8, bottom: 8}}
+                onPress={() => setDismissedAlertId(latestCreatedAlert.id)}>
+                <Ionicons name="close" size={18} color={theme.gray} />
+              </TouchableOpacity>
+            </View>
+          )}
           <Text style={styles.counterText}>
             {notificationAlerts.length}/{MAX_ALERTS} alerts
           </Text>

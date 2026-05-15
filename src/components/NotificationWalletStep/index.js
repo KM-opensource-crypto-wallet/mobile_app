@@ -4,30 +4,32 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './NotificationWalletStepStyles';
 
-const NotificationWalletStep = ({wallets, onSelectWallet}) => {
+const NotificationWalletStep = ({wallets, onSelectWallet, coinFilter}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
 
   const renderItem = useCallback(
-    ({item}) => (
-      <TouchableOpacity
-        style={styles.listItem}
-        onPress={() => onSelectWallet(item)}>
-        <MaterialCommunityIcons name="wallet" size={24} color={theme.font} />
-        <View style={styles.flexOne}>
-          <Text style={styles.listItemText}>{item.walletName}</Text>
-          <Text style={styles.listItemSubtext}>
-            {`${item.coins?.filter(c => c.isInWallet)?.length || 0} coins`}
-          </Text>
-        </View>
-        <MaterialCommunityIcons
-          name="chevron-right"
-          size={24}
-          color={theme.gray}
-        />
-      </TouchableOpacity>
-    ),
-    [onSelectWallet, styles, theme],
+    ({item}) => {
+      const filter = coinFilter ?? (c => c.isInWallet);
+      const count = item.coins?.filter(filter)?.length || 0;
+      return (
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => onSelectWallet(item)}>
+          <MaterialCommunityIcons name="wallet" size={24} color={theme.font} />
+          <View style={styles.flexOne}>
+            <Text style={styles.listItemText}>{item.walletName}</Text>
+            <Text style={styles.listItemSubtext}>{`${count} coins`}</Text>
+          </View>
+          <MaterialCommunityIcons
+            name="chevron-right"
+            size={24}
+            color={theme.gray}
+          />
+        </TouchableOpacity>
+      );
+    },
+    [coinFilter, onSelectWallet, styles, theme],
   );
 
   return (

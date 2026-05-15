@@ -129,6 +129,28 @@ const myStyles = (theme, bottom) =>
       fontSize: 16,
       fontFamily: 'Roboto-Medium',
     },
+    bannerContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.secondaryBackgroundColor,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      marginHorizontal: 16,
+      marginBottom: 8,
+      gap: 8,
+      borderLeftWidth: 3,
+      borderWidth: 1,
+      borderColor: theme.backdrop,
+      borderLeftColor: theme.background,
+    },
+    bannerText: {
+      flex: 1,
+      fontSize: 13,
+      color: theme.font,
+      fontFamily: 'Roboto-Regular',
+      lineHeight: 18,
+    },
   });
 
 export default myStyles;
