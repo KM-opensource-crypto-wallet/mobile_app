@@ -3,9 +3,6 @@ import {getBuildNumber, getVersion} from 'react-native-device-info';
 import crypto from 'react-native-quick-crypto';
 import {Linking} from 'react-native';
 import {Platform} from 'react-native';
-import {LogLevel, OneSignal} from 'react-native-onesignal';
-import {getUniqueId} from 'react-native-device-info';
-import {ONESIGNAL_APP_ID} from 'utils/wlData';
 
 export const inAppBrowserOptions = IS_ANDROID
   ? {
@@ -176,35 +173,3 @@ export const Constants = {
   },
 };
 
-let _oneSignalInitialized = false;
-
-export const initOneSignal = async () => {
-  if (!ONESIGNAL_APP_ID) {
-    console.warn('initOneSignal: ONESIGNAL_APP_ID is not defined, skipping.');
-    return null;
-  }
-  try {
-    if (!_oneSignalInitialized) {
-      if (__DEV__) {
-        OneSignal.Debug.setLogLevel(LogLevel.Verbose);
-      }
-      OneSignal.initialize(ONESIGNAL_APP_ID);
-      _oneSignalInitialized = true;
-    }
-
-    const deviceId = await getUniqueId();
-
-    if (Platform.OS === 'ios' || Number(Platform.Version) >= 33) {
-      OneSignal.Notifications.requestPermission(false);
-    }
-
-    OneSignal.login(deviceId);
-    OneSignal.User.pushSubscription.optIn();
-
-    const onesignalId = await OneSignal.User.getOnesignalId();
-    return onesignalId;
-  } catch (error) {
-    console.error('OneSignal init error:', error);
-    return null;
-  }
-};

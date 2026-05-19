@@ -34,7 +34,6 @@ import DriveGuideModal from 'components/BackupRestore/DriveGuideModal';
 import ModalDeleteBackup from 'components/ModalDeleteBackup';
 import myStyles from './styles';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {OneSignal} from 'react-native-onesignal';
 
 const RestoreWallets = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -109,7 +108,6 @@ const RestoreWallets = ({navigation}) => {
   const handleLogout = useCallback(async notShowToast => {
     try {
       await googleDrive.googleSignOut();
-      OneSignal.logout();
       setUserInfo(null);
       setRestorableWallets([]);
       setError(null);

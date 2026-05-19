@@ -33,7 +33,6 @@ import WalletSelectionCard from 'components/BackupRestore/WalletSelectionCard';
 import ModalDeleteBackup from 'components/ModalDeleteBackup';
 import myStyles from './styles';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {OneSignal} from 'react-native-onesignal';
 
 const BackupWallets = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -99,7 +98,6 @@ const BackupWallets = ({navigation}) => {
   const handleLogout = useCallback(async notShowToast => {
     try {
       await googleDrive.googleSignOut();
-      OneSignal.logout();
       setUserInfo(null);
       if (!notShowToast) {
         showToast({type: 'successToast', message: 'Logged out successfully'});

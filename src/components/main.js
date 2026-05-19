@@ -41,7 +41,12 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {store} from 'redux/store';
-import {OneSignal} from 'react-native-onesignal';
+import {
+  setupOneSignal,
+  initOneSignal,
+  addNotificationClickListener,
+  removeNotificationClickListener,
+} from 'utils/onesignal';
 import {isReduxStoreLoaded} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSelectors';
 import {selectWalletConnectSessions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {clearWalletConnectStorageCache} from 'utils/asyncStorage';
@@ -61,7 +66,6 @@ import {getCountry} from 'react-native-localize';
 import {MenuProvider} from 'react-native-popup-menu';
 import {
   getQueryParams,
-  initOneSignal,
   parseUrlQS,
   validatePaymentUrl,
   validateWCUrl,
@@ -73,6 +77,7 @@ import {
   setRouteStateData,
   setWcUri,
 } from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
+import {checkNotifications, RESULTS} from 'react-native-permissions';
 import ModalAppUpdate from 'components/ModalAppUpdates';
 import dayjs from 'dayjs';
 import axios from 'axios';
@@ -425,10 +430,15 @@ const Main = () => {
   }, [pendingNotificationData, handleNotificationData]);
 
   useEffect(() => {
-    initOneSignal();
-    OneSignal.Notifications.addEventListener('click', onNotificationClick);
+    setupOneSignal();
+    checkNotifications().then(({status}) => {
+      if (status === RESULTS.GRANTED || status === RESULTS.LIMITED) {
+        initOneSignal();
+      }
+    });
+    addNotificationClickListener(onNotificationClick);
     return () => {
-      OneSignal.Notifications.removeEventListener('click', onNotificationClick);
+      removeNotificationClickListener(onNotificationClick);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

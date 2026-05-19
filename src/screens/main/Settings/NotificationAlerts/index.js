@@ -13,8 +13,6 @@ import {
   Text,
   FlatList,
   Alert,
-  Platform,
-  Linking,
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
@@ -35,10 +33,15 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
 import {useFocusEffect} from '@react-navigation/native';
 import EmptyView from 'components/EmptyView';
-import {OneSignal} from 'react-native-onesignal';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {showToast} from 'utils/toast';
-import {initOneSignal} from 'utils/common';
+import {initOneSignal} from 'utils/onesignal';
+import {
+  checkNotifications,
+  requestNotifications,
+  openSettings as openNotificationSettings,
+  RESULTS,
+} from 'react-native-permissions';
 
 const MAX_ALERTS = 20;
 const FIFTEEN_MIN_MS = 15 * 60 * 1000;
@@ -103,15 +106,23 @@ const NotificationAlerts = ({navigation}) => {
   );
 
   const checkNotificationPermission = useCallback(async () => {
-    const hasPermission = await OneSignal.Notifications.getPermissionAsync();
-    setHasNotificationPermission(hasPermission);
+    const {status} = await checkNotifications();
+    setHasNotificationPermission(
+      status === RESULTS.GRANTED || status === RESULTS.LIMITED,
+    );
   }, []);
 
+  const appStateRef = useRef(AppState.currentState);
+
   const handleAppStateChange = useCallback(
-    appState => {
-      if (appState === 'active') {
+    nextAppState => {
+      if (
+        appStateRef.current.match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
         checkNotificationPermission();
       }
+      appStateRef.current = nextAppState;
     },
     [checkNotificationPermission],
   );
@@ -121,9 +132,7 @@ const NotificationAlerts = ({navigation}) => {
       'change',
       handleAppStateChange,
     );
-    return () => {
-      appStateSubscription.remove();
-    };
+    return () => appStateSubscription.remove();
   }, [handleAppStateChange]);
 
   useEffect(() => {
@@ -133,7 +142,8 @@ const NotificationAlerts = ({navigation}) => {
   useFocusEffect(
     useCallback(() => {
       fetchAlerts();
-    }, [fetchAlerts]),
+      checkNotificationPermission();
+    }, [fetchAlerts, checkNotificationPermission]),
   );
 
   const data = useMemo(() => {
@@ -150,14 +160,29 @@ const NotificationAlerts = ({navigation}) => {
     );
   }, [searchText, notificationAlerts]);
 
+  const openSettings = useCallback(() => {
+    openNotificationSettings('notifications');
+  }, []);
+
   const checkPermissionAndNavigate = useCallback(async () => {
-    const hasPermission = await OneSignal.Notifications.getPermissionAsync();
-    if (hasPermission) {
+    const {status: currentStatus} = await checkNotifications();
+    if (currentStatus === RESULTS.GRANTED || currentStatus === RESULTS.LIMITED) {
       navigation.navigate('AddNotificationAlert');
       return;
     }
-    const granted = await OneSignal.Notifications.requestPermission(false);
-    if (granted) {
+    if (currentStatus === RESULTS.BLOCKED) {
+      Alert.alert(
+        'Enable Notifications',
+        'Notifications must be enabled to receive transaction alerts for your wallets. Please enable them in your device settings.',
+        [
+          {text: 'Cancel', style: 'cancel'},
+          {text: 'Open Settings', onPress: openSettings},
+        ],
+      );
+      return;
+    }
+    const {status} = await requestNotifications(['alert', 'sound', 'badge']);
+    if (status === RESULTS.GRANTED || status === RESULTS.LIMITED) {
       setHasNotificationPermission(true);
       await initOneSignal();
       navigation.navigate('AddNotificationAlert');
@@ -167,17 +192,11 @@ const NotificationAlerts = ({navigation}) => {
         'Notifications must be enabled to receive transaction alerts for your wallets. Please enable them in your device settings.',
         [
           {text: 'Cancel', style: 'cancel'},
-          {
-            text: 'Open Settings',
-            onPress: () =>
-              Platform.OS === 'ios'
-                ? Linking.openURL('app-settings:')
-                : Linking.openSettings(),
-          },
+          {text: 'Open Settings', onPress: openSettings},
         ],
       );
     }
-  }, [navigation]);
+  }, [navigation, openSettings]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -240,11 +259,39 @@ const NotificationAlerts = ({navigation}) => {
     [onPressDelete, onPressEdit],
   );
 
-  const openSettings = useCallback(() => {
-    Platform.OS === 'ios'
-      ? Linking.openURL('app-settings:')
-      : Linking.openSettings();
-  }, []);
+  const handleEnableNotifications = useCallback(async () => {
+    const {status: currentStatus} = await checkNotifications();
+    if (currentStatus === RESULTS.GRANTED || currentStatus === RESULTS.LIMITED) {
+      setHasNotificationPermission(true);
+      await initOneSignal();
+      return;
+    }
+    if (currentStatus === RESULTS.BLOCKED) {
+      Alert.alert(
+        'Enable Notifications',
+        'Notifications must be enabled to receive transaction alerts for your wallets. Please enable them in your device settings.',
+        [
+          {text: 'Cancel', style: 'cancel'},
+          {text: 'Open Settings', onPress: openSettings},
+        ],
+      );
+      return;
+    }
+    const {status} = await requestNotifications(['alert', 'sound', 'badge']);
+    if (status === RESULTS.GRANTED || status === RESULTS.LIMITED) {
+      setHasNotificationPermission(true);
+      await initOneSignal();
+    } else {
+      Alert.alert(
+        'Enable Notifications',
+        'Notifications must be enabled to receive transaction alerts for your wallets. Please enable them in your device settings.',
+        [
+          {text: 'Cancel', style: 'cancel'},
+          {text: 'Open Settings', onPress: openSettings},
+        ],
+      );
+    }
+  }, [openSettings]);
 
   const renderPermissionMessage = useCallback(
     () => (
@@ -257,21 +304,21 @@ const NotificationAlerts = ({navigation}) => {
               color={theme.background}
             />
           </View>
-          <Text style={styles.permissionTitle}>Notifications Disabled</Text>
+          <Text style={styles.permissionTitle}>Enable Notifications</Text>
           <Text style={styles.permissionDescription}>
-            You've turned off notification permissions. Enable them to receive
-            important alerts about your transactions and wallet activities.
+            Get real-time alerts when you receive or send crypto above your set
+            threshold. Tap below to grant notification access.
           </Text>
           <TouchableOpacity
             style={styles.settingsButton}
             activeOpacity={0.75}
-            onPress={openSettings}>
-            <Text style={styles.settingsButtonText}>Open Settings</Text>
+            onPress={handleEnableNotifications}>
+            <Text style={styles.settingsButtonText}>Enable Notifications</Text>
           </TouchableOpacity>
         </View>
       </View>
     ),
-    [styles, theme.background, openSettings],
+    [styles, theme.background, handleEnableNotifications],
   );
 
   return (

@@ -28,7 +28,9 @@ const AddNotificationAlertCoins = ({navigation, route}) => {
         .filter(
           c =>
             c.isInWallet &&
-            (isEVMChain(c.chain_name) || isBitcoinChain(c.chain_name)),
+            c.type === 'token' &&
+            (c.chain_name === 'ethereum' ||
+              c.chain_name === 'binance_smart_chain'),
         )
         .map(c => ({
           coin: c,

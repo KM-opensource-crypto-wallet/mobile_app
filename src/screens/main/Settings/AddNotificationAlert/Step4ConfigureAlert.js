@@ -18,7 +18,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
 import {v4} from 'uuid';
 import {showToast} from 'utils/toast';
-import {initOneSignal} from 'utils/common';
+import {initOneSignal} from 'utils/onesignal';
 import {
   coinKey,
   getDefaultMinAmount,
