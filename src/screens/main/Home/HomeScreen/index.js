@@ -70,10 +70,14 @@ import {
   getConversations,
   getSelectedConversations,
 } from 'dok-wallet-blockchain-networks/redux/messages/messageSelector';
-import {setPaymentData} from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
+import {
+  setPaymentData,
+  setRouteStateData,
+} from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
 import {
   getIsWalletConnectInitialized,
   getPaymentData,
+  getRouteStateData,
   getWCUri,
 } from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
 import {isChatOptions} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
@@ -149,6 +153,7 @@ const HomeScreen = ({navigation, route}) => {
   const paymentData = useSelector(getPaymentData);
   const isWalletConnectInitialized = useSelector(getIsWalletConnectInitialized);
   const wcUri = useSelector(getWCUri);
+  const routeStateData = useSelector(getRouteStateData);
   const conversationName = useSelector(getConversationName);
 
   const newsBottomSheetRef = useRef();
@@ -159,6 +164,13 @@ const HomeScreen = ({navigation, route}) => {
   const qrScheme = route.params?.qrScheme;
   const qrAmount = route.params?.qrAmount;
   const newDateToString = route.params?.newDateToString;
+
+  useEffect(() => {
+    if (routeStateData?.navigateToTransactionList) {
+      dispatch(setRouteStateData({navigateToTransactionList: false}));
+      navigation.navigate('TransactionList');
+    }
+  }, [routeStateData?.navigateToTransactionList, navigation, dispatch]);
   const [routes] = React.useState(
     IS_IOS && IS_KIML_WALLET
       ? [{key: 'coins', title: 'Coins'}]

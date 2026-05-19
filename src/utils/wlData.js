@@ -41,6 +41,13 @@ const WEB_GOOGLE_CLIENT_ID_OBJ = {
 
 export const WEB_GOOGLE_CLIENT_ID = WEB_GOOGLE_CLIENT_ID_OBJ[wlName];
 
+const ONESIGNAL_APP_ID_OBJ = {
+  dokwallet: process.env.DOK_WALLET_ONESIGNAL_APP_ID,
+  kimlwallet: process.env.KIML_WALLET_ONESIGNAL_APP_ID,
+};
+
+export const ONESIGNAL_APP_ID = ONESIGNAL_APP_ID_OBJ[wlName];
+
 // Use static require paths inside a mapping
 const logoMap = {
   dokwallet: {

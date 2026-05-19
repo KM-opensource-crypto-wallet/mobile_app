@@ -2,6 +2,7 @@ import {IS_ANDROID} from 'utils/dimensions';
 import {getBuildNumber, getVersion} from 'react-native-device-info';
 import crypto from 'react-native-quick-crypto';
 import {Linking} from 'react-native';
+import {Platform} from 'react-native';
 
 export const inAppBrowserOptions = IS_ANDROID
   ? {
@@ -171,3 +172,4 @@ export const Constants = {
       'You have one more attempt if you type a wrong password again your wallet will delete completely.',
   },
 };
+

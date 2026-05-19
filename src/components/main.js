@@ -36,7 +36,17 @@ import {
   createIfNotExistsMasterClientId,
   resetCoinsToDefaultAddressForPrivacyMode,
   resetNfts,
+  setCurrentCoin,
+  setCurrentWalletIndex,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {store} from 'redux/store';
+import {
+  setupOneSignal,
+  initOneSignal,
+  addNotificationClickListener,
+  removeNotificationClickListener,
+} from 'utils/onesignal';
 import {isReduxStoreLoaded} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSelectors';
 import {selectWalletConnectSessions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {clearWalletConnectStorageCache} from 'utils/asyncStorage';
@@ -56,7 +66,6 @@ import {getCountry} from 'react-native-localize';
 import {MenuProvider} from 'react-native-popup-menu';
 import {
   getQueryParams,
-  parseJson,
   parseUrlQS,
   validatePaymentUrl,
   validateWCUrl,
@@ -65,8 +74,10 @@ import {
   setIsUpdateAvailable,
   setIsWalletConnectInitialized,
   setPaymentData,
+  setRouteStateData,
   setWcUri,
 } from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
+import {checkNotifications, RESULTS} from 'react-native-permissions';
 import ModalAppUpdate from 'components/ModalAppUpdates';
 import dayjs from 'dayjs';
 import axios from 'axios';
@@ -132,6 +143,7 @@ const Main = () => {
   const compareRpcUrlsIntervalRef = useRef(null);
   const disableMessage = useSelector(getDisableMessage);
   const lastUpdateCheckTimestamp = useSelector(getLastUpdateCheckTimestamp);
+  const [pendingNotificationData, setPendingNotificationData] = useState(null);
 
   const fetchAndCompareRpcUrls = useCallback(() => {
     fetchRPCUrl();
@@ -360,6 +372,77 @@ const Main = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const handleNotificationData = useCallback(
+    data => {
+      if (!data?.chainName || !data?.coin) {
+        return;
+      }
+      const wallets = selectAllWallets(store.getState());
+      const walletIndex = data.walletId
+        ? wallets.findIndex(w => w.clientId === data.walletId)
+        : wallets.findIndex(w =>
+            w.coins?.some(
+              c =>
+                c.chain_name === data.chainName &&
+                c.symbol === data.coin &&
+                c.isInWallet,
+            ),
+          );
+      if (walletIndex === -1) {
+        return;
+      }
+      const coin = wallets[walletIndex].coins?.find(
+        c =>
+          c.chain_name === data.chainName &&
+          c.symbol === data.coin &&
+          c.isInWallet,
+      );
+      if (!coin) {
+        return;
+      }
+      dispatch(setCurrentWalletIndex(walletIndex));
+      dispatch(setCurrentCoin(coin._id));
+      dispatch(setRouteStateData({navigateToTransactionList: true}));
+      MainNavigation.reset({
+        index: 0,
+        routes: [{name: 'Sidebar'}],
+      });
+    },
+    [dispatch],
+  );
+
+  const onNotificationClick = useCallback(event => {
+    const data = event?.notification?.additionalData;
+    if (!data?.chainName || !data?.coin) {
+      return;
+    }
+    // Store notification data and show login modal
+    setPendingNotificationData(data);
+    setLoginModalVisible(true);
+  }, []);
+
+  const handleNotificationLoginSuccess = useCallback(() => {
+    if (pendingNotificationData) {
+      handleNotificationData(pendingNotificationData);
+      setPendingNotificationData(null);
+    }
+    setLoginModalVisible(false);
+  }, [pendingNotificationData, handleNotificationData]);
+
+  useEffect(() => {
+    setupOneSignal();
+    checkNotifications().then(({status}) => {
+      if (status === RESULTS.GRANTED || status === RESULTS.LIMITED) {
+        initOneSignal();
+      }
+    });
+    addNotificationClickListener(onNotificationClick);
+    return () => {
+      removeNotificationClickListener(onNotificationClick);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const {theme} = useContext(ThemeContext);
 
   return (
@@ -390,7 +473,11 @@ const Main = () => {
           <LoginModal
             visible={loginModalVisible}
             onClose={() => {
-              setLoginModalVisible(false);
+              if (pendingNotificationData) {
+                handleNotificationLoginSuccess();
+              } else {
+                setLoginModalVisible(false);
+              }
             }}
           />
         </NavigationContainer>

@@ -75,8 +75,12 @@ import SellCrypto from 'screens/main/SellCrypto';
 import AddAddress from 'screens/main/Settings/AddressBook/AddAddress';
 import AddCustomRPC from 'screens/main/Settings/AddCustomRPC';
 import AddressBook from 'components/AddressBook';
-import AddIcon from 'assets/images/sidebarIcons/Add.svg';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import NotificationAlerts from 'screens/main/Settings/NotificationAlerts';
+import AddNotificationAlert from 'screens/main/Settings/AddNotificationAlert';
+import AddNotificationAlertCoins from 'screens/main/Settings/AddNotificationAlert/Step2SelectCoins';
+import AddNotificationAlertAddresses from 'screens/main/Settings/AddNotificationAlert/Step3SelectAddresses';
+import AddNotificationAlertConfig from 'screens/main/Settings/AddNotificationAlert/Step4ConfigureAlert';
 import CustomRPC from 'components/CustomRPC';
 
 LogBox.ignoreLogs([
@@ -593,6 +597,78 @@ export const useRoute = isAuth => {
               </TouchableOpacity>
             ),
             cardStyleInterpolator: forFade,
+          })}
+        />
+        <Stack.Screen
+          name="NotificationAlerts"
+          component={NotificationAlerts}
+          options={({navigation}) => ({
+            title: 'Notification Alerts',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+            cardStyleInterpolator: forFade,
+          })}
+        />
+        <Stack.Screen
+          name="AddNotificationAlert"
+          component={AddNotificationAlert}
+          options={({navigation}) => ({
+            title: 'Select Wallet',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+            cardStyleInterpolator: forFade,
+          })}
+        />
+        <Stack.Screen
+          name="AddNotificationAlertCoins"
+          component={AddNotificationAlertCoins}
+          options={({navigation}) => ({
+            title: 'Select Coins',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+          })}
+        />
+        <Stack.Screen
+          name="AddNotificationAlertAddresses"
+          component={AddNotificationAlertAddresses}
+          options={({navigation}) => ({
+            title: 'Select Addresses',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+          })}
+        />
+        <Stack.Screen
+          name="AddNotificationAlertConfig"
+          component={AddNotificationAlertConfig}
+          options={({navigation, route}) => ({
+            title: route?.params?.alert ? 'Edit Alert' : 'Configure Alert',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
           })}
         />
 

@@ -39,13 +39,13 @@ PODS:
     - SocketRocket
     - uniffi-bindgen-react-native (= 0.28.3-5)
     - Yoga
-  - BugfenderSDK (2.0.1)
+  - BugfenderSDK (2.2.0)
   - DoubleConversion (1.1.6)
   - fast_float (8.0.0)
   - FBLazyVector (0.83.1)
   - fmt (11.0.2)
   - glog (0.3.5)
-  - GoogleSignIn (9.0.0):
+  - GoogleSignIn (9.1.0):
     - AppAuth (~> 2.0)
     - AppCheckCore (~> 11.0)
     - GTMAppAuth (~> 5.0)
@@ -83,7 +83,7 @@ PODS:
   - libwebp/sharpyuv (1.5.0)
   - libwebp/webp (1.5.0):
     - libwebp/sharpyuv
-  - NitroModules (0.35.2):
+  - NitroModules (0.35.6):
     - boost
     - DoubleConversion
     - fast_float
@@ -112,6 +112,53 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - OneSignalXCFramework (5.5.0):
+    - OneSignalXCFramework/OneSignalComplete (= 5.5.0)
+  - OneSignalXCFramework/OneSignal (5.5.0):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalExtension
+    - OneSignalXCFramework/OneSignalLiveActivities
+    - OneSignalXCFramework/OneSignalNotifications
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalOutcomes
+    - OneSignalXCFramework/OneSignalUser
+  - OneSignalXCFramework/OneSignalComplete (5.5.0):
+    - OneSignalXCFramework/OneSignal
+    - OneSignalXCFramework/OneSignalInAppMessages
+    - OneSignalXCFramework/OneSignalLocation
+  - OneSignalXCFramework/OneSignalCore (5.5.0)
+  - OneSignalXCFramework/OneSignalExtension (5.5.0):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalOutcomes
+  - OneSignalXCFramework/OneSignalInAppMessages (5.5.0):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalNotifications
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalOutcomes
+    - OneSignalXCFramework/OneSignalUser
+  - OneSignalXCFramework/OneSignalLiveActivities (5.5.0):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalUser
+  - OneSignalXCFramework/OneSignalLocation (5.5.0):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalNotifications
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalUser
+  - OneSignalXCFramework/OneSignalNotifications (5.5.0):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalExtension
+    - OneSignalXCFramework/OneSignalOutcomes
+  - OneSignalXCFramework/OneSignalOSCore (5.5.0):
+    - OneSignalXCFramework/OneSignalCore
+  - OneSignalXCFramework/OneSignalOutcomes (5.5.0):
+    - OneSignalXCFramework/OneSignalCore
+  - OneSignalXCFramework/OneSignalUser (5.5.0):
+    - OneSignalXCFramework/OneSignalCore
+    - OneSignalXCFramework/OneSignalNotifications
+    - OneSignalXCFramework/OneSignalOSCore
+    - OneSignalXCFramework/OneSignalOutcomes
+  - OpenSSL-Universal (3.6.0000)
   - pagopa-io-react-native-integrity (0.3.2):
     - boost
     - DoubleConversion
@@ -142,7 +189,7 @@ PODS:
     - SwiftCBOR
     - Yoga
   - PromisesObjC (2.4.0)
-  - QuickCrypto (1.0.18):
+  - QuickCrypto (1.1.4):
     - boost
     - DoubleConversion
     - fast_float
@@ -150,6 +197,7 @@ PODS:
     - glog
     - hermes-engine
     - NitroModules
+    - OpenSSL-Universal (~> 3.6)
     - RCT-Folly
     - RCT-Folly/Fabric
     - RCTRequired
@@ -2208,6 +2256,35 @@ PODS:
     - Yoga
   - react-native-netinfo (11.4.1):
     - React-Core
+  - react-native-onesignal (5.4.1):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - OneSignalXCFramework (= 5.5.0)
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - react-native-pager-view (6.9.1):
     - boost
     - DoubleConversion
@@ -2236,8 +2313,34 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-quick-base64 (2.2.2):
+  - react-native-quick-base64 (3.0.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - react-native-randombytes (3.6.2):
     - React-Core
   - react-native-render-html (6.3.4):
@@ -3221,7 +3324,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RNPermissions (5.4.4):
+  - RNPermissions (5.5.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -3640,7 +3743,7 @@ PODS:
     - SDWebImage (~> 5.10)
   - SDWebImageSVGCoder (1.7.0):
     - SDWebImage/Core (~> 5.6)
-  - SDWebImageWebPCoder (0.14.6):
+  - SDWebImageWebPCoder (0.15.0):
     - libwebp (~> 1.0)
     - SDWebImage/Core (~> 5.17)
   - SensitiveInfo (5.6.2):
@@ -3673,7 +3776,7 @@ PODS:
     - Yoga
   - SocketRocket (0.7.1)
   - SwiftCBOR (0.6.0)
-  - SwiftProtobuf (1.31.1)
+  - SwiftProtobuf (1.36.1)
   - TrustWalletCore (3.2.9):
     - TrustWalletCore/Core (= 3.2.9)
   - TrustWalletCore/Core (3.2.9):
@@ -3700,6 +3803,7 @@ DEPENDENCIES:
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
+  - OneSignalXCFramework (< 6.0, >= 5.0.0)
   - "pagopa-io-react-native-integrity (from `../node_modules/@pagopa/io-react-native-integrity`)"
   - QuickCrypto (from `../node_modules/react-native-quick-crypto`)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -3747,6 +3851,7 @@ DEPENDENCIES:
   - react-native-in-app-review (from `../node_modules/react-native-in-app-review`)
   - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
+  - react-native-onesignal (from `../node_modules/react-native-onesignal`)
   - react-native-pager-view (from `../node_modules/react-native-pager-view`)
   - react-native-quick-base64 (from `../node_modules/react-native-quick-base64`)
   - react-native-randombytes (from `../node_modules/react-native-randombytes`)
@@ -3829,6 +3934,8 @@ SPEC REPOS:
     - libavif
     - libdav1d
     - libwebp
+    - OneSignalXCFramework
+    - OpenSSL-Universal
     - PromisesObjC
     - React-Codegen
     - SDWebImage
@@ -3953,6 +4060,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-keyboard-controller"
   react-native-netinfo:
     :path: "../node_modules/@react-native-community/netinfo"
+  react-native-onesignal:
+    :path: "../node_modules/react-native-onesignal"
   react-native-pager-view:
     :path: "../node_modules/react-native-pager-view"
   react-native-quick-base64:
@@ -4091,13 +4200,13 @@ SPEC CHECKSUMS:
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
   breeztech-breez-sdk-spark-react-native: ebe1210f31d5c3ffab8e76bebf86a701f71834b7
-  BugfenderSDK: 01831192d8bfe81912f104b903510f1c93fb3592
+  BugfenderSDK: 67548568056e992ceb5a520337ef508d80a048d4
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   fast_float: b32c788ed9c6a8c584d114d0047beda9664e7cc6
   FBLazyVector: 309703e71d3f2f1ed7dc7889d58309c9d77a95a4
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
-  GoogleSignIn: c7f09cfbc85a1abf69187be091997c317cc33b77
+  GoogleSignIn: fcee2257188d5eda57a5e2b6a715550ffff9206d
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   GTMAppAuth: 217a876b249c3c585a54fd6f73e6b58c4f5c4238
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
@@ -4105,10 +4214,12 @@ SPEC CHECKSUMS:
   libavif: 84bbb62fb232c3018d6f1bab79beea87e35de7b7
   libdav1d: 23581a4d8ec811ff171ed5e2e05cd27bad64c39f
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
-  NitroModules: bf7ff5ea3e2fd64661bc495e3c963e98ca0a325f
+  NitroModules: ca334519b7a8af135c1dfe0095504c719eee6edc
+  OneSignalXCFramework: 943852e7d70d719f73e9669d48620aeec1b93022
+  OpenSSL-Universal: 9110d21982bb7e8b22a962b6db56a8aa805afde7
   pagopa-io-react-native-integrity: f992c00ff17f65e6318886eaa3236ba864eded18
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  QuickCrypto: e561ff50899163abd814bc8b8a9630e35a1c7914
+  QuickCrypto: 313711902ab355165c3a14363a741b0b47870ab2
   RCT-Folly: 59ec0ac1f2f39672a0c6e6cecdd39383b764646f
   RCTDeprecation: a41bbdd9af30bf2e5715796b313e44ec43eefff1
   RCTRequired: 7be34aabb0b77c3cefe644528df0fa0afad4e4d0
@@ -4154,8 +4265,9 @@ SPEC CHECKSUMS:
   react-native-in-app-review: bb863fb300f2c716479c4285201df746cf5e20a2
   react-native-keyboard-controller: d07a35e49d478d26b2eb44b10aedc4e1d35354d6
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
+  react-native-onesignal: d0c2bd93b8e9ad83ad1cf51ce7b2c2e8c12bc6a6
   react-native-pager-view: 899989dd025d219d3ac0d386b2bc162f81ae8330
-  react-native-quick-base64: d87272898345e0fc3c3afb8e5dff335d51214f3e
+  react-native-quick-base64: 761ae4e7b7fe42f3aa45d16f86042ad31f01387e
   react-native-randombytes: ddf6edfd3fb9091af8c6ed1b35e57c308b5f5f2c
   react-native-render-html: 984dfe2294163d04bf5fe25d7c9f122e60e05ebe
   react-native-restart: 7595693413fe3ca15893702f2c8306c62a708162
@@ -4208,7 +4320,7 @@ SPEC CHECKSUMS:
   RNGoogleSignin: 545fbb4f7210aff29ff67f29f2be1c88f02c9a0f
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
   RNLocalize: 3c2abf099ee0e6889289aba9a710ab54e9cae3f2
-  RNPermissions: 7bbd23bc25023853211f2aad7a12a080a80f9b9f
+  RNPermissions: 7d56f88d3526411633a32bada29f9a187ab831c3
   RNReactNativeHapticFeedback: 63aa39dbd6ef56e9de688210c5761d4007927a7e
   RNReanimated: 361d5b8e20a77cd1f7907ad301f6d51ef79c1545
   RNScreens: 69f68c95d395bc4261d27c3aae7b4a458b947b7e
@@ -4220,16 +4332,16 @@ SPEC CHECKSUMS:
   SDWebImage: f84b0feeb08d2d11e6a9b843cb06d75ebf5b8868
   SDWebImageAVIFCoder: afe194a084e851f70228e4be35ef651df0fc5c57
   SDWebImageSVGCoder: 15a300a97ec1c8ac958f009c02220ac0402e936c
-  SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
+  SDWebImageWebPCoder: 0e06e365080397465cc73a7a9b472d8a3bd0f377
   SensitiveInfo: 7f362ffec4ce959a31f0706a4f22c9338f7926ee
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   SwiftCBOR: b873af28a9cc66003852fdc79a41852a7e54009a
-  SwiftProtobuf: e02f51c8c2df5845657aee2d4de9d61bf50ef788
+  SwiftProtobuf: 9e106a71456f4d3f6a3b0c8fd87ef0be085efc38
   TrustWalletCore: 33400e9cf939277435b4e2e6c21daaa1afe26c7c
   uniffi-bindgen-react-native: 018090e6c342b31e1189eb4d098860e9d44caa86
   VisionCamera: 68d40255fa8866e815cbbb063730102d3da276fd
   Yoga: 5456bb010373068fc92221140921b09d126b116e
 
-PODFILE CHECKSUM: 6c1a2c6eed182ee9260111d3eb2f81de0a48eb39
+PODFILE CHECKSUM: d9dfc6dd31686982be4bd18a4145164daa45a842
 
 COCOAPODS: 1.14.3

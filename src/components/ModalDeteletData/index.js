@@ -5,6 +5,7 @@ import styles from './ModalDeleteData';
 import {persistor} from 'redux/store';
 import RNRestart from 'react-native-restart';
 import googleDrive from '../../utils/googleDriveBackup';
+import {logoutOneSignal} from 'utils/onesignal';
 
 const ModalDeleteData = ({visible, hideModal}) => {
   const handlerNo = () => {
@@ -16,6 +17,7 @@ const ModalDeleteData = ({visible, hideModal}) => {
       hideModal();
       await persistor.purge();
       await googleDrive.googleSignOut();
+      logoutOneSignal();
       RNRestart.restart();
     } catch (e) {
       console.error('Error in delete data', e);
