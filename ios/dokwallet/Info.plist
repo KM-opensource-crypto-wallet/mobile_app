@@ -62,6 +62,8 @@
 	<string>$(PRODUCT_NAME) requires FaceID access to allows you quick and secure access.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>DokWallet needs to access your camera for scan QR code</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app does not actively use location. This key is required by an included SDK.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>DokWallet needs to access you photos for QR code</string>
 	<key>RCTNewArchEnabled</key>
