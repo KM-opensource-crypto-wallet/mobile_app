@@ -84,6 +84,7 @@ const calculateEstimatePrice = async (
     toChainName: selectedToAsset?.chain_name,
     fromContractAddress: selectedFromAsset?.contractAddress,
     toContractAddress: selectedToAsset?.contractAddress,
+    fromAddress: selectedFromAsset?.address,
   };
 
   const resp = await getExchangeQuote(payload);
@@ -338,6 +339,7 @@ const Exchange = ({navigation}) => {
           fromContractAddress: localSelectFromAsset?.contractAddress,
           toContractAddress: localSelectToAsset?.contractAddress,
           isFetchMinimum: true,
+          fromAddress: localSelectFromAsset?.address,
         };
         if (!minimumValue) {
           payload.amount = null;

@@ -362,6 +362,7 @@ const SendFunds = ({navigation, route}) => {
         isSendFunds: true,
         validName: validAddress ? values?.send : null,
         memo: values?.memo?.trim(),
+        swapData: null,
       }),
     );
     dispatch(
