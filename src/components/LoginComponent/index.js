@@ -153,6 +153,7 @@ const LoginComponent = ({onClose, visible}) => {
               },
             ],
           });
+          onClose?.();
         }
       } else if (rateLimitCheck) {
         const resp = await dispatch(handleAttempts({navigation})).unwrap();

@@ -38,6 +38,8 @@ import {
   deleteWallet,
   updateWalletName,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {deleteAlertThunk} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
+import {getNotificationAlerts} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSelector';
 import Spinner from 'components/Spinner';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
@@ -62,6 +64,7 @@ const CreateWallet = ({navigation, route}) => {
   const finalAllWallets = useRef(
     allWalletName.filter(subItem => subItem !== walletName),
   );
+  const notificationAlerts = useSelector(getNotificationAlerts);
   // const [currentWalletName, setCurrentWalletName] = useState(walletName);
   // const currentWalletName = currentWallet.name;
   // const allCoins = useSelector(getAllCoins);
@@ -148,18 +151,41 @@ const CreateWallet = ({navigation, route}) => {
     }
   };
 
-  const onPressYes = useCallback(() => {
+  const onPressYes = useCallback(async () => {
     setShowDeleteModal(false);
+
+    // Find the wallet being deleted
+    const walletToDelete = allWallets.find(
+      (_, index) => index.toString() === walletIndex,
+    );
+    if (walletToDelete) {
+      // Get notification alerts for this wallet
+      const walletAlerts = notificationAlerts.filter(
+        alert =>
+          alert.walletClientId === walletToDelete.clientId ||
+          alert.walletId === walletToDelete.clientId,
+      );
+
+      // Delete all notification subscriptions for this wallet
+      if (walletAlerts.length > 0) {
+        const deletePromises = walletAlerts.map(alert =>
+          dispatch(deleteAlertThunk({item: alert})),
+        );
+        await Promise.all(deletePromises);
+      }
+    }
+
     navigation.reset({
       index: 0,
       routes: [{name: 'Sidebar'}],
     });
+
     setTimeout(() => {
       if (walletIndex !== null && walletIndex !== undefined) {
         dispatch(deleteWallet(walletIndex));
       }
     }, 1000);
-  }, [dispatch, navigation, walletIndex]);
+  }, [dispatch, navigation, walletIndex, allWallets, notificationAlerts]);
 
   const onPressNo = useCallback(() => {
     setShowDeleteModal(false);

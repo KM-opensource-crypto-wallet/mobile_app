@@ -243,6 +243,19 @@ const Settings = ({navigation}) => {
           {/* /////////////////////////////// */}
           <Text style={styles.title}>General</Text>
           <TouchableOpacity
+            onPress={() => navigation.navigate('NotificationAlerts')}
+            style={{
+              ...styles.btn,
+              borderBottomWidth: 0.5,
+              borderBottomColor: theme.gray,
+            }}>
+            <Notifications width="24" height="22" fill={theme.font} />
+            <View style={styles.box}>
+              <Text style={styles.btnTitle}>Notifications</Text>
+              <Text style={styles.btnText}>Manage notification alerts</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={onPressRateApp}
             style={{
               ...styles.btn,

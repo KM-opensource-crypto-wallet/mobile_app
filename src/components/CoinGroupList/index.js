@@ -37,7 +37,7 @@ export const CoinsGroupList = ({list, onEndReached, contentContainerStyle}) => {
     item => {
       dispatch(addCoinGroup(item));
     },
-    [dispatch],
+    [dispatch, currentWallet],
   );
 
   return (
