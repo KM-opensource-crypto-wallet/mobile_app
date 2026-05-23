@@ -17,12 +17,19 @@ import {useSelector, useDispatch} from 'react-redux';
 import Transactions from 'components/Transactions';
 import SortTransactions from 'components/SortTransactions';
 import FilterIcon from 'assets/images/icons/filter-list.svg';
+import IoniconIcon from 'react-native-vector-icons/Ionicons';
 
 import {ThemeContext} from 'theme/ThemeContext';
-import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  selectCurrentCoin,
+  selectTransactionsByType,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {getHideSmallTransactions} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {setHideSmallTransactions} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
 import {refreshCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {
   getAddressDetailsUrl,
+  isBitcoinChain,
   isPendingTransactionSupportedChain,
 } from 'dok-wallet-blockchain-networks/helper';
 import {InAppBrowser} from 'react-native-inappbrowser-reborn';
@@ -31,18 +38,38 @@ import {inAppBrowserOptions} from 'utils/common';
 import {useNavigation} from '@react-navigation/native';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
+const ALL_TRANSACTION_TYPES = [
+  {label: 'All', value: 'all'},
+  {label: 'Regular', value: 'regular'},
+  {label: 'Stake', value: 'stake'},
+  {label: 'Unstake', value: 'unstake'},
+  {label: 'Withdraw', value: 'withdraw'},
+  {label: 'Batch', value: 'batch'},
+];
+
 const TransactionList = () => {
   const currentCoin = useSelector(selectCurrentCoin);
+  const hideSmallTransactions = useSelector(getHideSmallTransactions);
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-  const allTransactions = currentCoin?.transactions;
   const [modalVisible, setModalVisible] = useState(false);
   const [sort, setSort] = useState('Date Descending');
   const [filter, setFilter] = useState('None');
+  // const allTransactions = currentCoin?.transactions;
+  const [selectedType, setSelectedType] = useState('all');
   const [renderList, setRenderList] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hideSmallTx, setHideSmallTx] = useState(
+    hideSmallTransactions ?? false,
+  );
   const navigation = useNavigation();
+
+  const transactionsSelector = useMemo(
+    () => selectTransactionsByType(selectedType),
+    [selectedType],
+  );
+  const typedTransactions = useSelector(transactionsSelector);
 
   const isSupportUpdateTransaction = useMemo(() => {
     return (
@@ -50,6 +77,39 @@ const TransactionList = () => {
       currentCoin?.type === 'coin'
     );
   }, [currentCoin?.chain_name, currentCoin?.type]);
+
+  const transactionTypes = useMemo(() => {
+    const chain = currentCoin?.chain_name;
+    if (chain === 'tron') {
+      return ALL_TRANSACTION_TYPES.filter(t => t.value !== 'batch');
+    }
+    if (chain === 'solana') {
+      return ALL_TRANSACTION_TYPES.filter(t =>
+        ['all', 'stake', 'unstake', 'withdraw'].includes(t.value),
+      );
+    }
+    const ALL_ONLY_CHAINS = [
+      'ton',
+      'stellar',
+      'aptos',
+      'cardano',
+      'cosmos',
+      'filecoin',
+      'hedera',
+      'polkadot',
+      'ripple',
+      'tezos',
+      'thorchain',
+      'bitcoin_lightning',
+      'litecoin',
+      'dogecoin',
+      'bitcoin_cash',
+    ];
+    if (ALL_ONLY_CHAINS.includes(chain) || isBitcoinChain(chain)) {
+      return ALL_TRANSACTION_TYPES.filter(t => t.value === 'all');
+    }
+    return ALL_TRANSACTION_TYPES;
+  }, [currentCoin?.chain_name]);
 
   const dispatch = useDispatch();
 
@@ -59,12 +119,14 @@ const TransactionList = () => {
 
   useEffect(() => {
     if (currentCoin?.address) {
-      dispatch(refreshCurrentCoin({fetchTransaction: true}))
+      dispatch(
+        refreshCurrentCoin({fetchTransaction: true, isFetchDelegation: true}),
+      )
         .unwrap()
         .then(() => {
           setIsLoading(false);
         })
-        .catch(e => {
+        .catch(() => {
           setIsLoading(false);
         });
     }
@@ -74,8 +136,8 @@ const TransactionList = () => {
   const address = currentCoin?.address;
 
   useEffect(() => {
-    setRenderList(allTransactions);
-  }, [allTransactions]);
+    setRenderList(typedTransactions);
+  }, [typedTransactions]);
 
   const onPressViewAll = useCallback(() => {
     const chain_name = currentCoin?.chain_name;
@@ -94,25 +156,45 @@ const TransactionList = () => {
   }, [navigation]);
 
   const onPressApply = useCallback(
-    (sortValue, filterValue) => {
+    (sortValue, filterValue, hideSmallTxValue) => {
       const mineAddress = currentCoin?.address;
       setSort(sortValue);
       setFilter(filterValue);
-      const allTempTransactions = Array.isArray(allTransactions)
-        ? [...allTransactions]
+      setHideSmallTx(hideSmallTxValue);
+      dispatch(setHideSmallTransactions(hideSmallTxValue));
+      const allTempTransactions = Array.isArray(typedTransactions)
+        ? [...typedTransactions]
         : [];
       const parseTransaction = JSON.parse(JSON.stringify(allTempTransactions));
 
       const filterTempTransactions = parseTransaction.filter(mainTran => {
-        if (filterValue === 'None') {
-          return true;
-        } else if (filterValue === 'Received') {
-          return mineAddress?.toUpperCase() === mainTran?.to?.toUpperCase();
+        if (filterValue === 'Received') {
+          if (mineAddress?.toUpperCase() !== mainTran?.to?.toUpperCase()) {
+            return false;
+          }
         } else if (filterValue === 'Send') {
-          return mineAddress?.toUpperCase() === mainTran?.from?.toUpperCase();
+          if (mineAddress?.toUpperCase() !== mainTran?.from?.toUpperCase()) {
+            return false;
+          }
         } else if (filterValue === 'Pending') {
-          return mainTran.status?.toUpperCase() !== 'SUCCESS';
+          if (mainTran.status?.toUpperCase() === 'SUCCESS') {
+            return false;
+          }
         }
+        if (
+          hideSmallTxValue &&
+          currentCoin?.currencyRate &&
+          currentCoin?.decimal &&
+          mainTran.transactionType !== 'stake' &&
+          mainTran.transactionType !== 'unstake'
+        ) {
+          const usdValue =
+            Number(mainTran.amount) * Number(currentCoin.currencyRate);
+          if (usdValue < 1) {
+            return false;
+          }
+        }
+        return true;
       });
       const sortedData = filterTempTransactions?.sort(function (a, b) {
         if (sortValue === 'Date Descending') {
@@ -127,9 +209,8 @@ const TransactionList = () => {
       });
 
       setRenderList(sortedData);
-      // const
     },
-    [currentCoin?.address, allTransactions],
+    [currentCoin, dispatch, typedTransactions],
   );
 
   const onRefresh = useCallback(async () => {
@@ -137,6 +218,13 @@ const TransactionList = () => {
     await dispatch(refreshCurrentCoin({fetchTransaction: true})).unwrap();
     setRefreshing(false);
   }, [dispatch]);
+
+  const onPressTypeTab = useCallback(value => {
+    setSelectedType(value);
+    setSort('Date Descending');
+    setFilter('None');
+    setHideSmallTx(false);
+  }, []);
 
   if (!currentCoin) {
     return null;
@@ -152,48 +240,96 @@ const TransactionList = () => {
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }>
-            <View style={styles.box}>
-              <View style={styles.rowView}>
+            {/* Header */}
+            <View style={styles.header}>
+              <View>
                 <Text style={styles.titleTrans}>Transactions</Text>
+                <Text style={styles.subtitle}>Your last 20 transactions</Text>
+              </View>
+              <View style={styles.headerActions}>
                 {isSupportUpdateTransaction && (
                   <TouchableOpacity
-                    style={styles.viewButton}
+                    style={styles.updateBtn}
                     onPress={onPressUpdateTransaction}>
-                    <Text style={styles.viewButtonText}>
-                      {'Update transaction'}
-                    </Text>
+                    <IoniconIcon
+                      name="refresh-outline"
+                      size={13}
+                      color={theme.background}
+                    />
+                    <Text style={styles.updateBtnText}>Update</Text>
                   </TouchableOpacity>
                 )}
-              </View>
-              <View style={styles.rowView}>
-                <Text style={styles.address} numberOfLines={1}>
-                  Your last 20 transactions
-                </Text>
                 <TouchableOpacity
-                  style={styles.viewButton}
+                  style={styles.viewAllBtn}
                   onPress={onPressViewAll}>
-                  <Text style={styles.viewButtonText}>{'View all'}</Text>
+                  <Text style={styles.viewAllText}>View all</Text>
+                  <IoniconIcon
+                    name="open-outline"
+                    size={13}
+                    color={theme.background}
+                  />
                 </TouchableOpacity>
               </View>
             </View>
-            <View style={styles.borderBox}>
-              <View style={styles.sortList}>
-                <View>
-                  <Text>
-                    <Text style={styles.sortTitle}>Sort by:</Text>
-                    <Text style={styles.titleItem}>{sort}</Text>
-                  </Text>
-                  {filter !== 'None' && (
-                    <Text>
-                      <Text style={styles.sortTitle}>Filter by:</Text>
-                      <Text style={styles.titleItem}>{filter}</Text>
+
+            {/* Type filter tabs */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.typeFilterScrollView}
+              contentContainerStyle={styles.typeFilterRow}>
+              {transactionTypes.map(item => {
+                const isActive = selectedType === item.value;
+                return (
+                  <TouchableOpacity
+                    key={item.value}
+                    style={
+                      isActive
+                        ? styles.typeFilterTabActive
+                        : styles.typeFilterTab
+                    }
+                    onPress={() => onPressTypeTab(item.value)}>
+                    <Text
+                      numberOfLines={1}
+                      style={
+                        isActive
+                          ? styles.typeFilterTabTextActive
+                          : styles.typeFilterTabText
+                      }>
+                      {item.label}
                     </Text>
-                  )}
-                </View>
-                <TouchableOpacity onPress={() => setModalVisible(true)}>
-                  <FilterIcon height="30" width="30" fill={theme.font} />
-                </TouchableOpacity>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            {/* Sort / filter bar */}
+            <View style={styles.sortBar}>
+              <View style={styles.sortLeft}>
+                <IoniconIcon
+                  name="swap-vertical-outline"
+                  size={14}
+                  color={theme.gray}
+                />
+                <Text style={styles.sortText}>{sort}</Text>
+                {filter !== 'None' && (
+                  <>
+                    <Text style={styles.sortDot}>·</Text>
+                    <Text style={styles.sortText}>{filter}</Text>
+                  </>
+                )}
+                {hideSmallTx && (
+                  <>
+                    <Text style={styles.sortDot}>·</Text>
+                    <Text style={styles.sortText}>{'< $1 hidden'}</Text>
+                  </>
+                )}
               </View>
+              <TouchableOpacity
+                style={styles.filterIconBtn}
+                onPress={() => setModalVisible(true)}>
+                <FilterIcon height="20" width="20" fill={theme.font} />
+              </TouchableOpacity>
             </View>
             <Transactions renderList={renderList} selectedAddress={address} />
           </ScrollView>

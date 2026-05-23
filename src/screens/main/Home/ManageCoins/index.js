@@ -186,6 +186,7 @@ const ManageCoins = ({navigation, route}) => {
             value={searchQuery}
             style={styles.input}
             onChangeText={handleSearch}
+            autoCorrect={false}
           />
         </View>
 

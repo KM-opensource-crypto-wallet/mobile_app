@@ -93,6 +93,7 @@ const AddressBook = ({navigation}) => {
           style={styles.input}
           onChangeText={setSearchText}
           autoFocus={false}
+          autoCorrect={false}
           inputStyle={{minHeight: 0}}
         />
       </View>

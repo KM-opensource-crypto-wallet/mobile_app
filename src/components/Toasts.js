@@ -39,6 +39,19 @@ const toastConfig = theme => {
             </Text>
           </View>
         </View>
+        {!!props?.onViewTransaction && (
+          <TouchableOpacity
+            style={myStyles.viewTransactionBtn}
+            onPress={() => {
+              Toast.hide();
+              props.onViewTransaction();
+            }}>
+            <Text style={myStyles.viewTransactionText}>
+              View Transaction Details
+            </Text>
+            <IoniconsIcon name={'chevron-forward'} size={14} color={'white'} />
+          </TouchableOpacity>
+        )}
         <View style={myStyles.progressBottomBorder} />
       </View>
     ),
@@ -69,6 +82,19 @@ const toastConfig = theme => {
             </Text>
           </View>
         </View>
+        {!!props?.onViewTransaction && (
+          <TouchableOpacity
+            style={myStyles.viewTransactionBtn}
+            onPress={() => {
+              Toast.hide();
+              props.onViewTransaction();
+            }}>
+            <Text style={myStyles.viewTransactionText}>
+              View Transaction Details
+            </Text>
+            <IoniconsIcon name={'chevron-forward'} size={14} color={'white'} />
+          </TouchableOpacity>
+        )}
         <View style={myStyles.successBottomBorder} />
       </View>
     ),
@@ -182,9 +208,29 @@ const Toasts = ({bottomOffset = 0}) => {
 const styles = theme =>
   StyleSheet.create({
     progressView: {
-      height: 90,
+      minHeight: 90,
       width: '100%',
       backgroundColor: theme.toastBackground,
+    },
+    viewTransactionBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginHorizontal: 14,
+      marginBottom: 12,
+      marginTop: 4,
+      paddingVertical: 9,
+      paddingHorizontal: 16,
+      backgroundColor: theme.background,
+      borderRadius: 8,
+      gap: 6,
+    },
+    viewTransactionText: {
+      fontSize: 13,
+      color: 'white',
+      fontFamily: 'Roboto',
+      fontWeight: '700',
+      letterSpacing: 0.3,
     },
     containerView: {
       flex: 1,

@@ -82,6 +82,7 @@ import AddNotificationAlertCoins from 'screens/main/Settings/AddNotificationAler
 import AddNotificationAlertAddresses from 'screens/main/Settings/AddNotificationAlert/Step3SelectAddresses';
 import AddNotificationAlertConfig from 'screens/main/Settings/AddNotificationAlert/Step4ConfigureAlert';
 import CustomRPC from 'components/CustomRPC';
+import TransactionDetails from 'components/TransactionDetails';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -919,6 +920,21 @@ export const useRoute = isAuth => {
           component={TransactionList}
           options={({navigation}) => ({
             title: `${currentCoin?.name || ''} Transactions`,
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+            cardStyleInterpolator: forFade,
+          })}
+        />
+        <Stack.Screen
+          name="TransactionDetails"
+          component={TransactionDetails}
+          options={({navigation}) => ({
+            title: `${currentCoin?.name || ''} Transaction`,
             headerLeft: () => (
               <TouchableOpacity
                 style={styles.headerLeftStyle}

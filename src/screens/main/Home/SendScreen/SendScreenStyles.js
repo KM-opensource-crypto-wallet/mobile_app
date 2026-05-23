@@ -195,6 +195,16 @@ const myStyles = theme =>
       fontFamily: 'Roboto-Regular',
       fontWeight: '700',
     },
+    delegationRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      width: '100%',
+      marginTop: 12,
+      gap: 10,
+    },
+    infoIconBtn: {
+      padding: 8,
+    },
   });
 
 export default myStyles;

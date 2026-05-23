@@ -336,7 +336,6 @@ export const getLightningTransactions = async phrase => {
   try {
     const sdk = await connectToSdk(phrase);
     if (!sdk) return;
-
     const response = await sdk.listPayments({
       offset: undefined,
       limit: 20,
@@ -352,20 +351,19 @@ export const getLightningTransactions = async phrase => {
     const transactions = response.payments;
     if (Array.isArray(transactions)) {
       return transactions.map(item => {
-        const txHash =
-          item?.details.inner?.txId ||
-          item?.details.inner?.paymentHash ||
-          item?.id ||
-          'N/A';
+        const txHash = item?.id;
+        item?.details.inner?.txId || item?.details.inner?.paymentHash || 'N/A';
         return {
           amount: item.amount,
-          link: txHash?.substring(0, 13) + '...',
+          link: txHash,
           url: null,
           status: item?.status ? 'Pending' : 'SUCCESS',
           date: Number(item?.timestamp) * 1000,
           from: item.paymentType === 1 ? null : address,
           to: item.paymentType === 1 ? address : null,
+          paymentType: item.paymentType,
           totalCourse: '0$',
+          transactionType: 'regular',
         };
       });
     }
@@ -376,13 +374,47 @@ export const getLightningTransactions = async phrase => {
   }
 };
 
+export const getLightningTransaction = async (phrase, txHash) => {
+  try {
+    const sdk = await connectToSdk(phrase);
+    if (!sdk || !txHash) return null;
+    const response = await sdk.getPayment({paymentId: txHash});
+    const item = response?.payment;
+    if (!item) return null;
+
+    const hash =
+      item?.details?.inner?.txId ||
+      item?.details?.inner?.paymentHash ||
+      item?.id ||
+      'N/A';
+
+    return {
+      data: {
+        amount: item.amount,
+        link: hash,
+        url: null,
+        status: item?.status ? 'Pending' : 'SUCCESS',
+        date: Number(item?.timestamp) * 1000,
+        from: item.paymentType === 1 ? null : undefined,
+        to: item.paymentType === 1 ? undefined : null,
+        paymentType: item.paymentType,
+        totalCourse: '0$',
+      },
+    };
+  } catch (error) {
+    console.error(
+      `error getting transaction by hash for bitcoin lightning ${error}`,
+    );
+    return null;
+  }
+};
+
 export const claimOnchainDeposit = async phrase => {
   try {
     const sdk = await connectToSdk(phrase);
     if (!sdk) return;
     const request = {};
     const result = [];
-
     const response = await sdk.listUnclaimedDeposits(request);
     for (const deposit of response.deposits) {
       const requiredFeeRate =
