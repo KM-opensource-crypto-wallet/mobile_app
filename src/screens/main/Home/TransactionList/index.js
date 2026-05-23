@@ -17,6 +17,7 @@ import {useSelector, useDispatch} from 'react-redux';
 import Transactions from 'components/Transactions';
 import SortTransactions from 'components/SortTransactions';
 import FilterIcon from 'assets/images/icons/filter-list.svg';
+import IoniconIcon from 'react-native-vector-icons/Ionicons';
 
 import {ThemeContext} from 'theme/ThemeContext';
 import {
@@ -118,7 +119,9 @@ const TransactionList = () => {
 
   useEffect(() => {
     if (currentCoin?.address) {
-      dispatch(refreshCurrentCoin({fetchTransaction: true}))
+      dispatch(
+        refreshCurrentCoin({fetchTransaction: true, isFetchDelegation: true}),
+      )
         .unwrap()
         .then(() => {
           setIsLoading(false);
@@ -237,30 +240,39 @@ const TransactionList = () => {
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }>
-            <View style={styles.box}>
-              <View style={styles.rowView}>
+            {/* Header */}
+            <View style={styles.header}>
+              <View>
                 <Text style={styles.titleTrans}>Transactions</Text>
+                <Text style={styles.subtitle}>Your last 20 transactions</Text>
+              </View>
+              <View style={styles.headerActions}>
                 {isSupportUpdateTransaction && (
                   <TouchableOpacity
-                    style={styles.viewButton}
+                    style={styles.updateBtn}
                     onPress={onPressUpdateTransaction}>
-                    <Text style={styles.viewButtonText}>
-                      {'Update transaction'}
-                    </Text>
+                    <IoniconIcon
+                      name="refresh-outline"
+                      size={13}
+                      color={theme.background}
+                    />
+                    <Text style={styles.updateBtnText}>Update</Text>
                   </TouchableOpacity>
                 )}
-              </View>
-              <View style={styles.rowView}>
-                <Text style={styles.address} numberOfLines={1}>
-                  Your last 20 transactions
-                </Text>
                 <TouchableOpacity
-                  style={styles.viewButton}
+                  style={styles.viewAllBtn}
                   onPress={onPressViewAll}>
-                  <Text style={styles.viewButtonText}>{'View all'}</Text>
+                  <Text style={styles.viewAllText}>View all</Text>
+                  <IoniconIcon
+                    name="open-outline"
+                    size={13}
+                    color={theme.background}
+                  />
                 </TouchableOpacity>
               </View>
             </View>
+
+            {/* Type filter tabs */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -291,30 +303,33 @@ const TransactionList = () => {
               })}
             </ScrollView>
 
-            <View style={styles.borderBox}>
-              <View style={styles.sortList}>
-                <View>
-                  <Text>
-                    <Text style={styles.sortTitle}>Sort by:</Text>
-                    <Text style={styles.titleItem}>{sort}</Text>
-                  </Text>
-                  {filter !== 'None' && (
-                    <Text>
-                      <Text style={styles.sortTitle}>Filter by:</Text>
-                      <Text style={styles.titleItem}>{filter}</Text>
-                    </Text>
-                  )}
-                  {hideSmallTx && (
-                    <Text>
-                      <Text style={styles.sortTitle}>Hiding:</Text>
-                      <Text style={styles.titleItem}>{'< $1'}</Text>
-                    </Text>
-                  )}
-                </View>
-                <TouchableOpacity onPress={() => setModalVisible(true)}>
-                  <FilterIcon height="30" width="30" fill={theme.font} />
-                </TouchableOpacity>
+            {/* Sort / filter bar */}
+            <View style={styles.sortBar}>
+              <View style={styles.sortLeft}>
+                <IoniconIcon
+                  name="swap-vertical-outline"
+                  size={14}
+                  color={theme.gray}
+                />
+                <Text style={styles.sortText}>{sort}</Text>
+                {filter !== 'None' && (
+                  <>
+                    <Text style={styles.sortDot}>·</Text>
+                    <Text style={styles.sortText}>{filter}</Text>
+                  </>
+                )}
+                {hideSmallTx && (
+                  <>
+                    <Text style={styles.sortDot}>·</Text>
+                    <Text style={styles.sortText}>{'< $1 hidden'}</Text>
+                  </>
+                )}
               </View>
+              <TouchableOpacity
+                style={styles.filterIconBtn}
+                onPress={() => setModalVisible(true)}>
+                <FilterIcon height="20" width="20" fill={theme.font} />
+              </TouchableOpacity>
             </View>
             <Transactions renderList={renderList} selectedAddress={address} />
           </ScrollView>

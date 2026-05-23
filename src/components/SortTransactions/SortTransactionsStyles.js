@@ -1,121 +1,252 @@
 import {StyleSheet, Dimensions} from 'react-native';
 
-const WIDTH = Dimensions.get('window').width + 80;
-
-const isIpad = WIDTH >= 768;
-
-let itemWidth;
-
-if (isIpad) {
-  itemWidth = Math.round(WIDTH * 0.48);
-} else {
-  itemWidth = Math.round(WIDTH * 0.68);
-}
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 const myStyles = theme =>
   StyleSheet.create({
-    section: {
-      paddingVertical: 5,
+    overlay: {
       flex: 1,
-      justifyContent: 'center',
+      backgroundColor: 'rgba(0,0,0,0.55)',
+    },
+    sheet: {
+      backgroundColor: theme.backgroundColor,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingHorizontal: 16,
+      paddingBottom: 36,
+      maxHeight: '88%',
+      shadowColor: '#000',
+      shadowOffset: {width: 0, height: -3},
+      shadowOpacity: 0.12,
+      shadowRadius: 10,
+      elevation: 16,
+    },
+    handle: {
+      width: 36,
+      height: 4,
+      backgroundColor: theme.whiteOutline,
+      borderRadius: 2,
+      alignSelf: 'center',
+      marginTop: 10,
+      marginBottom: 18,
     },
     header: {
-      display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginVertical: 5,
-      paddingRight: 10,
+      marginBottom: 20,
     },
-    headerBox: {
-      paddingLeft: 10,
-      width: 160,
+    headerTitle: {
+      color: theme.font,
+      fontSize: 18,
+      fontFamily: 'Roboto-Bold',
+      fontWeight: '700',
     },
-    title: {
+    headerSub: {
       color: theme.gray,
-      fontSize: 14,
+      fontSize: 12,
       fontFamily: 'Roboto-Regular',
-      textTransform: 'uppercase',
+      marginTop: 2,
     },
-    titleItem: {
-      color: theme.gray,
-      fontSize: 14,
-      fontFamily: 'Roboto-Regular',
-      marginLeft: 12,
-    },
-    btn: {
-      backgroundColor: theme.headerBorder,
-      width: 100,
-      height: 40,
+    resetBtn: {
       flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: theme.background,
+      paddingHorizontal: 12,
+      paddingVertical: 7,
+      borderRadius: 16,
+    },
+    resetBtnText: {
+      color: theme.title,
+      fontSize: 12,
+      fontFamily: 'Roboto-Medium',
+      fontWeight: '600',
+    },
+    sectionLabel: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginBottom: 10,
+      marginTop: 4,
+    },
+    sectionLabelText: {
+      color: theme.background,
+      fontSize: 12,
+      fontFamily: 'Roboto-Medium',
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      letterSpacing: 0.6,
+    },
+    optionGroup: {
+      borderWidth: 1,
+      borderColor: theme.whiteOutline,
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginBottom: 20,
+      backgroundColor: theme.secondaryBackgroundColor,
+    },
+    optionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 14,
+      paddingHorizontal: 14,
+      gap: 12,
+    },
+    optionRowSelected: {
+      backgroundColor: theme.background + '12',
+    },
+    optionRowDivider: {
+      borderBottomWidth: 1,
+      borderBottomColor: theme.whiteOutline,
+    },
+    optionIcon: {
+      width: 32,
+      height: 32,
+      borderRadius: 8,
+      backgroundColor: theme.walletItemColor,
       alignItems: 'center',
       justifyContent: 'center',
-      borderRadius: 6,
     },
-    btnTitle: {
-      color: theme.title,
-      fontSize: 16,
-      fontFamily: 'Roboto-Regular',
+    optionIconSelected: {
+      backgroundColor: theme.background,
     },
-    item: {
+    optionText: {
+      flex: 1,
+    },
+    optionLabel: {
       color: theme.font,
       fontSize: 14,
-      fontFamily: 'Roboto-Regular',
+      fontFamily: 'Roboto-Medium',
+      fontWeight: '600',
     },
-    itembox: {
-      display: 'flex',
+    optionLabelSelected: {
+      color: theme.background,
+    },
+    optionDesc: {
+      color: theme.gray,
+      fontSize: 12,
+      fontFamily: 'Roboto-Regular',
+      marginTop: 1,
+    },
+    radio: {
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      borderWidth: 2,
+      borderColor: theme.whiteOutline,
       alignItems: 'center',
+      justifyContent: 'center',
+    },
+    radioSelected: {
+      borderColor: theme.background,
+    },
+    radioDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: theme.background,
+    },
+    filterRow: {
       flexDirection: 'row',
-      justifyContent: 'flex-start',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 20,
+    },
+    filterPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: theme.whiteOutline,
+      backgroundColor: theme.secondaryBackgroundColor,
+    },
+    filterPillSelected: {
+      backgroundColor: theme.background,
+      borderColor: theme.background,
+    },
+    filterPillText: {
+      color: theme.font,
+      fontSize: 13,
+      fontFamily: 'Roboto-Medium',
+      fontWeight: '500',
+    },
+    filterPillTextSelected: {
+      color: theme.title,
     },
     toggleRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 10,
-      paddingVertical: 8,
-    },
-    btnSubmit: {
-      backgroundColor: theme.background,
-      width: itemWidth - 10,
-      height: 50,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: 6,
-      alignSelf: 'center',
-    },
-    cacheButton: {
-      backgroundColor: 'transparent',
       borderWidth: 1,
-      borderColor: theme.background,
-      width: itemWidth - 10,
-      height: 50,
+      borderColor: theme.whiteOutline,
+      borderRadius: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      marginBottom: 20,
+      backgroundColor: theme.secondaryBackgroundColor,
+    },
+    toggleLeft: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: 6,
-      alignSelf: 'center',
-      marginTop: 16,
+      gap: 10,
+      flex: 1,
     },
-    cacheButtonTitle: {
+    toggleIcon: {
+      width: 32,
+      height: 32,
+      borderRadius: 8,
+      backgroundColor: theme.walletItemColor,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    toggleLabel: {
       color: theme.font,
-      fontSize: 16,
-      fontFamily: 'Roboto-Regular',
+      fontSize: 14,
+      fontFamily: 'Roboto-Medium',
       fontWeight: '600',
     },
-    btnSubmitTitle: {
-      color: theme.title,
-      fontSize: 16,
+    toggleDesc: {
+      color: theme.gray,
+      fontSize: 12,
       fontFamily: 'Roboto-Regular',
+      marginTop: 1,
     },
-    Box: {
-      display: 'flex',
+    applyBtn: {
+      backgroundColor: theme.background,
+      flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-
-      borderColor: 'blue',
+      paddingVertical: 15,
+      borderRadius: 12,
+      gap: 8,
+      marginBottom: 10,
+    },
+    applyBtnText: {
+      color: theme.title,
+      fontSize: 16,
+      fontFamily: 'Roboto-Medium',
+      fontWeight: '700',
+    },
+    cacheBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 13,
+      borderRadius: 12,
+      gap: 8,
       borderWidth: 1,
+      borderColor: theme.whiteOutline,
+      backgroundColor: theme.secondaryBackgroundColor,
+    },
+    cacheBtnText: {
+      color: theme.background,
+      fontSize: 14,
+      fontFamily: 'Roboto-Medium',
+      fontWeight: '600',
     },
   });
 

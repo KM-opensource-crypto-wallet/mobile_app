@@ -33,6 +33,7 @@ import {
 import {
   addEVMAndTronDeriveAddresses,
   refreshCurrentCoin,
+  revokeDelegation,
   setIsAddMoreAddressPopupHidden,
   setSelectedDeriveAddress,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
@@ -46,11 +47,13 @@ import {
   getCustomizePublicAddress,
   isBitcoinChain,
   isDeriveAddressSupportChain,
+  isEip7702SupportedChain,
   isPrivateKeyNotSupportedChain,
   isStakingChain,
 } from 'dok-wallet-blockchain-networks/helper';
 import DokDropdown from 'components/DokDropdown';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import IoniconIcon from 'react-native-vector-icons/Ionicons';
 import {
   Menu,
   MenuOption,
@@ -63,6 +66,7 @@ import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {clearSelectedUTXOs} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {isCustomDerivedChecked} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import UnclaimedBottomSheet from 'components/UnclaimedBottomSheet';
+import ModalDelegation from 'components/ModalDelegation';
 
 const SendScreen = ({navigation, route}) => {
   const currentCoin = useSelector(selectCurrentCoin);
@@ -78,6 +82,9 @@ const SendScreen = ({navigation, route}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showAdvanceModal, setShowAdvanceModal] = useState(false);
+  const [isRevokingDelegation, setIsRevokingDelegation] = useState(false);
+  const [showDelegationInfo, setShowDelegationInfo] = useState(false);
+  const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const isCheckedStored = useSelector(isCustomDerivedChecked);
   const isCustomDerivationClicked = useRef(false);
   const unClaimedBottomSheet = useRef();
@@ -86,6 +93,9 @@ const SendScreen = ({navigation, route}) => {
   const isBitcoin = isBitcoinChain(currentCoin?.chain_name);
   const isStaking =
     isStakingChain(currentCoin?.chain_name) && currentCoin?.type === 'coin';
+  const isDelegationAvailable =
+    !!currentCoin?.isDelegationAvailable &&
+    isEip7702SupportedChain(currentCoin?.chain_name);
   const isDeriveAddressChain = isDeriveAddressSupportChain(
     currentCoin?.chain_name,
   );
@@ -114,6 +124,7 @@ const SendScreen = ({navigation, route}) => {
       dispatch(
         refreshCurrentCoin({
           isFetchUnclaimDeposit: true,
+          isFetchDelegation: true,
         }),
       )
         .unwrap()
@@ -134,6 +145,7 @@ const SendScreen = ({navigation, route}) => {
     await dispatch(
       refreshCurrentCoin({
         isFetchUnclaimDeposit: true,
+        isFetchDelegation: true,
       }),
     ).unwrap();
     setRefreshing(false);
@@ -194,6 +206,27 @@ const SendScreen = ({navigation, route}) => {
       setShowAdvanceModal(true);
     }
   }, [isCheckedStored]);
+
+  const handleConfirmRevoke = useCallback(async () => {
+    setShowRevokeConfirm(false);
+    setIsRevokingDelegation(true);
+    try {
+      await dispatch(revokeDelegation()).unwrap();
+      await dispatch(refreshCurrentCoin({isFetchDelegation: true})).unwrap();
+      Toast.show({
+        type: 'successToast',
+        text1: 'Delegation removed successfully',
+      });
+    } catch (e) {
+      Toast.show({
+        type: 'errorToast',
+        text1: 'Failed to remove delegation',
+        text2: e?.message,
+      });
+    } finally {
+      setIsRevokingDelegation(false);
+    }
+  }, [dispatch]);
 
   useLayoutEffect(() => {
     if (isBitcoin || (isDeriveAddressChain && !isImportWithPrivateKey)) {
@@ -436,6 +469,34 @@ const SendScreen = ({navigation, route}) => {
                   <Text style={styles.btnText}>{'Staking'}</Text>
                 </TouchableOpacity>
               ) : null}
+              {isDelegationAvailable && (
+                <View style={styles.delegationRow}>
+                  <TouchableOpacity
+                    style={{
+                      ...styles.btn,
+                      ...styles.shadow,
+                      flex: 1,
+                      marginBottom: 0,
+                    }}
+                    onPress={() => setShowRevokeConfirm(true)}
+                    disabled={isRevokingDelegation}>
+                    <Text style={styles.btnText}>
+                      {isRevokingDelegation
+                        ? 'Removing...'
+                        : 'Remove Delegation'}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setShowDelegationInfo(true)}
+                    style={styles.infoIconBtn}>
+                    <IoniconIcon
+                      name="information-circle-outline"
+                      size={26}
+                      color={theme.font}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           </ScrollView>
         )}
@@ -461,6 +522,13 @@ const SendScreen = ({navigation, route}) => {
           onDismiss={onDismissAddCoinsSheet}
         />
       )}
+      <ModalDelegation
+        showInfo={showDelegationInfo}
+        showConfirm={showRevokeConfirm}
+        onCloseInfo={() => setShowDelegationInfo(false)}
+        onCloseConfirm={() => setShowRevokeConfirm(false)}
+        onConfirmRevoke={handleConfirmRevoke}
+      />
     </>
   );
 };

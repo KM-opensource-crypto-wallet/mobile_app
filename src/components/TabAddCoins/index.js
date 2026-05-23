@@ -142,6 +142,7 @@ const TabAddCoins = () => {
         value={searchQuery}
         style={styles.input}
         onChangeText={handleSearch}
+        autoCorrect={false}
       />
       {isSearchAllCoinLoading || isAllCoinLoading ? (
         <Loading />

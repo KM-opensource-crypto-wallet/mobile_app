@@ -150,6 +150,7 @@ const SearchComponent = memo(({searchQuery, handleSearch}) => {
         inputStyle={{
           minHeight: 50,
         }}
+        autoCorrect={false}
       />
     </View>
   );

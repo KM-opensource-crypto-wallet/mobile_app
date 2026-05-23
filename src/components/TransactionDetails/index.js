@@ -32,8 +32,6 @@ import IoniconIcon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FastImage from '@d11/react-native-fast-image';
 import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
-import SendIcon from 'assets/images/send/send.svg';
-import RecIcon from 'assets/images/send/rec.svg';
 import myStyles from './TransactionDetailsStyles';
 
 const STATUS_CONFIG = {
@@ -114,6 +112,12 @@ const TransactionDetails = ({route, navigation}) => {
         totalCourse: recentTx.totalCourse,
         blockNumber: recentTx.blockNumber,
         confirmations: recentTx.confirmations,
+        contractAddress:
+          recentTx.contractAddress ?? initialTransaction.contractAddress,
+        ...(recentTx.transactionType != null &&
+          initialTransaction.transactionType != null && {
+            transactionType: recentTx.transactionType,
+          }),
         ...(recentTx.paymentType != null && {
           paymentType: recentTx.paymentType,
         }),
@@ -161,7 +165,13 @@ const TransactionDetails = ({route, navigation}) => {
   // ── Transaction type detection ──────────────────────────────────────────────
 
   const isNFT = !!transaction?.isNFT;
-  const isBatchTx = !!transaction?.isBatchTransaction;
+  const isNFTHistorical =
+    !isNFT && transaction?.transactionType === 'nftTransfer';
+  const isDelegationChange =
+    transaction?.transactionType === 'delegationChange';
+  const isBatchTx =
+    !!transaction?.isBatchTransaction ||
+    transaction?.transactionType === 'batch';
   const isStakingTx = !!(
     transaction?.isCreateStaking ||
     transaction?.isWithdrawStaking ||
@@ -172,7 +182,15 @@ const TransactionDetails = ({route, navigation}) => {
     transaction?.transactionType === 'withdraw'
   );
   const isVoteTx = !!transaction?.isCreateVote;
-  const isRegularTx = !isNFT && !isBatchTx && !isStakingTx && !isVoteTx;
+  const isSmartContractTx = transaction?.transactionType === 'smartContract';
+  const isRegularTx =
+    !isNFT &&
+    !isNFTHistorical &&
+    !isDelegationChange &&
+    !isBatchTx &&
+    !isStakingTx &&
+    !isVoteTx &&
+    !isSmartContractTx;
 
   const stakingLabel =
     transaction?.isCreateStaking || transaction?.transactionType === 'stake'
@@ -365,6 +383,150 @@ const TransactionDetails = ({route, navigation}) => {
     );
   }
 
+  // ── NFT Transfer (historical — no metadata) ──────────────────────────────────
+
+  if (isNFTHistorical) {
+    return (
+      <DokSafeAreaView style={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
+          <View style={styles.hero}>
+            <View style={[styles.iconCircle, {backgroundColor: '#fdf4ff'}]}>
+              <IoniconIcon name="image-outline" size={32} color="#9333ea" />
+            </View>
+            <Text style={styles.txType}>NFT Transfer</Text>
+            <StatusBadge />
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Transaction Details</Text>
+            {!!currentCoin?.chain_display_name && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Chain</Text>
+                  <Text style={styles.rowValue}>
+                    {currentCoin.chain_display_name}
+                  </Text>
+                </View>
+              </>
+            )}
+            {!!transaction.from && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>From</Text>
+                  <CopyRow
+                    value={transaction.from}
+                    styles={styles}
+                    theme={theme}
+                  />
+                </View>
+              </>
+            )}
+            {!!transaction.to && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>To</Text>
+                  <CopyRow
+                    value={transaction.to}
+                    styles={styles}
+                    theme={theme}
+                  />
+                </View>
+              </>
+            )}
+            {renderCommonRows()}
+          </View>
+
+          {!!transaction.url && (
+            <TouchableOpacity
+              style={[styles.explorerBtn, {backgroundColor: theme.background}]}
+              onPress={onViewExplorer}>
+              <IoniconIcon name="open-outline" size={18} color="#fff" />
+              <Text style={styles.explorerBtnText}>View on Explorer</Text>
+            </TouchableOpacity>
+          )}
+        </ScrollView>
+      </DokSafeAreaView>
+    );
+  }
+
+  // ── Delegation Change (EIP-7702 grant / revoke) ──────────────────────────────
+
+  if (isDelegationChange) {
+    const isRevoke =
+      transaction?.from?.toLowerCase() === transaction?.to?.toLowerCase();
+    return (
+      <DokSafeAreaView style={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
+          <View style={styles.hero}>
+            <View style={[styles.iconCircle, {backgroundColor: '#eff6ff'}]}>
+              <MaterialCommunityIcons
+                name="shield-key-outline"
+                size={32}
+                color="#2563eb"
+              />
+            </View>
+            <Text style={styles.txType}>
+              {isRevoke ? 'Delegation Revoked' : 'Delegation Change'}
+            </Text>
+            <Text style={styles.heroSubLabel}>EIP-7702</Text>
+            <StatusBadge />
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Transaction Details</Text>
+            {!!currentCoin?.chain_display_name && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Chain</Text>
+                  <Text style={styles.rowValue}>
+                    {currentCoin.chain_display_name}
+                  </Text>
+                </View>
+              </>
+            )}
+            {!!transaction.from && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Wallet</Text>
+                  <CopyRow
+                    value={transaction.from}
+                    styles={styles}
+                    theme={theme}
+                  />
+                </View>
+              </>
+            )}
+            {renderCommonRows()}
+          </View>
+
+          {!!transaction.url && (
+            <TouchableOpacity
+              style={[styles.explorerBtn, {backgroundColor: theme.background}]}
+              onPress={onViewExplorer}>
+              <IoniconIcon name="open-outline" size={18} color="#fff" />
+              <Text style={styles.explorerBtnText}>View on Explorer</Text>
+            </TouchableOpacity>
+          )}
+        </ScrollView>
+      </DokSafeAreaView>
+    );
+  }
+
   // ── Batch Transaction ────────────────────────────────────────────────────────
 
   if (isBatchTx) {
@@ -389,10 +551,12 @@ const TransactionDetails = ({route, navigation}) => {
               />
             </View>
             <Text style={styles.txType}>Batch Transaction</Text>
-            <Text style={styles.heroSubLabel}>
-              {batchItems.length} transaction
-              {batchItems.length !== 1 ? 's' : ''}
-            </Text>
+            {batchItems.length > 0 && (
+              <Text style={styles.heroSubLabel}>
+                {batchItems.length} transaction
+                {batchItems.length !== 1 ? 's' : ''}
+              </Text>
+            )}
             <StatusBadge />
           </View>
 
@@ -662,6 +826,86 @@ const TransactionDetails = ({route, navigation}) => {
     );
   }
 
+  // ── Smart Contract Call ──────────────────────────────────────────────────────
+
+  if (isSmartContractTx) {
+    return (
+      <DokSafeAreaView style={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
+          <View style={styles.hero}>
+            <View style={[styles.iconCircle, {backgroundColor: '#f3e5f5'}]}>
+              <MaterialCommunityIcons
+                name="code-braces"
+                size={32}
+                color="#7b1fa2"
+              />
+            </View>
+            <Text style={styles.txType}>Smart Contract Call</Text>
+            <StatusBadge />
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Transaction Details</Text>
+            {!!transaction.contractAddress && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Contract</Text>
+                  <CopyRow
+                    value={transaction.contractAddress}
+                    styles={styles}
+                    theme={theme}
+                  />
+                </View>
+              </>
+            )}
+            {!!transaction.from && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>From</Text>
+                  <CopyRow
+                    value={transaction.from}
+                    styles={styles}
+                    theme={theme}
+                  />
+                </View>
+              </>
+            )}
+            {!!transaction.to && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>To</Text>
+                  <CopyRow
+                    value={transaction.to}
+                    styles={styles}
+                    theme={theme}
+                  />
+                </View>
+              </>
+            )}
+            {renderCommonRows()}
+          </View>
+
+          {!!transaction.url && (
+            <TouchableOpacity
+              style={[styles.explorerBtn, {backgroundColor: theme.background}]}
+              onPress={onViewExplorer}>
+              <IoniconIcon name="open-outline" size={18} color="#fff" />
+              <Text style={styles.explorerBtnText}>View on Explorer</Text>
+            </TouchableOpacity>
+          )}
+        </ScrollView>
+      </DokSafeAreaView>
+    );
+  }
+
   // ── Regular (Send / Receive) ─────────────────────────────────────────────────
 
   const iconBgColor = isReceived ? '#e8f7e0' : '#fdecea';
@@ -677,11 +921,11 @@ const TransactionDetails = ({route, navigation}) => {
         }>
         <View style={styles.hero}>
           <View style={[styles.iconCircle, {backgroundColor: iconBgColor}]}>
-            {isReceived ? (
-              <RecIcon width={32} height={32} />
-            ) : (
-              <SendIcon width={32} height={32} />
-            )}
+            <IoniconIcon
+              name={isReceived ? 'arrow-down' : 'arrow-up'}
+              size={32}
+              color={isReceived ? '#71C441' : '#FF4444'}
+            />
           </View>
           <Text style={styles.txType}>{isReceived ? 'Received' : 'Sent'}</Text>
           <Text style={[styles.amount, {color: amountColor}]}>

@@ -1,11 +1,15 @@
 import React, {useState, useContext, useCallback} from 'react';
-import {View, TouchableOpacity, Dimensions, Text, Switch} from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  Switch,
+  ScrollView,
+} from 'react-native';
 import myStyles from './SortTransactionsStyles';
-import {Modal} from 'react-native-paper';
-import {CheckBox} from '@rneui/themed';
-import RadioOn from 'assets/images/icons/radio-button-on.svg';
 import {ThemeContext} from 'theme/ThemeContext';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import IoniconIcon from 'react-native-vector-icons/Ionicons';
 import {useDispatch, useSelector} from 'react-redux';
 import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {createPendingTransactionKey} from 'dok-wallet-blockchain-networks/helper';
@@ -14,18 +18,27 @@ import {
   setPendingTransactions,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 
-const WIDTH = Dimensions.get('window').width + 80;
-const {height: screenHeight} = Dimensions.get('window');
-const modalHeight = screenHeight / 1.6;
-const isIpad = WIDTH >= 768;
+const SORT_OPTIONS = [
+  {label: 'Date Descending', icon: 'arrow-down-outline', desc: 'Newest first'},
+  {label: 'Date Ascending', icon: 'arrow-up-outline', desc: 'Oldest first'},
+  {
+    label: 'Amount Descending',
+    icon: 'trending-up-outline',
+    desc: 'Highest amount first',
+  },
+  {
+    label: 'Amount Ascending',
+    icon: 'trending-down-outline',
+    desc: 'Lowest amount first',
+  },
+];
 
-let ITEM_WIDTH;
-
-if (isIpad) {
-  ITEM_WIDTH = Math.round(WIDTH * 0.5);
-} else {
-  ITEM_WIDTH = Math.round(WIDTH * 0.7);
-}
+const FILTER_OPTIONS = [
+  {label: 'None', icon: 'layers-outline'},
+  {label: 'Send', icon: 'arrow-up-circle-outline'},
+  {label: 'Received', icon: 'arrow-down-circle-outline'},
+  {label: 'Pending', icon: 'time-outline'},
+];
 
 const SortTransactions = ({visible, hideModal, onPressAppy}) => {
   const {theme} = useContext(ThemeContext);
@@ -37,32 +50,15 @@ const SortTransactions = ({visible, hideModal, onPressAppy}) => {
   const [status, setStatus] = useState('None');
   const [hideSmallTx, setHideSmallTx] = useState(false);
 
-  const handleSumbit = () => {
+  const handleSubmit = () => {
     hideModal(false);
     onPressAppy(value, status, hideSmallTx);
   };
 
-  const sortList = [
-    {label: 'Date Ascending'},
-    {label: 'Date Descending'},
-    {label: 'Amount Ascending'},
-    {label: 'Amount Descending'},
-  ];
-
-  const filterList = [
-    {label: 'None'},
-    {label: 'Send'},
-    {label: 'Received'},
-    {label: 'Pending'},
-  ];
-
-  const containerStyle = {
-    width: ITEM_WIDTH,
-    alignSelf: 'center',
-    backgroundColor: theme.secondaryBackgroundColor,
-    borderRadius: 5,
-    height: modalHeight,
-    // padding: 2,
+  const handleReset = () => {
+    setValue('Date Descending');
+    setStatus('None');
+    setHideSmallTx(false);
   };
 
   const onPressClearTransactionCache = useCallback(() => {
@@ -85,113 +81,166 @@ const SortTransactions = ({visible, hideModal, onPressAppy}) => {
   return (
     <Modal
       visible={visible}
-      onDismiss={hideModal}
-      contentContainerStyle={containerStyle}
-      animationType="fade"
-      theme={{
-        colors: {
-          backdrop: 'transparent',
-        },
-      }}>
-      <View style={styles.section}>
-        <View style={styles.header}>
-          <Text style={styles.headerBox}>
-            <Text style={styles.title}>Sort by:</Text>
-            <Text style={styles.titleItem}>{value}</Text>
-          </Text>
+      transparent
+      animationType="slide"
+      onRequestClose={() => hideModal(false)}>
+      <TouchableOpacity
+        style={styles.overlay}
+        activeOpacity={1}
+        onPress={() => hideModal(false)}
+      />
+      <View style={styles.sheet}>
+        <View style={styles.handle} />
 
-          <TouchableOpacity style={styles.btn} onPress={() => hideModal(false)}>
-            <Text style={styles.btnTitle}>Cancel</Text>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.headerTitle}>Sort & Filter</Text>
+            <Text style={styles.headerSub}>
+              Customise your transaction view
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
+            <IoniconIcon name="refresh-outline" size={13} color={theme.title} />
+            <Text style={styles.resetBtnText}>Reset</Text>
           </TouchableOpacity>
         </View>
 
-        {sortList?.map((item, index) => (
-          <View style={styles.itembox} key={index}>
-            <View sryle={styles.checkBox}>
-              <CheckBox
-                containerStyle={{
-                  backgroundColor: 'transparent',
-                  borderWidth: 0,
-                  padding: 0,
-                  width: 25,
-                  height: 25,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-                checked={value === item.label}
-                onPress={() => {
-                  setValue(item.label);
-                }}
-                checkedIcon={
-                  <RadioOn width="25" height="25" color={theme.background} />
-                }
-                uncheckedIcon={
-                  <Icon
-                    name="circle-o"
-                    size={24}
-                    color={theme.carouselPoints}
-                  />
-                }
-                checkedColor={theme.background}
-              />
-            </View>
-            <Text style={styles.item}>{item.label}</Text>
-          </View>
-        ))}
-
-        {/* //////////////////filter/////////////////////////////////////////// */}
-        <Text style={{...styles.titleItem, marginVertical: 10}}>Filter</Text>
-
-        {filterList?.map((el, index) => (
-          <View style={styles.itembox} key={index}>
-            <CheckBox
-              containerStyle={{
-                backgroundColor: 'transparent',
-                borderWidth: 0,
-                padding: 0,
-                width: 25,
-                height: 25,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              checked={status === el.label}
-              value={el.label}
-              onPress={() => {
-                setStatus(el.label);
-              }}
-              checkedIcon={
-                <RadioOn width="25" height="25" color={theme.background} />
-              }
-              uncheckedIcon={
-                <Icon name="circle-o" size={24} color={theme.carouselPoints} />
-              }
-              checkedColor={theme.background}
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.sectionLabel}>
+            <IoniconIcon
+              name="swap-vertical-outline"
+              size={14}
+              color={theme.background}
             />
-            <Text style={styles.item}>{el.label}</Text>
+            <Text style={styles.sectionLabelText}>Sort by</Text>
           </View>
-        ))}
 
-        <View style={styles.toggleRow}>
-          <Text style={styles.item}>Hide transactions &lt; $1</Text>
-          <Switch
-            value={hideSmallTx}
-            onValueChange={setHideSmallTx}
-            trackColor={{false: theme.carouselPoints, true: theme.background}}
-            thumbColor={'white'}
-          />
-        </View>
+          <View style={styles.optionGroup}>
+            {SORT_OPTIONS.map((opt, index) => {
+              const isSelected = value === opt.label;
+              const isLast = index === SORT_OPTIONS.length - 1;
+              return (
+                <TouchableOpacity
+                  key={opt.label}
+                  style={[
+                    styles.optionRow,
+                    isSelected && styles.optionRowSelected,
+                    !isLast && styles.optionRowDivider,
+                  ]}
+                  onPress={() => setValue(opt.label)}
+                  activeOpacity={0.7}>
+                  <View
+                    style={[
+                      styles.optionIcon,
+                      isSelected && styles.optionIconSelected,
+                    ]}>
+                    <IoniconIcon
+                      name={opt.icon}
+                      size={16}
+                      color={isSelected ? theme.title : theme.font}
+                    />
+                  </View>
+                  <View style={styles.optionText}>
+                    <Text
+                      style={[
+                        styles.optionLabel,
+                        isSelected && styles.optionLabelSelected,
+                      ]}>
+                      {opt.label}
+                    </Text>
+                    <Text style={styles.optionDesc}>{opt.desc}</Text>
+                  </View>
+                  <View
+                    style={[styles.radio, isSelected && styles.radioSelected]}>
+                    {isSelected && <View style={styles.radioDot} />}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
-        <TouchableOpacity style={styles.btnSubmit} onPress={handleSumbit}>
-          <Text style={styles.btnSubmitTitle}>Apply</Text>
-        </TouchableOpacity>
+          <View style={styles.sectionLabel}>
+            <IoniconIcon
+              name="funnel-outline"
+              size={14}
+              color={theme.background}
+            />
+            <Text style={styles.sectionLabelText}>Filter by status</Text>
+          </View>
 
-        <TouchableOpacity
-          style={styles.cacheButton}
-          onPress={onPressClearTransactionCache}>
-          <Text style={styles.cacheButtonTitle}>Clear Transaction Cache</Text>
-        </TouchableOpacity>
+          <View style={styles.filterRow}>
+            {FILTER_OPTIONS.map(opt => {
+              const isSelected = status === opt.label;
+              return (
+                <TouchableOpacity
+                  key={opt.label}
+                  style={[
+                    styles.filterPill,
+                    isSelected && styles.filterPillSelected,
+                  ]}
+                  onPress={() => setStatus(opt.label)}
+                  activeOpacity={0.7}>
+                  <IoniconIcon
+                    name={opt.icon}
+                    size={15}
+                    color={isSelected ? theme.title : theme.font}
+                  />
+                  <Text
+                    style={[
+                      styles.filterPillText,
+                      isSelected && styles.filterPillTextSelected,
+                    ]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <View style={styles.toggleRow}>
+            <View style={styles.toggleLeft}>
+              <View style={styles.toggleIcon}>
+                <IoniconIcon
+                  name="eye-off-outline"
+                  size={16}
+                  color={theme.background}
+                />
+              </View>
+              <View>
+                <Text style={styles.toggleLabel}>Hide small transactions</Text>
+                <Text style={styles.toggleDesc}>
+                  Skip transactions below $1
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={hideSmallTx}
+              onValueChange={setHideSmallTx}
+              trackColor={{false: theme.whiteOutline, true: theme.background}}
+              thumbColor={theme.title}
+            />
+          </View>
+
+          <TouchableOpacity style={styles.applyBtn} onPress={handleSubmit}>
+            <IoniconIcon
+              name="checkmark-circle-outline"
+              size={18}
+              color={theme.title}
+            />
+            <Text style={styles.applyBtnText}>Apply</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.cacheBtn}
+            onPress={onPressClearTransactionCache}>
+            <IoniconIcon
+              name="trash-outline"
+              size={16}
+              color={theme.background}
+            />
+            <Text style={styles.cacheBtnText}>Clear Transaction Cache</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </View>
     </Modal>
   );
