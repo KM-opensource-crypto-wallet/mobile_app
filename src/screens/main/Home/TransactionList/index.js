@@ -61,8 +61,9 @@ const TransactionList = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hideSmallTx, setHideSmallTx] = useState(
-    hideSmallTransactions ?? false,
+    hideSmallTransactions ?? true,
   );
+  const [showInfo, setShowInfo] = useState(false);
   const navigation = useNavigation();
 
   const transactionsSelector = useMemo(
@@ -136,8 +137,19 @@ const TransactionList = () => {
   const address = currentCoin?.address;
 
   useEffect(() => {
-    setRenderList(typedTransactions);
-  }, [typedTransactions]);
+    if (!hideSmallTx || !currentCoin?.currencyRate) {
+      setRenderList(typedTransactions);
+      return;
+    }
+    const filtered = (typedTransactions || []).filter(tx => {
+      if (tx.transactionType !== 'regular') {
+        return true;
+      }
+      const usdValue = Number(tx.amount) * Number(currentCoin.currencyRate);
+      return usdValue >= 1;
+    });
+    setRenderList(filtered);
+  }, [typedTransactions, hideSmallTx, currentCoin?.currencyRate]);
 
   const onPressViewAll = useCallback(() => {
     const chain_name = currentCoin?.chain_name;
@@ -184,9 +196,7 @@ const TransactionList = () => {
         if (
           hideSmallTxValue &&
           currentCoin?.currencyRate &&
-          currentCoin?.decimal &&
-          mainTran.transactionType !== 'stake' &&
-          mainTran.transactionType !== 'unstake'
+          mainTran.transactionType === 'regular'
         ) {
           const usdValue =
             Number(mainTran.amount) * Number(currentCoin.currencyRate);
@@ -223,7 +233,6 @@ const TransactionList = () => {
     setSelectedType(value);
     setSort('Date Descending');
     setFilter('None');
-    setHideSmallTx(false);
   }, []);
 
   if (!currentCoin) {
@@ -244,7 +253,22 @@ const TransactionList = () => {
             <View style={styles.header}>
               <View>
                 <Text style={styles.titleTrans}>Transactions</Text>
-                <Text style={styles.subtitle}>Your last 20 transactions</Text>
+                <TouchableOpacity
+                  style={styles.subtitleRow}
+                  onPress={() => setShowInfo(v => !v)}
+                  activeOpacity={0.7}>
+                  <Text style={styles.subtitle}>Your last 20 transactions</Text>
+                  <IoniconIcon
+                    name={
+                      showInfo
+                        ? 'information-circle'
+                        : 'information-circle-outline'
+                    }
+                    size={14}
+                    color={theme.gray}
+                    style={styles.infoIcon}
+                  />
+                </TouchableOpacity>
               </View>
               <View style={styles.headerActions}>
                 {isSupportUpdateTransaction && (
@@ -271,6 +295,44 @@ const TransactionList = () => {
                 </TouchableOpacity>
               </View>
             </View>
+
+            {/* Info card */}
+            {showInfo && (
+              <View style={styles.infoCard}>
+                <IoniconIcon
+                  name="information-circle"
+                  size={16}
+                  color={theme.background}
+                />
+                <View style={styles.infoCardBody}>
+                  <Text style={styles.infoCardTitle}>
+                    Why are some transactions missing?
+                  </Text>
+                  <Text style={styles.infoCardLine}>
+                    {'• Only the last 20 transactions are fetched.'}
+                  </Text>
+                  <Text style={styles.infoCardLine}>
+                    {'• Regular transfers under $1 are hidden (toggle in '}
+                    <Text style={styles.infoCardBold}>Sort & Filter</Text>
+                    {').'}
+                  </Text>
+                  <Text style={styles.infoCardLine}>
+                    {
+                      '• A status filter (Send / Received / Pending) may be active.'
+                    }
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowInfo(false);
+                      onPressViewAll();
+                    }}>
+                    <Text style={styles.infoCardLink}>
+                      {'Tap "View all" to see your full history →'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
 
             {/* Type filter tabs */}
             <ScrollView
@@ -339,6 +401,9 @@ const TransactionList = () => {
         visible={modalVisible}
         hideModal={setModalVisible}
         onPressAppy={onPressApply}
+        currentSort={sort}
+        currentFilter={filter}
+        currentHideSmallTx={hideSmallTx}
       />
     </>
   );

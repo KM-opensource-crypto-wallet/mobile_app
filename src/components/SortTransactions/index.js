@@ -1,4 +1,4 @@
-import React, {useState, useContext, useCallback} from 'react';
+import React, {useState, useContext, useCallback, useEffect} from 'react';
 import {
   View,
   Text,
@@ -40,15 +40,31 @@ const FILTER_OPTIONS = [
   {label: 'Pending', icon: 'time-outline'},
 ];
 
-const SortTransactions = ({visible, hideModal, onPressAppy}) => {
+const SortTransactions = ({
+  visible,
+  hideModal,
+  onPressAppy,
+  currentSort,
+  currentFilter,
+  currentHideSmallTx,
+}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const currentCoin = useSelector(selectCurrentCoin);
   const dispatch = useDispatch();
 
-  const [value, setValue] = useState('Date Descending');
-  const [status, setStatus] = useState('None');
-  const [hideSmallTx, setHideSmallTx] = useState(false);
+  const [value, setValue] = useState(currentSort ?? 'Date Descending');
+  const [status, setStatus] = useState(currentFilter ?? 'None');
+  const [hideSmallTx, setHideSmallTx] = useState(currentHideSmallTx ?? true);
+
+  useEffect(() => {
+    if (visible) {
+      setValue(currentSort ?? 'Date Descending');
+      setStatus(currentFilter ?? 'None');
+      setHideSmallTx(currentHideSmallTx ?? true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   const handleSubmit = () => {
     hideModal(false);
@@ -58,7 +74,7 @@ const SortTransactions = ({visible, hideModal, onPressAppy}) => {
   const handleReset = () => {
     setValue('Date Descending');
     setStatus('None');
-    setHideSmallTx(false);
+    setHideSmallTx(true);
   };
 
   const onPressClearTransactionCache = useCallback(() => {
