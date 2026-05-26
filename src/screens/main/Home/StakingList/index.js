@@ -85,6 +85,42 @@ const StakingList = ({navigation}) => {
     setIsRefreshing(false);
   }, [dispatch]);
 
+  const renderBoxItem = useCallback(
+    (title, value, buttonLabel, buttonValue, type) => {
+      if (type === 'hidden') {
+        return null;
+      }
+      return (
+        <View style={styles.itemView} key={title}>
+          <Text style={styles.title} numberOfLines={1}>
+            {title}
+          </Text>
+          <View style={styles.rightItemView}>
+            <Text style={styles.boxBalance} numberOfLines={1}>
+              {value}
+            </Text>
+            {!!buttonLabel && (
+              <TouchableOpacity
+                style={styles.buttonStyle}
+                onPress={() => onPressBoxItem(buttonLabel, buttonValue)}>
+                <Text style={styles.buttonTitle}>{buttonLabel}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      );
+    },
+    [
+      onPressBoxItem,
+      styles.boxBalance,
+      styles.buttonStyle,
+      styles.buttonTitle,
+      styles.itemView,
+      styles.rightItemView,
+      styles.title,
+    ],
+  );
+
   const listHeader = useCallback(() => {
     return (
       <View>
@@ -207,42 +243,6 @@ const StakingList = ({navigation}) => {
       });
     },
     [currentCoin?.currencyRate, navigation],
-  );
-
-  const renderBoxItem = useCallback(
-    (title, value, buttonLabel, buttonValue, type) => {
-      if (type === 'hidden') {
-        return null;
-      }
-      return (
-        <View style={styles.itemView} key={title}>
-          <Text style={styles.title} numberOfLines={1}>
-            {title}
-          </Text>
-          <View style={styles.rightItemView}>
-            <Text style={styles.boxBalance} numberOfLines={1}>
-              {value}
-            </Text>
-            {!!buttonLabel && (
-              <TouchableOpacity
-                style={styles.buttonStyle}
-                onPress={() => onPressBoxItem(buttonLabel, buttonValue)}>
-                <Text style={styles.buttonTitle}>{buttonLabel}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      );
-    },
-    [
-      onPressBoxItem,
-      styles.boxBalance,
-      styles.buttonStyle,
-      styles.buttonTitle,
-      styles.itemView,
-      styles.rightItemView,
-      styles.title,
-    ],
   );
 
   if (!currentCoin) {

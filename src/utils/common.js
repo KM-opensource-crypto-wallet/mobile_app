@@ -179,13 +179,13 @@ export const formatNumber = num => {
     return '0';
   }
   if (n >= 1e12) {
-    return (n / 1e12).toFixed(2) + ' T';
+    return (Math.floor((n / 1e12) * 100) / 100).toString() + ' T';
   } else if (n >= 1e9) {
-    return (n / 1e9).toFixed(2) + ' B';
+    return (Math.floor((n / 1e9) * 100) / 100).toString() + ' B';
   } else if (n >= 1e6) {
-    return (n / 1e6).toFixed(2) + ' M';
+    return (Math.floor((n / 1e6) * 100) / 100).toString() + ' M';
   } else if (n >= 1e3) {
-    return (n / 1e3).toFixed(2) + ' Th';
+    return (Math.floor((n / 1e3) * 100) / 100).toString() + ' Th';
   } else {
     return n.toString();
   }
