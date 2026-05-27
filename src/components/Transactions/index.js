@@ -39,10 +39,30 @@ const STATUS_CONFIG = {
 const ICON_CONFIG = {
   stake: {name: 'trending-up', lib: 'ion', bg: '#F0FDF4', color: '#16A34A'},
   unstake: {name: 'trending-down', lib: 'ion', bg: '#FFF7ED', color: '#EA580C'},
-  withdraw: {name: 'arrow-down-circle-outline', lib: 'mci', bg: '#F0FDFA', color: '#0D9488'},
-  smartContract: {name: 'code-braces', lib: 'mci', bg: '#FAF5FF', color: '#9333EA'},
-  nftTransfer: {name: 'image-outline', lib: 'ion', bg: '#FDF4FF', color: '#9333EA'},
-  delegationChange: {name: 'shield-key-outline', lib: 'mci', bg: '#EFF6FF', color: '#2563EB'},
+  withdraw: {
+    name: 'arrow-down-circle-outline',
+    lib: 'mci',
+    bg: '#F0FDFA',
+    color: '#0D9488',
+  },
+  smartContract: {
+    name: 'code-braces',
+    lib: 'mci',
+    bg: '#FAF5FF',
+    color: '#9333EA',
+  },
+  nftTransfer: {
+    name: 'image-outline',
+    lib: 'ion',
+    bg: '#FDF4FF',
+    color: '#9333EA',
+  },
+  delegationChange: {
+    name: 'shield-key-outline',
+    lib: 'mci',
+    bg: '#EFF6FF',
+    color: '#2563EB',
+  },
   batch: {name: 'layers-outline', lib: 'mci', bg: '#EEF2FF', color: '#4F46E5'},
   received: {name: 'arrow-down', lib: 'ion', bg: '#F0FDF4', color: '#16A34A'},
   sent: {name: 'arrow-up', lib: 'ion', bg: '#FEF2F2', color: '#DC2626'},
@@ -82,7 +102,11 @@ const truncateAmount = amount => {
 const TxIcon = ({config}) => {
   if (config.lib === 'mci') {
     return (
-      <MaterialCommunityIcons name={config.name} size={20} color={config.color} />
+      <MaterialCommunityIcons
+        name={config.name}
+        size={20}
+        color={config.color}
+      />
     );
   }
   return <IoniconIcon name={config.name} size={20} color={config.color} />;
@@ -282,7 +306,11 @@ const Transactions = ({renderList, selectedAddress}) => {
                       <TouchableOpacity
                         style={styles.button}
                         onPress={() => onPressSpeedUp(item)}>
-                        <IoniconIcon name="trending-up" size={18} color="white" />
+                        <IoniconIcon
+                          name="trending-up"
+                          size={18}
+                          color="white"
+                        />
                         <Text style={styles.buttonTitle}>Speed Up</Text>
                       </TouchableOpacity>
                       <TouchableOpacity

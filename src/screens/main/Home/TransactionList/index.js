@@ -31,6 +31,7 @@ import {
   getAddressDetailsUrl,
   isBitcoinChain,
   isPendingTransactionSupportedChain,
+  isTransactionListLimit100,
 } from 'dok-wallet-blockchain-networks/helper';
 import {InAppBrowser} from 'react-native-inappbrowser-reborn';
 import Loading from 'components/Loading';
@@ -60,11 +61,13 @@ const TransactionList = () => {
   const [renderList, setRenderList] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [hideSmallTx, setHideSmallTx] = useState(
-    hideSmallTransactions ?? true,
-  );
+  const [hideSmallTx, setHideSmallTx] = useState(hideSmallTransactions ?? true);
   const [showInfo, setShowInfo] = useState(false);
   const navigation = useNavigation();
+
+  const isSupport100tx = useMemo(() => {
+    return isTransactionListLimit100(currentCoin?.chain_name);
+  }, [currentCoin?.chain_name]);
 
   const transactionsSelector = useMemo(
     () => selectTransactionsByType(selectedType),
@@ -114,6 +117,58 @@ const TransactionList = () => {
 
   const dispatch = useDispatch();
 
+  const computeRenderList = useCallback(
+    (transactions, sortValue, filterValue, hideSmallTxValue) => {
+      const mineAddress = currentCoin?.address;
+      const currencyRate = currentCoin?.currencyRate;
+      const list = Array.isArray(transactions) ? [...transactions] : [];
+
+      const filtered = list.filter(tx => {
+        if (filterValue === 'Received') {
+          if (mineAddress?.toUpperCase() !== tx?.to?.toUpperCase()) {
+            return false;
+          }
+        } else if (filterValue === 'Send') {
+          if (mineAddress?.toUpperCase() !== tx?.from?.toUpperCase()) {
+            return false;
+          }
+        } else if (filterValue === 'Pending') {
+          if (tx.status?.toUpperCase() === 'SUCCESS') {
+            return false;
+          }
+        }
+        if (
+          hideSmallTxValue &&
+          currencyRate &&
+          tx.transactionType === 'regular'
+        ) {
+          const usdValue = Number(tx.amount) * Number(currencyRate);
+          if (usdValue < 1) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      return filtered.sort((a, b) => {
+        if (sortValue === 'Date Descending') {
+          return new Date(b.date) - new Date(a.date);
+        }
+        if (sortValue === 'Date Ascending') {
+          return new Date(a.date) - new Date(b.date);
+        }
+        if (sortValue === 'Amount Ascending') {
+          return Number(a.amount) - Number(b.amount);
+        }
+        if (sortValue === 'Amount Descending') {
+          return Number(b.amount) - Number(a.amount);
+        }
+        return 0;
+      });
+    },
+    [currentCoin?.address, currentCoin?.currencyRate],
+  );
+
   const coinId = useMemo(() => {
     return currentCoin?._id + currentCoin?.name + currentCoin?.chain_name;
   }, [currentCoin]);
@@ -137,19 +192,10 @@ const TransactionList = () => {
   const address = currentCoin?.address;
 
   useEffect(() => {
-    if (!hideSmallTx || !currentCoin?.currencyRate) {
-      setRenderList(typedTransactions);
-      return;
-    }
-    const filtered = (typedTransactions || []).filter(tx => {
-      if (tx.transactionType !== 'regular') {
-        return true;
-      }
-      const usdValue = Number(tx.amount) * Number(currentCoin.currencyRate);
-      return usdValue >= 1;
-    });
-    setRenderList(filtered);
-  }, [typedTransactions, hideSmallTx, currentCoin?.currencyRate]);
+    setRenderList(
+      computeRenderList(typedTransactions, sort, filter, hideSmallTx),
+    );
+  }, [typedTransactions, sort, filter, hideSmallTx, computeRenderList]);
 
   const onPressViewAll = useCallback(() => {
     const chain_name = currentCoin?.chain_name;
@@ -169,58 +215,12 @@ const TransactionList = () => {
 
   const onPressApply = useCallback(
     (sortValue, filterValue, hideSmallTxValue) => {
-      const mineAddress = currentCoin?.address;
       setSort(sortValue);
       setFilter(filterValue);
       setHideSmallTx(hideSmallTxValue);
       dispatch(setHideSmallTransactions(hideSmallTxValue));
-      const allTempTransactions = Array.isArray(typedTransactions)
-        ? [...typedTransactions]
-        : [];
-      const parseTransaction = JSON.parse(JSON.stringify(allTempTransactions));
-
-      const filterTempTransactions = parseTransaction.filter(mainTran => {
-        if (filterValue === 'Received') {
-          if (mineAddress?.toUpperCase() !== mainTran?.to?.toUpperCase()) {
-            return false;
-          }
-        } else if (filterValue === 'Send') {
-          if (mineAddress?.toUpperCase() !== mainTran?.from?.toUpperCase()) {
-            return false;
-          }
-        } else if (filterValue === 'Pending') {
-          if (mainTran.status?.toUpperCase() === 'SUCCESS') {
-            return false;
-          }
-        }
-        if (
-          hideSmallTxValue &&
-          currentCoin?.currencyRate &&
-          mainTran.transactionType === 'regular'
-        ) {
-          const usdValue =
-            Number(mainTran.amount) * Number(currentCoin.currencyRate);
-          if (usdValue < 1) {
-            return false;
-          }
-        }
-        return true;
-      });
-      const sortedData = filterTempTransactions?.sort(function (a, b) {
-        if (sortValue === 'Date Descending') {
-          return new Date(b.date) - new Date(a.date);
-        } else if (sortValue === 'Date Ascending') {
-          return new Date(a.date) - new Date(b.date);
-        } else if (sortValue === 'Amount Ascending') {
-          return Number(a.amount) - Number(b.amount);
-        } else if (sortValue === 'Amount Descending') {
-          return Number(b.amount) - Number(a.amount);
-        }
-      });
-
-      setRenderList(sortedData);
     },
-    [currentCoin, dispatch, typedTransactions],
+    [dispatch],
   );
 
   const onRefresh = useCallback(async () => {
@@ -257,7 +257,9 @@ const TransactionList = () => {
                   style={styles.subtitleRow}
                   onPress={() => setShowInfo(v => !v)}
                   activeOpacity={0.7}>
-                  <Text style={styles.subtitle}>Your last 20 transactions</Text>
+                  <Text style={styles.subtitle}>{`Your last ${
+                    isSupport100tx ? '100' : '20'
+                  } transactions`}</Text>
                   <IoniconIcon
                     name={
                       showInfo
@@ -309,7 +311,9 @@ const TransactionList = () => {
                     Why are some transactions missing?
                   </Text>
                   <Text style={styles.infoCardLine}>
-                    {'• Only the last 20 transactions are fetched.'}
+                    {`• Only the last ${
+                      isSupport100tx ? '100' : '20'
+                    } transactions are fetched.`}
                   </Text>
                   <Text style={styles.infoCardLine}>
                     {'• Regular transfers under $1 are hidden (toggle in '}
