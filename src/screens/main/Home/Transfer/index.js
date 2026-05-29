@@ -319,6 +319,10 @@ const Transfer = ({navigation, route}) => {
               isWithdrawStaking: !!isWithdrawStaking,
               isStakingRewards: !!isStakingRewards,
               isDeactivateStaking: !!isDeactivateStaking,
+              stakingProviderName:
+                isCreateStaking || isDeactivateStaking
+                  ? transferData?.stakingProviderName
+                  : null,
               feesType: selectedFeesTypeRef.current,
               estimateGas: transferData?.estimateGas,
             }),

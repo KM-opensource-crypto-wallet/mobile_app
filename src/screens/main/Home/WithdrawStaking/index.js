@@ -86,7 +86,7 @@ const WithdrawStaking = ({navigation, route}) => {
     }));
   }, [isEVMStaking, currentCoin?.staking, currentCoin?.currencyRate]);
 
-  const [selectedProvider, setSelectedProvider] = useState(
+  const [selectedProvider] = useState(
     stakingProviderList.find(
       p =>
         p.value === selectedStake?.providerName ||
@@ -179,7 +179,7 @@ const WithdrawStaking = ({navigation, route}) => {
           stakingAddress: selectedStake?.staking_address,
           validatorName: selectedStake?.validatorInfo?.name,
           stakingProviderName: isEVMStaking
-            ? selectedProvider?.value
+            ? selectedProvider?.value || selectedStake?.validatorInfo?.name
             : selectedStake?.providerName || selectedStake?.validatorInfo?.name,
           currentCoin,
           amount: validateBigNumberStr(amount),
@@ -201,7 +201,7 @@ const WithdrawStaking = ({navigation, route}) => {
           isStakingRewards: isStakingRewards,
           resourceType: resourceType?.value,
           stakingProviderName: isEVMStaking
-            ? selectedProvider?.value
+            ? selectedProvider?.value || selectedStake?.validatorInfo?.name
             : selectedStake?.providerName || selectedStake?.validatorInfo?.name,
         }),
       );
