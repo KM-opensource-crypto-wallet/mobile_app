@@ -134,6 +134,7 @@ const CreateStaking = ({navigation}) => {
         balance: availableAmount,
         isCreateStaking: true,
         resourceType: values?.resourceType?.value,
+        stakingProviderName: values?.validatorPubKey?.label,
       }),
     );
     dispatch(setExchangeSuccess(false));
