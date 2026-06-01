@@ -147,7 +147,9 @@ const WithdrawStaking = ({navigation, route}) => {
     state.resourceType?.value,
   ]);
   const disableTextInput =
-    isDisableTextInput(currentCoin?.chain_name) || !isDeactivateStaking;
+    isDisableTextInput(currentCoin?.chain_name) ||
+    !isDeactivateStaking ||
+    isEVMStaking;
 
   const floatingHeight = useFloatingHeight();
   const dispatch = useDispatch();
