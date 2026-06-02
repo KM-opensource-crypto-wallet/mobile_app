@@ -48,6 +48,10 @@ const myStyles = (theme, bottom) =>
     headerRightButton: {
       paddingRight: 11,
     },
+    headerRightButtons: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
     searchInputMinHeight: {
       minHeight: 0,
     },

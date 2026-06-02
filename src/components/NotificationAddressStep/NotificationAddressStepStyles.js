@@ -52,6 +52,29 @@ const myStyles = theme =>
       fontSize: 16,
       fontFamily: 'Roboto-Regular',
     },
+    bitcoinInfoContainer: {
+      marginHorizontal: 16,
+      marginVertical: 8,
+      padding: 14,
+      borderRadius: 10,
+      backgroundColor: '#f59e0b18',
+      borderWidth: 1,
+      borderColor: '#f59e0b44',
+    },
+    bitcoinInfoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    bitcoinInfoIcon: {
+      marginRight: 8,
+    },
+    bitcoinInfoText: {
+      flex: 1,
+      fontSize: 13,
+      color: '#92400e',
+      fontFamily: 'Roboto-Regular',
+      lineHeight: 18,
+    },
   });
 
 export default myStyles;

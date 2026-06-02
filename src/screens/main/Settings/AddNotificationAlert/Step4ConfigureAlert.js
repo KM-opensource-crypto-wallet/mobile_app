@@ -230,15 +230,29 @@ const AddNotificationAlertConfig = ({navigation, route}) => {
       } else {
         const promises = selectedCoinEntries.map(entry => {
           const key = coinKey(entry.walletClientId, entry.coin._id);
+          if (isBitcoinChain(entry.coin.chain_name)) {
+            const allAddresses = entry?.coin?.deriveAddresses?.map(
+              d => d?.address,
+            );
+            const primaryAddress = allAddresses[0] || entry.coin.address || '';
+            const payload = {
+              id: v4(),
+              backendId: null,
+              createdAt: Date.now(),
+              ...basePayload(entry, key, primaryAddress),
+              chainName: 'bitcoin',
+              wallets: allAddresses,
+            };
+            return dispatch(
+              createCustomAlert({payload, oneSignalPlayerId}),
+            ).unwrap();
+          }
+          const addr = addressMap[key] || entry.coin.address || '';
           const payload = {
             id: v4(),
             backendId: null,
             createdAt: Date.now(),
-            ...basePayload(
-              entry,
-              key,
-              addressMap[key] || entry.coin.address || '',
-            ),
+            ...basePayload(entry, key, addr),
           };
           return dispatch(
             createCustomAlert({payload, oneSignalPlayerId}),

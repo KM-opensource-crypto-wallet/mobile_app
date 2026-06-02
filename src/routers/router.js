@@ -81,6 +81,7 @@ import AddNotificationAlert from 'screens/main/Settings/AddNotificationAlert';
 import AddNotificationAlertCoins from 'screens/main/Settings/AddNotificationAlert/Step2SelectCoins';
 import AddNotificationAlertAddresses from 'screens/main/Settings/AddNotificationAlert/Step3SelectAddresses';
 import AddNotificationAlertConfig from 'screens/main/Settings/AddNotificationAlert/Step4ConfigureAlert';
+import NotificationHistory from 'screens/main/Settings/NotificationHistory';
 import CustomRPC from 'components/CustomRPC';
 
 LogBox.ignoreLogs([
@@ -662,6 +663,21 @@ export const useRoute = isAuth => {
           component={AddNotificationAlertConfig}
           options={({navigation, route}) => ({
             title: route?.params?.alert ? 'Edit Alert' : 'Configure Alert',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+          })}
+        />
+
+        <Stack.Screen
+          name="NotificationHistory"
+          component={NotificationHistory}
+          options={({navigation}) => ({
+            title: 'Notification History',
             headerLeft: () => (
               <TouchableOpacity
                 style={styles.headerLeftStyle}

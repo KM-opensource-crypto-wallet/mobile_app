@@ -22,24 +22,37 @@ const AddNotificationAlertCoins = ({navigation, route}) => {
     [allWallets, walletClientId],
   );
 
-  const walletCoins = useMemo(
-    () =>
-      (selectedWallet?.coins || [])
-        .filter(
-          c =>
-            c.isInWallet &&
-            c.type === 'token' &&
-            (c.chain_name === 'ethereum' ||
-              c.chain_name === 'binance_smart_chain'),
-        )
-        .map(c => ({
-          coin: c,
-          walletClientId: selectedWallet.clientId,
-          walletId: selectedWallet.clientId,
-          walletName: selectedWallet.walletName,
-        })),
-    [selectedWallet],
-  );
+  const walletCoins = useMemo(() => {
+    const allCoins = (selectedWallet?.coins || []).filter(
+      c =>
+        (c.isInWallet &&
+          (c.chain_name === 'ethereum' ||
+            c.chain_name === 'binance_smart_chain') &&
+          c.type === 'token') ||
+        isBitcoinChain(c.chain_name),
+    );
+
+    // Deduplicate Bitcoin variants: one entry per symbol, prefer chain_name='bitcoin'
+    const bitcoinBySymbol = new Map();
+    const evmCoins = [];
+    for (const c of allCoins) {
+      if (isBitcoinChain(c.chain_name)) {
+        const prev = bitcoinBySymbol.get(c.symbol);
+        if (!prev || c.chain_name === 'bitcoin') {
+          bitcoinBySymbol.set(c.symbol, c);
+        }
+      } else {
+        evmCoins.push(c);
+      }
+    }
+
+    return [...evmCoins, ...bitcoinBySymbol.values()].map(c => ({
+      coin: c,
+      walletClientId: selectedWallet.clientId,
+      walletId: selectedWallet.clientId,
+      walletName: selectedWallet.walletName,
+    }));
+  }, [selectedWallet]);
 
   const [selectedCoinKeys, setSelectedCoinKeys] = useState(new Set());
   const [coinSearchQuery, setCoinSearchQuery] = useState('');

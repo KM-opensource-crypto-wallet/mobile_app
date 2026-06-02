@@ -128,6 +128,7 @@ const SendScreen = ({navigation, route}) => {
   }, [coinId, dispatch]);
 
   const address = currentCoin?.address;
+  console.log('Current Coin:', currentCoin);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

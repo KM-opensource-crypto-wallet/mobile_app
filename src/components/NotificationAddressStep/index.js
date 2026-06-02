@@ -4,6 +4,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 import CoinIcon from 'components/CoinIcon/CoinIcon';
 import ChainItem from 'components/ChainItem';
 import DokDropdown from 'components/DokDropdown';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import {isBitcoinChain} from 'dok-wallet-blockchain-networks/helper';
 import myStyles from './NotificationAddressStepStyles';
 import {coinKey, buildAddressOptions} from 'utils/notificationAlertHelpers';
@@ -42,6 +43,30 @@ const NotificationAddressStep = ({
   const renderItem = useCallback(
     ({item: entry}) => {
       const key = coinKey(entry.walletClientId, entry.coin._id);
+      const isBitcoin = isBitcoinChain(entry.coin.chain_name);
+
+      if (isBitcoin) {
+        const addressCount =
+          entry.coin.deriveAddresses?.length || (entry.coin.address ? 1 : 0);
+        return (
+          <View style={styles.bitcoinInfoContainer}>
+            <View style={styles.bitcoinInfoRow}>
+              <Ionicons
+                name="information-circle"
+                size={20}
+                color="#f59e0b"
+                style={styles.bitcoinInfoIcon}
+              />
+              <Text style={styles.bitcoinInfoText}>
+                {`All ${addressCount} address${
+                  addressCount !== 1 ? 'es' : ''
+                } will be monitored automatically`}
+              </Text>
+            </View>
+          </View>
+        );
+      }
+
       const options = buildAddressOptions(entry.coin);
       const selectedAddr = addressMap[key] || options[0]?.value || '';
       return (

@@ -155,7 +155,8 @@ const HomeScreen = ({navigation, route}) => {
   const wcUri = useSelector(getWCUri);
   const routeStateData = useSelector(getRouteStateData);
   const conversationName = useSelector(getConversationName);
-
+  const state = useSelector(state => state);
+  console.log(state, 'state in home screen');
   const newsBottomSheetRef = useRef();
   const selectedTopicRef = useRef();
   const conversationsRef = useRef([]);
@@ -435,6 +436,18 @@ const HomeScreen = ({navigation, route}) => {
                     </TouchableOpacity>
                   </View>
                   <View style={styles.rightHeaderIcons}>
+                    <TouchableOpacity
+                      hitSlop={{top: 12, left: 12, right: 12, bottom: 12}}
+                      activeOpacity={1}
+                      onPress={() =>
+                        navigation.navigate('NotificationHistory')
+                      }>
+                      <MaterialCommunityIcons
+                        name="bell-outline"
+                        size={22}
+                        color={theme.borderActiveColor}
+                      />
+                    </TouchableOpacity>
                     <TouchableOpacity
                       ref={filterButtonRef}
                       hitSlop={{top: 12, left: 12, right: 12, bottom: 12}}
