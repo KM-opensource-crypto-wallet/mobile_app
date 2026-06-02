@@ -320,7 +320,7 @@ const Transfer = ({navigation, route}) => {
               isStakingRewards: !!isStakingRewards,
               isDeactivateStaking: !!isDeactivateStaking,
               stakingProviderName:
-                isCreateStaking || isDeactivateStaking
+                isCreateStaking || isDeactivateStaking || isStakingRewards
                   ? transferData?.stakingProviderName
                   : null,
               feesType: selectedFeesTypeRef.current,
@@ -448,7 +448,7 @@ const Transfer = ({navigation, route}) => {
         isCreateVote: !!isCreateVote,
         isDeactivateStaking: !!isDeactivateStaking,
         stakingProviderName:
-          isCreateStaking || isDeactivateStaking
+          isCreateStaking || isDeactivateStaking || isStakingRewards
             ? transferData?.stakingProviderName
             : null,
         stakingAddress: isStakingScreen ? transferData?.stakingAddress : null,

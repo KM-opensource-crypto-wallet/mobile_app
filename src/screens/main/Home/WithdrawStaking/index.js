@@ -147,9 +147,7 @@ const WithdrawStaking = ({navigation, route}) => {
     state.resourceType?.value,
   ]);
   const disableTextInput =
-    isDisableTextInput(currentCoin?.chain_name) ||
-    !isDeactivateStaking ||
-    isEVMStaking;
+    isDisableTextInput(currentCoin?.chain_name) || !isDeactivateStaking;
 
   const floatingHeight = useFloatingHeight();
   const dispatch = useDispatch();
@@ -196,6 +194,7 @@ const WithdrawStaking = ({navigation, route}) => {
           contractAddress:
             selectedStake?.validator_address || currentCoin?.contractAddress,
           amount: validateBigNumberStr(amount),
+          tokenDecimals: currentCoin?.decimal,
           validatorPubKey: selectedStake?.validator_address,
           stakingAddress: selectedStake?.staking_address,
           isWithdrawStaking: isWithdrawStaking,
