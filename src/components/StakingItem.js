@@ -118,7 +118,7 @@ const StakingItem = ({
             <Text style={styles.rewardValueText}>{`+${rewardAmount.toFixed(
               6,
             )}`}</Text>
-            {isWithdraw && (
+            {isWithdraw && typeof handleClaimReward === 'function' && (
               <TouchableOpacity
                 onPress={() => handleClaimReward(rewardAmount, item)}
                 style={styles.claimButton}>

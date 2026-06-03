@@ -34,7 +34,7 @@ const ValidatorOptionItem = ({item, currentCoin}) => {
             </Text>
           )}
           <Text style={[myStyles.text]} numberOfLines={1}>
-            {`STAKE ${formatNumber(item.options.totalStaked)} ${
+            {`STAKE ${formatNumber(item?.options?.totalStaked ?? 0)} ${
               currentCoin?.symbol
             }`}
           </Text>
