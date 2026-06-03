@@ -77,6 +77,7 @@ import AddCustomRPC from 'screens/main/Settings/AddCustomRPC';
 import AddressBook from 'components/AddressBook';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import NotificationAlerts from 'screens/main/Settings/NotificationAlerts';
+import TutorialVideos from 'screens/main/Settings/TutorialVideos';
 import AddNotificationAlert from 'screens/main/Settings/AddNotificationAlert';
 import AddNotificationAlertCoins from 'screens/main/Settings/AddNotificationAlert/Step2SelectCoins';
 import AddNotificationAlertAddresses from 'screens/main/Settings/AddNotificationAlert/Step3SelectAddresses';
@@ -711,6 +712,21 @@ export const useRoute = isAuth => {
           options={({navigation}) => ({
             title: 'EVM, SOL & TRX Addresses',
 
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+            cardStyleInterpolator: forFade,
+          })}
+        />
+        <Stack.Screen
+          name="TutorialVideos"
+          component={TutorialVideos}
+          options={({navigation}) => ({
+            title: 'Tutorial Videos',
             headerLeft: () => (
               <TouchableOpacity
                 style={styles.headerLeftStyle}
