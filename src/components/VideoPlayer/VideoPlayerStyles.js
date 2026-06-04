@@ -1,6 +1,6 @@
-import {StyleSheet, Platform} from 'react-native';
+import {StyleSheet} from 'react-native';
 
-const myStyles = () =>
+const myStyles = top =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -10,7 +10,7 @@ const myStyles = () =>
     },
     closeButton: {
       position: 'absolute',
-      top: Platform.OS === 'ios' ? 54 : 16,
+      top: top + 16,
       right: 16,
       zIndex: 10,
       backgroundColor: 'rgba(0,0,0,0.5)',

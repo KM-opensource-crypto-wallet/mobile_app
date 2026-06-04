@@ -12,17 +12,18 @@ import Video from 'react-native-video';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
 import {isYouTubeVideo, getYouTubeId} from 'utils/videoUtils';
 import myStyles from './VideoPlayerStyles';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
 const VideoPlayer = ({item, onClose}) => {
-  const styles = myStyles();
   const isPortrait = item?.orientation === 'portrait';
   const isYT = isYouTubeVideo(item?.video);
   const ytId = isYT ? getYouTubeId(item.video) : null;
   const yTVideoRef = useRef(null);
   const [loading, setLoading] = useState(true);
-
+  const {top} = useSafeAreaInsets();
+  const styles = myStyles(top);
   useEffect(() => {
     setLoading(true);
   }, [item?.video]);

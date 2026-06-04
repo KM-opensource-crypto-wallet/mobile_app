@@ -116,14 +116,14 @@ export const CONTACT_DETAILS = ContactDetailsObj[wlName];
 
 const UrlObj = {
   dokwallet: {
-    privacyPolicy: 'https://dokwallet.com/privacypolicy.html',
-    terms: 'https://dokwallet.com/terms.html',
-    appUrl: 'https://www.dokwallet.app',
+    privacyPolicy: 'https://dokwallet.com/privacypolicy',
+    terms: 'https://dokwallet.com/terms',
+    appUrl: 'https://app.dokwallet.com',
   },
   kimlwallet: {
-    privacyPolicy: 'https://kimlview.com/privacy-policy.html',
-    terms: 'https://kimlview.com/terms-and-conditions.html',
-    appUrl: 'https://www.kimlview.xyz',
+    privacyPolicy: 'https://kimlwallet.com/privacy-policy',
+    terms: 'https://kimlwallet.com/terms',
+    appUrl: 'https://app.kimlwallet.com',
   },
 };
 
