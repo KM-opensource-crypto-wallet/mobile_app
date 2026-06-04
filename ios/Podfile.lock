@@ -158,7 +158,7 @@ PODS:
     - OneSignalXCFramework/OneSignalNotifications
     - OneSignalXCFramework/OneSignalOSCore
     - OneSignalXCFramework/OneSignalOutcomes
-  - OpenSSL-Universal (3.6.0000)
+  - OpenSSL-Universal (3.6.2000)
   - pagopa-io-react-native-integrity (0.3.2):
     - boost
     - DoubleConversion
@@ -189,7 +189,7 @@ PODS:
     - SwiftCBOR
     - Yoga
   - PromisesObjC (2.4.0)
-  - QuickCrypto (1.1.4):
+  - QuickCrypto (1.1.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -197,7 +197,7 @@ PODS:
     - glog
     - hermes-engine
     - NitroModules
-    - OpenSSL-Universal (~> 3.6)
+    - OpenSSL-Universal (~> 3.6.2000)
     - RCT-Folly
     - RCT-Folly/Fabric
     - RCTRequired
@@ -2520,6 +2520,92 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - react-native-video (6.19.2):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - react-native-video/Video (= 6.19.2)
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
+  - react-native-video/Fabric (6.19.2):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
+  - react-native-video/Video (6.19.2):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - react-native-video/Fabric
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - react-native-view-shot (3.8.0):
     - React-Core
   - react-native-webview (13.16.0):
@@ -3776,7 +3862,7 @@ PODS:
     - Yoga
   - SocketRocket (0.7.1)
   - SwiftCBOR (0.6.0)
-  - SwiftProtobuf (1.36.1)
+  - SwiftProtobuf (1.38.0)
   - TrustWalletCore (3.2.9):
     - TrustWalletCore/Core (= 3.2.9)
   - TrustWalletCore/Core (3.2.9):
@@ -3860,6 +3946,7 @@ DEPENDENCIES:
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-screenguard (from `../node_modules/react-native-screenguard`)
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
+  - react-native-video (from `../node_modules/react-native-video`)
   - react-native-view-shot (from `../node_modules/react-native-view-shot`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -4078,6 +4165,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-screenguard"
   react-native-slider:
     :path: "../node_modules/@react-native-community/slider"
+  react-native-video:
+    :path: "../node_modules/react-native-video"
   react-native-view-shot:
     :path: "../node_modules/react-native-view-shot"
   react-native-webview:
@@ -4216,10 +4305,10 @@ SPEC CHECKSUMS:
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   NitroModules: ca334519b7a8af135c1dfe0095504c719eee6edc
   OneSignalXCFramework: 943852e7d70d719f73e9669d48620aeec1b93022
-  OpenSSL-Universal: 9110d21982bb7e8b22a962b6db56a8aa805afde7
+  OpenSSL-Universal: ecee7b138fa75a74ecf00d7ffd248fb584739b9e
   pagopa-io-react-native-integrity: f992c00ff17f65e6318886eaa3236ba864eded18
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  QuickCrypto: 313711902ab355165c3a14363a741b0b47870ab2
+  QuickCrypto: 944c9fec0bc7c7a572c9c59741bb9cf0ba1bd7f1
   RCT-Folly: 59ec0ac1f2f39672a0c6e6cecdd39383b764646f
   RCTDeprecation: a41bbdd9af30bf2e5715796b313e44ec43eefff1
   RCTRequired: 7be34aabb0b77c3cefe644528df0fa0afad4e4d0
@@ -4274,6 +4363,7 @@ SPEC CHECKSUMS:
   react-native-safe-area-context: 54d812805f3c4e08a4580ad086cbde1d8780c2e4
   react-native-screenguard: 7d9e9000f8da97ea7e664a972402fa0576331448
   react-native-slider: e35799fb9983a19307195d77f10caf5f6a716842
+  react-native-video: 1bd55e6f395c6342a4eee06e3f8485c5564d41e1
   react-native-view-shot: 6b7ed61d77d88580fed10954d45fad0eb2d47688
   react-native-webview: 8b9097e270a99ee8798449f191a7ea27c790fa1c
   React-NativeModulesApple: 7f2f2fed3f6c858889eb61d09941be965d52df58
@@ -4336,7 +4426,7 @@ SPEC CHECKSUMS:
   SensitiveInfo: 7f362ffec4ce959a31f0706a4f22c9338f7926ee
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   SwiftCBOR: b873af28a9cc66003852fdc79a41852a7e54009a
-  SwiftProtobuf: 9e106a71456f4d3f6a3b0c8fd87ef0be085efc38
+  SwiftProtobuf: d724b5145bfc609d9a49c1e3e3a3dabb07273ffb
   TrustWalletCore: 33400e9cf939277435b4e2e6c21daaa1afe26c7c
   uniffi-bindgen-react-native: 018090e6c342b31e1189eb4d098860e9d44caa86
   VisionCamera: 68d40255fa8866e815cbbb063730102d3da276fd

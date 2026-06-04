@@ -94,6 +94,57 @@ const myStyles = theme =>
       resizeMode: 'contain',
       marginRight: 12,
     },
+    headerButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+    },
+    headerButtonText: {
+      color: theme.borderActiveColor,
+      fontSize: 16,
+      fontFamily: 'Roboto-Regular',
+      fontWeight: '600',
+    },
+    selectAllRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    selectAllCheckbox: {
+      marginRight: 8,
+    },
+    itemCheckbox: {
+      marginLeft: 8,
+    },
+    activeBadge: {
+      marginLeft: 8,
+      color: theme.background,
+      fontSize: 13,
+      fontFamily: 'Roboto-Regular',
+      fontWeight: '600',
+    },
+    deleteBar: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      borderTopWidth: 1,
+      borderTopColor: theme.headerBorder,
+      backgroundColor: theme.backgroundColor,
+    },
+    deleteBarButton: {
+      backgroundColor: 'red',
+      height: 56,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    deleteBarText: {
+      color: 'white',
+      fontSize: 16,
+      fontFamily: 'Roboto-Regular',
+      fontWeight: '700',
+    },
   });
 
 export default myStyles;

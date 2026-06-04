@@ -21,6 +21,7 @@ import {
   isSearchInHomeScreen,
   isWalletReset,
 } from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {getTutorialVideos} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
 import {
   updateChatOptions,
   updateFingerprint,
@@ -56,6 +57,7 @@ const Settings = ({navigation}) => {
   const chatOptions = useSelector(isChatOptions);
   const searchInHomeScreen = useSelector(isSearchInHomeScreen);
   const rateLimitCheck = useSelector(isWalletReset);
+  const tutorialVideos = useSelector(getTutorialVideos);
 
   const onToggleSwitch = () => {
     if (isFingerprintEnabled) {
@@ -268,6 +270,27 @@ const Settings = ({navigation}) => {
               <Text style={styles.btnText}>Rate & Review us</Text>
             </View>
           </TouchableOpacity>
+          {tutorialVideos?.length > 0 && (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('TutorialVideos')}
+              style={{
+                ...styles.btn,
+                borderBottomWidth: 0.5,
+                borderBottomColor: theme.gray,
+              }}>
+              <IoniconsIcon
+                name={'play-circle-outline'}
+                size={24}
+                color={theme.font}
+              />
+              <View style={styles.box}>
+                <Text style={styles.btnTitle}>Tutorial Videos</Text>
+                <Text style={styles.btnText} numberOfLines={2}>
+                  Learn how to use wallet features
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
           {/* /////////////////////////////// */}
           <TouchableOpacity
             onPress={() => navigation.navigate('Terms & Conditions')}
