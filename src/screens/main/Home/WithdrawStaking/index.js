@@ -6,6 +6,7 @@ import {
   Text,
   TouchableWithoutFeedback,
   Keyboard,
+  Switch,
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {useSelector, useDispatch} from 'react-redux';
@@ -86,6 +87,20 @@ const WithdrawStaking = ({navigation, route}) => {
     }));
   }, [isEVMStaking, currentCoin?.staking, currentCoin?.currencyRate]);
 
+  const [isMaxCheckbox, setIsMaxCheckbox] = useState(false);
+
+  const handleMaxCheckboxToggle = value => {
+    setIsMaxCheckbox(value);
+    if (value) {
+      setState(prev => ({
+        ...prev,
+        amount: availableAmount,
+        currencyAmount: availableAmountCurrency,
+        errors: {},
+      }));
+    }
+  };
+
   const [selectedProvider] = useState(
     stakingProviderList.find(
       p =>
@@ -147,7 +162,9 @@ const WithdrawStaking = ({navigation, route}) => {
     state.resourceType?.value,
   ]);
   const disableTextInput =
-    isDisableTextInput(currentCoin?.chain_name) || !isDeactivateStaking;
+    isDisableTextInput(currentCoin?.chain_name) ||
+    !isDeactivateStaking ||
+    (isEVMStaking && isMaxCheckbox);
 
   const floatingHeight = useFloatingHeight();
   const dispatch = useDispatch();
@@ -171,20 +188,23 @@ const WithdrawStaking = ({navigation, route}) => {
   }, [isWithdrawStaking, isDeactivateStaking, isStakingRewards]);
 
   const handleSubmitForm = async () => {
-    const localErrors = checkError(amount, currencyAmount);
+    const localErrors =
+      isEVMStaking && isMaxCheckbox ? {} : checkError(amount, currencyAmount);
     if (Object.keys(localErrors).length === 0) {
+      const stakingProviderName = isEVMStaking
+        ? selectedProvider?.value || selectedStake?.validatorInfo?.name
+        : selectedStake?.providerName || selectedStake?.validatorInfo?.name;
       dispatch(
         setCurrentTransferData({
           validatorPubKey: selectedStake?.validator_address,
           stakingAddress: selectedStake?.staking_address,
           validatorName: selectedStake?.validatorInfo?.name,
-          stakingProviderName: isEVMStaking
-            ? selectedProvider?.value || selectedStake?.validatorInfo?.name
-            : selectedStake?.providerName || selectedStake?.validatorInfo?.name,
+          stakingProviderName,
           currentCoin,
           amount: validateBigNumberStr(amount),
           resourceType: resourceType?.value,
           isSendFunds: false,
+          isMaxCheckbox: isEVMStaking && isMaxCheckbox,
         }),
       );
       dispatch(
@@ -201,9 +221,8 @@ const WithdrawStaking = ({navigation, route}) => {
           isDeactivateStaking: isDeactivateStaking,
           isStakingRewards: isStakingRewards,
           resourceType: resourceType?.value,
-          stakingProviderName: isEVMStaking
-            ? selectedProvider?.value || selectedStake?.validatorInfo?.name
-            : selectedStake?.providerName || selectedStake?.validatorInfo?.name,
+          stakingProviderName,
+          isMaxCheckbox: isEVMStaking && isMaxCheckbox,
         }),
       );
       dispatch(setExchangeSuccess(false));
@@ -255,7 +274,9 @@ const WithdrawStaking = ({navigation, route}) => {
   };
   const amountBN = new BigNumber(amount);
   const availableAmountBN = new BigNumber(availableAmount);
-  const isValid = validateNumber(amount) && amountBN.lte(availableAmountBN);
+  const isValid =
+    (isEVMStaking && isMaxCheckbox) ||
+    (validateNumber(amount) && amountBN.lte(availableAmountBN));
 
   return (
     <Provider>
@@ -297,6 +318,36 @@ const WithdrawStaking = ({navigation, route}) => {
                     style={{
                       flex: 1,
                     }}>
+                    {isEVMStaking && (
+                      <TouchableOpacity
+                        activeOpacity={0.85}
+                        onPress={() => handleMaxCheckboxToggle(!isMaxCheckbox)}
+                        style={[
+                          styles.unstakeMaxCard,
+                          isMaxCheckbox && {
+                            borderColor: theme.background,
+                            backgroundColor: theme.background + '12',
+                          },
+                        ]}>
+                        <View style={styles.unstakeMaxInfo}>
+                          <Text style={styles.unstakeMaxTitle}>
+                            Unstake Entire Balance
+                          </Text>
+                          <Text style={styles.unstakeMaxSubtitle}>
+                            Redeem all staked tokens at once
+                          </Text>
+                        </View>
+                        <Switch
+                          value={isMaxCheckbox}
+                          onValueChange={handleMaxCheckboxToggle}
+                          trackColor={{
+                            false: theme.gray + '60',
+                            true: theme.background,
+                          }}
+                          thumbColor={'#ffffff'}
+                        />
+                      </TouchableOpacity>
+                    )}
                     <View style={styles.boxInput}>
                       <Text style={styles.listTitle}>Staking Amount</Text>
                       <View style={styles.inputView}>
