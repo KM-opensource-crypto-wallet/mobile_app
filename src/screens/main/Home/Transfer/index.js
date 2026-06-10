@@ -323,6 +323,12 @@ const Transfer = ({navigation, route}) => {
                 isCreateStaking || isDeactivateStaking || isStakingRewards
                   ? transferData?.stakingProviderName
                   : null,
+              tokenDecimals: isStakingScreen
+                ? transferData?.currentCoin?.decimal
+                : null,
+              isMaxCheckbox: isDeactivateStaking
+                ? transferData?.isMaxCheckbox
+                : null,
               feesType: selectedFeesTypeRef.current,
               estimateGas: transferData?.estimateGas,
             }),

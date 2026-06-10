@@ -1,4 +1,11 @@
-import React, {useState, useEffect, useContext, useRef, useMemo} from 'react';
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+  useMemo,
+  useCallback,
+} from 'react';
 import myStyles from './CreateStakingStyle';
 import {
   TouchableOpacity,
@@ -25,6 +32,7 @@ import {currencySymbol} from 'data/currency';
 import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import BigNumber from 'bignumber.js';
 import {
+  isEVMChain,
   isHaveResourceTypeInCreateStakingScreen,
   isValidatorSupportCreateStakingScreen,
   multiplyBNWithFixed,
@@ -36,6 +44,8 @@ import DokDropdown from 'components/DokDropdown';
 import ValidatorOptionItem from 'components/ValidatorOptionItem';
 import {
   fetchValidatorByChain,
+  fetchStakingAllowance,
+  executeApprove,
   setStakingLoading,
 } from 'dok-wallet-blockchain-networks/redux/staking/stakingSlice';
 import {
@@ -44,6 +54,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/staking/stakingSelectors';
 import Loading from 'components/Loading';
 import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
+import AllowanceInfoSheet from 'components/AllowanceInfoSheet';
 
 const CreateStaking = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -51,6 +62,16 @@ const CreateStaking = ({navigation}) => {
   const currentCoin = useSelector(selectCurrentCoin);
   const localCurrency = useSelector(getLocalCurrency);
   const [maxAmount, setMaxAmount] = useState('0.00000');
+  const allowanceSheetRef = useRef(null);
+  const pendingFormValuesRef = useRef(null);
+
+  const isEVMStaking = useMemo(
+    () =>
+      isEVMChain(currentCoin?.chain_name) &&
+      !!currentCoin?.contractAddress &&
+      !['tron', 'solana'].includes(currentCoin?.chain_name),
+    [currentCoin?.chain_name, currentCoin?.contractAddress],
+  );
 
   const availableAmount = useMemo(() => {
     const amount = currentCoin?.totalAmount || '0';
@@ -68,6 +89,10 @@ const CreateStaking = ({navigation}) => {
     return multiplyBNWithFixed(availableAmount, currentCoin?.currencyRate, 2);
   }, [availableAmount, currentCoin?.currencyRate]);
   const isLoading = useSelector(getStakingLoading);
+  const [approveLoading, setApproveLoading] = useState(false);
+  const [pendingStakingProviderName, setPendingStakingProviderName] =
+    useState(null);
+  const [pendingAmount, setPendingAmount] = useState(null);
   const validators = useSelector(getStakingValidatorsByChain, shallowEqual);
   const floatingHeight = useFloatingHeight();
   const dispatch = useDispatch();
@@ -113,36 +138,106 @@ const CreateStaking = ({navigation}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSubmitForm = async values => {
-    dispatch(
-      setCurrentTransferData({
-        validatorPubKey: values?.validatorPubKey?.value,
-        validatorName: values?.validatorPubKey?.label,
-        stakingProviderName: values?.validatorPubKey?.label,
-        currentCoin,
-        amount: validateBigNumberStr(values?.amount),
-        resourceType: values?.resourceType?.value,
-        isSendFunds: false,
-      }),
-    );
-    dispatch(
-      calculateEstimateFee({
-        isFetchNonce: true,
-        fromAddress: currentCoin?.address,
-        amount: validateBigNumberStr(values?.amount),
-        validatorPubKey: values?.validatorPubKey?.value,
-        balance: availableAmount,
+  const navigateToTransfer = useCallback(
+    (values, allowanceType) => {
+      dispatch(
+        setCurrentTransferData({
+          validatorPubKey: values?.validatorPubKey?.value,
+          validatorName: values?.validatorPubKey?.label,
+          stakingProviderName: values?.validatorPubKey?.label,
+          currentCoin,
+          amount: validateBigNumberStr(values?.amount),
+          resourceType: values?.resourceType?.value,
+          allowanceType: allowanceType || 'manual',
+          isSendFunds: false,
+        }),
+      );
+      dispatch(
+        calculateEstimateFee({
+          isFetchNonce: true,
+          fromAddress: currentCoin?.address,
+          amount: validateBigNumberStr(values?.amount),
+          validatorPubKey: values?.validatorPubKey?.value,
+          balance: availableAmount,
+          isCreateStaking: true,
+          resourceType: values?.resourceType?.value,
+          stakingProviderName: values?.validatorPubKey?.label,
+        }),
+      );
+      dispatch(setExchangeSuccess(false));
+      navigation.navigate('Transfer', {
+        fromScreen: 'Staking',
         isCreateStaking: true,
-        resourceType: values?.resourceType?.value,
-        stakingProviderName: values?.validatorPubKey?.label,
-      }),
-    );
-    dispatch(setExchangeSuccess(false));
-    navigation.navigate('Transfer', {
-      fromScreen: 'Staking',
-      isCreateStaking: true,
-    });
-  };
+      });
+    },
+    [dispatch, currentCoin, availableAmount, navigation],
+  );
+
+  const handleSubmitForm = useCallback(
+    async values => {
+      if (isEVMStaking) {
+        pendingFormValuesRef.current = values;
+        setPendingStakingProviderName(values?.validatorPubKey?.label);
+        setPendingAmount(values?.amount);
+        try {
+          const result = await dispatch(
+            fetchStakingAllowance({
+              stakingProviderName: values?.validatorPubKey?.label,
+              amount: values?.amount,
+            }),
+          ).unwrap();
+          if (result?.isApproved) {
+            pendingFormValuesRef.current = null;
+            navigateToTransfer(values, 'manual');
+          } else {
+            allowanceSheetRef.current?.present();
+          }
+        } catch (e) {
+          console.warn('[CreateStaking] allowance fetch failed:', e?.message);
+        }
+        return;
+      }
+      navigateToTransfer(values);
+    },
+    [dispatch, isEVMStaking, navigateToTransfer],
+  );
+
+  const onAllowanceContinue = useCallback(
+    async ({
+      type: allowanceType,
+      gasFee,
+      estimateGas,
+      maxPriorityFeePerGas,
+      nonce,
+    }) => {
+      if (!pendingFormValuesRef.current) {
+        return;
+      }
+      const formValues = pendingFormValuesRef.current;
+      setApproveLoading(true);
+      try {
+        await dispatch(
+          executeApprove({
+            allowanceType,
+            stakingProviderName: formValues?.validatorPubKey?.label,
+            gasFee,
+            estimateGas,
+            maxPriorityFeePerGas,
+            nonce,
+          }),
+        ).unwrap();
+      } catch (e) {
+        setApproveLoading(false);
+        console.warn('[CreateStaking] allowance action failed:', e?.message);
+        return;
+      }
+      setApproveLoading(false);
+      allowanceSheetRef.current?.close();
+      pendingFormValuesRef.current = null;
+      navigateToTransfer(formValues, allowanceType);
+    },
+    [dispatch, navigateToTransfer],
+  );
 
   if (isLoading) {
     return <Loading />;
@@ -405,6 +500,19 @@ const CreateStaking = ({navigation}) => {
           </Formik>
         </KeyboardAwareScrollView>
       </Portal>
+      <AllowanceInfoSheet
+        ref={allowanceSheetRef}
+        symbol={currentCoin?.chain_symbol}
+        tokenSymbol={currentCoin?.symbol}
+        requiredAmount={formikRef?.current?.values?.amount}
+        availableAmount={availableAmount}
+        approveLoading={approveLoading}
+        onContinue={onAllowanceContinue}
+        chainSymbol={currentCoin?.chain_symbol}
+        chainName={currentCoin?.chain_name}
+        stakingProviderName={pendingStakingProviderName}
+        amount={pendingAmount}
+      />
     </Provider>
   );
 };
