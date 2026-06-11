@@ -175,6 +175,17 @@ export const validationSchemaWithdrawStaking = (
       .max(currencyBalanceAmount, 'Currency amount greater than balance'),
   });
 
+export const validationSchemaDefaultStaking = (balanceAmount = 0) =>
+  Yup.object().shape({
+    amount: Yup.number()
+      .typeError('Please enter number value only')
+      .positive('Must be a positive number.')
+      .required(
+        'The amount that you entered is invalid. Please enter an amount which is less or equal to your available balance.',
+      )
+      .max(balanceAmount, 'Amount greater than available balance'),
+  });
+
 const validatationSchemForCreateStaking = {
   tron: validationSchemaTronStaking,
   solana: validationSchemaSolanaStaking,
@@ -184,7 +195,10 @@ export const getValidationSchemaForCreateStaking = (
   chain_name,
   balanceAmount = 0,
 ) => {
-  return validatationSchemForCreateStaking[chain_name]?.(balanceAmount);
+  return (
+    validatationSchemForCreateStaking[chain_name]?.(balanceAmount) ??
+    validationSchemaDefaultStaking(balanceAmount)
+  );
 };
 
 export const updateTransactionValidation = Yup.object().shape({

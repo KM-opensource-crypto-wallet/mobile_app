@@ -26,6 +26,8 @@ import {
   isEVMChain,
   isBalanceNotAvailable,
   GAS_CURRENCY,
+  delay,
+  validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
 import {useDispatch, useSelector} from 'react-redux';
 import {fetchStakingAllowanceEstimationFee} from 'dok-wallet-blockchain-networks/redux/staking/stakingSlice';
@@ -38,6 +40,7 @@ import {
   selectUserCoins,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import AdvancedFeesSheet from '../AdvancedFeesSheet';
+import ModalConfirmTransaction from '../ModalConfirmTransaction';
 
 const selectNativeBalance = state => {
   const currentCoin = selectCurrentCoin(state);
@@ -54,7 +57,6 @@ const selectNativeBalance = state => {
 const AllowanceInfoSheet = forwardRef(
   (
     {
-      symbol,
       tokenSymbol,
       requiredAmount,
       availableAmount,
@@ -73,18 +75,24 @@ const AllowanceInfoSheet = forwardRef(
     const dispatch = useDispatch();
 
     const allowanceData = useSelector(getStakingAllowance);
+    console.log('allowanceData:', allowanceData);
     const isLoading = useSelector(getStakingAllowanceLoading);
     const nativeBalance = useSelector(selectNativeBalance);
 
     const [isOpen, setIsOpen] = useState(false);
     const [selectedType, setSelectedType] = useState('manual');
     const [selectedFeesType, setSelectedFeesType] = useState('recommended');
-    const [customGasPrice, setCustomGasPrice] = useState('');
+    const [isFetchedSuccessful, setIsFetchedSuccessful] = useState('null');
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    // const [customGasPrice, setCustomGasPrice] = useState('');
     const [customNonce, setCustomNonce] = useState('');
     const [isFetchingFeesAgain, setIsFetchingFeesAgain] = useState(false);
     const isFetchingFeesRef = useRef(false);
     const advancedFeesSheetRef = useRef(null);
-
+    const selectedFeesTypeRef = useRef('recommended');
+    const isFetchingRef = useRef(false);
+    const isPauseCalculateFees = useRef(false);
+    const [customFees, setCustomFees] = useState('');
     const convertedChainName = isEVMChain(chainName) ? 'ethereum' : chainName;
 
     // Sync nonce input when allowanceData updates
@@ -94,12 +102,26 @@ const AllowanceInfoSheet = forwardRef(
       }
     }, [allowanceData?.nonce]);
 
-    // Sync custom gas price default when feesOptions arrive
+    // Sync custom gas price default when feesOptions arrive, but not if user has selected custom
     useEffect(() => {
-      if (allowanceData?.feesOptions?.[0]?.gasPrice != null) {
-        setCustomGasPrice(String(allowanceData.feesOptions[0].gasPrice));
+      if (
+        allowanceData?.feesOptions?.[0]?.gasPrice &&
+        selectedFeesTypeRef.current !== 'custom'
+      ) {
+        setCustomFees(allowanceData?.feesOptions?.[0]?.gasPrice);
       }
     }, [allowanceData?.feesOptions]);
+
+    const onChangeCustomFees = text => {
+      console.log('text:', text);
+      const tempValues = validateNumberInInput(text, allowanceData?.decimal);
+      setCustomFees(tempValues || '0');
+    };
+
+    const onChangeCustomNonce = text => {
+      const numericValue = text.replace(/[^0-9]/g, '');
+      setCustomNonce(numericValue);
+    };
 
     const fetchEstimationFee = useCallback(() => {
       if (isFetchingFeesRef.current) {
@@ -108,28 +130,80 @@ const AllowanceInfoSheet = forwardRef(
       isFetchingFeesRef.current = true;
       setIsFetchingFeesAgain(true);
       dispatch(
-        fetchStakingAllowanceEstimationFee({stakingProviderName, amount}),
+        fetchStakingAllowanceEstimationFee({
+          isFetchNonce: false,
+          existingNonce: allowanceData?.nonce,
+          stakingProviderName,
+          amount,
+          nonce: customNonce || allowanceData?.nonce, // please pass custom nonce
+          feesType: selectedFeesTypeRef.current,
+          estimateGas: allowanceData?.estimateGas,
+          customGasPrice:
+            selectedFeesTypeRef.current === 'custom' ? customFees : undefined,
+        }),
       )
         .unwrap()
-        .then(() => {
+        .then(resp => {
           setIsFetchingFeesAgain(false);
           isFetchingFeesRef.current = false;
+          setIsFetchedSuccessful(resp ? 'true' : 'false');
         })
         .catch(() => {
           setIsFetchingFeesAgain(false);
           isFetchingFeesRef.current = false;
         });
-    }, [dispatch, stakingProviderName, amount]);
+    }, [
+      dispatch,
+      allowanceData?.nonce,
+      allowanceData?.estimateGas,
+      stakingProviderName,
+      amount,
+      customNonce,
+      customFees,
+    ]);
 
-    // Fire once immediately when sheet opens, then repeat every 10 seconds
+    // Recommended / Normal: fire once immediately then repeat every 10 seconds.
     useEffect(() => {
-      if (!isOpen || !stakingProviderName || !amount) {
+      if (
+        !isOpen ||
+        !stakingProviderName ||
+        !amount ||
+        selectedFeesType === 'custom'
+      ) {
         return;
       }
       fetchEstimationFee();
       const interval = setInterval(fetchEstimationFee, 10000);
       return () => clearInterval(interval);
-    }, [isOpen, stakingProviderName, amount, fetchEstimationFee]);
+    }, [
+      isOpen,
+      stakingProviderName,
+      amount,
+      fetchEstimationFee,
+      selectedFeesType,
+    ]);
+
+    // Custom: re-fetch with 500ms debounce whenever customFees or customNonce changes.
+    useEffect(() => {
+      if (
+        !isOpen ||
+        !stakingProviderName ||
+        !amount ||
+        selectedFeesType !== 'custom'
+      ) {
+        return;
+      }
+      const timer = setTimeout(fetchEstimationFee, 500);
+      return () => clearTimeout(timer);
+    }, [
+      isOpen,
+      stakingProviderName,
+      amount,
+      selectedFeesType,
+      customFees,
+      customNonce,
+      fetchEstimationFee,
+    ]);
 
     // customizing the ref
     useImperativeHandle(ref, () => ({
@@ -170,74 +244,20 @@ const AllowanceInfoSheet = forwardRef(
       [nativeBalance, allowanceData?.transactionFee],
     );
 
-    // Gas price in Gwei for the selected option
-    const selectedGasPriceGwei = useMemo(() => {
-      if (selectedFeesType === 'custom') {
-        return parseFloat(customGasPrice) || 0;
-      }
-      if (selectedFeesType === 'normal') {
-        return allowanceData?.feesOptions?.[1]?.gasPrice || 0;
-      }
-      return allowanceData?.feesOptions?.[0]?.gasPrice || 0;
-    }, [selectedFeesType, customGasPrice, allowanceData?.feesOptions]);
-
-    // Fee display: gasPrice (Gwei) * estimateGas / 1e9 = ETH
-    const displayFee = useMemo(() => {
-      try {
-        if (!selectedGasPriceGwei || !allowanceData?.estimateGas) {
-          return allowanceData?.transactionFee || '0';
-        }
-        return new BigNumber(selectedGasPriceGwei)
-          .multipliedBy(new BigNumber(allowanceData.estimateGas))
-          .dividedBy(new BigNumber(1e9))
-          .toFixed(8);
-      } catch {
-        return allowanceData?.transactionFee || '0';
-      }
-    }, [
-      selectedGasPriceGwei,
-      allowanceData?.estimateGas,
-      allowanceData?.transactionFee,
-    ]);
-
     const handleContinue = useCallback(() => {
-      if (!onContinue) {
-        return;
-      }
-      const gasFeeWei =
-        selectedFeesType === 'recommended' && allowanceData?.gasFee
-          ? allowanceData.gasFee
-          : String(
-              Math.round(
-                new BigNumber(selectedGasPriceGwei)
-                  .multipliedBy(1e9)
-                  .toNumber(),
-              ),
-            );
-      const finalNonce = parseInt(customNonce, 10);
-      onContinue({
-        type: selectedType,
-        gasFee: gasFeeWei,
-        maxPriorityFeePerGas: allowanceData?.maxPriorityFeePerGas,
-        estimateGas: allowanceData?.estimateGas,
-        nonce: !isNaN(finalNonce) ? finalNonce : allowanceData?.nonce,
-      });
-    }, [
-      onContinue,
-      selectedType,
-      selectedFeesType,
-      selectedGasPriceGwei,
-      customNonce,
-      allowanceData,
-    ]);
-
+      setShowConfirmModal(true);
+      isPauseCalculateFees.current = true;
+    }, []);
     const onSelectFeesType = useCallback((type, gasPrice) => {
       if (type === 'custom') {
+        isPauseCalculateFees.current = true;
         setSelectedFeesType('custom');
-        return;
+        selectedFeesTypeRef.current = 'custom';
+      } else {
+        isPauseCalculateFees.current = false;
+        setSelectedFeesType(type);
+        selectedFeesTypeRef.current = type;
       }
-      setCustomGasPrice(gasPrice?.toString() || '');
-      setSelectedFeesType(type);
     }, []);
 
     const isDisabled =
@@ -249,7 +269,44 @@ const AllowanceInfoSheet = forwardRef(
     const bottomSheetRefCallback = useCallback(sheetRef => {
       bottomSheetRef.current = sheetRef;
     }, []);
-    console.log('allowanceData fee options:', allowanceData?.feesOptions);
+
+    const submitTransferData = useCallback(async () => {
+      if (!onContinue) {
+        return;
+      }
+      const gasFeeWei =
+        selectedFeesType === 'recommended' && allowanceData?.gasFee
+          ? allowanceData.gasFee
+          : String(
+              Math.round(
+                new BigNumber(customFees).multipliedBy(1e9).toNumber(),
+              ),
+            );
+      const finalNonce = parseInt(customNonce, 10);
+      onContinue({
+        type: selectedType,
+        gasFee: gasFeeWei,
+        maxPriorityFeePerGas: allowanceData?.maxPriorityFeePerGas,
+        estimateGas: allowanceData?.estimateGas,
+        nonce: !isNaN(finalNonce) ? finalNonce : allowanceData?.nonce,
+      });
+    }, [
+      allowanceData?.estimateGas,
+      allowanceData.gasFee,
+      allowanceData?.maxPriorityFeePerGas,
+      allowanceData?.nonce,
+      customFees,
+      customNonce,
+      onContinue,
+      selectedFeesType,
+      selectedType,
+    ]);
+
+    const onSuccess = useCallback(async () => {
+      setShowConfirmModal(false);
+      await delay(300);
+      await submitTransferData();
+    }, [submitTransferData]);
     return (
       <>
         <DokBottomSheet
@@ -425,7 +482,7 @@ const AllowanceInfoSheet = forwardRef(
                     <Text style={styles.errorText}>
                       Insufficient balance. Amount exceeds available balance of{' '}
                       {parseFloat(availableAmount || '0').toFixed(6)}{' '}
-                      {symbol || ''}.
+                      {tokenSymbol || ''}.
                     </Text>
                   ) : (
                     <Text style={styles.hint}>
@@ -448,7 +505,9 @@ const AllowanceInfoSheet = forwardRef(
                       <Text style={styles.feeSectionValue}>
                         {isFetchingFeesAgain
                           ? 'Refreshing...'
-                          : `${displayFee} ${chainSymbol || ''}`}
+                          : `${allowanceData?.transactionFee || '0'} ${
+                              chainSymbol || ''
+                            }`}
                       </Text>
                       <MaterialCommunityIcons
                         name="chevron-right"
@@ -484,19 +543,27 @@ const AllowanceInfoSheet = forwardRef(
               ) : null}
             </BottomSheetView>
           </TouchableWithoutFeedback>
+          <ModalConfirmTransaction
+            hideModal={() => {
+              setShowConfirmModal(false);
+              isPauseCalculateFees.current = false;
+            }}
+            visible={showConfirmModal}
+            onSuccess={onSuccess}
+          />
+          <AdvancedFeesSheet
+            ref={advancedFeesSheetRef}
+            feesOptions={allowanceData?.feesOptions}
+            selectedFeesType={selectedFeesType}
+            customFees={customFees}
+            customNonce={customNonce}
+            chainName={convertedChainName}
+            gasCurrency={GAS_CURRENCY[convertedChainName] || 'Gwei'}
+            onSelectFeesType={onSelectFeesType}
+            onChangeCustomFees={onChangeCustomFees}
+            onChangeCustomNonce={onChangeCustomNonce}
+          />
         </DokBottomSheet>
-        <AdvancedFeesSheet
-          ref={advancedFeesSheetRef}
-          feesOptions={allowanceData?.feesOptions}
-          selectedFeesType={selectedFeesType}
-          customFees={customGasPrice}
-          customNonce={customNonce}
-          chainName={convertedChainName}
-          gasCurrency={GAS_CURRENCY[convertedChainName] || 'Gwei'}
-          onSelectFeesType={onSelectFeesType}
-          onChangeCustomFees={setCustomGasPrice}
-          onChangeCustomNonce={setCustomNonce}
-        />
       </>
     );
   },
@@ -676,6 +743,7 @@ const myStyles = theme =>
       alignItems: 'center',
       justifyContent: 'center',
       marginTop: 4,
+      marginBottom: 16,
     },
     buttonDisabled: {
       backgroundColor: '#708090',

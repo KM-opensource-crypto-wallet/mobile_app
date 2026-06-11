@@ -87,7 +87,7 @@ const WithdrawStaking = ({navigation, route}) => {
     }));
   }, [isEVMStaking, currentCoin?.staking, currentCoin?.currencyRate]);
 
-  const [isMaxCheckbox, setIsMaxCheckbox] = useState(false);
+  const [isMaxCheckbox, setIsMaxCheckbox] = useState(true);
 
   const handleMaxCheckboxToggle = value => {
     setIsMaxCheckbox(value);

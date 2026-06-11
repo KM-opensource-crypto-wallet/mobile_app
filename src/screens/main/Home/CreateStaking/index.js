@@ -502,7 +502,6 @@ const CreateStaking = ({navigation}) => {
       </Portal>
       <AllowanceInfoSheet
         ref={allowanceSheetRef}
-        symbol={currentCoin?.chain_symbol}
         tokenSymbol={currentCoin?.symbol}
         requiredAmount={formikRef?.current?.values?.amount}
         availableAmount={availableAmount}
