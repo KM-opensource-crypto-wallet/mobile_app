@@ -30,7 +30,10 @@ import {
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
 import {useDispatch, useSelector} from 'react-redux';
-import {fetchStakingAllowanceEstimationFee} from 'dok-wallet-blockchain-networks/redux/staking/stakingSlice';
+import {
+  fetchStakingApproveEstimationFee,
+  updateFees,
+} from 'dok-wallet-blockchain-networks/redux/staking/stakingSlice';
 import {
   getStakingAllowance,
   getStakingAllowanceLoading,
@@ -82,15 +85,13 @@ const AllowanceInfoSheet = forwardRef(
     const [isOpen, setIsOpen] = useState(false);
     const [selectedType, setSelectedType] = useState('manual');
     const [selectedFeesType, setSelectedFeesType] = useState('recommended');
-    const [isFetchedSuccessful, setIsFetchedSuccessful] = useState('null');
+
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    // const [customGasPrice, setCustomGasPrice] = useState('');
     const [customNonce, setCustomNonce] = useState('');
     const [isFetchingFeesAgain, setIsFetchingFeesAgain] = useState(false);
     const isFetchingFeesRef = useRef(false);
     const advancedFeesSheetRef = useRef(null);
     const selectedFeesTypeRef = useRef('recommended');
-    const isFetchingRef = useRef(false);
     const isPauseCalculateFees = useRef(false);
     const [customFees, setCustomFees] = useState('');
     const convertedChainName = isEVMChain(chainName) ? 'ethereum' : chainName;
@@ -112,16 +113,19 @@ const AllowanceInfoSheet = forwardRef(
       }
     }, [allowanceData?.feesOptions]);
 
-    const onChangeCustomFees = text => {
-      console.log('text:', text);
-      const tempValues = validateNumberInInput(text, allowanceData?.decimal);
-      setCustomFees(tempValues || '0');
-    };
+    const onChangeCustomFees = useCallback(
+      text => {
+        const tempValues = validateNumberInInput(text, allowanceData?.decimal);
+        setCustomFees(tempValues);
+        dispatch(updateFees({gasPrice: tempValues || '0', convertedChainName}));
+      },
+      [allowanceData?.decimal, convertedChainName, dispatch],
+    );
 
-    const onChangeCustomNonce = text => {
+    const onChangeCustomNonce = useCallback(text => {
       const numericValue = text.replace(/[^0-9]/g, '');
       setCustomNonce(numericValue);
-    };
+    }, []);
 
     const fetchEstimationFee = useCallback(() => {
       if (isFetchingFeesRef.current) {
@@ -130,9 +134,8 @@ const AllowanceInfoSheet = forwardRef(
       isFetchingFeesRef.current = true;
       setIsFetchingFeesAgain(true);
       dispatch(
-        fetchStakingAllowanceEstimationFee({
+        fetchStakingApproveEstimationFee({
           isFetchNonce: false,
-          existingNonce: allowanceData?.nonce,
           stakingProviderName,
           amount,
           nonce: customNonce || allowanceData?.nonce, // please pass custom nonce
@@ -143,10 +146,9 @@ const AllowanceInfoSheet = forwardRef(
         }),
       )
         .unwrap()
-        .then(resp => {
+        .then(() => {
           setIsFetchingFeesAgain(false);
           isFetchingFeesRef.current = false;
-          setIsFetchedSuccessful(resp ? 'true' : 'false');
         })
         .catch(() => {
           setIsFetchingFeesAgain(false);
@@ -168,7 +170,9 @@ const AllowanceInfoSheet = forwardRef(
         !isOpen ||
         !stakingProviderName ||
         !amount ||
-        selectedFeesType === 'custom'
+        selectedFeesType === 'custom' ||
+        showConfirmModal ||
+        approveLoading
       ) {
         return;
       }
@@ -181,6 +185,8 @@ const AllowanceInfoSheet = forwardRef(
       amount,
       fetchEstimationFee,
       selectedFeesType,
+      showConfirmModal,
+      approveLoading,
     ]);
 
     // Custom: re-fetch with 500ms debounce whenever customFees or customNonce changes.
@@ -189,7 +195,9 @@ const AllowanceInfoSheet = forwardRef(
         !isOpen ||
         !stakingProviderName ||
         !amount ||
-        selectedFeesType !== 'custom'
+        selectedFeesType !== 'custom' ||
+        showConfirmModal ||
+        approveLoading
       ) {
         return;
       }
@@ -203,6 +211,8 @@ const AllowanceInfoSheet = forwardRef(
       customFees,
       customNonce,
       fetchEstimationFee,
+      showConfirmModal,
+      approveLoading,
     ]);
 
     // customizing the ref
@@ -263,6 +273,7 @@ const AllowanceInfoSheet = forwardRef(
     const isDisabled =
       isLoading ||
       approveLoading ||
+      isFetchingFeesAgain ||
       insufficientBalance ||
       isInsufficientFeeBalance;
 
@@ -284,22 +295,30 @@ const AllowanceInfoSheet = forwardRef(
             );
       const finalNonce = parseInt(customNonce, 10);
       onContinue({
+        isFetchNonce: false,
         type: selectedType,
         gasFee: gasFeeWei,
         maxPriorityFeePerGas: allowanceData?.maxPriorityFeePerGas,
-        estimateGas: allowanceData?.estimateGas,
+        stakingProviderName,
+        amount,
         nonce: !isNaN(finalNonce) ? finalNonce : allowanceData?.nonce,
+        feesType: selectedFeesTypeRef.current,
+        estimateGas: allowanceData?.estimateGas,
+        customGasPrice:
+          selectedFeesTypeRef.current === 'custom' ? customFees : undefined,
       });
     }, [
       allowanceData?.estimateGas,
       allowanceData.gasFee,
       allowanceData?.maxPriorityFeePerGas,
       allowanceData?.nonce,
+      amount,
       customFees,
       customNonce,
       onContinue,
       selectedFeesType,
       selectedType,
+      stakingProviderName,
     ]);
 
     const onSuccess = useCallback(async () => {

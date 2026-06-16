@@ -55,6 +55,7 @@ import {
 import Loading from 'components/Loading';
 import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import AllowanceInfoSheet from 'components/AllowanceInfoSheet';
+import {showToast} from 'utils/toast';
 
 const CreateStaking = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -97,6 +98,7 @@ const CreateStaking = ({navigation}) => {
   const floatingHeight = useFloatingHeight();
   const dispatch = useDispatch();
   const formikRef = useRef(null);
+  const defaultValidatorSetRef = useRef(false);
   const validatorList = useMemo(() => {
     return validators.map(item => ({
       label: item?.name,
@@ -118,7 +120,8 @@ const CreateStaking = ({navigation}) => {
   }, [isResourceSupport, currentCoin?.chain_name]);
 
   useEffect(() => {
-    if (validatorList?.[0]) {
+    if (validatorList?.[0] && !defaultValidatorSetRef.current) {
+      defaultValidatorSetRef.current = true;
       formikRef?.current?.setFieldValue('validatorPubKey', validatorList?.[0]);
     }
   }, [validatorList]);
@@ -204,31 +207,56 @@ const CreateStaking = ({navigation}) => {
 
   const onAllowanceContinue = useCallback(
     async ({
+      isFetchNonce,
       type: allowanceType,
       gasFee,
-      estimateGas,
       maxPriorityFeePerGas,
+      stakingProviderName,
+      amount,
       nonce,
+      feesType,
+      estimateGas,
+      customGasPrice,
     }) => {
       if (!pendingFormValuesRef.current) {
         return;
       }
       const formValues = pendingFormValuesRef.current;
       setApproveLoading(true);
+      let tx_hash;
       try {
-        await dispatch(
+        const result = await dispatch(
           executeApprove({
+            isFetchNonce,
             allowanceType,
-            stakingProviderName: formValues?.validatorPubKey?.label,
             gasFee,
-            estimateGas,
             maxPriorityFeePerGas,
+            stakingProviderName:
+              stakingProviderName || formValues?.validatorPubKey?.label,
+            amount,
             nonce,
+            feesType,
+            estimateGas,
+            customGasPrice,
           }),
         ).unwrap();
+        tx_hash = result?.tx_hash;
       } catch (e) {
         setApproveLoading(false);
+        allowanceSheetRef.current?.close();
         console.warn('[CreateStaking] allowance action failed:', e?.message);
+        setTimeout(() => {
+          showToast({
+            type: 'errorToast',
+            title: 'Something went wrong',
+            autoHide: true,
+          });
+        }, 400);
+        return;
+      }
+      if (!tx_hash) {
+        setApproveLoading(false);
+        allowanceSheetRef.current?.close();
         return;
       }
       setApproveLoading(false);
@@ -260,7 +288,7 @@ const CreateStaking = ({navigation}) => {
             initialValues={{
               amount: '',
               currencyAmount: '',
-              validatorPubKey: validatorList?.[0] || null,
+              validatorPubKey: null,
               resourceType: isResourceSupport ? resourceData[1] : null,
             }}
             validationSchema={getValidationSchemaForCreateStaking(
