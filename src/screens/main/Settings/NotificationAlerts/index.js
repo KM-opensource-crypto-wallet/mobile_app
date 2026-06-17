@@ -166,7 +166,10 @@ const NotificationAlerts = ({navigation}) => {
 
   const checkPermissionAndNavigate = useCallback(async () => {
     const {status: currentStatus} = await checkNotifications();
-    if (currentStatus === RESULTS.GRANTED || currentStatus === RESULTS.LIMITED) {
+    if (
+      currentStatus === RESULTS.GRANTED ||
+      currentStatus === RESULTS.LIMITED
+    ) {
       navigation.navigate('AddNotificationAlert');
       return;
     }
@@ -261,7 +264,10 @@ const NotificationAlerts = ({navigation}) => {
 
   const handleEnableNotifications = useCallback(async () => {
     const {status: currentStatus} = await checkNotifications();
-    if (currentStatus === RESULTS.GRANTED || currentStatus === RESULTS.LIMITED) {
+    if (
+      currentStatus === RESULTS.GRANTED ||
+      currentStatus === RESULTS.LIMITED
+    ) {
       setHasNotificationPermission(true);
       await initOneSignal();
       return;

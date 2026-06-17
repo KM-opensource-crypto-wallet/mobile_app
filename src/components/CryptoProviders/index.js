@@ -45,6 +45,7 @@ import {
 import {IS_ANDROID, IS_IOS} from 'utils/dimensions';
 import ModalAddCoins from 'components/ModalAddCoins';
 import PaymentOptionItem from 'components/PaymentOptionItem';
+import ApplePayMark from 'components/ApplePayMark';
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {IS_KIML_WALLET} from 'utils/wlData';
@@ -259,14 +260,19 @@ const CryptoProviders = () => {
                             fontSize: 16,
                           }}
                           renderLeftIcon={() =>
-                            values.selectedPaymentMethod?.options?.icon && (
-                              <MaterialCommunityIcon
-                                name={
-                                  values.selectedPaymentMethod?.options?.icon
-                                }
-                                color={theme.font}
-                                size={32}
-                              />
+                            values.selectedPaymentMethod?.value ===
+                            'apple_pay' ? (
+                              <ApplePayMark />
+                            ) : (
+                              values.selectedPaymentMethod?.options?.icon && (
+                                <MaterialCommunityIcon
+                                  name={
+                                    values.selectedPaymentMethod?.options?.icon
+                                  }
+                                  color={theme.font}
+                                  size={32}
+                                />
+                              )
                             )
                           }
                         />

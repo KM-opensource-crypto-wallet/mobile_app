@@ -10,8 +10,11 @@ import {coinKey, getDefaultMinAmount} from 'utils/notificationAlertHelpers';
 const AddNotificationAlertAddresses = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-  const {walletClientId, selectedCoinKeysArr, addressMap: initialAddressMap} =
-    route.params;
+  const {
+    walletClientId,
+    selectedCoinKeysArr,
+    addressMap: initialAddressMap,
+  } = route.params;
 
   const allWallets = useSelector(selectAllWallets);
   const selectedWallet = useMemo(
