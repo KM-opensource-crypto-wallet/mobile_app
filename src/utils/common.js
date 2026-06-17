@@ -172,4 +172,3 @@ export const Constants = {
       'You have one more attempt if you type a wrong password again your wallet will delete completely.',
   },
 };
-

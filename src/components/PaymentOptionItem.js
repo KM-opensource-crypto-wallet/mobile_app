@@ -2,17 +2,22 @@ import React, {useContext} from 'react';
 import {View, StyleSheet, Text} from 'react-native';
 import {ThemeContext} from 'theme/ThemeContext';
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import ApplePayMark from 'components/ApplePayMark';
 
 const PaymentOptionItem = ({item}) => {
   const {theme} = useContext(ThemeContext);
   const myStyles = styles(theme);
   return (
     <View style={myStyles.list}>
-      <MaterialCommunityIcon
-        name={item?.options?.icon}
-        color={theme.font}
-        size={32}
-      />
+      {item?.value === 'apple_pay' ? (
+        <ApplePayMark />
+      ) : (
+        <MaterialCommunityIcon
+          name={item?.options?.icon}
+          color={theme.font}
+          size={32}
+        />
+      )}
       <Text style={myStyles.titleAmount}>{item.label}</Text>
     </View>
   );
