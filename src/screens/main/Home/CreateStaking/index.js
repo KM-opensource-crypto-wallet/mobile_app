@@ -13,6 +13,7 @@ import {
   Text,
   TouchableWithoutFeedback,
   Keyboard,
+  ActivityIndicator,
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {Formik} from 'formik';
@@ -51,11 +52,11 @@ import {
 import {
   getStakingLoading,
   getStakingValidatorsByChain,
+  getStakingAllowanceLoading,
 } from 'dok-wallet-blockchain-networks/redux/staking/stakingSelectors';
 import Loading from 'components/Loading';
 import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import AllowanceInfoSheet from 'components/AllowanceInfoSheet';
-import {showToast} from 'utils/toast';
 
 const CreateStaking = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -90,6 +91,7 @@ const CreateStaking = ({navigation}) => {
     return multiplyBNWithFixed(availableAmount, currentCoin?.currencyRate, 2);
   }, [availableAmount, currentCoin?.currencyRate]);
   const isLoading = useSelector(getStakingLoading);
+  const allowanceLoading = useSelector(getStakingAllowanceLoading);
   const [approveLoading, setApproveLoading] = useState(false);
   const [pendingStakingProviderName, setPendingStakingProviderName] =
     useState(null);
@@ -102,7 +104,7 @@ const CreateStaking = ({navigation}) => {
   const validatorList = useMemo(() => {
     return validators.map(item => ({
       label: item?.name,
-      value: item?.validatorAddress,
+      value: item?.validatorAddress || item?.name,
       options: item,
     }));
   }, [validators]);
@@ -245,13 +247,6 @@ const CreateStaking = ({navigation}) => {
         setApproveLoading(false);
         allowanceSheetRef.current?.close();
         console.warn('[CreateStaking] allowance action failed:', e?.message);
-        setTimeout(() => {
-          showToast({
-            type: 'errorToast',
-            title: 'Something went wrong',
-            autoHide: true,
-          });
-        }, 400);
         return;
       }
       if (!tx_hash) {
@@ -330,6 +325,11 @@ const CreateStaking = ({navigation}) => {
                           {availableAmountCurrency}
                         </Text>
                       </View>
+                      {values?.validatorPubKey?.options?.minAmount != null && (
+                        <Text style={styles.listTitle}>
+                          {`Minimum: ${values.validatorPubKey.options.minAmount} ${currentCoin?.symbol}`}
+                        </Text>
+                      )}
                       <View
                         style={{
                           flex: 1,
@@ -511,15 +511,20 @@ const CreateStaking = ({navigation}) => {
                       </View>
                     </View>
                     <TouchableOpacity
-                      disabled={!isValid}
+                      disabled={!isValid || allowanceLoading}
                       style={{
                         ...styles.button,
-                        backgroundColor: isValid
-                          ? theme.background
-                          : theme.gray,
+                        backgroundColor:
+                          isValid && !allowanceLoading
+                            ? theme.background
+                            : theme.gray,
                       }}
                       onPress={handleSubmit}>
-                      <Text style={styles.buttonTitle}>Next</Text>
+                      {allowanceLoading ? (
+                        <ActivityIndicator color="white" />
+                      ) : (
+                        <Text style={styles.buttonTitle}>Next</Text>
+                      )}
                     </TouchableOpacity>
                   </View>
                 </View>

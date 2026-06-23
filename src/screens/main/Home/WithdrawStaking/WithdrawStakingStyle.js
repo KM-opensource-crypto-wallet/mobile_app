@@ -65,6 +65,10 @@ const myStyles = theme =>
     input: {
       height: 50,
     },
+    disabledInput: {
+      height: 50,
+      backgroundColor: theme.gray + '22',
+    },
     btnMax: {
       position: 'absolute',
       top: 24,
@@ -78,6 +82,10 @@ const myStyles = theme =>
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 9999,
+    },
+    btnMaxDisabled: {
+      backgroundColor: theme.gray + '55',
+      borderColor: theme.gray + '55',
     },
     btnText: {
       color: theme.backgroundColor,

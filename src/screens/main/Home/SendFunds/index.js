@@ -58,6 +58,10 @@ import {
   getCustomRPCWithData,
   selectAllCustomRpc,
 } from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSelectors';
+import {getSentAddressHistory} from 'dok-wallet-blockchain-networks/redux/sentAddressHistory/sentAddressHistorySelectors';
+import {getAddressBook} from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSelector';
+import {findLookalikeAddress} from 'dok-wallet-blockchain-networks/helper/addressPoisoning';
+import ModalAddressPoisoningWarning from 'components/ModalAddressPoisoningWarning';
 
 const SendFunds = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
@@ -76,6 +80,8 @@ const SendFunds = ({navigation, route}) => {
   const currentWallet = useSelector(selectCurrentWallet);
   const allCustomRPC = useSelector(selectAllCustomRpc);
   const transferData = useSelector(getTransferData);
+  const sentAddressHistory = useSelector(getSentAddressHistory);
+  const addressBook = useSelector(getAddressBook);
   const isBitcoin = isBitcoinChain(currentCoin?.chain_name);
   const uuid = useMemo(() => {
     return v4();
@@ -84,6 +90,7 @@ const SendFunds = ({navigation, route}) => {
   const [modal, setModal] = useState(false);
   const [maxAmount, setMaxAmount] = useState('0.00000');
   const [modalVisible, setmodalVisible] = useState(false);
+  const [poisonWarning, setPoisonWarning] = useState(null);
   const availableAmount = useMemo(() => {
     const amount =
       (isBitcoin && transferData?.selectedUTXOsValue) ||
@@ -186,51 +193,94 @@ const SendFunds = ({navigation, route}) => {
     }
   }, [route?.params?.memo]);
 
-  const addToBatch = useCallback(async () => {
-    const values = formikRef.current.values;
-    const customRPC = getCustomRPCWithData(
+  // Validate the recipient: a directly valid address, or (on name-support
+  // chains) a resolvable name. Shared by the send and batch flows.
+  const validateRecipientAddress = useCallback(
+    async sendValue => {
+      const customRPC = getCustomRPCWithData(
+        allCustomRPC,
+        currentCoin?.chain_name,
+        currentWallet?.clientId,
+      );
+      const currentChain = getChain(
+        currentCoin?.chain_name,
+        currentWallet?.phrase,
+        customRPC,
+      );
+      const isValid = await currentChain.isValidAddress({address: sendValue});
+      let validAddress = null;
+      if (!isValid && isNameSupportChain(currentCoin?.chain_name)) {
+        validAddress = await currentChain?.isValidName({name: sendValue});
+      }
+      return {isValid, validAddress};
+    },
+    [
       allCustomRPC,
       currentCoin?.chain_name,
       currentWallet?.clientId,
-    );
-    const currentChain = getChain(
-      currentCoin?.chain_name,
       currentWallet?.phrase,
-      customRPC,
+    ],
+  );
+
+  // Run address-poisoning detection on the resolved recipient. If a lookalike
+  // is found, hold the action and show the warning (proceed runs only after the
+  // user acknowledges); otherwise proceed immediately. Shared by both flows.
+  const checkPoisoningThenProceed = useCallback(
+    (resolvedToAddress, proceed) => {
+      const lookalikeAddress = findLookalikeAddress({
+        inputAddress: resolvedToAddress,
+        chain_name: currentCoin?.chain_name,
+        sentHistory: sentAddressHistory,
+        addressBook,
+      });
+      if (lookalikeAddress) {
+        setPoisonWarning({
+          suspiciousAddress: resolvedToAddress,
+          matchedAddress: lookalikeAddress,
+          onConfirm: proceed,
+        });
+        return;
+      }
+      proceed();
+    },
+    [currentCoin?.chain_name, sentAddressHistory, addressBook],
+  );
+
+  const addToBatch = useCallback(async () => {
+    const values = formikRef.current.values;
+    const {isValid, validAddress} = await validateRecipientAddress(
+      values?.send,
     );
-    const isValid = await currentChain.isValidAddress({address: values?.send});
-    let validAddress = null;
-    if (!isValid && isNameSupportChain(currentCoin?.chain_name)) {
-      validAddress = await currentChain?.isValidName({name: values?.send});
-    }
     if (isValid || validAddress) {
-      dispatch(
-        addBatchTransaction({
-          transactionId: uuid,
-          selectedCoin: currentCoin,
-          transferData: {
-            contractAddress: currentCoin?.contractAddress,
-            fromAddress: currentCoin?.address,
-            toAddress: values?.send,
-            decimals: currentCoin?.decimal,
-            amount: validateBigNumberStr(values?.amount),
-            fiatAmount: values?.currencyAmount || '0',
-          },
-          isERC20Token: currentCoin?.type?.toLowerCase() === 'token',
-          navigation,
-        }),
-      );
+      const resolvedToAddress = validAddress || values?.send?.trim();
+      checkPoisoningThenProceed(resolvedToAddress, () => {
+        dispatch(
+          addBatchTransaction({
+            transactionId: uuid,
+            selectedCoin: currentCoin,
+            transferData: {
+              contractAddress: currentCoin?.contractAddress,
+              fromAddress: currentCoin?.address,
+              toAddress: values?.send,
+              decimals: currentCoin?.decimal,
+              amount: validateBigNumberStr(values?.amount),
+              fiatAmount: values?.currencyAmount || '0',
+            },
+            isERC20Token: currentCoin?.type?.toLowerCase() === 'token',
+            navigation,
+          }),
+        );
+      });
     } else {
       formikRef?.current?.setFieldError('send', 'address is not valid');
     }
   }, [
-    allCustomRPC,
     currentCoin,
-    currentWallet?.clientId,
-    currentWallet?.phrase,
     dispatch,
     navigation,
     uuid,
+    validateRecipientAddress,
+    checkPoisoningThenProceed,
   ]);
 
   const handleSubmitForm = async values => {
@@ -288,57 +338,50 @@ const SendFunds = ({navigation, route}) => {
       setModal(true);
       return;
     }
-    const customRPC = getCustomRPCWithData(
-      allCustomRPC,
-      currentCoin?.chain_name,
-      currentWallet?.clientId,
+    const {isValid, validAddress} = await validateRecipientAddress(
+      values?.send,
     );
-    const currentChain = getChain(
-      currentCoin?.chain_name,
-      currentWallet?.phrase,
-      customRPC,
-    );
-    const isValid = await currentChain.isValidAddress({address: values?.send});
-    let validAddress = null;
-    if (!isValid && isNameSupportChain(currentCoin?.chain_name)) {
-      validAddress = await currentChain?.isValidName({name: values?.send});
-    }
-
     if (isValid || validAddress) {
-      dispatch(
-        setCurrentTransferData({
-          toAddress: validAddress || values?.send?.trim(),
-          currentCoin,
-          amount: validateBigNumberStr(values?.amount),
-          initialAmount:
-            currentCoin?.type !== 'token' &&
-            validateBigNumberStr(values?.amount),
-          isSendFunds: true,
-          validName: validAddress ? values?.send : null,
-          memo: values?.memo?.trim(),
-        }),
+      const resolvedToAddress = validAddress || values?.send?.trim();
+      checkPoisoningThenProceed(resolvedToAddress, () =>
+        proceedToTransfer(values, validAddress),
       );
-      dispatch(
-        calculateEstimateFee({
-          isFetchNonce: true,
-          fromAddress: currentCoin?.address,
-          toAddress: validAddress || values?.send,
-          amount: validateBigNumberStr(values?.amount),
-          contractAddress: currentCoin?.contractAddress,
-          balance: availableAmount,
-          memo: values?.memo?.trim(),
-          selectedUTXOs: transferData?.selectedUTXOs,
-        }),
-      );
-      dispatch(setExchangeSuccess(false));
-      navigation.navigate('Transfer', {
-        fromScreen: 'SendFunds',
-        redirect_url,
-        meta,
-      });
     } else {
       formikRef?.current?.setFieldError('send', 'address is not valid');
     }
+  };
+
+  const proceedToTransfer = (values, validAddress) => {
+    dispatch(
+      setCurrentTransferData({
+        toAddress: validAddress || values?.send?.trim(),
+        currentCoin,
+        amount: validateBigNumberStr(values?.amount),
+        initialAmount:
+          currentCoin?.type !== 'token' && validateBigNumberStr(values?.amount),
+        isSendFunds: true,
+        validName: validAddress ? values?.send : null,
+        memo: values?.memo?.trim(),
+      }),
+    );
+    dispatch(
+      calculateEstimateFee({
+        isFetchNonce: true,
+        fromAddress: currentCoin?.address,
+        toAddress: validAddress || values?.send,
+        amount: validateBigNumberStr(values?.amount),
+        contractAddress: currentCoin?.contractAddress,
+        balance: availableAmount,
+        memo: values?.memo?.trim(),
+        selectedUTXOs: transferData?.selectedUTXOs,
+      }),
+    );
+    dispatch(setExchangeSuccess(false));
+    navigation.navigate('Transfer', {
+      fromScreen: 'SendFunds',
+      redirect_url,
+      meta,
+    });
   };
 
   const onSelectAddress = useCallback(item => {
@@ -749,6 +792,17 @@ const SendFunds = ({navigation, route}) => {
           visible={modalVisible}
           hideModal={setmodalVisible}
           data={isDataCorrect()}
+        />
+        <ModalAddressPoisoningWarning
+          visible={!!poisonWarning}
+          suspiciousAddress={poisonWarning?.suspiciousAddress}
+          matchedAddress={poisonWarning?.matchedAddress}
+          onCancel={() => setPoisonWarning(null)}
+          onContinue={() => {
+            const pending = poisonWarning;
+            setPoisonWarning(null);
+            pending?.onConfirm?.();
+          }}
         />
       </Portal>
     </Provider>

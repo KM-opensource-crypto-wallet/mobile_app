@@ -139,7 +139,23 @@ export const validationSchemaSolanaStaking = (balanceAmount = 0) =>
       .required(
         'The amount that you entered is invalid. Please enter an amount which is less or equal to your available balance.',
       )
-      .max(balanceAmount, 'Amount greater than balance'),
+      .max(balanceAmount, 'Amount greater than balance')
+      .test('min-staking', '', function (value) {
+        // Minimum is read from the selected validator so per-validator/provider
+        // minimums work for free. Only enforced when the value is present.
+        const minAmount = this.parent?.validatorPubKey?.options?.minAmount;
+        if (
+          minAmount != null &&
+          Number(minAmount) > 0 &&
+          value != null &&
+          Number(value) < Number(minAmount)
+        ) {
+          return this.createError({
+            message: `Minimum staking amount is ${minAmount} SOL`,
+          });
+        }
+        return true;
+      }),
   });
 
 export const validationSchemaTronStaking = (balanceAmount = 0) =>
@@ -184,6 +200,7 @@ export const validationSchemaDefaultStaking = (balanceAmount = 0) =>
         'The amount that you entered is invalid. Please enter an amount which is less or equal to your available balance.',
       )
       .max(balanceAmount, 'Amount greater than available balance'),
+    validatorPubKey: Yup.object().required('validator is not valid!'),
   });
 
 const validatationSchemForCreateStaking = {

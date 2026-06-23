@@ -352,18 +352,27 @@ const WithdrawStaking = ({navigation, route}) => {
                       <Text style={styles.listTitle}>Staking Amount</Text>
                       <View style={styles.inputView}>
                         <TextInput
-                          style={styles.input}
+                          style={[
+                            styles.input,
+                            disableTextInput && styles.disabledInput,
+                          ]}
                           label="Enter amount for staking"
                           theme={{
                             colors: {
                               onSurfaceVariant: errors ? theme.gray : 'red',
                             },
                           }}
-                          outlineColor={errors.amount ? 'red' : theme.gray}
+                          outlineColor={
+                            errors.amount
+                              ? 'red'
+                              : disableTextInput
+                              ? theme.gray + '55'
+                              : theme.gray
+                          }
                           activeOutlineColor={
                             errors.amount ? 'red' : theme.font
                           }
-                          textColor={theme.font}
+                          textColor={disableTextInput ? theme.gray : theme.font}
                           autoCapitalize="none"
                           returnKeyType="next"
                           mode="outlined"
@@ -397,7 +406,10 @@ const WithdrawStaking = ({navigation, route}) => {
                         />
                         <TouchableOpacity
                           disabled={disableTextInput}
-                          style={styles.btnMax}
+                          style={[
+                            styles.btnMax,
+                            disableTextInput && styles.btnMaxDisabled,
+                          ]}
                           hitSlop={{
                             top: 12,
                             left: 12,
@@ -422,7 +434,10 @@ const WithdrawStaking = ({navigation, route}) => {
                       <Text style={styles.listTitle}>Fiat Staking Amount</Text>
                       <View style={styles.inputView}>
                         <TextInput
-                          style={styles.input}
+                          style={[
+                            styles.input,
+                            disableTextInput && styles.disabledInput,
+                          ]}
                           label={`Enter ${localCurrency} amount for staking`}
                           theme={{
                             colors: {
@@ -432,8 +447,13 @@ const WithdrawStaking = ({navigation, route}) => {
                             },
                           }}
                           editable={!disableTextInput}
+                          textColor={disableTextInput ? theme.gray : theme.font}
                           outlineColor={
-                            errors.currencyAmount ? 'red' : theme.gray
+                            errors.currencyAmount
+                              ? 'red'
+                              : disableTextInput
+                              ? theme.gray + '55'
+                              : theme.gray
                           }
                           activeOutlineColor={
                             errors.currencyAmount ? 'red' : theme.font
@@ -471,7 +491,10 @@ const WithdrawStaking = ({navigation, route}) => {
                         />
                         <TouchableOpacity
                           disabled={disableTextInput}
-                          style={styles.btnMax}
+                          style={[
+                            styles.btnMax,
+                            disableTextInput && styles.btnMaxDisabled,
+                          ]}
                           hitSlop={{
                             top: 12,
                             left: 12,

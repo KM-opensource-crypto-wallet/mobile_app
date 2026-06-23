@@ -32,7 +32,7 @@ import {
 import {useDispatch, useSelector} from 'react-redux';
 import {
   fetchStakingApproveEstimationFee,
-  updateFees,
+  updateApproveFees,
 } from 'dok-wallet-blockchain-networks/redux/staking/stakingSlice';
 import {
   getStakingAllowance,
@@ -78,7 +78,6 @@ const AllowanceInfoSheet = forwardRef(
     const dispatch = useDispatch();
 
     const allowanceData = useSelector(getStakingAllowance);
-    console.log('allowanceData:', allowanceData);
     const isLoading = useSelector(getStakingAllowanceLoading);
     const nativeBalance = useSelector(selectNativeBalance);
 
@@ -89,12 +88,33 @@ const AllowanceInfoSheet = forwardRef(
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [customNonce, setCustomNonce] = useState('');
     const [isFetchingFeesAgain, setIsFetchingFeesAgain] = useState(false);
+    const [hasError, setHasError] = useState(false);
     const isFetchingFeesRef = useRef(false);
     const advancedFeesSheetRef = useRef(null);
     const selectedFeesTypeRef = useRef('recommended');
     const isPauseCalculateFees = useRef(false);
     const [customFees, setCustomFees] = useState('');
     const convertedChainName = isEVMChain(chainName) ? 'ethereum' : chainName;
+
+    // Refs mirror volatile values so the fetch can read them at call time
+    // without being recreated on every change (keeps the interval stable).
+    const customNonceRef = useRef('');
+    const customFeesRef = useRef('');
+    const selectedTypeRef = useRef('manual');
+    const allowanceDataRef = useRef(null);
+
+    useEffect(() => {
+      customNonceRef.current = customNonce;
+    }, [customNonce]);
+    useEffect(() => {
+      customFeesRef.current = customFees;
+    }, [customFees]);
+    useEffect(() => {
+      selectedTypeRef.current = selectedType;
+    }, [selectedType]);
+    useEffect(() => {
+      allowanceDataRef.current = allowanceData;
+    }, [allowanceData]);
 
     // Sync nonce input when allowanceData updates
     useEffect(() => {
@@ -117,7 +137,9 @@ const AllowanceInfoSheet = forwardRef(
       text => {
         const tempValues = validateNumberInInput(text, allowanceData?.decimal);
         setCustomFees(tempValues);
-        dispatch(updateFees({gasPrice: tempValues || '0', convertedChainName}));
+        dispatch(
+          updateApproveFees({gasPrice: tempValues || '0', convertedChainName}),
+        );
       },
       [allowanceData?.decimal, convertedChainName, dispatch],
     );
@@ -127,22 +149,32 @@ const AllowanceInfoSheet = forwardRef(
       setCustomNonce(numericValue);
     }, []);
 
+    // Stable across renders: depends only on the props it sends. Volatile values
+    // (nonce, fees type, custom inputs, cached estimateGas) are read from refs at
+    // call time, so completing a fetch never recreates this callback.
     const fetchEstimationFee = useCallback(() => {
       if (isFetchingFeesRef.current) {
         return;
       }
       isFetchingFeesRef.current = true;
       setIsFetchingFeesAgain(true);
+      setHasError(false);
+      const latestAllowanceData = allowanceDataRef.current;
       dispatch(
         fetchStakingApproveEstimationFee({
           isFetchNonce: false,
           stakingProviderName,
           amount,
-          nonce: customNonce || allowanceData?.nonce, // please pass custom nonce
+          // First call has no cached nonce → chain layer fetches it once; later
+          // calls reuse it so we never re-fetch the nonce on every refresh.
+          nonce: customNonceRef.current || latestAllowanceData?.nonce,
           feesType: selectedFeesTypeRef.current,
-          estimateGas: allowanceData?.estimateGas,
+          estimateGas: latestAllowanceData?.estimateGas,
           customGasPrice:
-            selectedFeesTypeRef.current === 'custom' ? customFees : undefined,
+            selectedFeesTypeRef.current === 'custom'
+              ? customFeesRef.current
+              : undefined,
+          allowanceType: selectedTypeRef.current,
         }),
       )
         .unwrap()
@@ -150,70 +182,29 @@ const AllowanceInfoSheet = forwardRef(
           setIsFetchingFeesAgain(false);
           isFetchingFeesRef.current = false;
         })
-        .catch(() => {
+        .catch(error => {
+          console.error('error in call', error);
           setIsFetchingFeesAgain(false);
           isFetchingFeesRef.current = false;
+          setHasError(true);
         });
-    }, [
-      dispatch,
-      allowanceData?.nonce,
-      allowanceData?.estimateGas,
-      stakingProviderName,
-      amount,
-      customNonce,
-      customFees,
-    ]);
+    }, [dispatch, stakingProviderName, amount]);
 
-    // Recommended / Normal: fire once immediately then repeat every 10 seconds.
+    // Single source of fee refresh: fire once when the sheet opens, then every
+    // 10s. The tick is gated by refs (in-flight + pause), so it never piles up
+    // and never runs while custom fees are selected or a transaction is pending.
     useEffect(() => {
-      if (
-        !isOpen ||
-        !stakingProviderName ||
-        !amount ||
-        selectedFeesType === 'custom' ||
-        showConfirmModal ||
-        approveLoading
-      ) {
+      if (!isOpen || !stakingProviderName || !amount) {
         return;
       }
       fetchEstimationFee();
-      const interval = setInterval(fetchEstimationFee, 10000);
+      const interval = setInterval(() => {
+        if (!isFetchingFeesRef.current && !isPauseCalculateFees.current) {
+          fetchEstimationFee();
+        }
+      }, 10000);
       return () => clearInterval(interval);
-    }, [
-      isOpen,
-      stakingProviderName,
-      amount,
-      fetchEstimationFee,
-      selectedFeesType,
-      showConfirmModal,
-      approveLoading,
-    ]);
-
-    // Custom: re-fetch with 500ms debounce whenever customFees or customNonce changes.
-    useEffect(() => {
-      if (
-        !isOpen ||
-        !stakingProviderName ||
-        !amount ||
-        selectedFeesType !== 'custom' ||
-        showConfirmModal ||
-        approveLoading
-      ) {
-        return;
-      }
-      const timer = setTimeout(fetchEstimationFee, 500);
-      return () => clearTimeout(timer);
-    }, [
-      isOpen,
-      stakingProviderName,
-      amount,
-      selectedFeesType,
-      customFees,
-      customNonce,
-      fetchEstimationFee,
-      showConfirmModal,
-      approveLoading,
-    ]);
+    }, [isOpen, stakingProviderName, amount, fetchEstimationFee]);
 
     // customizing the ref
     useImperativeHandle(ref, () => ({
@@ -221,6 +212,10 @@ const AllowanceInfoSheet = forwardRef(
         setIsOpen(true);
         setSelectedType('manual');
         setSelectedFeesType('recommended');
+        selectedTypeRef.current = 'manual';
+        selectedFeesTypeRef.current = 'recommended';
+        isPauseCalculateFees.current = false;
+        setHasError(false);
         bottomSheetRef.current?.present();
       },
       close: () => {
@@ -258,17 +253,23 @@ const AllowanceInfoSheet = forwardRef(
       setShowConfirmModal(true);
       isPauseCalculateFees.current = true;
     }, []);
-    const onSelectFeesType = useCallback((type, gasPrice) => {
-      if (type === 'custom') {
-        isPauseCalculateFees.current = true;
-        setSelectedFeesType('custom');
-        selectedFeesTypeRef.current = 'custom';
-      } else {
-        isPauseCalculateFees.current = false;
-        setSelectedFeesType(type);
-        selectedFeesTypeRef.current = type;
-      }
-    }, []);
+    const onSelectFeesType = useCallback(
+      (type, gasPrice) => {
+        if (type === 'custom') {
+          isPauseCalculateFees.current = true;
+          setSelectedFeesType('custom');
+          selectedFeesTypeRef.current = 'custom';
+        } else {
+          isPauseCalculateFees.current = false;
+          setSelectedFeesType(type);
+          selectedFeesTypeRef.current = type;
+          if (gasPrice) {
+            dispatch(updateApproveFees({gasPrice, convertedChainName}));
+          }
+        }
+      },
+      [dispatch, convertedChainName],
+    );
 
     const isDisabled =
       isLoading ||
@@ -287,12 +288,8 @@ const AllowanceInfoSheet = forwardRef(
       }
       const gasFeeWei =
         selectedFeesType === 'recommended' && allowanceData?.gasFee
-          ? allowanceData.gasFee
-          : String(
-              Math.round(
-                new BigNumber(customFees).multipliedBy(1e9).toNumber(),
-              ),
-            );
+          ? allowanceData?.gasFee
+          : new BigNumber(customFees || '0').multipliedBy(1e9).toFixed(0);
       const finalNonce = parseInt(customNonce, 10);
       onContinue({
         isFetchNonce: false,
@@ -309,7 +306,7 @@ const AllowanceInfoSheet = forwardRef(
       });
     }, [
       allowanceData?.estimateGas,
-      allowanceData.gasFee,
+      allowanceData?.gasFee,
       allowanceData?.maxPriorityFeePerGas,
       allowanceData?.nonce,
       amount,
@@ -357,6 +354,31 @@ const AllowanceInfoSheet = forwardRef(
                   <ActivityIndicator size="small" color={theme.background} />
                   <Text style={styles.loadingText}>Fetching allowance...</Text>
                 </View>
+              ) : hasError ? (
+                <View style={styles.errorView}>
+                  <MaterialCommunityIcons
+                    name="alert-circle-outline"
+                    size={48}
+                    color="#F44336"
+                  />
+                  <Text style={styles.errorViewTitle}>
+                    Something went wrong
+                  </Text>
+                  <Text style={styles.errorViewSubtitle}>
+                    We couldn't estimate the network fee right now. Please check
+                    your connection and try again.
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.retryButton}
+                    onPress={fetchEstimationFee}>
+                    <MaterialCommunityIcons
+                      name="refresh"
+                      size={18}
+                      color={theme.title}
+                    />
+                    <Text style={styles.retryButtonText}>Retry</Text>
+                  </TouchableOpacity>
+                </View>
               ) : (
                 <>
                   {allowanceData ? (
@@ -403,6 +425,11 @@ const AllowanceInfoSheet = forwardRef(
 
                   {/* Approval type cards */}
                   <Text style={styles.sectionLabel}>Select Approval Type</Text>
+                  <Text style={styles.whatIsApprove}>
+                    {`Approval is a one-time on-chain permission that lets the staking contract use your ${
+                      tokenSymbol || 'tokens'
+                    }. Your tokens stay in your wallet until you stake.`}
+                  </Text>
                   <View style={styles.cardsRow}>
                     <TouchableOpacity
                       style={[
@@ -437,7 +464,7 @@ const AllowanceInfoSheet = forwardRef(
                         Manual
                       </Text>
                       <Text style={styles.cardDesc}>
-                        Approve exact stake amount
+                        Approve only this amount
                       </Text>
                       <Text
                         style={[
@@ -484,7 +511,9 @@ const AllowanceInfoSheet = forwardRef(
                         ]}>
                         Unlimited
                       </Text>
-                      <Text style={styles.cardDesc}>Skip future approvals</Text>
+                      <Text style={styles.cardDesc}>
+                        Approve once, skip future
+                      </Text>
                       <Text
                         style={[
                           styles.cardAmount,
@@ -504,9 +533,39 @@ const AllowanceInfoSheet = forwardRef(
                       {tokenSymbol || ''}.
                     </Text>
                   ) : (
-                    <Text style={styles.hint}>
-                      Approval transaction will be submitted before staking.
-                    </Text>
+                    <>
+                      <View style={styles.selectionNote}>
+                        <MaterialCommunityIcons
+                          name={
+                            selectedType === 'unlimited'
+                              ? 'alert-outline'
+                              : 'shield-check-outline'
+                          }
+                          size={16}
+                          color={
+                            selectedType === 'unlimited'
+                              ? '#FF9800'
+                              : theme.gray
+                          }
+                        />
+                        <Text
+                          style={[
+                            styles.selectionNoteText,
+                            selectedType === 'unlimited'
+                              ? styles.selectionNoteWarning
+                              : styles.selectionNoteSafe,
+                          ]}>
+                          {selectedType === 'unlimited'
+                            ? `The staking contract can move any amount of your ${
+                                tokenSymbol || 'tokens'
+                              } until you revoke it. Saves fees and time on future stakes — choose only for protocols you trust.`
+                            : "Safest option. The contract can only ever move this exact amount — you'll need to approve again for future stakes."}
+                        </Text>
+                      </View>
+                      <Text style={styles.hint}>
+                        Approval transaction will be submitted before staking.
+                      </Text>
+                    </>
                   )}
                   {/* Network Fee Row — tap to open AdvancedFeesSheet */}
                   <TouchableOpacity
@@ -546,7 +605,7 @@ const AllowanceInfoSheet = forwardRef(
               )}
 
               {/* Action button */}
-              {!approveLoading ? (
+              {!approveLoading && !hasError ? (
                 onContinue ? (
                   <TouchableOpacity
                     disabled={isDisabled}
@@ -565,7 +624,9 @@ const AllowanceInfoSheet = forwardRef(
           <ModalConfirmTransaction
             hideModal={() => {
               setShowConfirmModal(false);
-              isPauseCalculateFees.current = false;
+              // Resume refresh only if not on a custom fee (custom must stay local).
+              isPauseCalculateFees.current =
+                selectedFeesTypeRef.current === 'custom';
             }}
             visible={showConfirmModal}
             onSuccess={onSuccess}
@@ -581,6 +642,10 @@ const AllowanceInfoSheet = forwardRef(
             onSelectFeesType={onSelectFeesType}
             onChangeCustomFees={onChangeCustomFees}
             onChangeCustomNonce={onChangeCustomNonce}
+            // Opens OVER the allowance sheet: layer above it and keep the
+            // allowance sheet mounted (dimmed + non-interactive) underneath.
+            zIndex={10001}
+            stackBehavior="push"
           />
         </DokBottomSheet>
       </>
@@ -632,6 +697,42 @@ const myStyles = theme =>
       color: theme.font,
       fontWeight: '500',
     },
+    errorView: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 40,
+      gap: 12,
+    },
+    errorViewTitle: {
+      fontSize: 16,
+      fontFamily: 'Roboto-Regular',
+      color: theme.font,
+      fontWeight: '600',
+    },
+    errorViewSubtitle: {
+      fontSize: 13,
+      fontFamily: 'Roboto-Regular',
+      color: theme.gray,
+      lineHeight: 19,
+      textAlign: 'center',
+      paddingHorizontal: 12,
+      marginBottom: 4,
+    },
+    retryButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      height: 44,
+      paddingHorizontal: 24,
+      borderRadius: 12,
+      backgroundColor: theme.background,
+    },
+    retryButtonText: {
+      fontSize: 15,
+      fontFamily: 'Roboto-Regular',
+      color: theme.title,
+      fontWeight: '600',
+    },
     statusRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -655,6 +756,32 @@ const myStyles = theme =>
       fontFamily: 'Roboto-Regular',
       color: theme.gray,
       marginBottom: 10,
+    },
+    whatIsApprove: {
+      fontSize: 12,
+      fontFamily: 'Roboto-Regular',
+      color: theme.gray,
+      lineHeight: 17,
+      marginTop: -4,
+      marginBottom: 12,
+    },
+    selectionNote: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 6,
+      marginBottom: 10,
+    },
+    selectionNoteText: {
+      fontSize: 12,
+      fontFamily: 'Roboto-Regular',
+      lineHeight: 18,
+      flexShrink: 1,
+    },
+    selectionNoteSafe: {
+      color: theme.gray,
+    },
+    selectionNoteWarning: {
+      color: '#FF9800',
     },
     cardsRow: {
       flexDirection: 'row',
