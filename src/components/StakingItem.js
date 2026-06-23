@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React, {useCallback, useContext} from 'react';
 import {Text, TouchableOpacity, View, StyleSheet} from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
 import {currencySymbol} from 'data/currency';
@@ -10,32 +10,52 @@ import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/wa
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import Toast from 'react-native-toast-message';
 
-const StakingItem = ({item, isWithdraw, estimateEpochTimestamp}) => {
+const StakingItem = ({
+  item,
+  showReward,
+  isWithdraw,
+  estimateEpochTimestamp,
+  handleClaimReward,
+}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const navigation = useNavigation();
   const currentCoin = useSelector(selectCurrentCoin);
   const localCurrency = useSelector(getLocalCurrency);
 
+  const handleOnPress = useCallback(() => {
+    if (item?.status?.toLowerCase() === 'deactivating') {
+      Toast.show({
+        type: 'errorToast',
+        text1: 'Already deactivating',
+        text2: 'Please wait until epoch end then you can withdraw.',
+      });
+    } else if (item?.status) {
+      navigation.navigate('WithdrawStaking', {
+        selectedStake: item,
+        ...(item?.status === 'inactive'
+          ? {isWithdrawStaking: true}
+          : {isDeactivateStaking: true}),
+      });
+    } else {
+      navigation.navigate('WithdrawStaking', {
+        selectedStake: item,
+        ...(item?.status === 'inactive'
+          ? {isWithdrawStaking: true}
+          : {isDeactivateStaking: true}),
+      });
+    }
+  }, [item, navigation]);
+
+  const rewardAmount = item?.reward?.amount
+    ? parseFloat(item.reward.amount)
+    : 0;
+  const hasReward = rewardAmount > 0;
+  const rewardSymbol = item?.reward?.symbol || null;
+  const rewardLogo = item?.reward?.logo || null;
+
   return (
-    <TouchableOpacity
-      disabled={!isWithdraw}
-      onPress={() => {
-        if (item?.status?.toLowerCase() === 'deactivating') {
-          Toast.show({
-            type: 'errorToast',
-            text1: 'Already deactivating',
-            text2: 'Please wait until epoch end then you can withdraw.',
-          });
-        } else if (item?.status) {
-          navigation.navigate('WithdrawStaking', {
-            selectedStake: item,
-            ...(item?.status === 'inactive'
-              ? {isWithdrawStaking: true}
-              : {isDeactivateStaking: true}),
-          });
-        }
-      }}>
+    <TouchableOpacity disabled={!isWithdraw} onPress={handleOnPress}>
       <View
         style={[
           styles.rowView,
@@ -63,10 +83,9 @@ const StakingItem = ({item, isWithdraw, estimateEpochTimestamp}) => {
           </View>
           <View style={styles.rightRowView}>
             <View>
-              <Text
-                style={
-                  styles.balanceStyle
-                }>{`${item?.amount} ${currentCoin?.symbol}`}</Text>
+              <Text style={styles.balanceStyle}>{`${
+                item?.stakedAmount ?? item?.amount
+              } ${currentCoin?.symbol}`}</Text>
               <Text
                 style={
                   styles.fiatStyle
@@ -77,6 +96,37 @@ const StakingItem = ({item, isWithdraw, estimateEpochTimestamp}) => {
             )}
           </View>
         </View>
+        {hasReward && showReward && (
+          <View style={styles.rewardCard}>
+            <View style={styles.rewardAccentBar} />
+            {rewardLogo ? (
+              <FastImage
+                source={{uri: rewardLogo}}
+                style={styles.rewardTokenLogo}
+              />
+            ) : (
+              <View style={styles.rewardTokenPlaceholder}>
+                <Text style={styles.rewardTokenPlaceholderText}>
+                  {rewardSymbol?.[0] ?? '?'}
+                </Text>
+              </View>
+            )}
+            <View style={styles.rewardTextGroup}>
+              <Text style={styles.rewardTitle}>Rewards Earned</Text>
+              <Text style={styles.rewardSymbolText}>{rewardSymbol}</Text>
+            </View>
+            <Text style={styles.rewardValueText}>{`+${rewardAmount.toFixed(
+              6,
+            )}`}</Text>
+            {isWithdraw && typeof handleClaimReward === 'function' && (
+              <TouchableOpacity
+                onPress={() => handleClaimReward(rewardAmount, item)}
+                style={styles.claimButton}>
+                <Text style={styles.claimButtonText}>Claim</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
         {(item?.status?.toLowerCase() === 'activating' ||
           item?.status?.toLowerCase() === 'deactivating') &&
           isWithdraw &&
@@ -101,7 +151,6 @@ const myStyles = theme =>
       borderBottomWidth: 0.5,
       borderColor: theme.gray,
       paddingVertical: 12,
-      // flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
     },
@@ -153,6 +202,79 @@ const myStyles = theme =>
       textAlign: 'right',
       marginTop: 4,
       fontWeight: '600',
+    },
+    rewardCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'stretch',
+      marginTop: 10,
+      paddingVertical: 10,
+      paddingRight: 12,
+      backgroundColor: theme.lightBackground,
+      borderRadius: 10,
+      overflow: 'hidden',
+    },
+    rewardAccentBar: {
+      width: 4,
+      alignSelf: 'stretch',
+      backgroundColor: theme.successBottom,
+      marginRight: 10,
+    },
+    rewardTokenLogo: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      marginRight: 10,
+    },
+    rewardTokenPlaceholder: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: theme.successBottom,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 10,
+    },
+    rewardTokenPlaceholderText: {
+      fontSize: 12,
+      fontFamily: 'Roboto-Regular',
+      fontWeight: '700',
+      color: '#FFFFFF',
+    },
+    rewardTextGroup: {
+      flex: 1,
+    },
+    rewardTitle: {
+      fontSize: 11,
+      fontFamily: 'Roboto-Regular',
+      fontWeight: '500',
+      color: theme.gray,
+    },
+    rewardSymbolText: {
+      fontSize: 13,
+      fontFamily: 'Roboto-Regular',
+      fontWeight: '600',
+      color: theme.font,
+      marginTop: 2,
+    },
+    rewardValueText: {
+      fontSize: 14,
+      fontFamily: 'Roboto-Regular',
+      fontWeight: '700',
+      color: theme.successBottom,
+    },
+    claimButton: {
+      marginLeft: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      backgroundColor: theme.successBottom,
+      borderRadius: 8,
+    },
+    claimButtonText: {
+      fontSize: 12,
+      fontFamily: 'Roboto-Regular',
+      fontWeight: '700',
+      color: '#FFFFFF',
     },
     remaningTime: {
       color: theme.gray,

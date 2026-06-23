@@ -31,6 +31,8 @@ const AdvancedFeesSheet = forwardRef(
       onChangeCustomFees,
       onChangeCustomNonce,
       chainName,
+      zIndex,
+      stackBehavior,
     },
     ref,
   ) => {
@@ -55,6 +57,8 @@ const AdvancedFeesSheet = forwardRef(
         bottomSheetRef={sheetRef => (bottomSheetRef.current = sheetRef)}
         enableDynamicSizing={true}
         maxDynamicContentSize={600}
+        zIndex={zIndex}
+        stackBehavior={stackBehavior}
         onDismiss={handleClose}>
         <TouchableWithoutFeedback
           onPress={() => {
@@ -293,6 +297,7 @@ const myStyles = theme =>
       alignItems: 'center',
       justifyContent: 'center',
       marginTop: 8,
+      marginBottom: 16,
     },
     buttonText: {
       fontSize: 16,

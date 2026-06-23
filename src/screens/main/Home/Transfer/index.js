@@ -319,6 +319,16 @@ const Transfer = ({navigation, route}) => {
               isWithdrawStaking: !!isWithdrawStaking,
               isStakingRewards: !!isStakingRewards,
               isDeactivateStaking: !!isDeactivateStaking,
+              stakingProviderName:
+                isCreateStaking || isDeactivateStaking || isStakingRewards
+                  ? transferData?.stakingProviderName
+                  : null,
+              tokenDecimals: isStakingScreen
+                ? transferData?.currentCoin?.decimal
+                : null,
+              isMaxCheckbox: isDeactivateStaking
+                ? transferData?.isMaxCheckbox
+                : null,
               feesType: selectedFeesTypeRef.current,
               estimateGas: transferData?.estimateGas,
             }),
@@ -443,6 +453,10 @@ const Transfer = ({navigation, route}) => {
         selectedVotes: isVoteStakingScreen ? transferData?.selectedVotes : null,
         isCreateVote: !!isCreateVote,
         isDeactivateStaking: !!isDeactivateStaking,
+        stakingProviderName:
+          isCreateStaking || isDeactivateStaking || isStakingRewards
+            ? transferData?.stakingProviderName
+            : null,
         stakingAddress: isStakingScreen ? transferData?.stakingAddress : null,
         numberOfStakeAccount: isStakingScreen
           ? transferData?.currentCoin?.staking?.length || 0
@@ -478,6 +492,7 @@ const Transfer = ({navigation, route}) => {
     transferData?.stakingBalance,
     transferData?.resourceType,
     transferData?.selectedVotes,
+    transferData?.stakingProviderName,
     transferData?.stakingAddress,
     transferData?.validatorName,
     transferData?.displayValidators,

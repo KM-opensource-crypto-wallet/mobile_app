@@ -65,6 +65,10 @@ const myStyles = theme =>
     input: {
       height: 50,
     },
+    disabledInput: {
+      height: 50,
+      backgroundColor: theme.gray + '22',
+    },
     btnMax: {
       position: 'absolute',
       top: 24,
@@ -78,6 +82,10 @@ const myStyles = theme =>
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 9999,
+    },
+    btnMaxDisabled: {
+      backgroundColor: theme.gray + '55',
+      borderColor: theme.gray + '55',
     },
     btnText: {
       color: theme.backgroundColor,
@@ -134,6 +142,35 @@ const myStyles = theme =>
       fontSize: 18,
       fontFamily: 'Roboto-Regular',
       marginLeft: 10,
+    },
+    unstakeMaxCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: theme.backgroundColor,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      marginTop: 16,
+      marginBottom: 4,
+      borderWidth: 1.5,
+      borderColor: theme.gray + '40',
+    },
+    unstakeMaxInfo: {
+      flex: 1,
+      marginRight: 12,
+    },
+    unstakeMaxTitle: {
+      color: theme.font,
+      fontSize: 15,
+      fontFamily: 'Roboto-Regular',
+      fontWeight: '600',
+    },
+    unstakeMaxSubtitle: {
+      color: theme.gray,
+      fontSize: 12,
+      fontFamily: 'Roboto-Regular',
+      marginTop: 3,
     },
     button: {
       height: 60,

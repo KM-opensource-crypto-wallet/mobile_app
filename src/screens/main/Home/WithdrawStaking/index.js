@@ -6,6 +6,7 @@ import {
   Text,
   TouchableWithoutFeedback,
   Keyboard,
+  Switch,
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {useSelector, useDispatch} from 'react-redux';
@@ -22,6 +23,7 @@ import {currencySymbol} from 'data/currency';
 import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import BigNumber from 'bignumber.js';
 import {
+  isEVMChain,
   isHaveResourceTypeInCreateStakingScreen,
   isValidatorSupportCreateStakingScreen,
   multiplyBNWithFixed,
@@ -55,6 +57,9 @@ const WithdrawStaking = ({navigation, route}) => {
     return isValidatorSupportCreateStakingScreen(currentCoin?.chain_name);
   }, [currentCoin?.chain_name]);
 
+  const isEVMStaking =
+    isDeactivateStaking && isEVMChain(currentCoin?.chain_name);
+
   const isResourceSupport = useMemo(() => {
     return isHaveResourceTypeInCreateStakingScreen(currentCoin?.chain_name);
   }, [currentCoin?.chain_name]);
@@ -63,21 +68,69 @@ const WithdrawStaking = ({navigation, route}) => {
     return isResourceSupport ? resourcesData[currentCoin?.chain_name] : null;
   }, [isResourceSupport, currentCoin?.chain_name]);
 
+  const stakingProviderList = useMemo(() => {
+    if (!isEVMStaking) {
+      return [];
+    }
+    const staking = Array.isArray(currentCoin?.staking)
+      ? currentCoin.staking
+      : [];
+    return staking.map(item => ({
+      label: item?.validatorInfo?.name,
+      value: item?.validatorInfo?.name,
+      stakedAmount: item?.stakedAmount,
+      fiatAmount: multiplyBNWithFixed(
+        item?.stakedAmount,
+        currentCoin?.currencyRate,
+        2,
+      ),
+    }));
+  }, [isEVMStaking, currentCoin?.staking, currentCoin?.currencyRate]);
+
+  const [isMaxCheckbox, setIsMaxCheckbox] = useState(true);
+
+  const handleMaxCheckboxToggle = value => {
+    setIsMaxCheckbox(value);
+    if (value) {
+      setState(prev => ({
+        ...prev,
+        amount: availableAmount,
+        currencyAmount: availableAmountCurrency,
+        errors: {},
+      }));
+    }
+  };
+
+  const [selectedProvider] = useState(
+    stakingProviderList.find(
+      p =>
+        p.value === selectedStake?.providerName ||
+        p.value === selectedStake?.validatorInfo?.name,
+    ) ||
+      stakingProviderList[0] ||
+      null,
+  );
+
   const [state, setState] = useState({
     resourceType:
       isResourceSupport && isDeactivateStaking ? resourceData?.[1] : null,
-    amount: selectedStake?.amount || '0',
+    amount: selectedStake?.stakedAmount || selectedStake?.amount || '0',
     currencyAmount: selectedStake?.fiatAmount || '0',
     errors: {},
   });
   const {amount, currencyAmount, errors, resourceType} = state;
   const availableAmount = useMemo(() => {
+    if (isEVMStaking) {
+      return selectedProvider?.stakedAmount || '0';
+    }
     return selectedStake?.amount?.toString()
       ? selectedStake?.amount?.toString()
       : state?.resourceType?.value === 'ENERGY'
       ? currentCoin?.energyBalance
       : currentCoin?.bandwidthBalance;
   }, [
+    isEVMStaking,
+    selectedProvider?.stakedAmount,
     currentCoin?.bandwidthBalance,
     currentCoin?.energyBalance,
     selectedStake?.amount,
@@ -109,7 +162,9 @@ const WithdrawStaking = ({navigation, route}) => {
     state.resourceType?.value,
   ]);
   const disableTextInput =
-    isDisableTextInput(currentCoin?.chain_name) || !isDeactivateStaking;
+    isDisableTextInput(currentCoin?.chain_name) ||
+    !isDeactivateStaking ||
+    (isEVMStaking && isMaxCheckbox);
 
   const floatingHeight = useFloatingHeight();
   const dispatch = useDispatch();
@@ -133,30 +188,41 @@ const WithdrawStaking = ({navigation, route}) => {
   }, [isWithdrawStaking, isDeactivateStaking, isStakingRewards]);
 
   const handleSubmitForm = async () => {
-    const localErrors = checkError(amount, currencyAmount);
+    const localErrors =
+      isEVMStaking && isMaxCheckbox ? {} : checkError(amount, currencyAmount);
     if (Object.keys(localErrors).length === 0) {
+      const stakingProviderName = isEVMStaking
+        ? selectedProvider?.value || selectedStake?.validatorInfo?.name
+        : selectedStake?.providerName || selectedStake?.validatorInfo?.name;
       dispatch(
         setCurrentTransferData({
           validatorPubKey: selectedStake?.validator_address,
           stakingAddress: selectedStake?.staking_address,
           validatorName: selectedStake?.validatorInfo?.name,
+          stakingProviderName,
           currentCoin,
           amount: validateBigNumberStr(amount),
           resourceType: resourceType?.value,
           isSendFunds: false,
+          isMaxCheckbox: isEVMStaking && isMaxCheckbox,
         }),
       );
       dispatch(
         calculateEstimateFee({
           isFetchNonce: true,
           fromAddress: currentCoin?.address,
+          contractAddress:
+            selectedStake?.validator_address || currentCoin?.contractAddress,
           amount: validateBigNumberStr(amount),
+          tokenDecimals: currentCoin?.decimal,
           validatorPubKey: selectedStake?.validator_address,
           stakingAddress: selectedStake?.staking_address,
           isWithdrawStaking: isWithdrawStaking,
           isDeactivateStaking: isDeactivateStaking,
           isStakingRewards: isStakingRewards,
           resourceType: resourceType?.value,
+          stakingProviderName,
+          isMaxCheckbox: isEVMStaking && isMaxCheckbox,
         }),
       );
       dispatch(setExchangeSuccess(false));
@@ -208,7 +274,9 @@ const WithdrawStaking = ({navigation, route}) => {
   };
   const amountBN = new BigNumber(amount);
   const availableAmountBN = new BigNumber(availableAmount);
-  const isValid = validateNumber(amount) && amountBN.lte(availableAmountBN);
+  const isValid =
+    (isEVMStaking && isMaxCheckbox) ||
+    (validateNumber(amount) && amountBN.lte(availableAmountBN));
 
   return (
     <Provider>
@@ -250,22 +318,61 @@ const WithdrawStaking = ({navigation, route}) => {
                     style={{
                       flex: 1,
                     }}>
+                    {isEVMStaking && (
+                      <TouchableOpacity
+                        activeOpacity={0.85}
+                        onPress={() => handleMaxCheckboxToggle(!isMaxCheckbox)}
+                        style={[
+                          styles.unstakeMaxCard,
+                          isMaxCheckbox && {
+                            borderColor: theme.background,
+                            backgroundColor: theme.background + '12',
+                          },
+                        ]}>
+                        <View style={styles.unstakeMaxInfo}>
+                          <Text style={styles.unstakeMaxTitle}>
+                            Unstake Entire Balance
+                          </Text>
+                          <Text style={styles.unstakeMaxSubtitle}>
+                            Redeem all staked tokens at once
+                          </Text>
+                        </View>
+                        <Switch
+                          value={isMaxCheckbox}
+                          onValueChange={handleMaxCheckboxToggle}
+                          trackColor={{
+                            false: theme.gray + '60',
+                            true: theme.background,
+                          }}
+                          thumbColor={'#ffffff'}
+                        />
+                      </TouchableOpacity>
+                    )}
                     <View style={styles.boxInput}>
                       <Text style={styles.listTitle}>Staking Amount</Text>
                       <View style={styles.inputView}>
                         <TextInput
-                          style={styles.input}
+                          style={[
+                            styles.input,
+                            disableTextInput && styles.disabledInput,
+                          ]}
                           label="Enter amount for staking"
                           theme={{
                             colors: {
                               onSurfaceVariant: errors ? theme.gray : 'red',
                             },
                           }}
-                          outlineColor={errors.amount ? 'red' : theme.gray}
+                          outlineColor={
+                            errors.amount
+                              ? 'red'
+                              : disableTextInput
+                              ? theme.gray + '55'
+                              : theme.gray
+                          }
                           activeOutlineColor={
                             errors.amount ? 'red' : theme.font
                           }
-                          textColor={theme.font}
+                          textColor={disableTextInput ? theme.gray : theme.font}
                           autoCapitalize="none"
                           returnKeyType="next"
                           mode="outlined"
@@ -299,7 +406,10 @@ const WithdrawStaking = ({navigation, route}) => {
                         />
                         <TouchableOpacity
                           disabled={disableTextInput}
-                          style={styles.btnMax}
+                          style={[
+                            styles.btnMax,
+                            disableTextInput && styles.btnMaxDisabled,
+                          ]}
                           hitSlop={{
                             top: 12,
                             left: 12,
@@ -324,7 +434,10 @@ const WithdrawStaking = ({navigation, route}) => {
                       <Text style={styles.listTitle}>Fiat Staking Amount</Text>
                       <View style={styles.inputView}>
                         <TextInput
-                          style={styles.input}
+                          style={[
+                            styles.input,
+                            disableTextInput && styles.disabledInput,
+                          ]}
                           label={`Enter ${localCurrency} amount for staking`}
                           theme={{
                             colors: {
@@ -334,8 +447,13 @@ const WithdrawStaking = ({navigation, route}) => {
                             },
                           }}
                           editable={!disableTextInput}
+                          textColor={disableTextInput ? theme.gray : theme.font}
                           outlineColor={
-                            errors.currencyAmount ? 'red' : theme.gray
+                            errors.currencyAmount
+                              ? 'red'
+                              : disableTextInput
+                              ? theme.gray + '55'
+                              : theme.gray
                           }
                           activeOutlineColor={
                             errors.currencyAmount ? 'red' : theme.font
@@ -373,7 +491,10 @@ const WithdrawStaking = ({navigation, route}) => {
                         />
                         <TouchableOpacity
                           disabled={disableTextInput}
-                          style={styles.btnMax}
+                          style={[
+                            styles.btnMax,
+                            disableTextInput && styles.btnMaxDisabled,
+                          ]}
                           hitSlop={{
                             top: 12,
                             left: 12,
@@ -396,10 +517,20 @@ const WithdrawStaking = ({navigation, route}) => {
                         </Text>
                       )}
                     </View>
-                    {isValidatorSupport && (
+                    {isEVMStaking && stakingProviderList.length > 0 && (
+                      <View style={styles.boxInput}>
+                        <Text style={styles.listTitle}>Staking Provider</Text>
+                        <StakingItem item={selectedStake} isWithdraw={false} />
+                      </View>
+                    )}
+                    {isValidatorSupport && !isEVMStaking && (
                       <View style={styles.boxInput}>
                         <Text style={styles.listTitle}>Validator</Text>
-                        <StakingItem item={selectedStake} isWithdraw={false} />
+                        <StakingItem
+                          item={selectedStake}
+                          isWithdraw={false}
+                          showReward={false}
+                        />
                       </View>
                     )}
                     {isResourceSupport && !hideResource && (

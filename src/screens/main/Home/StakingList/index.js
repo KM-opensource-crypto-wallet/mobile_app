@@ -31,15 +31,16 @@ import {
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 const StakingList = ({navigation}) => {
   const currentCoin = useSelector(selectCurrentCoin);
-  const staking = Array.isArray(currentCoin?.staking)
-    ? currentCoin?.staking
-    : [];
+
+  const staking = useMemo(
+    () => (Array.isArray(currentCoin?.staking) ? currentCoin?.staking : []),
+    [currentCoin?.staking],
+  );
   const stakingInfo = useMemo(() => {
     return Array.isArray(currentCoin?.stakingInfo)
       ? currentCoin?.stakingInfo
       : [];
   }, [currentCoin?.stakingInfo]);
-
   const unstakingDisableText = useMemo(() => {
     return stakingInfo.find(item => item.label === 'disabled_unstaking')?.value;
   }, [stakingInfo]);
@@ -84,6 +85,130 @@ const StakingList = ({navigation}) => {
     setIsRefreshing(false);
   }, [dispatch]);
 
+  const renderBoxItem = useCallback(
+    (title, value, buttonLabel, buttonValue, type) => {
+      if (type === 'hidden') {
+        return null;
+      }
+      return (
+        <View style={styles.itemView} key={title}>
+          <Text style={styles.title} numberOfLines={1}>
+            {title}
+          </Text>
+          <View style={styles.rightItemView}>
+            <Text style={styles.boxBalance} numberOfLines={1}>
+              {value}
+            </Text>
+            {!!buttonLabel && (
+              <TouchableOpacity
+                style={styles.buttonStyle}
+                onPress={() => onPressBoxItem(buttonLabel, buttonValue)}>
+                <Text style={styles.buttonTitle}>{buttonLabel}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      );
+    },
+    [
+      onPressBoxItem,
+      styles.boxBalance,
+      styles.buttonStyle,
+      styles.buttonTitle,
+      styles.itemView,
+      styles.rightItemView,
+      styles.title,
+    ],
+  );
+
+  const listHeader = useCallback(() => {
+    return (
+      <View>
+        <View style={styles.box}>
+          {renderBoxItem(
+            'Available Balance',
+            `${currentCoin?.totalAmount} ${currentCoin?.symbol}`,
+          )}
+          {stakingInfo.map(item =>
+            renderBoxItem(
+              item.label,
+              `${item.value}`,
+              item.buttonLabel,
+              item.buttonValue,
+              item.type,
+            ),
+          )}
+        </View>
+        <TouchableOpacity
+          style={styles.btn}
+          onPress={() => {
+            navigation.navigate('CreateStaking');
+          }}>
+          <Text style={styles.btnText}>{'Create Staking'}</Text>
+        </TouchableOpacity>
+        {isShowVote && (
+          <TouchableOpacity
+            style={styles.btn}
+            onPress={() => {
+              dispatch(setSelectedVotes(null));
+              navigation.navigate('VoteStaking');
+            }}>
+            <Text style={styles.btnText}>{'Validators'}</Text>
+          </TouchableOpacity>
+        )}
+        {isShowUnstaking && (
+          <>
+            {!!unstakingDisableText && (
+              <Text style={styles.errorTitle}>{unstakingDisableText}</Text>
+            )}
+          </>
+        )}
+        <Text style={styles.stakingTitle}>Active Staking</Text>
+      </View>
+    );
+  }, [
+    currentCoin?.symbol,
+    currentCoin?.totalAmount,
+    dispatch,
+    isShowUnstaking,
+    isShowVote,
+    navigation,
+    renderBoxItem,
+    stakingInfo,
+    styles.box,
+    styles.btn,
+    styles.btnText,
+    styles.errorTitle,
+    styles.stakingTitle,
+    unstakingDisableText,
+  ]);
+
+  const refreshControl = useMemo(() => {
+    return <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />;
+  }, [isRefreshing, onRefresh]);
+
+  const handleClaimReward = useCallback(
+    (rewardAmount, item) => {
+      const fiatAmount = multiplyBNWithFixed(
+        rewardAmount,
+        currentCoin?.currencyRate,
+        2,
+      );
+      navigation.navigate('WithdrawStaking', {
+        selectedStake: {
+          validatorInfo: item?.validatorInfo,
+          validator_address: item?.validator_address,
+          staking_address: item?.staking_address,
+          amount: rewardAmount,
+          fiatAmount,
+        },
+        isStakingRewards: true,
+        hideResource: true,
+      });
+    },
+    [currentCoin?.currencyRate, navigation],
+  );
+
   const renderItem = useCallback(
     ({item}) => {
       return (
@@ -91,10 +216,12 @@ const StakingList = ({navigation}) => {
           item={item}
           isWithdraw={true}
           estimateEpochTimestamp={estimateEpochTimestamp}
+          showReward={true}
+          handleClaimReward={handleClaimReward}
         />
       );
     },
-    [estimateEpochTimestamp],
+    [estimateEpochTimestamp, handleClaimReward],
   );
 
   const onPressBoxItem = useCallback(
@@ -118,31 +245,6 @@ const StakingList = ({navigation}) => {
     [currentCoin?.currencyRate, navigation],
   );
 
-  const renderBoxItem = (title, value, buttonLabel, buttonValue, type) => {
-    if (type === 'hidden') {
-      return null;
-    }
-    return (
-      <View style={styles.itemView} key={title}>
-        <Text style={styles.title} numberOfLines={1}>
-          {title}
-        </Text>
-        <View style={styles.rightItemView}>
-          <Text style={styles.boxBalance} numberOfLines={1}>
-            {value}
-          </Text>
-          {!!buttonLabel && (
-            <TouchableOpacity
-              style={styles.buttonStyle}
-              onPress={() => onPressBoxItem(buttonLabel, buttonValue)}>
-              <Text style={styles.buttonTitle}>{buttonLabel}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-    );
-  };
-
   if (!currentCoin) {
     return null;
   }
@@ -155,76 +257,10 @@ const StakingList = ({navigation}) => {
           ) : (
             <FlatList
               contentContainerStyle={styles.containerContainerStyle}
-              refreshControl={
-                <RefreshControl
-                  refreshing={isRefreshing}
-                  onRefresh={onRefresh}
-                />
-              }
+              refreshControl={refreshControl}
               data={staking}
               renderItem={renderItem}
-              ListHeaderComponent={
-                <View>
-                  <View style={styles.box}>
-                    {renderBoxItem(
-                      'Available Balance',
-                      `${currentCoin?.totalAmount} ${currentCoin?.symbol}`,
-                    )}
-                    {stakingInfo.map(item =>
-                      renderBoxItem(
-                        item.label,
-                        `${item.value}`,
-                        item.buttonLabel,
-                        item.buttonValue,
-                        item.type,
-                      ),
-                    )}
-                  </View>
-                  <TouchableOpacity
-                    style={styles.btn}
-                    onPress={() => {
-                      navigation.navigate('CreateStaking');
-                    }}>
-                    <Text style={styles.btnText}>{'Create Staking'}</Text>
-                  </TouchableOpacity>
-                  {isShowVote && (
-                    <TouchableOpacity
-                      style={styles.btn}
-                      onPress={() => {
-                        dispatch(setSelectedVotes(null));
-                        navigation.navigate('VoteStaking');
-                      }}>
-                      <Text style={styles.btnText}>{'Validators'}</Text>
-                    </TouchableOpacity>
-                  )}
-                  {isShowUnstaking && (
-                    <>
-                      <TouchableOpacity
-                        style={[
-                          styles.btn,
-                          !!unstakingDisableText && {
-                            backgroundColor: theme.gray,
-                            marginBottom: 4,
-                          },
-                        ]}
-                        disabled={!!unstakingDisableText}
-                        onPress={() => {
-                          navigation.navigate('WithdrawStaking', {
-                            isDeactivateStaking: true,
-                          });
-                        }}>
-                        <Text style={styles.btnText}>{'Unstaking'}</Text>
-                      </TouchableOpacity>
-                      {!!unstakingDisableText && (
-                        <Text style={styles.errorTitle}>
-                          {unstakingDisableText}
-                        </Text>
-                      )}
-                    </>
-                  )}
-                  <Text style={styles.stakingTitle}>Active Staking</Text>
-                </View>
-              }
+              ListHeaderComponent={listHeader}
             />
           )}
         </DokSafeAreaView>

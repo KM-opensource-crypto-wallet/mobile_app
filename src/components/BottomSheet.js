@@ -11,7 +11,7 @@ import {Pressable} from 'react-native';
 
 const CustomBackdrop = props => {
   // animated variables
-  const {animatedIndex, style, dismiss} = props;
+  const {animatedIndex, style, dismiss, backdropZIndex = 9998} = props;
   const {theme} = useContext(ThemeContext);
   const containerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
@@ -27,11 +27,11 @@ const CustomBackdrop = props => {
       style,
       {
         backgroundColor: theme.backdrop,
-        zIndex: 9998,
+        zIndex: backdropZIndex,
       },
       containerAnimatedStyle,
     ],
-    [style, theme.backdrop, containerAnimatedStyle],
+    [style, theme.backdrop, containerAnimatedStyle, backdropZIndex],
   );
 
   return (
@@ -41,7 +41,7 @@ const CustomBackdrop = props => {
         height: '100%',
         position: 'absolute',
         width: '100%',
-        zIndex: 9998,
+        zIndex: backdropZIndex,
       }}>
       <Animated.View style={containerStyle} />
     </Pressable>
@@ -59,10 +59,15 @@ const DokBottomSheet = props => {
     android_keyboardInputMode = 'adjustResize',
     enableDynamicSizing = false,
     maxDynamicContentSize,
+    // Layer of this sheet. Sheets opened OVER another sheet must pass a higher
+    // value so their backdrop covers (dims + blocks touches on) the one beneath.
+    zIndex = 9999,
+    stackBehavior,
   } = props;
   const {theme} = useContext(ThemeContext);
   const localBottomSheetRef = useRef();
   const snapPointsLocal = useMemo(() => snapPoints || ['40%'], [snapPoints]);
+  const backdropZIndex = zIndex - 1;
   const {handleSheetPositionChange} =
     useBottomSheetBackHandler(localBottomSheetRef);
 
@@ -74,14 +79,18 @@ const DokBottomSheet = props => {
     [handleSheetPositionChange, onChange],
   );
 
-  const renderBackdrop = useCallback(subProps => {
-    return (
-      <CustomBackdrop
-        {...subProps}
-        dismiss={() => localBottomSheetRef.current?.close()}
-      />
-    );
-  }, []);
+  const renderBackdrop = useCallback(
+    subProps => {
+      return (
+        <CustomBackdrop
+          {...subProps}
+          backdropZIndex={backdropZIndex}
+          dismiss={() => localBottomSheetRef.current?.close()}
+        />
+      );
+    },
+    [backdropZIndex],
+  );
   return (
     <BottomSheetModal
       ref={ref => {
@@ -100,7 +109,8 @@ const DokBottomSheet = props => {
       closeOnPress={true}
       onChange={onLocalChange}
       backdropComponent={renderBackdrop}
-      containerStyle={{zIndex: 9999}}
+      {...(stackBehavior ? {stackBehavior} : {})}
+      containerStyle={{zIndex}}
       keyboardBehavior={keyboardBehavior}
       keyboardBlurBehavior={keyboardBlurBehavior}
       android_keyboardInputMode={android_keyboardInputMode}>
