@@ -47,6 +47,19 @@ import {
   SOLANA_SIGN_TRANSACTION,
 } from 'dok-wallet-blockchain-networks/service/solanaWalletConnect';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import {
+  TON_SEND_MESSAGE,
+  TON_SIGN_DATA,
+} from 'dok-wallet-blockchain-networks/service/tonWalletConnect';
+import {
+  STELLAR_SIGN_AND_SUBMIT_XDR,
+  STELLAR_SIGN_XDR,
+} from 'dok-wallet-blockchain-networks/service/stellarWalletConnect';
+import {
+  XRPL_SIGN_TRANSACTION,
+  XRPL_SUBMIT_TRANSACTION,
+  XRPL_SIGN_MESSAGE,
+} from 'dok-wallet-blockchain-networks/service/rippleWalletConnect';
 
 const displayMessage = (method, message) => {
   switch (method) {
@@ -60,6 +73,22 @@ const displayMessage = (method, message) => {
     case SOLANA_SIGN_TRANSACTION:
     case SOLANA_SIGN_AND_SEND_TRANSACTION: {
       return safelyJsonStringify(parseSolanaSignTransaction(message));
+    }
+    case TON_SEND_MESSAGE:
+    case TON_SIGN_DATA: {
+      return safelyJsonStringify(message);
+    }
+    case STELLAR_SIGN_XDR: {
+      return safelyJsonStringify(message);
+    }
+    case STELLAR_SIGN_AND_SUBMIT_XDR:
+      return safelyJsonStringify(message);
+    case XRPL_SIGN_TRANSACTION:
+    case XRPL_SUBMIT_TRANSACTION: {
+      return safelyJsonStringify(message);
+    }
+    case XRPL_SIGN_MESSAGE: {
+      return convertHexToUtf8IfPossible(message);
     }
     default: {
       return safelyJsonStringify(message);
@@ -111,7 +140,10 @@ const WalletConnectTransactionModal = props => {
   const getTransactionRequestData = useMemo(() => {
     if (
       transactionData?.chainId?.includes('tron') ||
-      transactionData?.chainId?.includes('solana')
+      transactionData?.chainId?.includes('solana') ||
+      transactionData?.chainId?.includes('ton') ||
+      transactionData?.chainId?.includes('stellar') ||
+      transactionData?.chainId?.includes('xrpl')
     ) {
       if (
         transactionData?.method === TRON_SIGN_MESSAGE ||
@@ -141,6 +173,41 @@ const WalletConnectTransactionModal = props => {
         return {
           finaltransactionData: transactionData?.params?.transaction,
           signTypeData: transactionData?.params,
+        };
+      }
+      if (transactionData?.method === TON_SEND_MESSAGE) {
+        return {
+          finaltransactionData: transactionData?.params,
+          signTypeData: transactionData?.params,
+        };
+      }
+      if (transactionData?.method === TON_SIGN_DATA) {
+        return {
+          signTypeData: transactionData?.params,
+        };
+      }
+      if (transactionData?.method === STELLAR_SIGN_XDR) {
+        return {
+          signTypeData: transactionData?.params,
+        };
+      }
+      if (transactionData?.method === STELLAR_SIGN_AND_SUBMIT_XDR) {
+        return {
+          signTypeData: transactionData?.params,
+        };
+      }
+      if (
+        transactionData?.method === XRPL_SIGN_TRANSACTION ||
+        transactionData?.method === XRPL_SUBMIT_TRANSACTION
+      ) {
+        return {
+          finaltransactionData: transactionData?.params,
+          signTypeData: transactionData?.params,
+        };
+      }
+      if (transactionData?.method === XRPL_SIGN_MESSAGE) {
+        return {
+          signTypeData: transactionData?.params?.message,
         };
       }
     } else {

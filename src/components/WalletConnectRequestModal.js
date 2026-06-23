@@ -31,6 +31,8 @@ import {
 import WalletConnect from 'assets/images/WalletConnect.png';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import {getTonSessionProperties} from 'dok-wallet-blockchain-networks/service/tonWalletConnect';
+import {chainLogoMap} from 'assets/chain_logo';
 
 const WalletConnectRequestModal = props => {
   const requestData = useSelector(selectWalletConnectRequestData);
@@ -184,10 +186,21 @@ const WalletConnectRequestModal = props => {
             events: allEvents,
           };
         });
+        const hasTon = allKeys.includes('ton');
+        let tonSessionProperties = {};
+        if (hasTon) {
+          const tonCoinData = chainData.find(item => item.chain_name === 'ton');
+          if (tonCoinData?.privateKey) {
+            tonSessionProperties = getTonSessionProperties(
+              tonCoinData.privateKey,
+            );
+          }
+        }
         const session = await connector.approveSession({
           id,
           namespaces,
           relayProtocol: relays[0].protocol,
+          ...(hasTon && {sessionProperties: tonSessionProperties}),
         });
 
         dispatch(
@@ -237,7 +250,13 @@ const WalletConnectRequestModal = props => {
   const renderItem = (item, index) => {
     return (
       <View style={styles.itemView} key={item.key + index}>
-        <FastImage source={{uri: item?.icon}} style={styles.rowImageStyle} />
+        <FastImage
+          source={
+            chainLogoMap[item?.chain_name?.toLowerCase()] ||
+            (item?.icon ? {uri: item.icon} : undefined)
+          }
+          style={styles.rowImageStyle}
+        />
         <View style={styles.centerItemView}>
           <Text style={styles.itemTitle}>
             {`${item?.chain_display_name} (${currentWallet.walletName})`}
@@ -268,7 +287,7 @@ const WalletConnectRequestModal = props => {
           {!isValidChain && (
             <Text style={styles.errorText}>
               {
-                'You can only accept requests originating from ETH, BNB, SOL, MATIC and/or TRX.'
+                'You can only accept requests originating from ETH, BNB, SOL, MATIC, TRX, TON, XLM and/or XRP.'
               }
             </Text>
           )}
