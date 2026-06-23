@@ -185,7 +185,7 @@ export const formatNumber = num => {
   } else if (n >= 1e6) {
     return (Math.floor((n / 1e6) * 100) / 100).toString() + ' M';
   } else if (n >= 1e3) {
-    return (Math.floor((n / 1e3) * 100) / 100).toString() + ' Th';
+    return (Math.floor((n / 1e3) * 100) / 100).toString() + ' K';
   } else {
     return n.toString();
   }
