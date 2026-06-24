@@ -172,21 +172,3 @@ export const Constants = {
       'You have one more attempt if you type a wrong password again your wallet will delete completely.',
   },
 };
-
-export const formatNumber = num => {
-  const n = parseFloat(num);
-  if (!num || isNaN(n)) {
-    return '0';
-  }
-  if (n >= 1e12) {
-    return (Math.floor((n / 1e12) * 100) / 100).toString() + ' T';
-  } else if (n >= 1e9) {
-    return (Math.floor((n / 1e9) * 100) / 100).toString() + ' B';
-  } else if (n >= 1e6) {
-    return (Math.floor((n / 1e6) * 100) / 100).toString() + ' M';
-  } else if (n >= 1e3) {
-    return (Math.floor((n / 1e3) * 100) / 100).toString() + ' K';
-  } else {
-    return n.toString();
-  }
-};

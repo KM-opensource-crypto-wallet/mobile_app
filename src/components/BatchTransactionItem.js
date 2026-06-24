@@ -9,6 +9,7 @@ import CopyIcon from 'assets/images/icons/copy.svg';
 import ChainItem from 'components/ChainItem';
 import {currencySymbol} from 'data/currency';
 import CoinIcon from 'components/CoinIcon/CoinIcon';
+import {getCustomizePublicAddress} from 'dok-wallet-blockchain-networks/helper';
 
 const BatchTransactionItem = ({
   item,
@@ -92,8 +93,7 @@ const BatchTransactionItem = ({
               <View style={styles.subAddressContainer}>
                 <Text style={styles.addressLabel}>From</Text>
                 <Text style={styles.addressText}>
-                  {item.transferData.fromAddress.slice(0, 8)}...
-                  {item.transferData.fromAddress.slice(-6)}
+                  {getCustomizePublicAddress(item.transferData.fromAddress)}
                 </Text>
               </View>
               <TouchableOpacity
@@ -114,8 +114,7 @@ const BatchTransactionItem = ({
               <View style={styles.subAddressContainer}>
                 <Text style={styles.addressLabel}>To</Text>
                 <Text style={styles.addressText}>
-                  {item?.transferData?.toAddress?.slice?.(0, 8)}...
-                  {item?.transferData?.toAddress?.slice?.(-6)}
+                  {getCustomizePublicAddress(item.transferData.toAddress)}
                 </Text>
               </View>
               <TouchableOpacity

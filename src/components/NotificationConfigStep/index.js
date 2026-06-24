@@ -5,12 +5,14 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {ThemeContext} from 'theme/ThemeContext';
 import CoinIcon from 'components/CoinIcon/CoinIcon';
 import ChainItem from 'components/ChainItem';
-import {isBitcoinChain} from 'dok-wallet-blockchain-networks/helper';
+import {
+  getCustomizePublicAddress,
+  isBitcoinChain,
+} from 'dok-wallet-blockchain-networks/helper';
 import {IS_ANDROID} from 'utils/dimensions';
 import myStyles from './NotificationConfigStepStyles';
 import {
   coinKey,
-  truncateAddress,
   isAmountBelowThreshold,
   MAX_ALERTS,
 } from 'utils/notificationAlertHelpers';
@@ -97,7 +99,7 @@ const NotificationConfigStep = ({
               <View style={styles.summaryRowTop}>
                 <Text style={styles.summaryLabel}>Address</Text>
                 <Text style={styles.summaryValue} numberOfLines={1}>
-                  {truncateAddress(addressMap[configCoinKey])}
+                  {getCustomizePublicAddress(addressMap[configCoinKey])}
                 </Text>
               </View>
             )}

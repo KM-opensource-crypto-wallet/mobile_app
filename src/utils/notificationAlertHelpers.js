@@ -1,18 +1,14 @@
 import BigNumber from 'bignumber.js';
-import {validateNumberInInput} from 'dok-wallet-blockchain-networks/helper';
+import {
+  getCustomizePublicAddress,
+  validateNumberInInput,
+} from 'dok-wallet-blockchain-networks/helper';
 
 export const MIN_USD_AMOUNT = 10;
 export const MAX_ALERTS = 20;
 
 export const coinKey = (walletClientId, coinId) =>
   `${walletClientId}_${coinId}`;
-
-export const truncateAddress = address => {
-  if (!address || address.length <= 14) {
-    return address || '';
-  }
-  return `${address.slice(0, 8)}...${address.slice(-6)}`;
-};
 
 export const getDefaultMinAmount = coin => {
   if (!coin?.currencyRate || Number(coin.currencyRate) === 0) {
@@ -45,10 +41,15 @@ export const buildAddressOptions = coin => {
   if (Array.isArray(coin.deriveAddresses) && coin.deriveAddresses.length > 0) {
     return coin.deriveAddresses
       .filter(d => d?.address)
-      .map(d => ({label: truncateAddress(d.address), value: d.address}));
+      .map(d => ({
+        label: getCustomizePublicAddress(d.address),
+        value: d.address,
+      }));
   }
   if (!coin.address) {
     return [];
   }
-  return [{label: truncateAddress(coin.address), value: coin.address}];
+  return [
+    {label: getCustomizePublicAddress(coin.address), value: coin.address},
+  ];
 };
