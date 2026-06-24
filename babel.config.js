@@ -22,14 +22,4 @@ module.exports = {
     ['react-native-paper/babel'],
     'react-native-worklets/plugin',
   ],
-  overrides: [
-    {
-      test: './node_modules/ethers',
-      plugins: [
-        '@babel/plugin-proposal-private-property-in-object',
-        '@babel/plugin-proposal-class-properties',
-        '@babel/plugin-proposal-private-methods',
-      ],
-    },
-  ],
 };

@@ -1,5 +1,5 @@
 import {StyleSheet, Platform} from 'react-native';
-import {SCREEN_WIDTH} from 'utils/dimensions';
+import {IS_IOS, SCREEN_WIDTH} from 'utils/dimensions';
 
 const myStyles = (theme, bottom) =>
   StyleSheet.create({
@@ -46,7 +46,7 @@ const myStyles = (theme, bottom) =>
       paddingBottom: 16 + bottom,
     },
     headerRightButton: {
-      paddingRight: 11,
+      paddingRight: IS_IOS ? 0 : 11,
     },
     searchInputMinHeight: {
       minHeight: 0,

@@ -68,6 +68,7 @@ import {clearSelectedUTXOs} from 'dok-wallet-blockchain-networks/redux/currentTr
 import {isCustomDerivedChecked} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import UnclaimedBottomSheet from 'components/UnclaimedBottomSheet';
 import ModalDelegation from 'components/ModalDelegation';
+import {IS_IOS} from 'utils/dimensions';
 
 const SendScreen = ({navigation, route}) => {
   const currentCoin = useSelector(selectCurrentCoin);
@@ -236,7 +237,7 @@ const SendScreen = ({navigation, route}) => {
     if (isBitcoin || (isDeriveAddressChain && !isImportWithPrivateKey)) {
       navigation.setOptions({
         headerRight: () => (
-          <View style={{marginRight: 8}}>
+          <View style={{marginRight: IS_IOS ? 0 : 8}}>
             <Menu>
               <MenuTrigger>
                 <EntypoIcon

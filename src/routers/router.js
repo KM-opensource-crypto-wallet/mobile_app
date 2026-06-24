@@ -1,10 +1,10 @@
 import React, {useContext} from 'react';
-import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import {useSelector} from 'react-redux';
 import {IS_IOS, SCREEN_WIDTH} from 'utils/dimensions';
 
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
 import {RegistrationScreen} from 'screens/auth/RegistrationScreen';
 import {LoginScreen} from 'screens/auth/LoginScreen';
 import {CarouselCards} from 'components/CarouselCards';
@@ -13,7 +13,7 @@ import {VerifyCreate} from 'components/VerifyCreate';
 import {Verify} from 'components/Verify';
 import Sidebar from 'components/Sidebar';
 import Scanner from 'screens/main/Scanner';
-import {Keyboard, StatusBar, StyleSheet, TouchableOpacity} from 'react-native';
+import {StyleSheet, TouchableOpacity} from 'react-native';
 import Back from 'assets/images/sidebarIcons/Back.svg';
 import ShareIcon from 'assets/images/icons/share.svg';
 import CreateWallet from 'screens/main/Wallets/CreateWallet';
@@ -84,6 +84,7 @@ import AddNotificationAlertAddresses from 'screens/main/Settings/AddNotification
 import AddNotificationAlertConfig from 'screens/main/Settings/AddNotificationAlert/Step4ConfigureAlert';
 import CustomRPC from 'components/CustomRPC';
 import TransactionDetails from 'components/TransactionDetails';
+import {isAndroid} from 'react-native-draggable-flatlist/lib/typescript/constants';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -93,12 +94,6 @@ LogBox.ignoreLogs([
   'AsyncStorage has been extracted from react-native',
   'EventEmitter.removeListener',
 ]);
-
-const forFade = ({current}) => ({
-  cardStyle: {
-    opacity: current.progress,
-  },
-});
 
 export const useRoute = isAuth => {
   const currentCoin = useSelector(selectCurrentCoin);
@@ -142,7 +137,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         {/* ////////////////////////////////////////////////// */}
@@ -164,7 +159,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -179,7 +174,7 @@ export const useRoute = isAuth => {
               </TouchableOpacity>
             ),
 
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
       </Stack.Group>
@@ -215,7 +210,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          cardStyleInterpolator: forFade,
+          animation: 'fade',
         })}
       />
       <Stack.Screen
@@ -238,7 +233,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          cardStyleInterpolator: forFade,
+          animation: 'fade',
         })}
       />
       <Stack.Group>
@@ -253,7 +248,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -269,7 +264,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -283,7 +278,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
       </Stack.Group>
@@ -313,7 +308,7 @@ export const useRoute = isAuth => {
               <Back  width="22" height="18" fill={theme.borderActiveColor}/>
             </TouchableOpacity>
           ),
-          cardStyleInterpolator: forFade,
+          animation: 'fade',
         })}
       />  */}
       {/* <Stack.Screen
@@ -339,7 +334,7 @@ export const useRoute = isAuth => {
               <Back  width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          cardStyleInterpolator: forFade,
+          animation: 'fade',
         })}
       />  */}
       {/* ///////////////////////////////not needed now///////////////////////////////////// */}
@@ -364,7 +359,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          cardStyleInterpolator: forFade,
+          animation: 'fade',
         })}
       />
       <Stack.Screen
@@ -388,7 +383,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          cardStyleInterpolator: forFade,
+          animation: 'fade',
         })}
       />
       <Stack.Screen
@@ -412,7 +407,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          cardStyleInterpolator: forFade,
+          animation: 'fade',
         })}
       />
       <Stack.Screen
@@ -436,7 +431,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          cardStyleInterpolator: forFade,
+          animation: 'fade',
         })}
       />
       <Stack.Group>
@@ -453,7 +448,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -469,7 +464,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -485,7 +480,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -515,7 +510,7 @@ export const useRoute = isAuth => {
                 />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -545,7 +540,7 @@ export const useRoute = isAuth => {
                 />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -560,7 +555,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -575,7 +570,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -598,7 +593,7 @@ export const useRoute = isAuth => {
                 <Check width="25" height="25" fill={theme.font} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -613,7 +608,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -628,7 +623,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -687,7 +682,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -703,7 +698,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -719,7 +714,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -734,7 +729,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -749,7 +744,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -765,7 +760,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -780,7 +775,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -795,7 +790,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
       </Stack.Group>
@@ -820,7 +815,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          cardStyleInterpolator: forFade,
+          animation: 'fade',
         })}
       />
       <Stack.Screen
@@ -828,7 +823,7 @@ export const useRoute = isAuth => {
         component={CoinSyncScreen}
         options={{
           headerShown: false,
-          cardStyleInterpolator: forFade,
+          animation: 'fade',
         }}
       />
       <Stack.Screen
@@ -843,7 +838,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          cardStyleInterpolator: forFade,
+          animation: 'fade',
         })}
       />
       <Stack.Screen
@@ -851,7 +846,7 @@ export const useRoute = isAuth => {
         component={Message}
         options={({navigation}) => ({
           headerShown: false,
-          cardStyleInterpolator: forFade,
+          animation: 'fade',
         })}
       />
       <Stack.Screen
@@ -866,7 +861,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          cardStyleInterpolator: forFade,
+          animation: 'fade',
         })}
       />
       <Stack.Screen
@@ -881,7 +876,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          cardStyleInterpolator: forFade,
+          animation: 'fade',
         })}
       />
       {/* /////////////send////////////////////////////////////////// */}
@@ -898,7 +893,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -913,7 +908,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -928,7 +923,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -943,7 +938,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -958,7 +953,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -973,7 +968,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -988,7 +983,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -1003,7 +998,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -1018,7 +1013,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -1033,7 +1028,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
 
@@ -1049,7 +1044,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -1064,7 +1059,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
 
@@ -1080,7 +1075,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
           })}
         />
         <Stack.Screen
@@ -1088,11 +1083,7 @@ export const useRoute = isAuth => {
           component={RecieveFunds}
           options={({route, navigation}) => ({
             title: 'Recieve Funds',
-
-            headerBackImage: () => (
-              <Back width="22" height="18" fill={theme.borderActiveColor} />
-            ),
-            cardStyleInterpolator: forFade,
+            animation: 'fade',
             headerRight: () => (
               <TouchableOpacity
                 style={styles.headerRightStyle}
@@ -1107,7 +1098,6 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            // cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
           })}
         />
         {/* <Stack.Screen
@@ -1181,9 +1171,7 @@ export const useRoute = isAuth => {
           presentation: 'modal',
           headerShown: false,
           gestureEnabled: false,
-          ...(IS_IOS
-            ? TransitionPresets.ModalPresentationIOS
-            : TransitionPresets.RevealFromBottomAndroid),
+          animation: 'slide_from_bottom',
         }}>
         <Stack.Screen
           name="WalletConnectRequestModal"
@@ -1217,9 +1205,9 @@ const isIpad = SCREEN_WIDTH >= 768;
 
 const styles = StyleSheet.create({
   headerLeftStyle: {
-    paddingLeft: isIpad ? 50 : 11,
+    paddingLeft: isIpad ? 50 : IS_IOS ? 0 : 11,
   },
   headerRightStyle: {
-    paddingRight: isIpad ? 50 : 11,
+    paddingRight: isIpad ? 50 : IS_IOS ? 0 : 11,
   },
 });

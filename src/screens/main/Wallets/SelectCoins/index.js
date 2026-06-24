@@ -448,7 +448,7 @@ const SelectCoins = ({navigation, route}) => {
             windowSize={10}
             removeClippedSubviews={true}
             extraData={selectedCoins}
-            ListEmptyComponent={ListEmptyComponent()}
+            ListEmptyComponent={ListEmptyComponent}
           />
         )}
         <TouchableOpacity

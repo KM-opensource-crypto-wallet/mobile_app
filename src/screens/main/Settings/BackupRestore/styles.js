@@ -1,4 +1,5 @@
 import {StyleSheet} from 'react-native';
+import {IS_IOS} from 'utils/dimensions';
 
 const myStyles = (theme, bottom) =>
   StyleSheet.create({
@@ -37,7 +38,7 @@ const myStyles = (theme, bottom) =>
       color: theme.gray,
     },
     headerRightContainer: {
-      marginRight: 10,
+      marginRight: IS_IOS ? 0 : 10,
       flexDirection: 'row',
       alignItems: 'center',
     },
