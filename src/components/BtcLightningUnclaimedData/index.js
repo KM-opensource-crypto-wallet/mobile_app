@@ -11,6 +11,7 @@ import IoniconIcon from 'react-native-vector-icons/Ionicons';
 import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
 import {handleUnclaimedData} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {showToast} from 'utils/toast';
+import {getCustomizePublicAddress} from 'dok-wallet-blockchain-networks/helper';
 
 export const BtcLightningUnclaimedData = ({onDismiss}) => {
   const [activeRejectIndex, setActiveRejectIndex] = useState(null);
@@ -122,12 +123,6 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
     ],
   );
 
-  const trimTxId = txid => {
-    if (!txid) return '';
-
-    return `${txid.slice(0, 6)}........${txid.slice(-6)}`;
-  };
-
   const renderItem = ({item, index}) => {
     const showInput = activeRejectIndex === index;
     return (
@@ -169,7 +164,9 @@ export const BtcLightningUnclaimedData = ({onDismiss}) => {
                   />
                   <Text style={styles.infoLabel}>Transaction ID</Text>
                 </View>
-                <Text style={styles.infoValue}>{trimTxId(item.txid)}</Text>
+                <Text style={styles.infoValue}>
+                  {getCustomizePublicAddress(item.txid)}
+                </Text>
               </View>
 
               <View style={styles.infoItem}>

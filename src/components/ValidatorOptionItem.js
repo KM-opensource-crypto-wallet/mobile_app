@@ -5,6 +5,7 @@ const {width: screenWidth} = Dimensions.get('window');
 const itemWidth = screenWidth / 1.4;
 import FastImage from '@d11/react-native-fast-image';
 import {formatNumber} from 'utils/common';
+import {formatBalance} from 'dok-wallet-blockchain-networks/helper';
 
 const ValidatorOptionItem = ({item, currentCoin}) => {
   const {theme} = useContext(ThemeContext);
@@ -34,7 +35,7 @@ const ValidatorOptionItem = ({item, currentCoin}) => {
             </Text>
           )}
           <Text style={[myStyles.text]} numberOfLines={1}>
-            {`STAKE ${formatNumber(item?.options?.totalStaked ?? 0)} ${
+            {`STAKE ${formatBalance(item?.options?.totalStaked ?? 0)} ${
               currentCoin?.symbol
             }`}
           </Text>

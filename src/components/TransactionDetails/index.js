@@ -33,18 +33,12 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import FastImage from '@d11/react-native-fast-image';
 import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
 import myStyles from './TransactionDetailsStyles';
+import {getCustomizePublicAddress} from 'dok-wallet-blockchain-networks/helper';
 
 const STATUS_CONFIG = {
   SUCCESS: {label: 'Success', color: '#71C441'},
   PENDING: {label: 'Pending', color: '#ffcc00'},
   FAILED: {label: 'Failed', color: '#FF4444'},
-};
-
-const truncateAddress = address => {
-  if (!address || typeof address !== 'string' || address.length <= 16) {
-    return typeof address === 'string' ? address : undefined;
-  }
-  return `${address.slice(0, 8)}...${address.slice(-8)}`;
 };
 
 const CopyRow = ({value, displayValue, styles, theme}) => {
@@ -59,7 +53,7 @@ const CopyRow = ({value, displayValue, styles, theme}) => {
         }
       }}>
       <Text style={styles.rowValue} numberOfLines={1}>
-        {displayValue || truncateAddress(stringValue)}
+        {displayValue || getCustomizePublicAddress(stringValue)}
       </Text>
       <IoniconIcon
         name="copy-outline"
@@ -582,7 +576,7 @@ const TransactionDetails = ({route, navigation}) => {
                       </View>
                       {!!tData?.to && (
                         <Text style={styles.batchItemTo} numberOfLines={1}>
-                          To: {truncateAddress(tData.to)}
+                          To: {getCustomizePublicAddress(tData.to)}
                         </Text>
                       )}
                     </View>
@@ -783,7 +777,8 @@ const TransactionDetails = ({route, navigation}) => {
                   <View style={styles.validatorItem}>
                     <View style={styles.validatorItemRow}>
                       <Text style={styles.validatorItemName} numberOfLines={1}>
-                        {item?.name || truncateAddress(item?.validatorAddress)}
+                        {item?.name ||
+                          getCustomizePublicAddress(item?.validatorAddress)}
                       </Text>
                       <Text style={styles.validatorItemVotes}>
                         {item?.votes} votes

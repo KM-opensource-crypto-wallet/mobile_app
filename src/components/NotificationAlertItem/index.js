@@ -12,14 +12,10 @@ import {
   MenuOptions,
   MenuTrigger,
 } from 'react-native-popup-menu';
-import {isBitcoinChain} from 'dok-wallet-blockchain-networks/helper';
-
-const truncateAddress = address => {
-  if (!address || address.length <= 14) {
-    return address || '';
-  }
-  return `${address.slice(0, 8)}...${address.slice(-6)}`;
-};
+import {
+  getCustomizePublicAddress,
+  isBitcoinChain,
+} from 'dok-wallet-blockchain-networks/helper';
 
 const NotificationAlertItem = ({item, onPressDelete, onPressEdit}) => {
   const {theme} = useContext(ThemeContext);
@@ -59,7 +55,7 @@ const NotificationAlertItem = ({item, onPressDelete, onPressEdit}) => {
           {item.walletName}
         </Text>
         <Text style={styles.address} numberOfLines={1}>
-          {truncateAddress(item.wallet)}
+          {getCustomizePublicAddress(item.wallet)}
         </Text>
         <Text style={styles.minAmount}>
           {`Min: ${item.minAmount} ${item.coinSymbol}`}
