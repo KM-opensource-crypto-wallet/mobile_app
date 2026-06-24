@@ -16,6 +16,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {ThemeContext} from 'theme/ThemeContext';
 import {clearWalletConnectStorageCache} from 'utils/asyncStorage';
+import {chainLogoMap} from 'assets/chain_logo';
 
 const WalletConnectItem = ({onClose}) => {
   const sessions = useSelector(selectWalletConnectSessions, shallowEqual);
@@ -91,7 +92,10 @@ const WalletConnectItem = ({onClose}) => {
         {chainData?.map((chain, i) => (
           <View style={styles.chainRowView} key={'' + chain?._id + i}>
             <FastImage
-              source={{uri: chain?.icon}}
+              source={
+                chainLogoMap[chain?.chain_name?.toLowerCase()] ||
+                (chain?.icon ? {uri: chain.icon} : undefined)
+              }
               style={styles.rowImageStyle}
             />
             <View style={styles.centerItemView}>

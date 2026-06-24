@@ -138,6 +138,18 @@ const WalletConnectTransactionModal = props => {
   }, []);
 
   const getTransactionRequestData = useMemo(() => {
+    if (transactionData?.method?.includes('wallet_sendCalls')) {
+      const batchCalls = (transactionData?.batchCalls || []).map(call => ({
+        ...call,
+        etherValue: call?.value ? parseBalance(call.value, 18) : '',
+      }));
+      return {
+        finaltransactionData: {
+          batchCalls,
+          from: transactionData?.from,
+        },
+      };
+    }
     if (
       transactionData?.chainId?.includes('tron') ||
       transactionData?.chainId?.includes('solana') ||
@@ -252,11 +264,14 @@ const WalletConnectTransactionModal = props => {
       navigation.pop();
       dispatch(
         createWalletConnectTransaction({
-          transactionData: getTransactionRequestData?.finaltransactionData,
+          transactionData: {
+            ...getTransactionRequestData?.finaltransactionData,
+            batchCalls: transactionData?.batchCalls, // <-- add this
+            from: transactionData?.from,
+          },
+          isBatchTransaction: transactionData?.isBatchTransaction,
           chain_name: walletData?.chain_name?.toLowerCase(),
           privateKey: walletData?.privateKey,
-          requestId: transactionData?.id,
-          sessionId,
           id,
           topic,
           method,
@@ -287,6 +302,46 @@ const WalletConnectTransactionModal = props => {
   const {theme} = useContext(ThemeContext);
 
   const styles = myStyles(theme);
+
+  const BatchCallsView = () => {
+    const calls =
+      getTransactionRequestData?.finaltransactionData?.batchCalls || [];
+    return (
+      <View style={{flex: 1, width: '100%', paddingHorizontal: '5%'}}>
+        <Text style={[styles.chainTitle, {marginLeft: 0}]}>
+          {`Batch Calls (${calls.length})`}
+        </Text>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.contentContainerStyle}>
+          {calls.map((call, index) => (
+            <View
+              key={index}
+              style={[styles.box, {width: '100%', marginTop: 12}]}>
+              <View style={styles.transferItemView}>
+                <Text style={styles.transferTitle}>{'Call'}</Text>
+                <Text style={styles.boxBalance}>{`#${index + 1}`}</Text>
+              </View>
+              <View style={styles.transferItemView}>
+                <Text style={styles.transferTitle}>{'To'}</Text>
+                <Text style={styles.boxBalance}>
+                  {getCustomizePublicAddress(call?.to)}
+                </Text>
+              </View>
+              {!!call?.etherValue && (
+                <View style={styles.transferItemView}>
+                  <Text style={styles.transferTitle}>{'Value'}</Text>
+                  <Text style={styles.boxBalance}>
+                    {call.etherValue} {walletData?.symbol}
+                  </Text>
+                </View>
+              )}
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  };
 
   const MessageView = () => {
     const signTypeData = getTransactionRequestData?.signTypeData;
@@ -329,7 +384,9 @@ const WalletConnectTransactionModal = props => {
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.url}>{url}</Text>
         <View style={[styles.borderView, {marginTop: 12}]} />
-        {isWalletConnectTransaction(method) ? (
+        {method?.includes('wallet_sendCalls') ? (
+          BatchCallsView()
+        ) : isWalletConnectTransaction(method) ? (
           <View style={styles.formInput}>
             <Text style={styles.amountTitle}>{`-${amount || 0} ${
               walletData?.symbol || ''
