@@ -138,18 +138,6 @@ const WalletConnectTransactionModal = props => {
   }, []);
 
   const getTransactionRequestData = useMemo(() => {
-    if (transactionData?.method?.includes('wallet_sendCalls')) {
-      const batchCalls = (transactionData?.batchCalls || []).map(call => ({
-        ...call,
-        etherValue: call?.value ? parseBalance(call.value, 18) : '',
-      }));
-      return {
-        finaltransactionData: {
-          batchCalls,
-          from: transactionData?.from,
-        },
-      };
-    }
     if (
       transactionData?.chainId?.includes('tron') ||
       transactionData?.chainId?.includes('solana') ||
@@ -223,6 +211,20 @@ const WalletConnectTransactionModal = props => {
         };
       }
     } else {
+      if (transactionData?.method?.includes('wallet_sendCalls')) {
+        const batchCalls = (transactionData?.params?.[0].calls || []).map(
+          call => ({
+            ...call,
+            etherValue: call?.value ? parseBalance(call.value, 18) : '',
+          }),
+        );
+        return {
+          finaltransactionData: {
+            batchCalls,
+            from: transactionData?.from,
+          },
+        };
+      }
       const finaltransactionData = transactionData?.params[0] || {};
       const signTypeData =
         transactionData?.method === PERSONAL_SIGN
@@ -266,7 +268,7 @@ const WalletConnectTransactionModal = props => {
         createWalletConnectTransaction({
           transactionData: {
             ...getTransactionRequestData?.finaltransactionData,
-            batchCalls: transactionData?.batchCalls, // <-- add this
+            batchCalls: transactionData?.params?.[0].calls,
             from: transactionData?.from,
           },
           isBatchTransaction: transactionData?.isBatchTransaction,
