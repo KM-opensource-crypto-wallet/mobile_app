@@ -84,7 +84,6 @@ import AddNotificationAlertAddresses from 'screens/main/Settings/AddNotification
 import AddNotificationAlertConfig from 'screens/main/Settings/AddNotificationAlert/Step4ConfigureAlert';
 import CustomRPC from 'components/CustomRPC';
 import TransactionDetails from 'components/TransactionDetails';
-import {isAndroid} from 'react-native-draggable-flatlist/lib/typescript/constants';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
