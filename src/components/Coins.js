@@ -28,6 +28,7 @@ import {setNewCoins} from 'dok-wallet-blockchain-networks/redux/currency/currenc
 import {syncCoinsWithServer} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import BatchTransactionBanner from 'components/BatchTransactionBanner';
 import CoinSyncBanner from 'components/CoinSyncBanner';
+import {formatBalance} from 'dok-wallet-blockchain-networks/helper';
 
 const {width: screenWidth} = Dimensions.get('window');
 
@@ -91,7 +92,7 @@ const Coins = () => {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Total Assets</Text>
           <Text style={styles.headerNumber}>
-            {currencySymbol[localCurrency] + totalAssets}
+            {currencySymbol[localCurrency] + formatBalance(totalAssets)}
           </Text>
         </View>
         <CryptoList
