@@ -237,7 +237,7 @@ const SendScreen = ({navigation, route}) => {
     if (isBitcoin || (isDeriveAddressChain && !isImportWithPrivateKey)) {
       navigation.setOptions({
         headerRight: () => (
-          <View style={{marginRight: IS_IOS ? 0 : 8}}>
+          <View style={{marginRight: 8}}>
             <Menu>
               <MenuTrigger>
                 <EntypoIcon

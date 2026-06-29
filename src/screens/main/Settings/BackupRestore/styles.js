@@ -38,7 +38,7 @@ const myStyles = (theme, bottom) =>
       color: theme.gray,
     },
     headerRightContainer: {
-      marginRight: IS_IOS ? 0 : 10,
+      marginRight: 10,
       flexDirection: 'row',
       alignItems: 'center',
     },

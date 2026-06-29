@@ -46,7 +46,7 @@ const myStyles = (theme, bottom) =>
       paddingBottom: 16 + bottom,
     },
     headerRightButton: {
-      paddingRight: IS_IOS ? 0 : 11,
+      paddingRight: 11,
     },
     searchInputMinHeight: {
       minHeight: 0,

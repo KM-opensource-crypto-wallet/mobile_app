@@ -2,7 +2,7 @@ import React, {useContext} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import {useSelector} from 'react-redux';
-import {IS_IOS, SCREEN_WIDTH} from 'utils/dimensions';
+import {SCREEN_WIDTH} from 'utils/dimensions';
 
 const Stack = createNativeStackNavigator();
 import {RegistrationScreen} from 'screens/auth/RegistrationScreen';
@@ -84,6 +84,7 @@ import AddNotificationAlertAddresses from 'screens/main/Settings/AddNotification
 import AddNotificationAlertConfig from 'screens/main/Settings/AddNotificationAlert/Step4ConfigureAlert';
 import CustomRPC from 'components/CustomRPC';
 import TransactionDetails from 'components/TransactionDetails';
+import StackHeader from 'components/StackHeader';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -102,6 +103,7 @@ export const useRoute = isAuth => {
   return (
     <Stack.Navigator
       screenOptions={{
+        header: props => <StackHeader {...props} />,
         headerStyle: {
           borderBottomColor: theme.headerBorder,
           borderBottomWidth: 1,
@@ -1204,9 +1206,9 @@ const isIpad = SCREEN_WIDTH >= 768;
 
 const styles = StyleSheet.create({
   headerLeftStyle: {
-    paddingLeft: isIpad ? 50 : IS_IOS ? 0 : 11,
+    paddingLeft: isIpad ? 50 : 11,
   },
   headerRightStyle: {
-    paddingRight: isIpad ? 50 : IS_IOS ? 0 : 11,
+    paddingRight: isIpad ? 50 : 11,
   },
 });
