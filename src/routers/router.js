@@ -1,10 +1,10 @@
 import React, {useContext} from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
 
 import {useSelector} from 'react-redux';
-import {SCREEN_WIDTH} from 'utils/dimensions';
+import {IS_IOS, SCREEN_WIDTH} from 'utils/dimensions';
 
-const Stack = createNativeStackNavigator();
+const Stack = createStackNavigator();
 import {RegistrationScreen} from 'screens/auth/RegistrationScreen';
 import {LoginScreen} from 'screens/auth/LoginScreen';
 import {CarouselCards} from 'components/CarouselCards';
@@ -13,7 +13,7 @@ import {VerifyCreate} from 'components/VerifyCreate';
 import {Verify} from 'components/Verify';
 import Sidebar from 'components/Sidebar';
 import Scanner from 'screens/main/Scanner';
-import {StyleSheet, TouchableOpacity} from 'react-native';
+import {Keyboard, StatusBar, StyleSheet, TouchableOpacity} from 'react-native';
 import Back from 'assets/images/sidebarIcons/Back.svg';
 import ShareIcon from 'assets/images/icons/share.svg';
 import CreateWallet from 'screens/main/Wallets/CreateWallet';
@@ -84,7 +84,6 @@ import AddNotificationAlertAddresses from 'screens/main/Settings/AddNotification
 import AddNotificationAlertConfig from 'screens/main/Settings/AddNotificationAlert/Step4ConfigureAlert';
 import CustomRPC from 'components/CustomRPC';
 import TransactionDetails from 'components/TransactionDetails';
-import StackHeader from 'components/StackHeader';
 
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
@@ -95,6 +94,14 @@ LogBox.ignoreLogs([
   'EventEmitter.removeListener',
 ]);
 
+const forFade = ({current}) => ({
+  cardStyle: {
+    opacity: current.progress,
+  },
+});
+
+const fadeTransition = IS_IOS ? {cardStyleInterpolator: forFade} : {};
+
 export const useRoute = isAuth => {
   const currentCoin = useSelector(selectCurrentCoin);
 
@@ -103,7 +110,6 @@ export const useRoute = isAuth => {
   return (
     <Stack.Navigator
       screenOptions={{
-        header: props => <StackHeader {...props} />,
         headerStyle: {
           borderBottomColor: theme.headerBorder,
           borderBottomWidth: 1,
@@ -138,7 +144,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         {/* ////////////////////////////////////////////////// */}
@@ -160,7 +166,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -175,7 +181,7 @@ export const useRoute = isAuth => {
               </TouchableOpacity>
             ),
 
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
       </Stack.Group>
@@ -211,7 +217,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          animation: 'fade',
+          ...fadeTransition,
         })}
       />
       <Stack.Screen
@@ -234,7 +240,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          animation: 'fade',
+          ...fadeTransition,
         })}
       />
       <Stack.Group>
@@ -249,7 +255,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -265,7 +271,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -279,7 +285,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
       </Stack.Group>
@@ -309,7 +315,7 @@ export const useRoute = isAuth => {
               <Back  width="22" height="18" fill={theme.borderActiveColor}/>
             </TouchableOpacity>
           ),
-          animation: 'fade',
+          ...fadeTransition,
         })}
       />  */}
       {/* <Stack.Screen
@@ -335,7 +341,7 @@ export const useRoute = isAuth => {
               <Back  width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          animation: 'fade',
+          ...fadeTransition,
         })}
       />  */}
       {/* ///////////////////////////////not needed now///////////////////////////////////// */}
@@ -360,7 +366,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          animation: 'fade',
+          ...fadeTransition,
         })}
       />
       <Stack.Screen
@@ -384,7 +390,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          animation: 'fade',
+          ...fadeTransition,
         })}
       />
       <Stack.Screen
@@ -408,7 +414,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          animation: 'fade',
+          ...fadeTransition,
         })}
       />
       <Stack.Screen
@@ -432,7 +438,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          animation: 'fade',
+          ...fadeTransition,
         })}
       />
       <Stack.Group>
@@ -449,7 +455,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -465,7 +471,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -481,7 +487,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -511,7 +517,7 @@ export const useRoute = isAuth => {
                 />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -541,7 +547,7 @@ export const useRoute = isAuth => {
                 />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -556,7 +562,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -571,7 +577,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -594,7 +600,7 @@ export const useRoute = isAuth => {
                 <Check width="25" height="25" fill={theme.font} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -609,7 +615,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -624,7 +630,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -683,7 +689,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -699,7 +705,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -715,7 +721,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -730,7 +736,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -745,7 +751,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -761,7 +767,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -776,7 +782,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -791,7 +797,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
       </Stack.Group>
@@ -816,7 +822,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          animation: 'fade',
+          ...fadeTransition,
         })}
       />
       <Stack.Screen
@@ -824,7 +830,7 @@ export const useRoute = isAuth => {
         component={CoinSyncScreen}
         options={{
           headerShown: false,
-          animation: 'fade',
+          ...fadeTransition,
         }}
       />
       <Stack.Screen
@@ -839,7 +845,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          animation: 'fade',
+          ...fadeTransition,
         })}
       />
       <Stack.Screen
@@ -847,7 +853,7 @@ export const useRoute = isAuth => {
         component={Message}
         options={({navigation}) => ({
           headerShown: false,
-          animation: 'fade',
+          ...fadeTransition,
         })}
       />
       <Stack.Screen
@@ -862,7 +868,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          animation: 'fade',
+          ...fadeTransition,
         })}
       />
       <Stack.Screen
@@ -877,7 +883,7 @@ export const useRoute = isAuth => {
               <Back width="22" height="18" fill={theme.borderActiveColor} />
             </TouchableOpacity>
           ),
-          animation: 'fade',
+          ...fadeTransition,
         })}
       />
       {/* /////////////send////////////////////////////////////////// */}
@@ -894,7 +900,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -909,7 +915,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -924,7 +930,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -939,7 +945,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -954,7 +960,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -969,7 +975,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -984,7 +990,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -999,7 +1005,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -1014,7 +1020,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -1029,7 +1035,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
 
@@ -1045,7 +1051,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -1060,7 +1066,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
 
@@ -1076,7 +1082,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
-            animation: 'fade',
+            ...fadeTransition,
           })}
         />
         <Stack.Screen
@@ -1084,7 +1090,11 @@ export const useRoute = isAuth => {
           component={RecieveFunds}
           options={({route, navigation}) => ({
             title: 'Recieve Funds',
-            animation: 'fade',
+
+            headerBackImage: () => (
+              <Back width="22" height="18" fill={theme.borderActiveColor} />
+            ),
+            ...fadeTransition,
             headerRight: () => (
               <TouchableOpacity
                 style={styles.headerRightStyle}
@@ -1099,6 +1109,7 @@ export const useRoute = isAuth => {
                 <Back width="22" height="18" fill={theme.borderActiveColor} />
               </TouchableOpacity>
             ),
+            ...fadeTransition,
           })}
         />
         {/* <Stack.Screen
@@ -1172,7 +1183,9 @@ export const useRoute = isAuth => {
           presentation: 'modal',
           headerShown: false,
           gestureEnabled: false,
-          animation: 'slide_from_bottom',
+          ...(IS_IOS
+            ? TransitionPresets.ModalPresentationIOS
+            : TransitionPresets.RevealFromBottomAndroid),
         }}>
         <Stack.Screen
           name="WalletConnectRequestModal"

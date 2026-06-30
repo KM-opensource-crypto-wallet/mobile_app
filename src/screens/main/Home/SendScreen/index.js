@@ -68,7 +68,6 @@ import {clearSelectedUTXOs} from 'dok-wallet-blockchain-networks/redux/currentTr
 import {isCustomDerivedChecked} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import UnclaimedBottomSheet from 'components/UnclaimedBottomSheet';
 import ModalDelegation from 'components/ModalDelegation';
-import {IS_IOS} from 'utils/dimensions';
 
 const SendScreen = ({navigation, route}) => {
   const currentCoin = useSelector(selectCurrentCoin);

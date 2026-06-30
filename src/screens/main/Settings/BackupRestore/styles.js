@@ -1,5 +1,4 @@
 import {StyleSheet} from 'react-native';
-import {IS_IOS} from 'utils/dimensions';
 
 const myStyles = (theme, bottom) =>
   StyleSheet.create({
