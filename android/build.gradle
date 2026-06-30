@@ -20,9 +20,3 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
-
-allprojects {
-    repositories {
-        maven { url "https://maven.sumsub.com/repository/maven-public/" }
-    }
-}
