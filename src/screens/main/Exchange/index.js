@@ -61,12 +61,17 @@ import ExchangeProviderItem from 'components/ExchangeProviderItem';
 import {getExchangeProviders} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
+const SLIPPAGE_PRESETS = [0.1, 0.5, 1];
+const MAX_SLIPPAGE = 50;
+const HIGH_SLIPPAGE_THRESHOLD = 5;
+
 const calculateEstimatePrice = async (
   selectedFromAsset,
   selectedToAsset,
   data,
   dispatch,
   callback,
+  slippage,
 ) => {
   const fromSymbol = selectedFromAsset?.symbol;
   const fromNetwork = selectedFromAsset?.chain_symbol;
@@ -85,6 +90,7 @@ const calculateEstimatePrice = async (
     fromContractAddress: selectedFromAsset?.contractAddress,
     toContractAddress: selectedToAsset?.contractAddress,
     fromAddress: selectedFromAsset?.address,
+    slippage: Number(slippage) || 0.5,
   };
 
   const resp = await getExchangeQuote(payload);
@@ -144,12 +150,16 @@ const Exchange = ({navigation}) => {
     fiatPay,
     availableProviders,
     selectedExchangeChain,
+    slippage,
   } = useSelector(getExchange);
   const localCurrency = useSelector(getLocalCurrency);
 
   const keyboardHeight = useKeyboardHeight();
 
   const [isFetching, setIsFetching] = useState({from: false, to: false});
+  const [showCustomSlippage, setShowCustomSlippage] = useState(
+    () => !SLIPPAGE_PRESETS.includes(Number(slippage)),
+  );
 
   const minimumAmountRef = useRef({});
   const sliderRef = useRef();
@@ -169,6 +179,7 @@ const Exchange = ({navigation}) => {
         localData,
         localDispatch,
         callback,
+        localSlippage,
       ) =>
         calculateEstimatePrice(
           localSelectedFromAsset,
@@ -176,6 +187,7 @@ const Exchange = ({navigation}) => {
           localData,
           localDispatch,
           callback,
+          localSlippage,
         ),
       1000,
     ),
@@ -222,10 +234,17 @@ const Exchange = ({navigation}) => {
           () => {
             setIsFetching({from: false, to: false});
           },
+          slippage,
         );
       }
     },
-    [debounceEstimateAmount, dispatch, selectedFromAsset, selectedToAsset],
+    [
+      debounceEstimateAmount,
+      dispatch,
+      selectedFromAsset,
+      selectedToAsset,
+      slippage,
+    ],
   );
 
   const onSliderValueChange = useCallback(
@@ -340,6 +359,7 @@ const Exchange = ({navigation}) => {
           toContractAddress: localSelectToAsset?.contractAddress,
           isFetchMinimum: true,
           fromAddress: localSelectFromAsset?.address,
+          slippage: Number(slippage) || 0.5,
         };
         if (!minimumValue) {
           payload.amount = null;
@@ -385,7 +405,12 @@ const Exchange = ({navigation}) => {
         setIsFetching({from: false, to: false});
       }
     },
-    [dispatch, selectedFromAsset?.currencyRate, selectedFromAsset?.totalAmount],
+    [
+      dispatch,
+      selectedFromAsset?.currencyRate,
+      selectedFromAsset?.totalAmount,
+      slippage,
+    ],
   );
 
   useEffect(() => {
@@ -522,6 +547,31 @@ const Exchange = ({navigation}) => {
   const onDismissAddCoinsSheet = useCallback(() => {
     addMoreCoinsSheet?.current?.close?.();
   }, []);
+
+  const onSelectSlippagePreset = useCallback(
+    preset => {
+      setShowCustomSlippage(false);
+      dispatch(setExchangeFields({slippage: preset + ''}));
+    },
+    [dispatch],
+  );
+
+  const onPressCustomSlippage = useCallback(() => {
+    setShowCustomSlippage(true);
+  }, []);
+
+  const onChangeCustomSlippage = useCallback(
+    text => {
+      const sanitized = validateNumberInInput(text, 2);
+      const numericValue = validateNumber(sanitized);
+      if (numericValue !== null && numericValue > MAX_SLIPPAGE) {
+        dispatch(setExchangeFields({slippage: MAX_SLIPPAGE + ''}));
+        return;
+      }
+      dispatch(setExchangeFields({slippage: sanitized}));
+    },
+    [dispatch],
+  );
 
   const fromSymbol = selectedFromAsset?.symbol;
   const fromNetwork = selectedFromAsset?.chain_symbol;
@@ -797,6 +847,63 @@ const Exchange = ({navigation}) => {
                   ))}
                 </>
               )}
+              <View style={styles.slippageSection}>
+                <View style={styles.lable}>
+                  <Text style={styles.title}>Slippage Tolerance</Text>
+                </View>
+                <View style={styles.slippageRow}>
+                  {SLIPPAGE_PRESETS.map(preset => {
+                    const isSelected =
+                      !showCustomSlippage && Number(slippage) === preset;
+                    return (
+                      <TouchableOpacity
+                        key={preset}
+                        style={[
+                          styles.slippagePill,
+                          isSelected && styles.slippagePillSelected,
+                        ]}
+                        onPress={() => onSelectSlippagePreset(preset)}>
+                        <Text
+                          style={[
+                            styles.slippagePillText,
+                            isSelected && styles.slippagePillTextSelected,
+                          ]}>
+                          {`${preset}%`}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                  <TouchableOpacity
+                    style={[
+                      styles.slippagePill,
+                      showCustomSlippage && styles.slippagePillSelected,
+                    ]}
+                    onPress={onPressCustomSlippage}>
+                    <Text
+                      style={[
+                        styles.slippagePillText,
+                        showCustomSlippage && styles.slippagePillTextSelected,
+                      ]}>
+                      Custom
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                {showCustomSlippage && (
+                  <TextInput
+                    style={styles.slippageInput}
+                    keyboardType="numeric"
+                    placeholder="Enter slippage %"
+                    placeholderTextColor={theme.gray}
+                    value={`${slippage}`}
+                    onChangeText={onChangeCustomSlippage}
+                  />
+                )}
+                {Number(slippage) > HIGH_SLIPPAGE_THRESHOLD && (
+                  <Text style={styles.warningText}>
+                    High slippage tolerance may result in an unfavorable trade.
+                  </Text>
+                )}
+              </View>
               <View style={styles.textContainer}>
                 <Text style={styles.text}>Minimum amount</Text>
                 <View style={styles.amountAvailable}>

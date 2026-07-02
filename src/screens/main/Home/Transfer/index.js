@@ -59,7 +59,10 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import ScurvedIcon from 'assets/images/icons/S-curved.svg';
 import {getExchange} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
-import {calculateExchange} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
+import {
+  calculateExchange,
+  sendSwap,
+} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import FastImage from '@d11/react-native-fast-image';
 import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
 import ValidatorItem from 'components/ValidatorItem';
@@ -312,6 +315,7 @@ const Transfer = ({navigation, route}) => {
                 ? transferData?.selectedVotes
                 : null,
               isBatchTransaction,
+              isSwapFee: isExchangeScreen,
               currentCoin: isBatchTransaction
                 ? transferData?.currentCoin
                 : null,
@@ -402,9 +406,13 @@ const Transfer = ({navigation, route}) => {
   }, []);
 
   const submitTransferData = useCallback(async () => {
+    if (isExchangeScreen && isEVMChain(selectedFromAsset?.chain_name)) {
+      return await dispatch(
+        sendSwap({nonce: customNonce, navigation}),
+      ).unwrap();
+    }
     return await dispatch(
       sendFunds({
-        swapData: transferData?.swapData,
         to: transferData.toAddress,
         memo: transferData.memo,
         nonce: customNonce,
@@ -478,7 +486,7 @@ const Transfer = ({navigation, route}) => {
     ).unwrap();
   }, [
     dispatch,
-    transferData?.swapData,
+    selectedFromAsset?.chain_name,
     transferData.toAddress,
     transferData.memo,
     transferData?.amount,

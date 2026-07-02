@@ -204,6 +204,49 @@ const myStyles = theme =>
       fontWeight: 'bold',
       color: theme.font,
     },
+    slippageSection: {
+      marginTop: 20,
+    },
+    slippageRow: {
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginTop: 8,
+    },
+    slippagePill: {
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: theme.whiteOutline,
+      backgroundColor: theme.secondaryBackgroundColor,
+    },
+    slippagePillSelected: {
+      backgroundColor: theme.background,
+      borderColor: theme.background,
+    },
+    slippagePillText: {
+      color: theme.font,
+      fontSize: 13,
+      fontFamily: 'Roboto-Regular',
+      fontWeight: '500',
+    },
+    slippagePillTextSelected: {
+      color: theme.title,
+    },
+    slippageInput: {
+      marginTop: 12,
+      height: 50,
+      borderWidth: 1,
+      borderRadius: 10,
+      paddingHorizontal: 16,
+      fontSize: 16,
+      fontFamily: 'Roboto-Regular',
+      borderColor: theme.whiteOutline,
+      backgroundColor: theme.secondaryBackgroundColor,
+      color: theme.font,
+    },
   });
 
 export default myStyles;
