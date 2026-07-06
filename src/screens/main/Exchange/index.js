@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import {TextInput as TextField} from 'react-native-paper';
 import structuredClone from '@ungap/structured-clone';
+import {showToast} from 'utils/toast';
 
 import myStyles from './ExchangeStyles';
 
@@ -36,15 +37,21 @@ import {
   getCoinsOptions,
   selectAllWallets,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {getExchange} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
 import {
+  getExchange,
+  getExchangeApproveLoading,
+} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
+import {
+  approveSwapAllowance,
   calculateExchange,
+  fetchExchangeAllowance,
   setExchangeFields,
 } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import BigNumber from 'bignumber.js';
 import {
   calculateSliderValue,
   debounce,
+  isEVMChain,
   multiplyBNWithFixed,
   validateNumber,
   validateNumberInInput,
@@ -60,10 +67,7 @@ import {getExchangeQuote} from 'dok-wallet-blockchain-networks/service/dokApi';
 import ExchangeProviderItem from 'components/ExchangeProviderItem';
 import {getExchangeProviders} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
-
-const SLIPPAGE_PRESETS = [0.1, 0.5, 1];
-const MAX_SLIPPAGE = 50;
-const HIGH_SLIPPAGE_THRESHOLD = 5;
+import AllowanceInfoSheet from 'components/AllowanceInfoSheet';
 
 const calculateEstimatePrice = async (
   selectedFromAsset,
@@ -90,7 +94,7 @@ const calculateEstimatePrice = async (
     fromContractAddress: selectedFromAsset?.contractAddress,
     toContractAddress: selectedToAsset?.contractAddress,
     fromAddress: selectedFromAsset?.address,
-    slippage: Number(slippage) || 0.5,
+    slippage: slippage ? Number(slippage) : undefined,
   };
 
   const resp = await getExchangeQuote(payload);
@@ -152,14 +156,14 @@ const Exchange = ({navigation}) => {
     selectedExchangeChain,
     slippage,
   } = useSelector(getExchange);
+  const exchangeApproveLoading = useSelector(getExchangeApproveLoading);
   const localCurrency = useSelector(getLocalCurrency);
 
   const keyboardHeight = useKeyboardHeight();
 
   const [isFetching, setIsFetching] = useState({from: false, to: false});
-  const [showCustomSlippage, setShowCustomSlippage] = useState(
-    () => !SLIPPAGE_PRESETS.includes(Number(slippage)),
-  );
+  const [isEditingSlippage, setIsEditingSlippage] = useState(false);
+  const [isPreparingAllowance, setIsPreparingAllowance] = useState(false);
 
   const minimumAmountRef = useRef({});
   const sliderRef = useRef();
@@ -169,6 +173,7 @@ const Exchange = ({navigation}) => {
   const coinToRef = useRef();
   const isFocused = useIsFocused();
   const addMoreCoinsSheet = useRef();
+  const exchangeAllowanceSheetRef = useRef();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debounceEstimateAmount = useCallback(
@@ -264,12 +269,6 @@ const Exchange = ({navigation}) => {
     [dispatch, handleFromChange, selectedFromAsset?.totalAmount],
   );
 
-  const handleSubmit = useCallback(async () => {
-    dispatch(setCurrentTransferSuccess(false));
-    navigation.navigate('Transfer', {fromScreen: 'Exchange'});
-    dispatch(calculateExchange());
-  }, [dispatch, navigation]);
-
   const getCoinDetails = useCallback(
     coinDetails => {
       let selectedCoinDetails = {};
@@ -359,7 +358,7 @@ const Exchange = ({navigation}) => {
           toContractAddress: localSelectToAsset?.contractAddress,
           isFetchMinimum: true,
           fromAddress: localSelectFromAsset?.address,
-          slippage: Number(slippage) || 0.5,
+          slippage: slippage ? Number(slippage) : undefined,
         };
         if (!minimumValue) {
           payload.amount = null;
@@ -548,30 +547,21 @@ const Exchange = ({navigation}) => {
     addMoreCoinsSheet?.current?.close?.();
   }, []);
 
-  const onSelectSlippagePreset = useCallback(
-    preset => {
-      setShowCustomSlippage(false);
-      dispatch(setExchangeFields({slippage: preset + ''}));
-    },
-    [dispatch],
-  );
-
-  const onPressCustomSlippage = useCallback(() => {
-    setShowCustomSlippage(true);
+  const onPressSlippage = useCallback(() => {
+    setIsEditingSlippage(true);
   }, []);
 
-  const onChangeCustomSlippage = useCallback(
+  const onChangeSlippageValue = useCallback(
     text => {
       const sanitized = validateNumberInInput(text, 2);
-      const numericValue = validateNumber(sanitized);
-      if (numericValue !== null && numericValue > MAX_SLIPPAGE) {
-        dispatch(setExchangeFields({slippage: MAX_SLIPPAGE + ''}));
-        return;
-      }
       dispatch(setExchangeFields({slippage: sanitized}));
     },
     [dispatch],
   );
+
+  const onDoneEditingSlippage = useCallback(() => {
+    setIsEditingSlippage(false);
+  }, []);
 
   const fromSymbol = selectedFromAsset?.symbol;
   const fromNetwork = selectedFromAsset?.chain_symbol;
@@ -581,6 +571,8 @@ const Exchange = ({navigation}) => {
   if (fromSymbol && fromNetwork && toNetwork && toSymbol) {
     minimumValue = selectedExchangeChain?.minAmount || null;
   }
+  const backendSlippage = selectedExchangeChain?.extraData?.slippage;
+  const displaySlippage = slippage || backendSlippage;
   const isMinimumValueGreater = minimumValue > amountFrom;
   const isBalanceLess = new BigNumber(selectedFromAsset?.totalAmount).lt(
     new BigNumber(amountFrom),
@@ -598,6 +590,63 @@ const Exchange = ({navigation}) => {
     isBalanceLess ||
     isCustomAddressRequire ||
     isFetching.to;
+
+  const isERC20FromAsset =
+    isEVMChain(selectedFromAsset?.chain_name) &&
+    !!selectedFromAsset?.contractAddress;
+  const showApproveAndSwap = isERC20FromAsset && !isButtonDisabled;
+
+  const handleSubmit = async () => {
+    dispatch(setCurrentTransferSuccess(false));
+    if (showApproveAndSwap) {
+      console.log('[ExchangeDebug] entering approve flow', {
+        contractAddress: selectedFromAsset?.contractAddress,
+        chain_name: selectedFromAsset?.chain_name,
+      });
+      setIsPreparingAllowance(true);
+      try {
+        await dispatch(calculateExchange()).unwrap();
+        console.log('[ExchangeDebug] calculateExchange resolved');
+        const result = await dispatch(fetchExchangeAllowance()).unwrap();
+        console.log('[ExchangeDebug] fetchExchangeAllowance result', result);
+        if (result?.isApproved) {
+          console.log(
+            '[ExchangeDebug] already approved, navigating to Transfer',
+          );
+          navigation.navigate('Transfer', {fromScreen: 'Exchange'});
+        } else {
+          console.log(
+            '[ExchangeDebug] not approved, presenting sheet. ref current:',
+            !!exchangeAllowanceSheetRef.current,
+          );
+          exchangeAllowanceSheetRef.current?.present();
+        }
+      } catch (error) {
+        console.log('[ExchangeDebug] threw error', error?.message, error);
+        console.error('Error preparing swap allowance', error);
+        showToast({
+          type: 'errorToast',
+          title: error?.message || 'Failed to check token allowance',
+        });
+      } finally {
+        setIsPreparingAllowance(false);
+      }
+      return;
+    }
+    console.log('[ExchangeDebug] showApproveAndSwap is false, plain Next flow');
+    navigation.navigate('Transfer', {fromScreen: 'Exchange'});
+    dispatch(calculateExchange());
+  };
+
+  const onAllowanceContinue = async () => {
+    try {
+      await dispatch(approveSwapAllowance()).unwrap();
+      exchangeAllowanceSheetRef.current?.close();
+      navigation.navigate('Transfer', {fromScreen: 'Exchange'});
+    } catch (error) {
+      console.error('Error approving swap allowance', error);
+    }
+  };
 
   return (
     <DokSafeAreaView style={styles.container}>
@@ -847,63 +896,6 @@ const Exchange = ({navigation}) => {
                   ))}
                 </>
               )}
-              <View style={styles.slippageSection}>
-                <View style={styles.lable}>
-                  <Text style={styles.title}>Slippage Tolerance</Text>
-                </View>
-                <View style={styles.slippageRow}>
-                  {SLIPPAGE_PRESETS.map(preset => {
-                    const isSelected =
-                      !showCustomSlippage && Number(slippage) === preset;
-                    return (
-                      <TouchableOpacity
-                        key={preset}
-                        style={[
-                          styles.slippagePill,
-                          isSelected && styles.slippagePillSelected,
-                        ]}
-                        onPress={() => onSelectSlippagePreset(preset)}>
-                        <Text
-                          style={[
-                            styles.slippagePillText,
-                            isSelected && styles.slippagePillTextSelected,
-                          ]}>
-                          {`${preset}%`}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                  <TouchableOpacity
-                    style={[
-                      styles.slippagePill,
-                      showCustomSlippage && styles.slippagePillSelected,
-                    ]}
-                    onPress={onPressCustomSlippage}>
-                    <Text
-                      style={[
-                        styles.slippagePillText,
-                        showCustomSlippage && styles.slippagePillTextSelected,
-                      ]}>
-                      Custom
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                {showCustomSlippage && (
-                  <TextInput
-                    style={styles.slippageInput}
-                    keyboardType="numeric"
-                    placeholder="Enter slippage %"
-                    placeholderTextColor={theme.gray}
-                    value={`${slippage}`}
-                    onChangeText={onChangeCustomSlippage}
-                  />
-                )}
-                {Number(slippage) > HIGH_SLIPPAGE_THRESHOLD && (
-                  <Text style={styles.warningText}>
-                    High slippage tolerance may result in an unfavorable trade.
-                  </Text>
-                )}
-              </View>
               <View style={styles.textContainer}>
                 <Text style={styles.text}>Minimum amount</Text>
                 <View style={styles.amountAvailable}>
@@ -912,6 +904,30 @@ const Exchange = ({navigation}) => {
                   }`}</Text>
                 </View>
               </View>
+              {!!selectedExchangeChain && !!backendSlippage && (
+                <View style={styles.textContainer}>
+                  <Text style={styles.text}>Slippage</Text>
+                  {isEditingSlippage ? (
+                    <TextInput
+                      style={styles.textValue}
+                      keyboardType="numeric"
+                      autoFocus={true}
+                      value={`${displaySlippage}`}
+                      onChangeText={onChangeSlippageValue}
+                      onBlur={onDoneEditingSlippage}
+                      onSubmitEditing={onDoneEditingSlippage}
+                    />
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.amountAvailable}
+                      onPress={onPressSlippage}>
+                      <Text style={styles.textValue}>
+                        {`${displaySlippage}%`}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
               <View style={styles.textContainer}>
                 <Text style={{...styles.text, fontFamily: 'Roboto-Bold'}}>
                   You pay
@@ -954,13 +970,20 @@ const Exchange = ({navigation}) => {
                 <TouchableOpacity
                   style={{
                     ...styles.button,
-                    backgroundColor: isButtonDisabled
-                      ? '#708090'
-                      : theme.background,
+                    backgroundColor:
+                      isButtonDisabled || isPreparingAllowance
+                        ? '#708090'
+                        : theme.background,
                   }}
                   onPress={handleSubmit}
-                  disabled={isButtonDisabled}>
-                  <Text style={styles.buttonTitle}>Next</Text>
+                  disabled={isButtonDisabled || isPreparingAllowance}>
+                  {isPreparingAllowance ? (
+                    <ActivityIndicator size="small" color={theme.title} />
+                  ) : (
+                    <Text style={styles.buttonTitle}>
+                      {showApproveAndSwap ? 'Approve and Swap' : 'Next'}
+                    </Text>
+                  )}
                 </TouchableOpacity>
                 <View style={{height: keyboardHeight, width: '100%'}} />
               </View>
@@ -971,6 +994,19 @@ const Exchange = ({navigation}) => {
           bottomSheetRef={ref => (addMoreCoinsSheet.current = ref)}
           onDismiss={onDismissAddCoinsSheet}
         />
+        {isERC20FromAsset && (
+          <AllowanceInfoSheet
+            ref={exchangeAllowanceSheetRef}
+            source="exchange"
+            tokenSymbol={selectedFromAsset?.symbol}
+            requiredAmount={amountFrom}
+            availableAmount={selectedFromAsset?.totalAmount}
+            chainName={selectedFromAsset?.chain_name}
+            chainSymbol={selectedFromAsset?.chain_symbol}
+            approveLoading={exchangeApproveLoading}
+            onContinue={onAllowanceContinue}
+          />
+        )}
         {/*<ModalExchange*/}
         {/*  visible={true}*/}
         {/*  hideModal={setmodalVisible}*/}

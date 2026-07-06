@@ -59,10 +59,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import ScurvedIcon from 'assets/images/icons/S-curved.svg';
 import {getExchange} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
-import {
-  calculateExchange,
-  sendSwap,
-} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
+import {sendSwap} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import FastImage from '@d11/react-native-fast-image';
 import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
 import ValidatorItem from 'components/ValidatorItem';
@@ -533,11 +530,6 @@ const Transfer = ({navigation, route}) => {
   const onSuccess = useCallback(async () => {
     setShowConfirmModal(false);
     await delay(300);
-    if (isExchangeScreen && transferData?.swapData) {
-      await dispatch(calculateExchange())
-        .unwrap()
-        .catch(() => {});
-    }
     const data = await submitTransferData();
     if (redirect_url && data?.tx_hash) {
       try {
@@ -551,14 +543,7 @@ const Transfer = ({navigation, route}) => {
         console.error('Failed to open redirect URL:', error);
       }
     }
-  }, [
-    dispatch,
-    isExchangeScreen,
-    meta,
-    redirect_url,
-    submitTransferData,
-    transferData?.swapData,
-  ]);
+  }, [meta, redirect_url, submitTransferData]);
 
   const handleSubmitForm = () => {
     setShowConfirmModal(true);

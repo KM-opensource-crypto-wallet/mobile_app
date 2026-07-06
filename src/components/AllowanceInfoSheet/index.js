@@ -38,20 +38,21 @@ import {
   getStakingAllowance,
   getStakingAllowanceLoading,
 } from 'dok-wallet-blockchain-networks/redux/staking/stakingSelectors';
+import {fetchExchangeApproveEstimationFee} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import {
-  selectCurrentCoin,
-  selectUserCoins,
-} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+  getExchangeAllowance,
+  getExchangeAllowanceLoading,
+} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
+import {selectUserCoins} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import AdvancedFeesSheet from '../AdvancedFeesSheet';
 import ModalConfirmTransaction from '../ModalConfirmTransaction';
 
-const selectNativeBalance = state => {
-  const currentCoin = selectCurrentCoin(state);
+const selectNativeBalance = (chainName, chainSymbol) => state => {
   const allCoins = selectUserCoins(state);
   const nativeCoin = allCoins.find(
     item =>
-      item.symbol === currentCoin?.chain_symbol &&
-      item.chain_name === currentCoin?.chain_name &&
+      item.symbol === chainSymbol &&
+      item.chain_name === chainName &&
       item.type !== 'token',
   );
   return nativeCoin?.totalAmount || 0;
@@ -60,6 +61,7 @@ const selectNativeBalance = state => {
 const AllowanceInfoSheet = forwardRef(
   (
     {
+      source = 'staking',
       tokenSymbol,
       requiredAmount,
       availableAmount,
@@ -76,10 +78,18 @@ const AllowanceInfoSheet = forwardRef(
     const styles = myStyles(theme);
     const bottomSheetRef = useRef(null);
     const dispatch = useDispatch();
+    const isExchange = source === 'exchange';
+    const contractLabel = isExchange ? 'exchange provider' : 'staking contract';
 
-    const allowanceData = useSelector(getStakingAllowance);
-    const isLoading = useSelector(getStakingAllowanceLoading);
-    const nativeBalance = useSelector(selectNativeBalance);
+    const allowanceData = useSelector(
+      isExchange ? getExchangeAllowance : getStakingAllowance,
+    );
+    const isLoading = useSelector(
+      isExchange ? getExchangeAllowanceLoading : getStakingAllowanceLoading,
+    );
+    const nativeBalance = useSelector(
+      selectNativeBalance(chainName, chainSymbol),
+    );
 
     const [isOpen, setIsOpen] = useState(false);
     const [selectedType, setSelectedType] = useState('manual');
@@ -160,23 +170,26 @@ const AllowanceInfoSheet = forwardRef(
       setIsFetchingFeesAgain(true);
       setHasError(false);
       const latestAllowanceData = allowanceDataRef.current;
-      dispatch(
-        fetchStakingApproveEstimationFee({
-          isFetchNonce: false,
-          stakingProviderName,
-          amount,
-          // First call has no cached nonce → chain layer fetches it once; later
-          // calls reuse it so we never re-fetch the nonce on every refresh.
-          nonce: customNonceRef.current || latestAllowanceData?.nonce,
-          feesType: selectedFeesTypeRef.current,
-          estimateGas: latestAllowanceData?.estimateGas,
-          customGasPrice:
-            selectedFeesTypeRef.current === 'custom'
-              ? customFeesRef.current
-              : undefined,
-          allowanceType: selectedTypeRef.current,
-        }),
-      )
+      const action = isExchange
+        ? fetchExchangeApproveEstimationFee({
+            feesType: selectedFeesTypeRef.current,
+          })
+        : fetchStakingApproveEstimationFee({
+            isFetchNonce: false,
+            stakingProviderName,
+            amount,
+            // First call has no cached nonce → chain layer fetches it once; later
+            // calls reuse it so we never re-fetch the nonce on every refresh.
+            nonce: customNonceRef.current || latestAllowanceData?.nonce,
+            feesType: selectedFeesTypeRef.current,
+            estimateGas: latestAllowanceData?.estimateGas,
+            customGasPrice:
+              selectedFeesTypeRef.current === 'custom'
+                ? customFeesRef.current
+                : undefined,
+            allowanceType: selectedTypeRef.current,
+          });
+      dispatch(action)
         .unwrap()
         .then(() => {
           setIsFetchingFeesAgain(false);
@@ -188,13 +201,13 @@ const AllowanceInfoSheet = forwardRef(
           isFetchingFeesRef.current = false;
           setHasError(true);
         });
-    }, [dispatch, stakingProviderName, amount]);
+    }, [dispatch, stakingProviderName, amount, isExchange]);
 
     // Single source of fee refresh: fire once when the sheet opens, then every
     // 10s. The tick is gated by refs (in-flight + pause), so it never piles up
     // and never runs while custom fees are selected or a transaction is pending.
     useEffect(() => {
-      if (!isOpen || !stakingProviderName || !amount) {
+      if (!isOpen || (!isExchange && (!stakingProviderName || !amount))) {
         return;
       }
       fetchEstimationFee();
@@ -204,7 +217,7 @@ const AllowanceInfoSheet = forwardRef(
         }
       }, 10000);
       return () => clearInterval(interval);
-    }, [isOpen, stakingProviderName, amount, fetchEstimationFee]);
+    }, [isOpen, stakingProviderName, amount, isExchange, fetchEstimationFee]);
 
     // customizing the ref
     useImperativeHandle(ref, () => ({
@@ -426,9 +439,11 @@ const AllowanceInfoSheet = forwardRef(
                   {/* Approval type cards */}
                   <Text style={styles.sectionLabel}>Select Approval Type</Text>
                   <Text style={styles.whatIsApprove}>
-                    {`Approval is a one-time on-chain permission that lets the staking contract use your ${
+                    {`Approval is a one-time on-chain permission that lets the ${contractLabel} use your ${
                       tokenSymbol || 'tokens'
-                    }. Your tokens stay in your wallet until you stake.`}
+                    }. Your tokens stay in your wallet until you ${
+                      isExchange ? 'swap' : 'stake'
+                    }.`}
                   </Text>
                   <View style={styles.cardsRow}>
                     <TouchableOpacity
@@ -556,30 +571,34 @@ const AllowanceInfoSheet = forwardRef(
                               : styles.selectionNoteSafe,
                           ]}>
                           {selectedType === 'unlimited'
-                            ? `The staking contract can move any amount of your ${
+                            ? `The ${contractLabel} can move any amount of your ${
                                 tokenSymbol || 'tokens'
-                              } until you revoke it. Saves fees and time on future stakes — choose only for protocols you trust.`
-                            : "Safest option. The contract can only ever move this exact amount — you'll need to approve again for future stakes."}
+                              } until you revoke it. Saves fees and time on future ${
+                                isExchange ? 'swaps' : 'stakes'
+                              } — choose only for protocols you trust.`
+                            : `Safest option. The contract can only ever move this exact amount — you'll need to approve again for future ${
+                                isExchange ? 'swaps' : 'stakes'
+                              }.`}
                         </Text>
                       </View>
                       <Text style={styles.hint}>
-                        Approval transaction will be submitted before staking.
+                        {`Approval transaction will be submitted before ${
+                          isExchange ? 'swapping' : 'staking'
+                        }.`}
                       </Text>
                     </>
                   )}
-                  {/* Network Fee Row — tap to open AdvancedFeesSheet */}
-                  <TouchableOpacity
-                    style={styles.feeRow}
-                    onPress={() => advancedFeesSheetRef.current?.present()}>
-                    <View style={styles.feeLabelRow}>
-                      <MaterialCommunityIcons
-                        name="gas-station"
-                        size={16}
-                        color={theme.background}
-                      />
-                      <Text style={styles.feeSectionLabel}>Network Fee</Text>
-                    </View>
-                    <View style={styles.feeValueRow}>
+                  {/* Network Fee Row — tap to open AdvancedFeesSheet (staking only; exchange is read-only) */}
+                  {isExchange ? (
+                    <View style={styles.feeRow}>
+                      <View style={styles.feeLabelRow}>
+                        <MaterialCommunityIcons
+                          name="gas-station"
+                          size={16}
+                          color={theme.background}
+                        />
+                        <Text style={styles.feeSectionLabel}>Network Fee</Text>
+                      </View>
                       <Text style={styles.feeSectionValue}>
                         {isFetchingFeesAgain
                           ? 'Refreshing...'
@@ -587,13 +606,35 @@ const AllowanceInfoSheet = forwardRef(
                               chainSymbol || ''
                             }`}
                       </Text>
-                      <MaterialCommunityIcons
-                        name="chevron-right"
-                        size={18}
-                        color={theme.gray}
-                      />
                     </View>
-                  </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.feeRow}
+                      onPress={() => advancedFeesSheetRef.current?.present()}>
+                      <View style={styles.feeLabelRow}>
+                        <MaterialCommunityIcons
+                          name="gas-station"
+                          size={16}
+                          color={theme.background}
+                        />
+                        <Text style={styles.feeSectionLabel}>Network Fee</Text>
+                      </View>
+                      <View style={styles.feeValueRow}>
+                        <Text style={styles.feeSectionValue}>
+                          {isFetchingFeesAgain
+                            ? 'Refreshing...'
+                            : `${allowanceData?.transactionFee || '0'} ${
+                                chainSymbol || ''
+                              }`}
+                        </Text>
+                        <MaterialCommunityIcons
+                          name="chevron-right"
+                          size={18}
+                          color={theme.gray}
+                        />
+                      </View>
+                    </TouchableOpacity>
+                  )}
                   {isInsufficientFeeBalance ? (
                     <Text style={styles.errorText}>
                       {`Insufficient ${
@@ -631,22 +672,24 @@ const AllowanceInfoSheet = forwardRef(
             visible={showConfirmModal}
             onSuccess={onSuccess}
           />
-          <AdvancedFeesSheet
-            ref={advancedFeesSheetRef}
-            feesOptions={allowanceData?.feesOptions}
-            selectedFeesType={selectedFeesType}
-            customFees={customFees}
-            customNonce={customNonce}
-            chainName={convertedChainName}
-            gasCurrency={GAS_CURRENCY[convertedChainName] || 'Gwei'}
-            onSelectFeesType={onSelectFeesType}
-            onChangeCustomFees={onChangeCustomFees}
-            onChangeCustomNonce={onChangeCustomNonce}
-            // Opens OVER the allowance sheet: layer above it and keep the
-            // allowance sheet mounted (dimmed + non-interactive) underneath.
-            zIndex={10001}
-            stackBehavior="push"
-          />
+          {!isExchange && (
+            <AdvancedFeesSheet
+              ref={advancedFeesSheetRef}
+              feesOptions={allowanceData?.feesOptions}
+              selectedFeesType={selectedFeesType}
+              customFees={customFees}
+              customNonce={customNonce}
+              chainName={convertedChainName}
+              gasCurrency={GAS_CURRENCY[convertedChainName] || 'Gwei'}
+              onSelectFeesType={onSelectFeesType}
+              onChangeCustomFees={onChangeCustomFees}
+              onChangeCustomNonce={onChangeCustomNonce}
+              // Opens OVER the allowance sheet: layer above it and keep the
+              // allowance sheet mounted (dimmed + non-interactive) underneath.
+              zIndex={10001}
+              stackBehavior="push"
+            />
+          )}
         </DokBottomSheet>
       </>
     );
