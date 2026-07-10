@@ -1,10 +1,17 @@
-import {persistStore, persistCombineReducers} from 'redux-persist';
+import {
+  persistStore,
+  persistCombineReducers,
+  createTransform,
+} from 'redux-persist';
 import createSensitiveStorage from 'redux-persist-sensitive-storage';
 import {configureStore} from '@reduxjs/toolkit';
 
 import {authSlice} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {settingsSlice} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
-import {walletsSlice} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {
+  RELOCK_OPTIONS,
+  walletsSlice,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {currentTransferSlice} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {currencySlice} from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
 import {exchangeSlice} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
@@ -31,10 +38,24 @@ const storage = createSensitiveStorage({
   // sharedPreferencesName: process.env.REDUX_SHARED_PREFERENCE_NAME,
   accessControl: 'none',
 });
+const walletsPersistTransform = createTransform(
+  inboundState => ({
+    ...inboundState,
+    allWallets: inboundState?.allWallets?.map(wallet =>
+      wallet?.hideSettings &&
+      wallet.hideSettings.relockOption !== RELOCK_OPTIONS.MANUAL
+        ? {...wallet, hideSettings: {...wallet.hideSettings, isRevealed: false}}
+        : wallet,
+    ),
+  }),
+  outboundState => outboundState,
+  {whitelist: [walletsSlice.name]},
+);
 
 const config = {
   key: process.env.REDUX_KEY,
   storage,
+  transforms: [walletsPersistTransform],
   blacklist: [
     currentTransferSlice.name,
     exchangeSlice.name,

@@ -18,6 +18,7 @@ import {
   getCurrencyLoading,
   getMissingCoins,
 } from 'dok-wallet-blockchain-networks/redux/currency/currencySelectors';
+import {markExpectedBackground} from 'utils/expectedBackground';
 import {setMissingCoins} from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
 import {setPaymentData} from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
 import {getPaymentData} from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
@@ -86,6 +87,7 @@ const AddCoins = ({visible, hideModal}) => {
   const handleCloseApp = () => {
     handleDismiss();
     if (paymentData?.redirect_url) {
+      markExpectedBackground();
       Linking.openURL(paymentData.redirect_url);
     }
   };

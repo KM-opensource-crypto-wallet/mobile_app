@@ -10,12 +10,18 @@ import {
   addEVMAndTronDeriveAddresses,
   removeEVMDeriveAddresses,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  isWalletHiddenAndLocked,
+  selectAllWallets,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {Avatar, Switch} from 'react-native-paper';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
 const EVMWalletDerivation = () => {
   const allWallets = useSelector(selectAllWallets);
+  const visibleWallets = allWallets
+    .map((wallet, index) => ({wallet, index}))
+    .filter(({wallet}) => !isWalletHiddenAndLocked(wallet));
 
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
@@ -29,10 +35,10 @@ const EVMWalletDerivation = () => {
           {'Add or remove derives address for all EVM, SOL and TRX coins.'}
         </Text>
         <FlatList
-          data={allWallets}
+          data={visibleWallets}
           contentContainerStyle={styles.contentContainerStyle}
-          keyExtractor={item => item.walletName}
-          renderItem={({item, index}) =>
+          keyExtractor={entry => entry.wallet.walletName}
+          renderItem={({item: {wallet: item, index}}) =>
             item?.isImportWalletWithPrivateKey ? null : (
               <View style={styles.walletBox}>
                 <View style={styles.rowView}>

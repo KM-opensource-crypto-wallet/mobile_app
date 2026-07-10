@@ -7,7 +7,7 @@ import EmptyView from '../EmptyView';
 import {useDispatch, useSelector} from 'react-redux';
 import {selectAllCustomRpc} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSelectors';
 import {deleteCustomRpc} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSlice';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectVisibleWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
   Menu,
   MenuOption,
@@ -26,7 +26,7 @@ const CustomRPC = () => {
   const {bottom} = useSafeAreaInsets();
   const styles = myStyles(theme, bottom);
   const dispatch = useDispatch();
-  const allWallets = useSelector(selectAllWallets);
+  const allWallets = useSelector(selectVisibleWallets);
   const allCustomRpcList = useSelector(selectAllCustomRpc);
 
   // Group entries by chain_name + customRpcUrl so wallets sharing same RPC appear in one card

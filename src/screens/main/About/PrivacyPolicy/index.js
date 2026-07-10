@@ -4,8 +4,8 @@ import {WebView} from 'react-native-webview';
 import myStyles from './PrivacyPolicyStyles';
 import {ThemeContext} from 'theme/ThemeContext';
 import {useContext} from 'react';
-import {InAppBrowser} from 'react-native-inappbrowser-reborn';
 import {inAppBrowserOptions} from 'utils/common';
+import {openInAppBrowser} from 'utils/inAppBrowser';
 import {URLData} from 'utils/wlData';
 
 const PrivacyPolicy = () => {
@@ -22,7 +22,7 @@ const PrivacyPolicy = () => {
           source={{uri}}
           onShouldStartLoadWithRequest={request => {
             if (request.url !== uri) {
-              InAppBrowser.open(request?.url, inAppBrowserOptions).then();
+              openInAppBrowser(request?.url, inAppBrowserOptions).then();
               return false;
             }
             return true;

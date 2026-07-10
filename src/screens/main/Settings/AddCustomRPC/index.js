@@ -21,7 +21,7 @@ import SelectInput from 'components/SelectInput';
 import {CustomRPCList} from 'dok-wallet-blockchain-networks/helper';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {useDispatch, useSelector} from 'react-redux';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectVisibleWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
   addCustomRpc,
   updateCustomRpc,
@@ -66,7 +66,7 @@ const AddCustomRPC = ({navigation, route}) => {
   }, [route?.params]);
 
   const dispatch = useDispatch();
-  const allWallets = useSelector(selectAllWallets);
+  const allWallets = useSelector(selectVisibleWallets);
   const walletData = useMemo(() => {
     return allWallets.map(wallet => ({
       walletName: wallet?.walletName,

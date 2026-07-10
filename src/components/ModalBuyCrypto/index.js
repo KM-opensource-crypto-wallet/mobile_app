@@ -6,6 +6,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 import {source} from 'deprecated-react-native-prop-types/DeprecatedImagePropType';
 import {InAppBrowser} from 'react-native-inappbrowser-reborn';
 import {inAppBrowserOptions} from 'utils/common';
+import {openInAppBrowser} from 'utils/inAppBrowser';
 import {WL_APP_NAME} from 'utils/wlData';
 
 const WIDTH = Dimensions.get('window').width + 80;
@@ -52,7 +53,7 @@ const ModalBuyCrypto = ({visible, hideModal, navigation, cryptoProvider}) => {
             const url = cryptoProvider.uri;
             const isAvailable = await InAppBrowser.isAvailable();
             if (isAvailable) {
-              await InAppBrowser.open(url, inAppBrowserOptions);
+              await openInAppBrowser(url, inAppBrowserOptions);
             }
           }}>
           <Text style={styles.buttonTitle}>Ok</Text>

@@ -4,11 +4,13 @@ import {useSelector} from 'react-redux';
 import {getDisableMessage} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
 import {CONTACT_DETAILS} from 'utils/wlData';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {markExpectedBackground} from 'utils/expectedBackground';
 
 const DisableComponent = () => {
   const disableMessage = useSelector(getDisableMessage);
   const onPressContactViaEmail = useCallback(async () => {
     try {
+      markExpectedBackground();
       await Linking.openURL(`mailto:${CONTACT_DETAILS.email}`);
     } catch (e) {
       console.error('error in open emails', e);
@@ -18,6 +20,7 @@ const DisableComponent = () => {
   const onPressContactViaTelegram = useCallback(async () => {
     try {
       if (CONTACT_DETAILS.telegram) {
+        markExpectedBackground();
         await Linking.openURL(CONTACT_DETAILS.telegram);
       }
     } catch (e) {

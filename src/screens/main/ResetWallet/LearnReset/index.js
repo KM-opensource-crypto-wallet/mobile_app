@@ -2,8 +2,8 @@ import React, {useContext} from 'react';
 import {View, Text, Linking, TouchableOpacity} from 'react-native';
 import myStyles from './LearnResetStyles';
 import {ThemeContext} from 'theme/ThemeContext';
-import {InAppBrowser} from 'react-native-inappbrowser-reborn';
 import {inAppBrowserOptions} from 'utils/common';
+import {openInAppBrowser} from 'utils/inAppBrowser';
 
 const LearnReset = () => {
   const {theme} = useContext(ThemeContext);
@@ -33,7 +33,7 @@ const LearnReset = () => {
         </Text>
         <TouchableOpacity
           onPress={() => {
-            InAppBrowser.open(
+            openInAppBrowser(
               'https://en.bitcoin.it/wiki/Seed_phrase',
               inAppBrowserOptions,
             ).then();

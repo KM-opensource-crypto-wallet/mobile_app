@@ -34,12 +34,19 @@ import {getLockTime} from 'dok-wallet-blockchain-networks/redux/settings/setting
 import {
   createClientIdIfNotExist,
   createIfNotExistsMasterClientId,
+  rehideWalletsOnBackground,
+  reassignCurrentWalletIfHidden,
+  removeInvalidWallets,
   resetCoinsToDefaultAddressForPrivacyMode,
   resetNfts,
   setCurrentCoin,
   setCurrentWalletIndex,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  _currentWalletIndexSelector,
+  isWalletHiddenAndLocked,
+  selectAllWallets,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {store} from 'redux/store';
 import {
   setupOneSignal,
@@ -62,6 +69,7 @@ import {
   getVersion,
 } from 'react-native-device-info';
 import {IS_ANDROID, IS_IOS} from 'utils/dimensions';
+import {consumeExpectedBackground} from 'utils/expectedBackground';
 import {getCountry} from 'react-native-localize';
 import {MenuProvider} from 'react-native-popup-menu';
 import {
@@ -278,6 +286,8 @@ const Main = () => {
       dispatch(createIfNotExistsMasterClientId());
       dispatch(createClientIdIfNotExist());
       dispatch(resetCoinsToDefaultAddressForPrivacyMode());
+      dispatch(removeInvalidWallets());
+      dispatch(reassignCurrentWalletIfHidden());
       const onUrlGet = event => {
         try {
           const url = event.url;
@@ -355,6 +365,22 @@ const Main = () => {
           fetchRPCUrl();
           fetchFeesInfo();
         } else if (nextAppState === 'background') {
+          if (!consumeExpectedBackground()) {
+            const walletIndexBeforeRehide = _currentWalletIndexSelector(
+              store.getState(),
+            );
+            dispatch(rehideWalletsOnBackground());
+            const walletIndexAfterRehide = _currentWalletIndexSelector(
+              store.getState(),
+            );
+
+            if (walletIndexAfterRehide !== walletIndexBeforeRehide) {
+              MainNavigation.reset({
+                index: 0,
+                routes: [{name: 'Sidebar'}],
+              });
+            }
+          }
           lockTimeSet.current = addMinutes(lockTimeRef.current).toISOString();
           if (
             !unsecureRoute.includes(currentRouteName) &&
@@ -389,6 +415,9 @@ const Main = () => {
             ),
           );
       if (walletIndex === -1) {
+        return;
+      }
+      if (isWalletHiddenAndLocked(wallets[walletIndex])) {
         return;
       }
       const coin = wallets[walletIndex].coins?.find(

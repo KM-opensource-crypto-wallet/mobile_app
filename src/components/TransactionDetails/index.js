@@ -24,8 +24,8 @@ import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/se
 import {fetchTransactionByHash} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {currencySymbol} from 'data/currency';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {InAppBrowser} from 'react-native-inappbrowser-reborn';
 import {inAppBrowserOptions} from 'utils/common';
+import {openInAppBrowser} from 'utils/inAppBrowser';
 import {showToast} from 'utils/toast';
 import dayjs from 'dayjs';
 import IoniconIcon from 'react-native-vector-icons/Ionicons';
@@ -217,7 +217,7 @@ const TransactionDetails = ({route, navigation}) => {
 
   const onViewExplorer = useCallback(() => {
     if (transaction?.url) {
-      InAppBrowser.open(transaction.url, inAppBrowserOptions).then();
+      openInAppBrowser(transaction.url, inAppBrowserOptions).then();
     }
   }, [transaction?.url]);
 

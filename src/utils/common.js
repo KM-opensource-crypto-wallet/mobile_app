@@ -3,6 +3,7 @@ import {getBuildNumber, getVersion} from 'react-native-device-info';
 import crypto from 'react-native-quick-crypto';
 import {Linking} from 'react-native';
 import {Platform} from 'react-native';
+import {markExpectedBackground} from 'utils/expectedBackground';
 
 export const inAppBrowserOptions = IS_ANDROID
   ? {
@@ -158,6 +159,7 @@ export const handleTransferRedirect = async (
       url.searchParams.set('meta', safelyStringify(meta));
     }
 
+    markExpectedBackground();
     await Linking.openURL(url.toString());
   } catch (error) {
     console.error('Failed to open redirect URL:', error);

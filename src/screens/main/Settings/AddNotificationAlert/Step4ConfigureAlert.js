@@ -10,7 +10,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {CommonActions} from '@react-navigation/native';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './AddNotificationAlertStyles';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectVisibleWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {getNotificationAlerts} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSelector';
 import {
   createCustomAlert,
@@ -52,7 +52,7 @@ const AddNotificationAlertConfig = ({navigation, route}) => {
   const initialMinAmountMap = route?.params?.minAmountMap || {};
   const initialConfigCoinKey = route?.params?.configCoinKey || null;
 
-  const allWallets = useSelector(selectAllWallets);
+  const allWallets = useSelector(selectVisibleWallets);
   const notificationAlerts = useSelector(getNotificationAlerts);
 
   const selectedWallet = useMemo(

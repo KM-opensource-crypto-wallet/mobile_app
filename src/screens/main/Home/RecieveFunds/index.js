@@ -32,6 +32,7 @@ import {
   getCustomRPCWithData,
   selectAllCustomRpc,
 } from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSelectors';
+import {markExpectedBackground} from 'utils/expectedBackground';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const RecieveFunds = ({navigation}) => {
@@ -70,6 +71,7 @@ const RecieveFunds = ({navigation}) => {
         filename: 'QRCode.png',
         message: address,
       };
+      markExpectedBackground();
       Share.open(shareImageBase64).catch(error => console.log(error));
     });
     setTimeout(() => {

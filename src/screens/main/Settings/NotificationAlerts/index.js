@@ -42,6 +42,7 @@ import {
   openSettings as openNotificationSettings,
   RESULTS,
 } from 'react-native-permissions';
+import {markExpectedBackground} from 'utils/expectedBackground';
 
 const MAX_ALERTS = 20;
 const FIFTEEN_MIN_MS = 15 * 60 * 1000;
@@ -161,6 +162,7 @@ const NotificationAlerts = ({navigation}) => {
   }, [searchText, notificationAlerts]);
 
   const openSettings = useCallback(() => {
+    markExpectedBackground();
     openNotificationSettings('notifications');
   }, []);
 

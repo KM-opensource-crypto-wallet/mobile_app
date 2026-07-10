@@ -14,6 +14,7 @@ import {Portal, Provider, TextInput} from 'react-native-paper';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {ThemeContext} from 'theme/ThemeContext';
 import {InAppBrowser} from 'react-native-inappbrowser-reborn';
+import {openInAppBrowser} from 'utils/inAppBrowser';
 import {getUserCoinsOptions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import FastImage from '@d11/react-native-fast-image';
 import DokDropdown from 'components/DokDropdown';
@@ -119,7 +120,7 @@ const CryptoProviders = () => {
       if (isAvailable) {
         const url = item?.extraData?.url;
         if (item?.extraData?.url) {
-          await InAppBrowser.open(url, inAppBrowserOptions);
+          await openInAppBrowser(url, inAppBrowserOptions);
         } else {
           const resp = await getBuyCryptoUrl({
             ...item,
@@ -130,7 +131,7 @@ const CryptoProviders = () => {
             appVersion: APP_VERSION,
             from_device: Platform.OS,
           });
-          await InAppBrowser.open(resp?.data, inAppBrowserOptions);
+          await openInAppBrowser(resp?.data, inAppBrowserOptions);
         }
       } else {
         console.error('Provider not found');

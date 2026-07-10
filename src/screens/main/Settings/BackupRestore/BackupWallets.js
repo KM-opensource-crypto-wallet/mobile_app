@@ -16,7 +16,7 @@ import Checkbox from 'components/Checkbox';
 import BackupRestoreUserMenu from 'components/BackupRestore/BackupRestoreUserMenu';
 
 import {
-  selectAllWallets,
+  selectVisibleWallets,
   getMasterClientId,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
@@ -40,7 +40,7 @@ const BackupWallets = ({navigation}) => {
   const styles = myStyles(theme, bottom);
   const [userInfo, setUserInfo] = useState(null);
 
-  const allWallets = useSelector(selectAllWallets);
+  const allWallets = useSelector(selectVisibleWallets);
   const masterClientId = useSelector(getMasterClientId);
   const localCurrency = useSelector(getLocalCurrency);
   const symbol = currencySymbol[localCurrency] || '$';

@@ -38,13 +38,22 @@ export const initOneSignal = async () => {
 };
 
 export const logoutOneSignal = () => {
+  if (!_initialized) {
+    return;
+  }
   OneSignal.logout();
 };
 
 export const addNotificationClickListener = callback => {
+  if (!_initialized) {
+    return;
+  }
   OneSignal.Notifications.addEventListener('click', callback);
 };
 
 export const removeNotificationClickListener = callback => {
+  if (!_initialized) {
+    return;
+  }
   OneSignal.Notifications.removeEventListener('click', callback);
 };

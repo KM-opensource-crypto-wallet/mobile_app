@@ -91,6 +91,32 @@ const myStyles = theme =>
       color: 'red',
       fontSize: 15,
     },
+    hideWalletSection: {
+      marginTop: 10,
+      marginBottom: 20,
+      paddingTop: 16,
+      borderTopWidth: 1,
+      borderTopColor: theme.gray,
+    },
+    hideWalletHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingBottom: 8,
+    },
+    hideWalletLabel: {
+      color: theme.font,
+      fontSize: 16,
+      fontFamily: 'Roboto-Regular',
+      fontWeight: 'bold',
+    },
+    infoButton: {
+      marginLeft: 8,
+    },
+    hideToggleError: {
+      marginTop: 8,
+      color: 'red',
+      fontSize: 12,
+    },
   });
 
 export default myStyles;
