@@ -1,6 +1,4 @@
-import {StyleSheet, Dimensions} from 'react-native';
-
-const WIDTH = Dimensions.get('window').width;
+import {StyleSheet} from 'react-native';
 
 const myStyles = theme =>
   StyleSheet.create({
@@ -12,18 +10,7 @@ const myStyles = theme =>
       flex: 1,
       backgroundColor: theme.backgroundColor,
       paddingHorizontal: 20,
-    },
-    formInput: {
-      flex: 1,
       paddingTop: 20,
-    },
-    brand: {
-      color: theme.font,
-      fontSize: 16,
-      marginBottom: 10,
-      textAlign: 'left',
-      fontFamily: 'Roboto-Regular',
-      fontWeight: 'bold',
     },
     input: {
       marginBottom: 20,
@@ -36,40 +23,24 @@ const myStyles = theme =>
       marginLeft: 10,
       fontSize: 12,
     },
-    info: {
-      color: 'red',
-      fontSize: 14,
-      fontFamily: 'Roboto-Regular',
-      marginTop: 10,
-    },
-    listTitle: {
-      color: theme.font,
-      fontSize: 16,
-      marginBottom: 10,
-      textAlign: 'left',
-      fontFamily: 'Roboto-Regular',
-    },
-    item: {
+    hideWalletHeaderRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 20,
+      paddingBottom: 8,
     },
-    itemSection: {
-      marginLeft: 20,
-    },
-    itemIcon: {
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    itemName: {
+    hideWalletLabel: {
       color: theme.font,
       fontSize: 16,
       fontFamily: 'Roboto-Regular',
       fontWeight: 'bold',
     },
-    itemText: {
+    infoButton: {
+      marginLeft: 8,
+    },
+    hideToggleError: {
+      marginTop: 8,
+      color: 'red',
       fontSize: 12,
-      fontFamily: 'Roboto-Regular',
     },
     button: {
       marginTop: 20,
@@ -85,11 +56,6 @@ const myStyles = theme =>
       color: theme.title,
       fontSize: 16,
       fontFamily: 'Roboto-Regular',
-    },
-    textWarning: {
-      marginBottom: 20,
-      color: 'red',
-      fontSize: 15,
     },
   });
 

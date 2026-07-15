@@ -29,6 +29,20 @@ const CONFIRM_BULLETS = [
   "The code is case-insensitive, so it doesn't matter how you typed it.",
 ];
 
+const NOTIFICATION_INFO_BULLETS = [
+  'This controls whether a hidden wallet can still send you push notifications for its alerts (price/transfer alerts, etc).',
+  'Enabled (default): notifications for this wallet are suppressed while it stays hidden, so nothing on your lock screen or notification tray reveals its activity.',
+  "Disabled: you'll keep receiving notifications for this wallet's alerts even while it's hidden.",
+];
+
+const INFO_CONTENT = {
+  info: {title: 'About Hide Wallet', bullets: INFO_BULLETS},
+  notificationInfo: {
+    title: 'About Hide Notifications',
+    bullets: NOTIFICATION_INFO_BULLETS,
+  },
+};
+
 const ModalHideWalletConfirm = ({
   visible,
   mode = 'confirm',
@@ -38,14 +52,15 @@ const ModalHideWalletConfirm = ({
 }) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-  const isInfoMode = mode === 'info';
-  const bullets = isInfoMode
-    ? INFO_BULLETS
-    : [
+  const isConfirmMode = mode === 'confirm';
+  const infoContent = INFO_CONTENT[mode] || INFO_CONTENT.info;
+  const bullets = isConfirmMode
+    ? [
         ...CONFIRM_BULLETS,
         RELOCK_DESCRIPTION[relockOption] ||
           RELOCK_DESCRIPTION[RELOCK_OPTIONS.RELAUNCH],
-      ];
+      ]
+    : infoContent.bullets;
 
   return (
     <Portal>
@@ -53,19 +68,19 @@ const ModalHideWalletConfirm = ({
         visible={visible}
         onDismiss={onCancel}
         contentContainerStyle={styles.contentContainer}
-        dismissable={isInfoMode}>
+        dismissable={!isConfirmMode}>
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}>
           <View style={styles.iconBadge}>
             <MaterialCommunityIcons
-              name={isInfoMode ? 'information-outline' : 'eye-off-outline'}
+              name={isConfirmMode ? 'eye-off-outline' : 'information-outline'}
               size={26}
               color={theme.background}
             />
           </View>
           <Text style={styles.title}>
-            {isInfoMode ? 'About Hide Wallet' : 'Hide this wallet?'}
+            {isConfirmMode ? 'Hide this wallet?' : infoContent.title}
           </Text>
           <View style={styles.bulletList}>
             {bullets.map((bullet, index) => (
@@ -77,7 +92,7 @@ const ModalHideWalletConfirm = ({
           </View>
         </ScrollView>
         <View style={styles.btnList}>
-          {isInfoMode ? (
+          {!isConfirmMode ? (
             <TouchableOpacity
               style={styles.primaryBtn}
               activeOpacity={0.85}
