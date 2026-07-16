@@ -44,7 +44,7 @@ const walletsPersistTransform = createTransform(
     allWallets: inboundState?.allWallets?.map(wallet =>
       wallet?.hideSettings &&
       wallet.hideSettings.relockOption !== RELOCK_OPTIONS.MANUAL
-        ? {...wallet, hideSettings: {...wallet.hideSettings, isRevealed: false}}
+        ? {...wallet, hideSettings: {...wallet.hideSettings, isHidden: true}}
         : wallet,
     ),
   }),

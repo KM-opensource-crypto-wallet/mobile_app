@@ -83,9 +83,7 @@ const Wallets = ({navigation}) => {
   const [matchedReveal, setMatchedReveal] = useState(null);
   const isFocus = useIsFocused();
   const displayedWallets = useMemo(() => {
-    const nameMatches = visibleWallets.filter(
-      item => !item?.hideSettings?.isHidden,
-    );
+    const nameMatches = visibleWallets;
     if (!searchQuery) {
       return nameMatches;
     }
@@ -167,7 +165,7 @@ const Wallets = ({navigation}) => {
     newDisplayedOrder => {
       let visibleCursor = 0;
       const newFullOrder = allWallets.map(wallet =>
-        wallet?.hideSettings?.isHidden
+        isWalletHiddenAndLocked(wallet)
           ? wallet
           : newDisplayedOrder[visibleCursor++],
       );
@@ -315,14 +313,11 @@ const Wallets = ({navigation}) => {
                     ]}
                     onPress={() => {
                       if (index !== -1) {
-                        if (
-                          item?.hideSettings?.isHidden &&
-                          !item?.hideSettings?.isRevealed
-                        ) {
+                        if (isWalletHiddenAndLocked(item)) {
                           dispatch(
                             setWalletRevealed({
                               walletIndex: index,
-                              isRevealed: true,
+                              isHidden: false,
                             }),
                           );
                         }

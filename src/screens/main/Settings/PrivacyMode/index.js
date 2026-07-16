@@ -7,18 +7,12 @@ import {useContext} from 'react';
 import {ThemeContext} from 'theme/ThemeContext';
 
 import {togglePrivacyMode} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {
-  isWalletHiddenAndLocked,
-  selectAllWallets,
-} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectVisibleWalletsWithIndex} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {Avatar, Switch} from 'react-native-paper';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
 const PrivacyMode = () => {
-  const allWallets = useSelector(selectAllWallets);
-  const visibleWallets = allWallets
-    .map((wallet, index) => ({wallet, index}))
-    .filter(({wallet}) => !isWalletHiddenAndLocked(wallet));
+  const visibleWallets = useSelector(selectVisibleWalletsWithIndex);
 
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);

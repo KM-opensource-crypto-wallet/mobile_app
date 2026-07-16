@@ -17,6 +17,7 @@ import DokRadioButton from 'components/DokRadioButton';
 import ModalHideWalletConfirm from 'components/ModalHideWalletConfirm';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {
+  _currentWalletIndexSelector,
   isWalletHiddenAndLocked,
   selectAllWalletName,
   selectAllWallets,
@@ -68,9 +69,7 @@ const HideWallet = ({navigation, route}) => {
     [allWalletName, editingWallet?.walletName],
   );
 
-  const [isHideEnabled, setIsHideEnabled] = useState(
-    !!initialHideSettings?.isHidden,
-  );
+  const [isHideEnabled, setIsHideEnabled] = useState(!!initialHideSettings);
   const [secretCode, setSecretCode] = useState('');
   const [secretCodeError, setSecretCodeError] = useState(null);
   const [hideToggleError, setHideToggleError] = useState(null);
@@ -92,7 +91,7 @@ const HideWallet = ({navigation, route}) => {
       index !== Number(walletIndex) && !isWalletHiddenAndLocked(item),
   );
   const isHideToggleDisabled = !isHideEnabled && !hasOtherVisibleWallet;
-  const isSecretCodeRequired = isHideEnabled && !initialHideSettings?.isHidden;
+  const isSecretCodeRequired = isHideEnabled && !initialHideSettings;
   const isHideSectionInvalid =
     isHideEnabled &&
     ((!secretCode && isSecretCodeRequired) ||
@@ -198,6 +197,7 @@ const HideWallet = ({navigation, route}) => {
 
   const performHideSave = useCallback(async () => {
     let syncResult = null;
+    const walletIndexBeforeSave = _currentWalletIndexSelector(store.getState());
     if (isHideEnabled) {
       if (secretCode) {
         // Code was already validated (name-inclusion + not-in-use-by-
@@ -216,7 +216,7 @@ const HideWallet = ({navigation, route}) => {
           }),
         );
         syncResult = await syncAlertsHideNotification(hideNotification);
-      } else if (initialHideSettings?.isHidden) {
+      } else if (initialHideSettings) {
         // Blank code while already hidden = keep the existing code,
         // only the re-lock option/hideNotification may have changed.
         dispatch(
@@ -231,7 +231,7 @@ const HideWallet = ({navigation, route}) => {
         );
         syncResult = await syncAlertsHideNotification(hideNotification);
       }
-    } else if (initialHideSettings?.isHidden) {
+    } else if (initialHideSettings) {
       dispatch(clearWalletHideSettings({walletIndex}));
       // Wallet is no longer hidden - its alerts should behave normally
       // again rather than staying suppressed on the backend forever.
@@ -258,7 +258,19 @@ const HideWallet = ({navigation, route}) => {
       }
       // totalCount === 0: no alerts exist for this wallet - nothing to sync.
     }
-    navigation.goBack();
+    const walletIndexAfterSave = _currentWalletIndexSelector(store.getState());
+    if (walletIndexAfterSave !== walletIndexBeforeSave) {
+      // Hiding/clearing this wallet's settings reassigned the current
+      // wallet out from under whatever screen is below us on the stack
+      // (see reassignCurrentWalletIndexIfHidden) - a plain goBack() would
+      // leave that screen mounted showing the old current wallet's data.
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'Sidebar'}],
+      });
+    } else {
+      navigation.goBack();
+    }
   }, [
     isHideEnabled,
     secretCode,
@@ -370,7 +382,7 @@ const HideWallet = ({navigation, route}) => {
                   value={secretCode}
                   onChangeText={handleSecretCodeChange}
                   placeholder={
-                    initialHideSettings?.isHidden
+                    initialHideSettings
                       ? 'Leave blank to keep current code'
                       : ''
                   }

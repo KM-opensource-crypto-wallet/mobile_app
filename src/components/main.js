@@ -381,14 +381,14 @@ const Main = () => {
               });
             }
           }
+          // Arming the login modal here (while still backgrounding) used to
+          // race the in-app browser's own native modal presentation/dismissal,
+          // leaving the app unresponsive to touches after returning from it
+          // (most visible from TransactionDetails' "View on Explorer"). The
+          // `active` branch's isAfterCurrentDate check already re-arms it
+          // safely once the transition is fully settled, so lockTime === 0
+          // doesn't need a separate pre-arm here.
           lockTimeSet.current = addMinutes(lockTimeRef.current).toISOString();
-          if (
-            !unsecureRoute.includes(currentRouteName) &&
-            currentRouteName !== 'Login' &&
-            lockTimeRef.current === 0
-          ) {
-            setLoginModalVisible(true);
-          }
         }
         appState.current = nextAppState;
       },

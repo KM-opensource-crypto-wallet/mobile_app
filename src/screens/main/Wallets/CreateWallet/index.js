@@ -397,7 +397,7 @@ const CreateWallet = ({navigation, route}) => {
                         <View style={styles.itemSection}>
                           <Text style={styles.itemName}>Hide Wallet</Text>
                           <Text style={{...styles.itemText, color: theme.gray}}>
-                            {editingWallet?.hideSettings?.isHidden
+                            {editingWallet?.hideSettings
                               ? 'Hidden'
                               : 'Not hidden'}
                           </Text>
