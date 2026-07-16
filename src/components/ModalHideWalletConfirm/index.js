@@ -21,6 +21,7 @@ const INFO_BULLETS = [
   "The code is case-insensitive, so it doesn't matter how you type it.",
   'To bring a hidden wallet back, search its exact secret code on the Wallets screen. Partial matches do not reveal it.',
   'Choose how it re-hides itself: on app relaunch (default), as soon as the app is backgrounded, or only when you manually turn this switch off.',
+  'Hidden wallets are skipped when you back up to Google Drive. Unhide a wallet first if you want it included in your backup.',
 ];
 
 const CONFIRM_BULLETS = [
