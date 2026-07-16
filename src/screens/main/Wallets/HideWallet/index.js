@@ -1,4 +1,11 @@
-import React, {useContext, useMemo, useState, useCallback} from 'react';
+import React, {
+  useContext,
+  useMemo,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
 import {
   View,
   Text,
@@ -33,7 +40,6 @@ import {
   deleteAlertThunk,
   updateAlertThunk,
 } from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
-import {debounce} from 'dok-wallet-blockchain-networks/helper';
 import {showToast} from 'utils/toast';
 import {store} from 'redux/store';
 import {
@@ -103,10 +109,22 @@ const HideWallet = ({navigation, route}) => {
 
   // Debounced since PBKDF2 is deliberately slow - runs against every other
   // hidden wallet's stored salt/hash (AC2's "code already in use" rule).
-  const checkDuplicateSecretCode = useMemo(
-    () =>
-      debounce(code => {
-        const inUse = isSecretCodeInUseByOtherWallet(
+  // Uses a manually-managed timeout (rather than the generic debounce
+  // helper) so handleSecretCodeChange can cancel a pending check outright -
+  // otherwise a stale timeout could fire after the input moved on (or the
+  // format became invalid) and clobber a newer/correct secretCodeError.
+  const duplicateCheckTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(duplicateCheckTimeoutRef.current);
+    };
+  }, []);
+
+  const checkDuplicateSecretCode = useCallback(
+    code => {
+      duplicateCheckTimeoutRef.current = setTimeout(async () => {
+        const inUse = await isSecretCodeInUseByOtherWallet(
           store.getState(),
           code,
           walletIndex,
@@ -114,11 +132,13 @@ const HideWallet = ({navigation, route}) => {
         setSecretCodeError(
           inUse ? 'This code is already used by another hidden wallet' : null,
         );
-      }, 300),
+      }, 300);
+    },
     [walletIndex],
   );
 
   const handleSecretCodeChange = text => {
+    clearTimeout(duplicateCheckTimeoutRef.current);
     setSecretCode(text);
     if (!text) {
       setSecretCodeError(null);
@@ -204,7 +224,7 @@ const HideWallet = ({navigation, route}) => {
         // another-wallet) in handleSubmit, before the confirm modal
         // ever opened - nothing async happens between then and here.
         const salt = generateSecretCodeSalt();
-        const hash = hashSecretCode(secretCode, salt);
+        const hash = await hashSecretCode(secretCode, salt);
         dispatch(
           setWalletHideSettings({
             walletIndex,
@@ -283,7 +303,7 @@ const HideWallet = ({navigation, route}) => {
     syncAlertsHideNotification,
   ]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (isHideEnabled) {
       if (secretCode) {
         if (secretCodeIncludesWalletName(secretCode, otherWalletNames)) {
@@ -293,7 +313,7 @@ const HideWallet = ({navigation, route}) => {
           return;
         }
         if (
-          isSecretCodeInUseByOtherWallet(
+          await isSecretCodeInUseByOtherWallet(
             store.getState(),
             secretCode,
             walletIndex,

@@ -201,8 +201,8 @@ const Wallets = ({navigation}) => {
 
   const attemptRevealByCode = useMemo(
     () =>
-      debounce(code => {
-        const result = findHiddenWalletByCode(store.getState(), code);
+      debounce(async code => {
+        const result = await findHiddenWalletByCode(store.getState(), code);
         setMatchedReveal(
           result?.matched
             ? {code: normalizeSecretCode(code), walletName: result.walletName}

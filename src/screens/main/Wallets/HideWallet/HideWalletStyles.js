@@ -19,7 +19,7 @@ const myStyles = theme =>
     textConfirm: {
       marginTop: -15,
       marginBottom: 20,
-      color: 'red',
+      color: theme.error,
       marginLeft: 10,
       fontSize: 12,
     },
@@ -39,7 +39,7 @@ const myStyles = theme =>
     },
     hideToggleError: {
       marginTop: 8,
-      color: 'red',
+      color: theme.error,
       fontSize: 12,
     },
     button: {

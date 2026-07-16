@@ -30,7 +30,25 @@ export const secretCodeIncludesWalletName = (code, walletNames = []) => {
 export const generateSecretCodeSalt = () =>
   crypto.randomBytes(SALT_BYTES).toString('hex');
 
-export const hashSecretCode = (
+const pbkdf2Async = (passwordBuffer, saltBuffer, iterations, keylen, digest) =>
+  new Promise((resolve, reject) => {
+    crypto.pbkdf2(
+      passwordBuffer,
+      saltBuffer,
+      iterations,
+      keylen,
+      digest,
+      (err, derivedKey) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(derivedKey);
+      },
+    );
+  });
+
+export const hashSecretCode = async (
   code,
   salt,
   iterations = SECRET_CODE_ITERATIONS,
@@ -38,16 +56,26 @@ export const hashSecretCode = (
   const normalized = normalizeSecretCode(code);
   const passwordBuffer = Buffer.from(normalized, 'utf8');
   const saltBuffer = Buffer.from(salt, 'hex');
-  return crypto
-    .pbkdf2Sync(passwordBuffer, saltBuffer, iterations, KEY_LENGTH, DIGEST)
-    .toString('hex');
+  const derivedKey = await pbkdf2Async(
+    passwordBuffer,
+    saltBuffer,
+    iterations,
+    KEY_LENGTH,
+    DIGEST,
+  );
+  return derivedKey.toString('hex');
 };
 
-export const verifySecretCode = (code, salt, iterations, expectedHash) => {
+export const verifySecretCode = async (
+  code,
+  salt,
+  iterations,
+  expectedHash,
+) => {
   if (!salt || !iterations || !expectedHash) {
     return false;
   }
-  const computedHash = hashSecretCode(code, salt, iterations);
+  const computedHash = await hashSecretCode(code, salt, iterations);
   const computedBuffer = Buffer.from(computedHash, 'hex');
   const expectedBuffer = Buffer.from(expectedHash, 'hex');
   if (computedBuffer.length !== expectedBuffer.length) {

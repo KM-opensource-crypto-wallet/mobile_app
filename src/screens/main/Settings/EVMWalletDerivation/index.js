@@ -31,7 +31,9 @@ const EVMWalletDerivation = () => {
         <FlatList
           data={visibleWallets}
           contentContainerStyle={styles.contentContainerStyle}
-          keyExtractor={entry => entry.wallet.walletName}
+          keyExtractor={entry =>
+            entry.wallet.clientId || entry.wallet.walletName
+          }
           renderItem={({item: {wallet: item, index}}) =>
             item?.isImportWalletWithPrivateKey ? null : (
               <View style={styles.walletBox}>

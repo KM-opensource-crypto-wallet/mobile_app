@@ -32,7 +32,10 @@ import {
   getCustomRPCWithData,
   selectAllCustomRpc,
 } from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSelectors';
-import {markExpectedBackground} from 'utils/expectedBackground';
+import {
+  markExpectedBackground,
+  consumeExpectedBackground,
+} from 'utils/expectedBackground';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const RecieveFunds = ({navigation}) => {
@@ -72,7 +75,10 @@ const RecieveFunds = ({navigation}) => {
         message: address,
       };
       markExpectedBackground();
-      Share.open(shareImageBase64).catch(error => console.log(error));
+      Share.open(shareImageBase64).catch(error => {
+        consumeExpectedBackground();
+        console.log(error);
+      });
     });
     setTimeout(() => {
       setTempState(prevState => !prevState);
