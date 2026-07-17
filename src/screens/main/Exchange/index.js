@@ -24,6 +24,7 @@ import myStyles from './ExchangeStyles';
 import {shallowEqual, useSelector, useDispatch} from 'react-redux';
 import ArrIcon from 'assets/images/icons/ic_arrow_right.svg';
 import InfoIcon from 'assets/images/icons/info.svg';
+import EditIcon from 'assets/images/icons/edit.svg';
 import ScurvedIcon from 'assets/images/icons/S-curved.svg';
 
 import SelectInputExchange from 'components/SelectInputExchange';
@@ -908,15 +909,23 @@ const Exchange = ({navigation}) => {
                 <View style={styles.textContainer}>
                   <Text style={styles.text}>Slippage</Text>
                   {isEditingSlippage ? (
-                    <TextInput
-                      style={styles.textValue}
-                      keyboardType="numeric"
-                      autoFocus={true}
-                      value={`${displaySlippage}`}
-                      onChangeText={onChangeSlippageValue}
-                      onBlur={onDoneEditingSlippage}
-                      onSubmitEditing={onDoneEditingSlippage}
-                    />
+                    <View style={styles.amountAvailable}>
+                      <TextInput
+                        style={styles.textValue}
+                        keyboardType="numeric"
+                        autoFocus={true}
+                        value={`${displaySlippage}`}
+                        onChangeText={onChangeSlippageValue}
+                        onBlur={onDoneEditingSlippage}
+                        onSubmitEditing={onDoneEditingSlippage}
+                      />
+                      <EditIcon
+                        width={14}
+                        height={14}
+                        fill={theme.gray}
+                        style={styles.editIcon}
+                      />
+                    </View>
                   ) : (
                     <TouchableOpacity
                       style={styles.amountAvailable}
@@ -924,6 +933,12 @@ const Exchange = ({navigation}) => {
                       <Text style={styles.textValue}>
                         {`${displaySlippage}%`}
                       </Text>
+                      <EditIcon
+                        width={14}
+                        height={14}
+                        fill={theme.gray}
+                        style={styles.editIcon}
+                      />
                     </TouchableOpacity>
                   )}
                 </View>

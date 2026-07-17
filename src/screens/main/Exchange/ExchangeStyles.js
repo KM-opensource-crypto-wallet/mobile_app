@@ -48,6 +48,9 @@ const myStyles = theme =>
       marginRight: 5,
       color: theme.gray,
     },
+    editIcon: {
+      marginLeft: 6,
+    },
     scurvedIcon: {
       display: 'flex',
       flexDirection: 'row',
