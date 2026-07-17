@@ -10,14 +10,14 @@ import {
   selectCoinSyncProgress,
   selectIsCreatingWallets,
   selectIsFetching,
-  selectIsBannerDismissed,
   selectSyncingWalletName,
   selectCoinSyncStatus,
 } from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSelectors';
 import {dismissBanner} from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSlice';
+import {dismissCoinSyncBanner} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {myStyles} from './CoinSyncBannerStyles';
 import {
-  isCoinsScanTimestampValid,
+  selectShouldShowCoinSyncBanner,
   selectCurrentWalletClientId,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 
@@ -31,13 +31,12 @@ const CoinSyncBanner = () => {
   const progress = useSelector(selectCoinSyncProgress);
   const isCreatingWallets = useSelector(selectIsCreatingWallets);
   const isFetching = useSelector(selectIsFetching);
-  const isBannerDismissed = useSelector(selectIsBannerDismissed);
   const syncingWalletName = useSelector(selectSyncingWalletName);
   const status = useSelector(selectCoinSyncStatus);
   const isCompleted = status === 'completed';
   const isFailed = status === 'error';
 
-  const isValidTimestamp = useSelector(isCoinsScanTimestampValid);
+  const shouldShowBanner = useSelector(selectShouldShowCoinSyncBanner);
   const currentWalletClientId = useSelector(selectCurrentWalletClientId);
 
   const progressPercent =
@@ -73,15 +72,13 @@ const CoinSyncBanner = () => {
   }, [navigation]);
 
   const onPressClose = useCallback(() => {
-    dispatch(dismissBanner(currentWalletClientId));
+    // Persisted, per-wallet: once closed the banner never shows again
+    dispatch(dismissCoinSyncBanner({clientId: currentWalletClientId}));
+    // Resets a finished scan's completed/error status back to idle
+    dispatch(dismissBanner());
   }, [dispatch, currentWalletClientId]);
 
-  if (
-    (!isValidTimestamp || isBannerDismissed) &&
-    !isSyncing &&
-    !isCompleted &&
-    !isFailed
-  ) {
+  if (!shouldShowBanner && !isSyncing && !isCompleted && !isFailed) {
     return null;
   }
 

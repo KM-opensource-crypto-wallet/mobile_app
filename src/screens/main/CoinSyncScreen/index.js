@@ -1,4 +1,10 @@
-import React, {useCallback, useContext, useMemo, useEffect} from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useMemo,
+  useEffect,
+  useState,
+} from 'react';
 import {
   View,
   FlatList,
@@ -8,7 +14,7 @@ import {
 } from 'react-native';
 import {ThemeContext} from 'theme/ThemeContext';
 import {useSelector, useDispatch} from 'react-redux';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {
   selectCoinSyncStatus,
   selectCoinSyncProgress,
@@ -28,8 +34,14 @@ import {
   toggleCoinSelection,
 } from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSlice';
 import {addCoinsToWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {
+  selectAllWallets,
+  getCurrentWalletIndex,
+  isCoinScanAvailableForTimestamp,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {showToast} from 'utils/toast';
 import CoinSyncItem from 'components/CoinSyncItem';
+import ModalConfirm from 'components/ModalConfirm';
 import InteractionBlocker from 'components/InteractionBlocker';
 import CoinSyncProgress from 'components/CoinSyncProgress';
 import CoinSyncActionButton from 'components/CoinSyncActionButton';
@@ -43,6 +55,19 @@ const CoinSyncScreen = () => {
   const styles = myStyles(theme);
   const dispatch = useDispatch();
   const navigation = useNavigation();
+  const route = useRoute();
+  // Wallet to scan (from the Scan Coins row); undefined = current wallet
+  const targetWalletIndex = route?.params?.walletIndex;
+  const allWallets = useSelector(selectAllWallets);
+  const currentWalletIndex = useSelector(getCurrentWalletIndex);
+  const resolvedWalletIndex =
+    targetWalletIndex !== undefined && targetWalletIndex !== null
+      ? Number(targetWalletIndex)
+      : currentWalletIndex;
+  const targetWalletName =
+    targetWalletIndex !== undefined && targetWalletIndex !== null
+      ? allWallets?.[resolvedWalletIndex]?.walletName || null
+      : null;
 
   // Selectors
   const status = useSelector(selectCoinSyncStatus);
@@ -58,6 +83,9 @@ const CoinSyncScreen = () => {
 
   // Derived state
   const isCompleted = status === 'completed';
+  // Coins found but not yet added - leaving the screen would discard them
+  const hasPendingCoins = isCompleted && coinsWithBalanceCount > 0;
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   const resultsHeaderText = useMemo(() => {
     if (isCompleted) {
@@ -68,10 +96,38 @@ const CoinSyncScreen = () => {
     return '';
   }, [isCompleted, coinsWithBalanceCount]);
 
-  // Block back during wallet creation
+  // Clear leftovers from a previous scan of a DIFFERENT wallet (cancelled or
+  // completed-and-never-dismissed) so this wallet's screen starts pristine.
+  // Never clears an actively running scan or this wallet's own results.
+  useEffect(() => {
+    if (
+      !isSyncing &&
+      syncingWalletIndex !== null &&
+      Number(syncingWalletIndex) !== Number(resolvedWalletIndex)
+    ) {
+      dispatch(resetCoinSync());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Disable iOS swipe-back while found coins are pending, so the user
+  // can't discard them without going through the confirmation modal
+  useEffect(() => {
+    navigation.setOptions({gestureEnabled: !hasPendingCoins});
+  }, [navigation, hasPendingCoins]);
+
+  // Block back during wallet creation; confirm before discarding
+  // pending found coins (Android hardware back)
   useEffect(() => {
     const onBackPress = () => {
-      return isCreatingWallets;
+      if (isCreatingWallets) {
+        return true;
+      }
+      if (hasPendingCoins) {
+        setShowLeaveConfirm(true);
+        return true;
+      }
+      return false;
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -79,12 +135,22 @@ const CoinSyncScreen = () => {
       onBackPress,
     );
     return () => backHandler.remove();
-  }, [isCreatingWallets]);
+  }, [isCreatingWallets, hasPendingCoins]);
 
   // Handlers
   const handleStartSync = useCallback(() => {
-    dispatch(syncAllCoins());
-  }, [dispatch]);
+    const lastScanTimestamp =
+      allWallets?.[resolvedWalletIndex]?.lastCoinsScanTimestamp;
+    if (!isCoinScanAvailableForTimestamp(lastScanTimestamp)) {
+      showToast({
+        type: 'errorToast',
+        title: 'Scan Unavailable',
+        message: 'You can scan each wallet once every 24 hours',
+      });
+      return;
+    }
+    dispatch(syncAllCoins({walletIndex: resolvedWalletIndex}));
+  }, [dispatch, allWallets, resolvedWalletIndex]);
 
   const handleCancel = useCallback(() => {
     dispatch(cancelSync());
@@ -95,11 +161,26 @@ const CoinSyncScreen = () => {
       return;
     }
 
+    if (hasPendingCoins) {
+      setShowLeaveConfirm(true);
+      return;
+    }
+
     if (!isSyncing) {
       dispatch(resetCoinSync());
     }
     navigation.goBack();
-  }, [dispatch, navigation, isSyncing, isCreatingWallets]);
+  }, [dispatch, navigation, isSyncing, isCreatingWallets, hasPendingCoins]);
+
+  const handleConfirmLeave = useCallback(() => {
+    setShowLeaveConfirm(false);
+    dispatch(resetCoinSync());
+    navigation.goBack();
+  }, [dispatch, navigation]);
+
+  const handleCancelLeave = useCallback(() => {
+    setShowLeaveConfirm(false);
+  }, []);
 
   const handleToggleSelection = useCallback(
     index => {
@@ -180,6 +261,8 @@ const CoinSyncScreen = () => {
             <Text style={styles.title} numberOfLines={1}>
               {syncingWalletName && (isSyncing || isCompleted)
                 ? `Sync - ${syncingWalletName}`
+                : targetWalletName
+                ? `Sync - ${targetWalletName}`
                 : 'Sync Coin Balances'}
             </Text>
             <View style={styles.placeholder} />
@@ -223,6 +306,17 @@ const CoinSyncScreen = () => {
         </View>
       </DokSafeAreaView>
       <InteractionBlocker visible={isCreatingWallets} theme={theme} />
+      <ModalConfirm
+        visible={showLeaveConfirm}
+        title={'Discard found coins?'}
+        description={
+          'The coins found in this scan will be removed if you go back without adding them.'
+        }
+        yesButtonTitle={'Discard'}
+        noButtonTitle={'Stay'}
+        onPressYes={handleConfirmLeave}
+        onPressNo={handleCancelLeave}
+      />
     </View>
   );
 };

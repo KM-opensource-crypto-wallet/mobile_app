@@ -15,6 +15,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {Formik} from 'formik';
@@ -41,6 +42,12 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {deleteAlertThunk} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
 import {getNotificationAlerts} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSelector';
+import {
+  selectIsSyncing,
+  selectSyncingWalletIndex,
+  selectSyncingWalletName,
+} from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSelectors';
+import useCoinScanCooldown from 'hooks/useCoinScanCooldown';
 import Spinner from 'components/Spinner';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
@@ -81,6 +88,23 @@ const CreateWallet = ({navigation, route}) => {
   // which is the globally active wallet.
   const editingWallet =
     walletIndex !== undefined ? allWallets[walletIndex] : null;
+
+  // Coin scan (1 per 24h per wallet) targets the wallet being edited
+  const scanTargetIndex = walletIndex ?? currentWalletIndex;
+  const scanWallet = editingWallet ?? currentWallet;
+  const {isAvailable: isScanAvailable, remainingLabel: scanRemainingLabel} =
+    useCoinScanCooldown(scanWallet?.lastCoinsScanTimestamp);
+  const isCoinSyncRunning = useSelector(selectIsSyncing);
+  const syncingWalletIndex = useSelector(selectSyncingWalletIndex);
+  const syncingWalletName = useSelector(selectSyncingWalletName);
+  const isScanningThisWallet =
+    isCoinSyncRunning &&
+    syncingWalletIndex !== null &&
+    Number(syncingWalletIndex) === Number(scanTargetIndex);
+  // Only one scan can run at a time - lock the row while another wallet scans
+  const isScanningOtherWallet = isCoinSyncRunning && !isScanningThisWallet;
+  const isScanRowEnabled =
+    isScanningThisWallet || (isScanAvailable && !isScanningOtherWallet);
 
   const [wrong, setWrong] = useState(false);
   const isCurrentWallet = walletName === defaultNewWalletName;
@@ -408,6 +432,71 @@ const CreateWallet = ({navigation, route}) => {
                           size={22}
                           color={theme.font}
                         />
+                      </TouchableOpacity>
+                    ) : null}
+
+                    {walletName ? (
+                      <TouchableOpacity
+                        style={{
+                          ...styles.item,
+                          opacity: isScanRowEnabled ? 1 : 0.5,
+                        }}
+                        disabled={!isScanRowEnabled}
+                        onPress={() =>
+                          navigation.navigate('CoinSyncScreen', {
+                            walletIndex: Number(scanTargetIndex),
+                          })
+                        }>
+                        <View
+                          style={{
+                            ...styles.scanIconBubble,
+                            ...(!isScanRowEnabled
+                              ? styles.scanIconBubbleDisabled
+                              : {}),
+                          }}>
+                          {isScanningThisWallet ? (
+                            <ActivityIndicator
+                              size="small"
+                              color={theme.background}
+                            />
+                          ) : (
+                            <MaterialCommunityIcons
+                              name={
+                                isScanningOtherWallet
+                                  ? 'timer-sand'
+                                  : isScanAvailable
+                                  ? 'radar'
+                                  : 'clock-outline'
+                              }
+                              size={22}
+                              color={
+                                isScanRowEnabled ? theme.background : theme.gray
+                              }
+                            />
+                          )}
+                        </View>
+                        <View style={styles.itemSection}>
+                          <Text style={styles.itemName}>Scan Coins</Text>
+                          <Text style={{...styles.itemText, color: theme.gray}}>
+                            {isScanningThisWallet
+                              ? 'Scanning in progress — tap to view'
+                              : isScanningOtherWallet
+                              ? syncingWalletName
+                                ? `Scanning "${syncingWalletName}"…`
+                                : 'Another wallet is being scanned…'
+                              : isScanAvailable
+                              ? 'Discover assets across 200+ coins'
+                              : `Available in ${scanRemainingLabel}`}
+                          </Text>
+                        </View>
+                        <View style={{flex: 1}} />
+                        {isScanRowEnabled && (
+                          <MaterialCommunityIcons
+                            name="chevron-right"
+                            size={22}
+                            color={theme.font}
+                          />
+                        )}
                       </TouchableOpacity>
                     ) : null}
                   </ScrollView>
