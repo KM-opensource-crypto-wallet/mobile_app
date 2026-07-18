@@ -10,7 +10,10 @@ import {useDispatch, useSelector} from 'react-redux';
 import {CommonActions} from '@react-navigation/native';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './AddNotificationAlertStyles';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  isWalletHiddenAndLocked,
+  selectAllWallets,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {getNotificationAlerts} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSelector';
 import {
   createCustomAlert,
@@ -89,7 +92,9 @@ const AddNotificationAlertConfig = ({navigation, route}) => {
     const wallet = allWallets.find(
       w => w.clientId === existingAlert.walletClientId,
     );
-    if (!wallet) {
+    // A hidden (locked) wallet's name must never render here - treat it
+    // like a missing wallet if this screen is ever reached for one.
+    if (!wallet || isWalletHiddenAndLocked(wallet)) {
       return [];
     }
     const coin = wallet.coins?.find(c => c._id === existingAlert.coinId);

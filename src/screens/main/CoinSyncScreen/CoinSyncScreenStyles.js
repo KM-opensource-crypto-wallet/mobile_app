@@ -1,4 +1,6 @@
-import {StyleSheet} from 'react-native';
+import {Dimensions, StyleSheet} from 'react-native';
+
+const isIpad = Dimensions.get('window').width >= 768;
 
 const myStyles = theme =>
   StyleSheet.create({
@@ -6,33 +8,13 @@ const myStyles = theme =>
       flex: 1,
       backgroundColor: theme.backgroundColor,
     },
+    // Mirrors the router's shared headerLeftStyle so the back button sits
+    // exactly like every other stack screen's.
+    headerBackButton: {
+      paddingLeft: isIpad ? 50 : 11,
+    },
     container: {
       flex: 1,
-    },
-    navHeaderContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.walletItemColor,
-    },
-    backButton: {
-      width: 40,
-      height: 40,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    title: {
-      fontSize: 18,
-      fontFamily: 'Roboto-Regular',
-      fontWeight: '600',
-      color: theme.font,
-    },
-    placeholder: {
-      width: 40,
-      height: 40,
     },
     headerContainer: {
       padding: 16,

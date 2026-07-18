@@ -40,8 +40,7 @@ import {
   deleteWallet,
   updateWalletName,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {deleteAlertThunk} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
-import {getNotificationAlerts} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSelector';
+import {deleteAlertsForWalletThunk} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
 import {
   selectIsSyncing,
   selectSyncingWalletIndex,
@@ -72,7 +71,6 @@ const CreateWallet = ({navigation, route}) => {
   const finalAllWallets = useRef(
     allWalletName.filter(subItem => subItem !== walletName),
   );
-  const notificationAlerts = useSelector(getNotificationAlerts);
   // const [currentWalletName, setCurrentWalletName] = useState(walletName);
   // const currentWalletName = currentWallet.name;
   // const allCoins = useSelector(getAllCoins);
@@ -189,21 +187,12 @@ const CreateWallet = ({navigation, route}) => {
     const walletToDelete = allWallets.find(
       (_, index) => index.toString() === walletIndex,
     );
-    if (walletToDelete) {
-      // Get notification alerts for this wallet
-      const walletAlerts = notificationAlerts.filter(
-        alert =>
-          alert.walletClientId === walletToDelete.clientId ||
-          alert.walletId === walletToDelete.clientId,
+    if (walletToDelete?.clientId) {
+      // Delete every notification subscription for this wallet in a single
+      // backend call. Wallet deletion proceeds even if this fails.
+      await dispatch(
+        deleteAlertsForWalletThunk({walletClientId: walletToDelete.clientId}),
       );
-
-      // Delete all notification subscriptions for this wallet
-      if (walletAlerts.length > 0) {
-        const deletePromises = walletAlerts.map(alert =>
-          dispatch(deleteAlertThunk({item: alert})),
-        );
-        await Promise.all(deletePromises);
-      }
     }
 
     navigation.reset({
@@ -216,7 +205,7 @@ const CreateWallet = ({navigation, route}) => {
         dispatch(deleteWallet(walletIndex));
       }
     }, 1000);
-  }, [dispatch, navigation, walletIndex, allWallets, notificationAlerts]);
+  }, [dispatch, navigation, walletIndex, allWallets]);
 
   const onPressNo = useCallback(() => {
     setShowDeleteModal(false);

@@ -18,36 +18,55 @@ const RELOCK_DESCRIPTION = {
 const INFO_BULLETS = [
   'Hiding a wallet removes it from the Wallets list and every screen that shows your wallets, including Address Book, Swap and Send/Receive etc.',
   "You'll set a secret code to hide it. The code itself is never stored - only a securely scrambled version of it is kept.",
-  "The code is case-insensitive, so it doesn't matter how you type it.",
   'To bring a hidden wallet back, search its exact secret code on the Wallets screen. Partial matches do not reveal it.',
   'Choose how it re-hides itself: on app relaunch (default), as soon as the app is backgrounded, or only when you manually turn this switch off.',
-  'Hidden wallets are skipped when you back up to Google Drive. Unhide a wallet first if you want it included in your backup.',
+  'While backing up to Google Drive, hidden wallets are not backed up. Turn off Hide Wallet for this wallet if you want it included in your Google Drive backup.',
 ];
 
 const CONFIRM_BULLETS = [
   'This wallet will disappear from the Wallets list and every screen that shows wallets, including Address Book, Swap and Send/Receive.',
   'The only way to bring it back is to search its exact secret code on the Wallets screen.',
-  "The code is case-insensitive, so it doesn't matter how you typed it.",
+  'While backing up to Google Drive, hidden wallets are not backed up. Turn off Hide Wallet for this wallet if you want it included in your Google Drive backup.',
 ];
 
 const NOTIFICATION_INFO_BULLETS = [
-  'This controls whether a hidden wallet can still send you push notifications for its alerts (price/transfer alerts, etc).',
-  'Enabled (default): notifications for this wallet are suppressed while it stays hidden, so nothing on your lock screen or notification tray reveals its activity.',
-  "Disabled: you'll keep receiving notifications for this wallet's alerts even while it's hidden.",
+  "This controls whether this wallet's notification alerts are deleted when the wallet is hidden.",
+  "Enabled (default): all of this wallet's alerts are deleted, so nothing on your lock screen or notification tray reveals its activity.",
+  "Deleted alerts are not restored when you unhide the wallet or turn this off - you'll need to re-create them from the Notification Alerts screen.",
+  "Disabled: this wallet's alerts are kept and you'll keep receiving notifications even while it's hidden.",
 ];
 
 const INFO_CONTENT = {
   info: {title: 'About Hide Wallet', bullets: INFO_BULLETS},
   notificationInfo: {
-    title: 'About Hide Notifications',
+    title: 'About Delete Notifications',
     bullets: NOTIFICATION_INFO_BULLETS,
   },
+};
+
+const s = n => (n > 1 ? 's' : '');
+
+const getNotificationConfirmBullet = (hideNotification, alertsCount) => {
+  if (hideNotification) {
+    return alertsCount > 0
+      ? `Your ${alertsCount} notification alert${s(
+          alertsCount,
+        )} for this wallet will be deleted, so nothing on your lock screen reveals its activity. They won't be restored automatically.`
+      : 'This wallet has no notification alerts - nothing will be deleted.';
+  }
+  return alertsCount > 0
+    ? `Your ${alertsCount} notification alert${s(
+        alertsCount,
+      )} will be kept - you'll keep receiving notifications for this wallet while it's hidden.`
+    : null;
 };
 
 const ModalHideWalletConfirm = ({
   visible,
   mode = 'confirm',
   relockOption,
+  hideNotification,
+  alertsCount = 0,
   onConfirm,
   onCancel,
 }) => {
@@ -55,13 +74,26 @@ const ModalHideWalletConfirm = ({
   const styles = myStyles(theme);
   const isConfirmMode = mode === 'confirm';
   const infoContent = INFO_CONTENT[mode] || INFO_CONTENT.info;
-  const bullets = isConfirmMode
-    ? [
-        ...CONFIRM_BULLETS,
-        RELOCK_DESCRIPTION[relockOption] ||
-          RELOCK_DESCRIPTION[RELOCK_OPTIONS.RELAUNCH],
-      ]
-    : infoContent.bullets;
+  let bullets;
+  if (isConfirmMode) {
+    bullets = [
+      ...CONFIRM_BULLETS,
+      RELOCK_DESCRIPTION[relockOption] ||
+        RELOCK_DESCRIPTION[RELOCK_OPTIONS.RELAUNCH],
+      getNotificationConfirmBullet(hideNotification, alertsCount),
+    ].filter(Boolean);
+  } else if (mode === 'notificationInfo') {
+    bullets = [
+      alertsCount > 0
+        ? `This wallet currently has ${alertsCount} notification alert${s(
+            alertsCount,
+          )}.`
+        : 'This wallet currently has no notification alerts.',
+      ...infoContent.bullets,
+    ];
+  } else {
+    bullets = infoContent.bullets;
+  }
 
   return (
     <Portal>

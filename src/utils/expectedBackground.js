@@ -6,13 +6,11 @@
 let expected = false;
 
 export const markExpectedBackground = () => {
-  console.log('DEBUG markExpectedBackground: expected set to true');
   expected = true;
 };
 
 export const consumeExpectedBackground = () => {
   const wasExpected = expected;
-  console.log('DEBUG consumeExpectedBackground: expected was', wasExpected);
   expected = false;
   return wasExpected;
 };

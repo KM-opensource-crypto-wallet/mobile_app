@@ -7,6 +7,7 @@ import React, {
   useRef,
 } from 'react';
 import {
+  ActivityIndicator,
   View,
   Text,
   TouchableOpacity,
@@ -25,7 +26,6 @@ import ModalHideWalletConfirm from 'components/ModalHideWalletConfirm';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {
   _currentWalletIndexSelector,
-  isWalletHiddenAndLocked,
   selectAllWalletName,
   selectAllWallets,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
@@ -37,7 +37,8 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {getNotificationAlerts} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSelector';
 import {
-  deleteAlertThunk,
+  deleteAlertsForWalletThunk,
+  fetchSubscriptionsThunk,
   updateAlertThunk,
 } from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
 import {showToast} from 'utils/toast';
@@ -46,7 +47,7 @@ import {
   generateSecretCodeSalt,
   hashSecretCode,
   isSecretCodeFormatValid,
-  secretCodeIncludesWalletName,
+  secretCodeMatchesWalletName,
   SECRET_CODE_ITERATIONS,
   SECRET_CODE_MAX_LENGTH,
   SECRET_CODE_MIN_LENGTH,
@@ -88,15 +89,19 @@ const HideWallet = ({navigation, route}) => {
   // null | 'info' | 'confirm' - a single source of truth so the info and
   // confirm modals can never both be considered visible at once.
   const [hideModal, setHideModal] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // AC6: at least one wallet must stay visible. If no OTHER wallet is
-  // currently visible, hiding this one would leave none - disable the
-  // toggle outright instead of letting the user tap it and then blocking.
-  const hasOtherVisibleWallet = allWallets.some(
+  // AC6: at least one wallet must stay PUBLIC (no hideSettings at all). A
+  // merely *revealed* hidden wallet doesn't count - it re-locks on relaunch/
+  // background, which would leave zero visible wallets. Disable the toggle
+  // outright instead of letting the user tap it and then blocking.
+  const hasOtherPublicWallet = allWallets.some(
     (item, index) =>
-      index !== Number(walletIndex) && !isWalletHiddenAndLocked(item),
+      index !== Number(walletIndex) &&
+      !!item?.walletName &&
+      !item?.hideSettings,
   );
-  const isHideToggleDisabled = !isHideEnabled && !hasOtherVisibleWallet;
+  const isHideToggleDisabled = !isHideEnabled && !hasOtherPublicWallet;
   const isSecretCodeRequired = isHideEnabled && !initialHideSettings;
   const isHideSectionInvalid =
     isHideEnabled &&
@@ -120,6 +125,24 @@ const HideWallet = ({navigation, route}) => {
       clearTimeout(duplicateCheckTimeoutRef.current);
     };
   }, []);
+
+  // Sync this wallet's subscriptions from the backend so the alert count
+  // shown in the modals (and the "is there anything to delete?" check in
+  // syncAlertsHideNotification) reflects reality, not just what happens to
+  // be in local state. Fire-and-forget: on failure we fall back to local.
+  useEffect(() => {
+    dispatch(fetchSubscriptionsThunk());
+  }, [dispatch]);
+
+  const walletAlerts = useMemo(
+    () =>
+      notificationAlerts.filter(
+        alert =>
+          alert.walletClientId === editingWallet?.clientId ||
+          alert.walletId === editingWallet?.clientId,
+      ),
+    [notificationAlerts, editingWallet?.clientId],
+  );
 
   const checkDuplicateSecretCode = useCallback(
     code => {
@@ -150,8 +173,8 @@ const HideWallet = ({navigation, route}) => {
       );
       return;
     }
-    if (secretCodeIncludesWalletName(text, otherWalletNames)) {
-      setSecretCodeError('Secret code must not include another wallet name');
+    if (secretCodeMatchesWalletName(text, otherWalletNames)) {
+      setSecretCodeError('Secret code must not be another wallet name');
       return;
     }
     setSecretCodeError(null);
@@ -161,9 +184,9 @@ const HideWallet = ({navigation, route}) => {
   const handleToggleHide = value => {
     // The switch is already `disabled` in this case (see isHideToggleDisabled)
     // - this is just a defensive fallback against it firing anyway.
-    if (value && !hasOtherVisibleWallet) {
+    if (value && !hasOtherPublicWallet) {
       setHideToggleError(
-        'At least one wallet must stay visible. Unhide or add another wallet before hiding this one.',
+        'At least one wallet must stay public. Unhide another wallet or add a new one before hiding this one.',
       );
       return;
     }
@@ -190,20 +213,41 @@ const HideWallet = ({navigation, route}) => {
   // notifications for this wallet again.
   const syncAlertsHideNotification = useCallback(
     async value => {
-      const walletAlerts = notificationAlerts.filter(
-        alert =>
-          alert.walletClientId === editingWallet?.clientId ||
-          alert.walletId === editingWallet?.clientId,
-      );
+      if (value) {
+        // Single bulk call removes every subscription for this wallet on
+        // the backend and purges the wallet's alerts from local state.
+        // Subscriptions were synced from the backend on mount, so an empty
+        // local list means there is genuinely nothing to delete - skip the
+        // API call entirely.
+        if (!editingWallet?.clientId || walletAlerts.length === 0) {
+          return {value, totalCount: 0, failedCount: 0};
+        }
+        try {
+          const result = await dispatch(
+            deleteAlertsForWalletThunk({
+              walletClientId: editingWallet.clientId,
+            }),
+          ).unwrap();
+          return {
+            value,
+            totalCount: result?.deletedCount ?? walletAlerts.length,
+            failedCount: 0,
+          };
+        } catch (e) {
+          return {
+            value,
+            totalCount: walletAlerts.length,
+            failedCount: walletAlerts.length || 1,
+          };
+        }
+      }
       const results = await Promise.allSettled(
         walletAlerts.map(alert =>
-          value
-            ? dispatch(deleteAlertThunk({item: alert})).unwrap()
-            : dispatch(
-                updateAlertThunk({
-                  payload: {...alert, hideNotification: value},
-                }),
-              ).unwrap(),
+          dispatch(
+            updateAlertThunk({
+              payload: {...alert, hideNotification: value},
+            }),
+          ).unwrap(),
         ),
       );
       return {
@@ -212,10 +256,10 @@ const HideWallet = ({navigation, route}) => {
         failedCount: results.filter(r => r.status === 'rejected').length,
       };
     },
-    [notificationAlerts, editingWallet?.clientId, dispatch],
+    [walletAlerts, editingWallet?.clientId, dispatch],
   );
 
-  const performHideSave = useCallback(async () => {
+  const doHideSave = useCallback(async () => {
     let syncResult = null;
     const walletIndexBeforeSave = _currentWalletIndexSelector(store.getState());
     if (isHideEnabled) {
@@ -303,22 +347,34 @@ const HideWallet = ({navigation, route}) => {
     syncAlertsHideNotification,
   ]);
 
+  const performHideSave = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      await doHideSave();
+    } finally {
+      setIsSaving(false);
+    }
+  }, [doHideSave]);
+
   const handleSubmit = useCallback(async () => {
     if (isHideEnabled) {
       if (secretCode) {
-        if (secretCodeIncludesWalletName(secretCode, otherWalletNames)) {
-          setSecretCodeError(
-            'Secret code must not include another wallet name',
-          );
+        if (secretCodeMatchesWalletName(secretCode, otherWalletNames)) {
+          setSecretCodeError('Secret code must not be another wallet name');
           return;
         }
-        if (
-          await isSecretCodeInUseByOtherWallet(
+        setIsSaving(true);
+        let codeInUse;
+        try {
+          codeInUse = await isSecretCodeInUseByOtherWallet(
             store.getState(),
             secretCode,
             walletIndex,
-          )
-        ) {
+          );
+        } finally {
+          setIsSaving(false);
+        }
+        if (codeInUse) {
           setSecretCodeError(
             'This code is already used by another hidden wallet',
           );
@@ -383,7 +439,7 @@ const HideWallet = ({navigation, route}) => {
             {(hideToggleError || isHideToggleDisabled) && (
               <Text style={styles.hideToggleError}>
                 {hideToggleError ||
-                  'At least one wallet must stay visible. Unhide or add another wallet before hiding this one.'}
+                  'At least one wallet must stay public. Unhide another wallet or add a new one before hiding this one.'}
               </Text>
             )}
 
@@ -419,7 +475,9 @@ const HideWallet = ({navigation, route}) => {
                 />
 
                 <View style={styles.hideWalletHeaderRow}>
-                  <Text style={styles.hideWalletLabel}>Hide notifications</Text>
+                  <Text style={styles.hideWalletLabel}>
+                    Delete notifications
+                  </Text>
                   <TouchableOpacity
                     style={styles.infoButton}
                     hitSlop={{top: 10, right: 10, bottom: 10, left: 10}}
@@ -441,13 +499,17 @@ const HideWallet = ({navigation, route}) => {
             )}
           </ScrollView>
           <TouchableOpacity
-            disabled={isHideSectionInvalid}
+            disabled={isHideSectionInvalid || isSaving}
             style={{
               ...styles.button,
               opacity: isHideSectionInvalid ? 0.5 : 1,
             }}
             onPress={handleSubmit}>
-            <Text style={styles.buttonTitle}>Save</Text>
+            {isSaving ? (
+              <ActivityIndicator color={theme.title} />
+            ) : (
+              <Text style={styles.buttonTitle}>Save</Text>
+            )}
           </TouchableOpacity>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
@@ -455,6 +517,8 @@ const HideWallet = ({navigation, route}) => {
         visible={!!hideModal}
         mode={hideModal || 'confirm'}
         relockOption={relockOption}
+        hideNotification={hideNotification}
+        alertsCount={walletAlerts.length}
         onCancel={onCancelHideModal}
         onConfirm={onConfirmHideAndSave}
       />

@@ -3,6 +3,7 @@ import React, {
   useContext,
   useMemo,
   useEffect,
+  useLayoutEffect,
   useState,
 } from 'react';
 import {
@@ -47,7 +48,7 @@ import CoinSyncProgress from 'components/CoinSyncProgress';
 import CoinSyncActionButton from 'components/CoinSyncActionButton';
 import CoinSyncEmptyState from 'components/CoinSyncEmptyState';
 import myStyles from './CoinSyncScreenStyles';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import Back from 'assets/images/sidebarIcons/Back.svg';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
 const CoinSyncScreen = () => {
@@ -172,6 +173,39 @@ const CoinSyncScreen = () => {
     navigation.goBack();
   }, [dispatch, navigation, isSyncing, isCreatingWallets, hasPendingCoins]);
 
+  const headerTitle =
+    syncingWalletName && (isSyncing || isCompleted)
+      ? `Sync - ${syncingWalletName}`
+      : targetWalletName
+      ? `Sync - ${targetWalletName}`
+      : 'Sync Coin Balances';
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: headerTitle,
+      headerLeft: () => (
+        <TouchableOpacity
+          style={styles.headerBackButton}
+          onPress={handleGoBack}
+          disabled={isCreatingWallets}>
+          <Back
+            width="22"
+            height="18"
+            fill={isCreatingWallets ? theme.gray : theme.borderActiveColor}
+          />
+        </TouchableOpacity>
+      ),
+    });
+  }, [
+    navigation,
+    headerTitle,
+    handleGoBack,
+    isCreatingWallets,
+    styles.headerBackButton,
+    theme.gray,
+    theme.borderActiveColor,
+  ]);
+
   const handleConfirmLeave = useCallback(() => {
     setShowLeaveConfirm(false);
     dispatch(resetCoinSync());
@@ -247,27 +281,6 @@ const CoinSyncScreen = () => {
     <View style={styles.safeArea}>
       <DokSafeAreaView style={styles.container}>
         <View style={styles.container}>
-          <View style={styles.navHeaderContainer}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={handleGoBack}
-              disabled={isCreatingWallets}>
-              <MaterialCommunityIcons
-                name="arrow-left"
-                size={24}
-                color={isCreatingWallets ? theme.gray : theme.font}
-              />
-            </TouchableOpacity>
-            <Text style={styles.title} numberOfLines={1}>
-              {syncingWalletName && (isSyncing || isCompleted)
-                ? `Sync - ${syncingWalletName}`
-                : targetWalletName
-                ? `Sync - ${targetWalletName}`
-                : 'Sync Coin Balances'}
-            </Text>
-            <View style={styles.placeholder} />
-          </View>
-
           <FlatList
             data={coinsWithBalance}
             renderItem={renderItem}

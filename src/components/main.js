@@ -70,6 +70,7 @@ import {
 } from 'react-native-device-info';
 import {IS_ANDROID, IS_IOS} from 'utils/dimensions';
 import {consumeExpectedBackground} from 'utils/expectedBackground';
+import {isInAppBrowserSessionActive} from 'utils/inAppBrowser';
 import {getCountry} from 'react-native-localize';
 import {MenuProvider} from 'react-native-popup-menu';
 import {
@@ -105,14 +106,12 @@ import ModalApkDownload from 'components/ModalApkDownload';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import CoinSyncWidget from 'components/CoinSyncWidget';
 
-const unsecureRoute = [
-  'ContactUs',
-  'CryptoProviders',
-  'CarouselCards',
-  'Registration',
-  'TransactionList',
-  'Scanner',
-];
+// Only truly pre-auth screens belong here. Screens whose buttons redirect
+// outside the app (in-app browser, Linking, permission dialogs) are handled
+// by the click-driven self-initiated-background suppression in the AppState
+// listener instead of a blanket route exclusion, so a genuine background on
+// them still locks the app.
+const unsecureRoute = ['CarouselCards', 'Registration'];
 
 let lastCallTimeStamp;
 
@@ -148,6 +147,7 @@ const Main = () => {
   const appState = useRef(AppLifecycle.currentState);
   const lockTimeSet = useRef(null);
   const lockTimeRef = useRef(lockTime);
+  const lastBackgroundSelfInitiated = useRef(false);
   const compareRpcUrlsIntervalRef = useRef(null);
   const disableMessage = useSelector(getDisableMessage);
   const lastUpdateCheckTimestamp = useSelector(getLastUpdateCheckTimestamp);
@@ -357,15 +357,23 @@ const Main = () => {
           if (
             currentRouteName !== 'Login' &&
             !unsecureRoute.includes(currentRouteName) &&
+            !lastBackgroundSelfInitiated.current &&
             isAfterCurrentDate(lockTimeSet.current)
           ) {
             setLoginModalVisible(true);
           }
+          // One-shot: the next background decides again.
+          lastBackgroundSelfInitiated.current = false;
           checkInAppUpdates();
           fetchRPCUrl();
           fetchFeesInfo();
         } else if (nextAppState === 'background') {
-          if (!consumeExpectedBackground()) {
+          // consumeExpectedBackground() must run unconditionally so a
+          // one-shot mark (Linking flows) is always cleared here.
+          const isSelfInitiatedBackground =
+            consumeExpectedBackground() || isInAppBrowserSessionActive();
+          lastBackgroundSelfInitiated.current = isSelfInitiatedBackground;
+          if (!isSelfInitiatedBackground) {
             const walletIndexBeforeRehide = _currentWalletIndexSelector(
               store.getState(),
             );

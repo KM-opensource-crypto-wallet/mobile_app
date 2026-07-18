@@ -40,8 +40,6 @@ import Check from 'assets/images/settings/check.svg';
 import ChangePassword from 'screens/auth/ChangePassword';
 import {LogBox} from 'react-native';
 import AboutApp from 'screens/main/About/AboutApp';
-import TermsConditions from 'screens/main/About/TermsConditions';
-import PrivacyPolicy from 'screens/main/About/PrivacyPolicy';
 import {ThemeContext} from 'theme/ThemeContext';
 import {VerifyLoginScreen} from 'screens/auth/VerifyLoginScreen';
 import Transfer from 'screens/main/Home/Transfer';
@@ -271,36 +269,6 @@ export const useRoute = isAuth => {
         <Stack.Screen
           name="About App"
           component={AboutApp}
-          options={({navigation}) => ({
-            headerLeft: () => (
-              <TouchableOpacity
-                style={styles.headerLeftStyle}
-                onPress={() => navigation.goBack()}>
-                <Back width="22" height="18" fill={theme.borderActiveColor} />
-              </TouchableOpacity>
-            ),
-            ...fadeTransition,
-          })}
-        />
-        <Stack.Screen
-          name="Terms & Conditions"
-          component={TermsConditions}
-          options={({navigation}) => ({
-            title: 'Terms of Use',
-
-            headerLeft: () => (
-              <TouchableOpacity
-                style={styles.headerLeftStyle}
-                onPress={() => navigation.goBack()}>
-                <Back width="22" height="18" fill={theme.borderActiveColor} />
-              </TouchableOpacity>
-            ),
-            ...fadeTransition,
-          })}
-        />
-        <Stack.Screen
-          name="Privacy Policy"
-          component={PrivacyPolicy}
           options={({navigation}) => ({
             headerLeft: () => (
               <TouchableOpacity
@@ -853,7 +821,19 @@ export const useRoute = isAuth => {
         name="CoinSyncScreen"
         component={CoinSyncScreen}
         options={{
-          headerShown: false,
+          headerStyle: {
+            borderBottomColor: theme.headerBorder,
+            borderBottomWidth: 1,
+            backgroundColor: theme.backgroundColor,
+          },
+          headerTitleStyle: {
+            color: theme.borderActiveColor,
+          },
+          title: 'Sync Coin Balances',
+          // headerLeft is set by the screen itself (needs its own back
+          // handling: blocked while creating wallets, confirm on pending
+          // found coins). Null here so no default arrow flashes first.
+          headerLeft: () => null,
           ...fadeTransition,
         }}
       />

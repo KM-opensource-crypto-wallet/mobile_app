@@ -58,6 +58,8 @@ const myStyles = theme =>
       marginLeft: 20,
     },
     itemIcon: {
+      width: 40,
+      height: 40,
       alignItems: 'center',
       justifyContent: 'center',
     },

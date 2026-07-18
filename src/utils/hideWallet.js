@@ -14,17 +14,15 @@ export const normalizeSecretCode = code => (code || '').trim().toLowerCase();
 export const isSecretCodeFormatValid = code =>
   SECRET_CODE_REGEX.test(normalizeSecretCode(code));
 
-// Wallet names are plainly visible in the app, so a secret code that
-// contains one is effectively guessable - defeats the point of hiding.
-export const secretCodeIncludesWalletName = (code, walletNames = []) => {
+// Wallet names are plainly visible in the app - a code that IS another
+// wallet's name would be trivially guessable, and typing that name in the
+// Wallets search box would accidentally reveal the hidden wallet.
+export const secretCodeMatchesWalletName = (code, walletNames = []) => {
   const normalizedCode = normalizeSecretCode(code);
   if (!normalizedCode) {
     return false;
   }
-  return walletNames.some(name => {
-    const normalizedName = normalizeSecretCode(name);
-    return !!normalizedName && normalizedCode.includes(normalizedName);
-  });
+  return walletNames.some(name => normalizeSecretCode(name) === normalizedCode);
 };
 
 export const generateSecretCodeSalt = () =>

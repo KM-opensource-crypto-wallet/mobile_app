@@ -10,7 +10,7 @@ export const inAppBrowserOptions = IS_ANDROID
       forceCloseOnRedirection: false,
       showInRecents: true,
     }
-  : {};
+  : {modalEnabled: true};
 
 export const parseBoolean = value => value === 'true' || value === true;
 

@@ -18,6 +18,7 @@ import {resetWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsS
 import {useDispatch} from 'react-redux';
 import {resetCurrentTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {resetBatchTransactions} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
+import {deleteAlertsForUserThunk} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
 import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
 import googleDrive from '../../utils/googleDriveBackup';
 import {logoutOneSignal} from 'utils/onesignal';
@@ -59,6 +60,11 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
 
   const handlerYes = async () => {
     if (list === 'Delete Account' || list === 'Forgot') {
+      // Remove every notification subscription for this user in one backend
+      // call. Fire-and-forget: the thunk reads the master client id from
+      // state synchronously (before resetWallet clears it), and account
+      // deletion must not be blocked by a network failure.
+      dispatch(deleteAlertsForUserThunk());
       dispatch(resetWallet());
       dispatch(resetCurrentTransferData());
       dispatch(resetBatchTransactions());

@@ -96,7 +96,9 @@ const Wallets = ({navigation}) => {
       const matchedWallet = allWallets.find(
         item => item.walletName === matchedReveal.walletName,
       );
-      if (matchedWallet) {
+      // Once revealed (tapped), the wallet may already be in the name
+      // matches - appending it again would duplicate the row (and its key).
+      if (matchedWallet && !filteredNameMatches.includes(matchedWallet)) {
         return [...filteredNameMatches, matchedWallet];
       }
     }
@@ -181,8 +183,14 @@ const Wallets = ({navigation}) => {
             newCurrentWalletIndex !== -1 ? newCurrentWalletIndex : undefined,
         }),
       );
+      // A manual rearrange means the user is taking over the ordering. If a
+      // sort option stayed active, the mount-time sortWallets dispatch would
+      // silently discard this order on the next visit to this screen.
+      if (sortOption !== WALLET_SORT_OPTIONS.DEFAULT) {
+        dispatch(setWalletsSortOption(WALLET_SORT_OPTIONS.DEFAULT));
+      }
     },
-    [allWallets, currentWallet, dispatch],
+    [allWallets, currentWallet, sortOption, dispatch],
   );
 
   const onPressMove = useCallback(
