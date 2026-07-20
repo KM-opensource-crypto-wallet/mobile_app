@@ -26,6 +26,11 @@ export const VerifyCreate = ({navigation, route}) => {
     } else {
       disabledPreventScreenshot().then(_ => {});
     }
+    // Always deactivate on unmount too, so FLAG_SECURE can't be left set if the
+    // screen unmounts while still focused.
+    return () => {
+      disabledPreventScreenshot().then(_ => {});
+    };
   }, [isFocused]);
 
   if (!currentWallet?.phrase) {

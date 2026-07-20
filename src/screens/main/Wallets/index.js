@@ -270,6 +270,11 @@ const Wallets = ({navigation}) => {
           style={styles.input}
           onChangeText={handleSearch}
           autoFocus={false}
+          onSubmitEditing={() => Keyboard.dismiss()}
+          autoCorrect={false}
+          autoComplete="off"
+          autoCapitalize="none"
+          spellCheck={false}
           inputStyle={{minHeight: 0}}
         />
 
