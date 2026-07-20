@@ -168,6 +168,7 @@ const Exchange = ({navigation}) => {
 
   const minimumAmountRef = useRef({});
   const sliderRef = useRef();
+  const scrollViewRef = useRef();
 
   const dispatch = useDispatch();
   const coinFromRef = useRef();
@@ -564,6 +565,12 @@ const Exchange = ({navigation}) => {
     setIsEditingSlippage(false);
   }, []);
 
+  useEffect(() => {
+    if (isEditingSlippage && keyboardHeight > 0) {
+      scrollViewRef.current?.scrollToEnd({animated: true});
+    }
+  }, [isEditingSlippage, keyboardHeight]);
+
   const fromSymbol = selectedFromAsset?.symbol;
   const fromNetwork = selectedFromAsset?.chain_symbol;
   let minimumValue = null;
@@ -653,6 +660,7 @@ const Exchange = ({navigation}) => {
     <DokSafeAreaView style={styles.container}>
       <View style={styles.container}>
         <ScrollView
+          ref={scrollViewRef}
           contentContainerStyle={styles.contentContainerStyle}
           keyboardShouldPersistTaps={'always'}>
           <TouchableWithoutFeedback
