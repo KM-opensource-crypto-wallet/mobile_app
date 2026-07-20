@@ -42,7 +42,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {showToast} from 'utils/toast';
 import CoinSyncItem from 'components/CoinSyncItem';
-import ModalConfirm from 'components/ModalConfirm';
+import CoinSyncDiscardModal from 'components/CoinSyncDiscardModal';
 import InteractionBlocker from 'components/InteractionBlocker';
 import CoinSyncProgress from 'components/CoinSyncProgress';
 import CoinSyncActionButton from 'components/CoinSyncActionButton';
@@ -319,16 +319,12 @@ const CoinSyncScreen = () => {
         </View>
       </DokSafeAreaView>
       <InteractionBlocker visible={isCreatingWallets} theme={theme} />
-      <ModalConfirm
+      <CoinSyncDiscardModal
         visible={showLeaveConfirm}
-        title={'Discard found coins?'}
-        description={
-          'The coins found in this scan will be removed if you go back without adding them.'
-        }
-        yesButtonTitle={'Discard'}
-        noButtonTitle={'Stay'}
-        onPressYes={handleConfirmLeave}
-        onPressNo={handleCancelLeave}
+        coinCount={coinsWithBalanceCount}
+        walletName={syncingWalletName || targetWalletName}
+        onDiscard={handleConfirmLeave}
+        onStay={handleCancelLeave}
       />
     </View>
   );

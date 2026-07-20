@@ -36,7 +36,6 @@ import {
   createIfNotExistsMasterClientId,
   rehideWalletsOnBackground,
   reassignCurrentWalletIfHidden,
-  removeInvalidWallets,
   resetCoinsToDefaultAddressForPrivacyMode,
   resetNfts,
   setCurrentCoin,
@@ -286,7 +285,6 @@ const Main = () => {
       dispatch(createIfNotExistsMasterClientId());
       dispatch(createClientIdIfNotExist());
       dispatch(resetCoinsToDefaultAddressForPrivacyMode());
-      dispatch(removeInvalidWallets());
       dispatch(reassignCurrentWalletIfHidden());
       const onUrlGet = event => {
         try {

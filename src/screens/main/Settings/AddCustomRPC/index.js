@@ -113,11 +113,24 @@ const AddCustomRPC = ({navigation, route}) => {
           });
           return;
         }
+        // The picker only lists visible wallets, but the existing
+        // association set may include hidden (locked) wallets. updateCustomRpc
+        // rebuilds the chain's entries from this payload, so carry those
+        // unpickable IDs forward or their association is silently dropped.
+        const pickerClientIds = new Set(
+          (values?.wallets || []).map(item => item.clientId),
+        );
+        const preservedClientIds = (previousData?.wallets || []).filter(
+          clientId => !pickerClientIds.has(clientId),
+        );
         const payload = {
           chain_name,
           chain_display_name,
           customRpcUrl,
-          wallets: selectedWallets?.map(item => item.clientId),
+          wallets: [
+            ...(selectedWallets?.map(item => item.clientId) || []),
+            ...preservedClientIds,
+          ],
         };
         if (previousData?.chain_name) {
           dispatch(updateCustomRpc(payload));
@@ -127,7 +140,7 @@ const AddCustomRPC = ({navigation, route}) => {
         navigation.pop();
       }
     },
-    [dispatch, navigation, previousData?.chain_name],
+    [dispatch, navigation, previousData?.chain_name, previousData?.wallets],
   );
 
   const toggleWalletSelect = useCallback(walletClientId => {

@@ -61,7 +61,6 @@ const CreateWallet = ({navigation, route}) => {
   const phrase = route?.params?.phrase;
   const privateKey = route?.params?.privateKey;
   const chain_name = route?.params?.chain_name;
-  const wallItem = route?.params?.item;
   const walletIndex = route?.params?.walletIndex?.toString();
   const currentWallet = useSelector(selectCurrentWallet);
   const currentWalletIndex = useSelector(_currentWalletIndexSelector);
@@ -78,7 +77,6 @@ const CreateWallet = ({navigation, route}) => {
   const defaultNewWalletName = currentWallet?.walletName; //`Wallet ${allWallets.length}`;
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const floatingHeight = useFloatingHeight();
   // const key = useSelector(getNewKey);
 
   // The wallet being edited (only reachable while it's visible, i.e. never

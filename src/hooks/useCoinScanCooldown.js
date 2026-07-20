@@ -13,10 +13,11 @@ const useCoinScanCooldown = lastCoinsScanTimestamp => {
     if (!lastCoinsScanTimestamp) {
       return {isAvailable: true, remainingLabel: ''};
     }
-    const availableAt = dayjs(lastCoinsScanTimestamp).add(
-      SCAN_COOLDOWN_HOURS,
-      'hour',
-    );
+    const lastScan = dayjs(lastCoinsScanTimestamp);
+    if (!lastScan.isValid()) {
+      return {isAvailable: true, remainingLabel: ''};
+    }
+    const availableAt = lastScan.add(SCAN_COOLDOWN_HOURS, 'hour');
     const remainingSeconds = availableAt.diff(dayjs(), 'second');
     if (remainingSeconds <= 0) {
       return {isAvailable: true, remainingLabel: ''};
