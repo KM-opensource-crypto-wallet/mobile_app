@@ -320,11 +320,14 @@ const CreateWallet = ({navigation, route}) => {
                         errors.name ? 'red' : theme.borderActiveColor
                       }
                       autoCapitalize="none"
-                      returnKeyType="next"
+                      autoCorrect={false}
+                      autoComplete="off"
+                      spellCheck={false}
+                      returnKeyType="done"
                       mode="outlined"
                       blurOnSubmit={false}
                       name="name"
-                      autoFocus={true}
+                      autoFocus={false}
                       onChangeText={handleChange('name')}
                       // onBlur={handleBlur('name')}
                       onBlur={() => {
@@ -332,7 +335,9 @@ const CreateWallet = ({navigation, route}) => {
                         handleBlur('currentPassword');
                       }}
                       value={values.name}
-                      // onSubmitEditing={handleSubmit}
+                      onSubmitEditing={() => {
+                        Keyboard.dismiss();
+                      }}
                     />
                     {errors.name && (
                       <Text style={styles.textConfirm}>{errors.name}</Text>
