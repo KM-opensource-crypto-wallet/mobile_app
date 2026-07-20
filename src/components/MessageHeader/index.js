@@ -15,8 +15,8 @@ import {
 import EntypoIcon from 'react-native-vector-icons/Entypo';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import {updateConsentState} from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
-import {InAppBrowser} from 'react-native-inappbrowser-reborn';
 import {inAppBrowserOptions} from 'utils/common';
+import {openInAppBrowser} from 'utils/inAppBrowser';
 import {useDispatch} from 'react-redux';
 import {getCustomizePublicAddress} from 'dok-wallet-blockchain-networks/helper';
 import {useNavigation} from '@react-navigation/native';
@@ -163,7 +163,7 @@ const MessageHeader = ({
               style={{padding: 0}}
               onSelect={() => {
                 if (conversation?.peerAddress) {
-                  InAppBrowser.open(
+                  openInAppBrowser(
                     `https://etherscan.io/address/${conversation?.peerAddress}`,
                     inAppBrowserOptions,
                   ).then();

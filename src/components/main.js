@@ -34,12 +34,18 @@ import {getLockTime} from 'dok-wallet-blockchain-networks/redux/settings/setting
 import {
   createClientIdIfNotExist,
   createIfNotExistsMasterClientId,
+  rehideWalletsOnBackground,
+  reassignCurrentWalletIfHidden,
   resetCoinsToDefaultAddressForPrivacyMode,
   resetNfts,
   setCurrentCoin,
   setCurrentWalletIndex,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  _currentWalletIndexSelector,
+  isWalletHiddenAndLocked,
+  selectAllWallets,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {store} from 'redux/store';
 import {
   setupOneSignal,
@@ -62,6 +68,8 @@ import {
   getVersion,
 } from 'react-native-device-info';
 import {IS_ANDROID, IS_IOS} from 'utils/dimensions';
+import {consumeExpectedBackground} from 'utils/expectedBackground';
+import {isInAppBrowserSessionActive} from 'utils/inAppBrowser';
 import {getCountry} from 'react-native-localize';
 import {MenuProvider} from 'react-native-popup-menu';
 import {
@@ -97,14 +105,12 @@ import ModalApkDownload from 'components/ModalApkDownload';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import CoinSyncWidget from 'components/CoinSyncWidget';
 
-const unsecureRoute = [
-  'ContactUs',
-  'CryptoProviders',
-  'CarouselCards',
-  'Registration',
-  'TransactionList',
-  'Scanner',
-];
+// Only truly pre-auth screens belong here. Screens whose buttons redirect
+// outside the app (in-app browser, Linking, permission dialogs) are handled
+// by the click-driven self-initiated-background suppression in the AppState
+// listener instead of a blanket route exclusion, so a genuine background on
+// them still locks the app.
+const unsecureRoute = ['CarouselCards', 'Registration'];
 
 let lastCallTimeStamp;
 
@@ -140,6 +146,7 @@ const Main = () => {
   const appState = useRef(AppLifecycle.currentState);
   const lockTimeSet = useRef(null);
   const lockTimeRef = useRef(lockTime);
+  const lastBackgroundSelfInitiated = useRef(false);
   const compareRpcUrlsIntervalRef = useRef(null);
   const disableMessage = useSelector(getDisableMessage);
   const lastUpdateCheckTimestamp = useSelector(getLastUpdateCheckTimestamp);
@@ -278,6 +285,7 @@ const Main = () => {
       dispatch(createIfNotExistsMasterClientId());
       dispatch(createClientIdIfNotExist());
       dispatch(resetCoinsToDefaultAddressForPrivacyMode());
+      dispatch(reassignCurrentWalletIfHidden());
       const onUrlGet = event => {
         try {
           const url = event.url;
@@ -347,22 +355,46 @@ const Main = () => {
           if (
             currentRouteName !== 'Login' &&
             !unsecureRoute.includes(currentRouteName) &&
+            !lastBackgroundSelfInitiated.current &&
             isAfterCurrentDate(lockTimeSet.current)
           ) {
             setLoginModalVisible(true);
           }
+          // One-shot: the next background decides again.
+          lastBackgroundSelfInitiated.current = false;
           checkInAppUpdates();
           fetchRPCUrl();
           fetchFeesInfo();
         } else if (nextAppState === 'background') {
-          lockTimeSet.current = addMinutes(lockTimeRef.current).toISOString();
-          if (
-            !unsecureRoute.includes(currentRouteName) &&
-            currentRouteName !== 'Login' &&
-            lockTimeRef.current === 0
-          ) {
-            setLoginModalVisible(true);
+          // consumeExpectedBackground() must run unconditionally so a
+          // one-shot mark (Linking flows) is always cleared here.
+          const isSelfInitiatedBackground =
+            consumeExpectedBackground() || isInAppBrowserSessionActive();
+          lastBackgroundSelfInitiated.current = isSelfInitiatedBackground;
+          if (!isSelfInitiatedBackground) {
+            const walletIndexBeforeRehide = _currentWalletIndexSelector(
+              store.getState(),
+            );
+            dispatch(rehideWalletsOnBackground());
+            const walletIndexAfterRehide = _currentWalletIndexSelector(
+              store.getState(),
+            );
+
+            if (walletIndexAfterRehide !== walletIndexBeforeRehide) {
+              MainNavigation.reset({
+                index: 0,
+                routes: [{name: 'Sidebar'}],
+              });
+            }
           }
+          // Arming the login modal here (while still backgrounding) used to
+          // race the in-app browser's own native modal presentation/dismissal,
+          // leaving the app unresponsive to touches after returning from it
+          // (most visible from TransactionDetails' "View on Explorer"). The
+          // `active` branch's isAfterCurrentDate check already re-arms it
+          // safely once the transition is fully settled, so lockTime === 0
+          // doesn't need a separate pre-arm here.
+          lockTimeSet.current = addMinutes(lockTimeRef.current).toISOString();
         }
         appState.current = nextAppState;
       },
@@ -389,6 +421,9 @@ const Main = () => {
             ),
           );
       if (walletIndex === -1) {
+        return;
+      }
+      if (isWalletHiddenAndLocked(wallets[walletIndex])) {
         return;
       }
       const coin = wallets[walletIndex].coins?.find(

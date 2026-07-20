@@ -5,7 +5,7 @@ import myStyles from './AddressBookStyles';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import KeyboardHeightView from 'components/KeyboardHeightView';
 import {useDispatch, useSelector} from 'react-redux';
-import {getAddressBook} from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSelector';
+import {getVisibleAddressBook} from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSelector';
 import {Searchbar} from 'react-native-paper';
 import AddressBookItem from 'components/AddressBookItem';
 import ModalConfirm from 'components/ModalConfirm';
@@ -20,7 +20,7 @@ const AddressBook = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
   const {bottom} = useSafeAreaInsets();
   const styles = myStyles(theme, bottom);
-  const addressBook = useSelector(getAddressBook);
+  const addressBook = useSelector(getVisibleAddressBook);
   const [searchText, setSearchText] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState('');
   const selectedItemRef = useRef(null);

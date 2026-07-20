@@ -16,6 +16,7 @@ import {useSelector} from 'react-redux';
 import {getCryptoProvidersOTC} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {currencySymbol} from 'data/currency';
+import {markExpectedBackground} from 'utils/expectedBackground';
 
 const ContactUs = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -25,6 +26,7 @@ const ContactUs = ({navigation}) => {
 
   const onPressContactViaEmail = useCallback(async () => {
     try {
+      markExpectedBackground();
       await Linking.openURL(`mailto:${CONTACT_DETAILS.email}`);
     } catch (e) {
       console.error('error in open emails', e);
@@ -34,6 +36,7 @@ const ContactUs = ({navigation}) => {
   const onPressContactViaTelegram = useCallback(async () => {
     try {
       if (CONTACT_DETAILS.telegram) {
+        markExpectedBackground();
         await Linking.openURL(CONTACT_DETAILS.telegram);
       }
     } catch (e) {

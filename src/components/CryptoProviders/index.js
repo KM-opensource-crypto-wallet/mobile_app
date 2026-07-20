@@ -13,7 +13,7 @@ import {shallowEqual, useDispatch, useSelector} from 'react-redux';
 import {Portal, Provider, TextInput} from 'react-native-paper';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {ThemeContext} from 'theme/ThemeContext';
-import {InAppBrowser} from 'react-native-inappbrowser-reborn';
+import {isInAppBrowserAvailable, openInAppBrowser} from 'utils/inAppBrowser';
 import {getUserCoinsOptions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import FastImage from '@d11/react-native-fast-image';
 import DokDropdown from 'components/DokDropdown';
@@ -42,13 +42,9 @@ import {
   validateNumber,
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
-import {IS_ANDROID, IS_IOS} from 'utils/dimensions';
+import {IS_ANDROID} from 'utils/dimensions';
 import ModalAddCoins from 'components/ModalAddCoins';
-import PaymentOptionItem from 'components/PaymentOptionItem';
-import ApplePayMark from 'components/ApplePayMark';
-import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {IS_KIML_WALLET} from 'utils/wlData';
 
 const currencyPicker = [
   {
@@ -115,11 +111,11 @@ const CryptoProviders = () => {
         formikRef?.current?.setFieldTouched('amount', true);
         return;
       }
-      const isAvailable = await InAppBrowser.isAvailable();
+      const isAvailable = await isInAppBrowserAvailable();
       if (isAvailable) {
         const url = item?.extraData?.url;
         if (item?.extraData?.url) {
-          await InAppBrowser.open(url, inAppBrowserOptions);
+          await openInAppBrowser(url, inAppBrowserOptions);
         } else {
           const resp = await getBuyCryptoUrl({
             ...item,
@@ -130,7 +126,7 @@ const CryptoProviders = () => {
             appVersion: APP_VERSION,
             from_device: Platform.OS,
           });
-          await InAppBrowser.open(resp?.data, inAppBrowserOptions);
+          await openInAppBrowser(resp?.data, inAppBrowserOptions);
         }
       } else {
         console.error('Provider not found');

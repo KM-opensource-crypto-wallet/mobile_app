@@ -225,7 +225,7 @@ PODS:
   - PromisesObjC (2.4.1)
   - PromisesSwift (2.4.1):
     - PromisesObjC (= 2.4.1)
-  - QuickCrypto (1.1.5):
+  - QuickCrypto (1.1.6):
     - hermes-engine
     - NitroModules
     - OpenSSL-Universal (~> 3.6.2000)
@@ -3565,7 +3565,7 @@ SPEC CHECKSUMS:
   pagopa-io-react-native-integrity: ed0f11de16667e103d587c417f4e5e9a3420c515
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
   PromisesSwift: 217dea0fd5d2ad65222a109c48698add13cc1c5b
-  QuickCrypto: ab6cb9112cfb11ab850a86e4e3fdc7dff2343d6b
+  QuickCrypto: 2aea3d12466ed6f87d8b7c497c41bfa2e3584eef
   RCTDeprecation: 2a74a2c57675e64419bd89078efde81f7c1de90b
   RCTRequired: 30451112e6fef4e6f31b4e7eee0845156e35e4b0
   RCTSwiftUI: 5aaf0b07e747ba749dc6acc94d8bd41eea4b570f

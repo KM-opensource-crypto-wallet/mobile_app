@@ -14,6 +14,8 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {Formik} from 'formik';
@@ -38,8 +40,13 @@ import {
   deleteWallet,
   updateWalletName,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {deleteAlertThunk} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
-import {getNotificationAlerts} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSelector';
+import {deleteAlertsForWalletThunk} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
+import {
+  selectIsSyncing,
+  selectSyncingWalletIndex,
+  selectSyncingWalletName,
+} from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSelectors';
+import useCoinScanCooldown from 'hooks/useCoinScanCooldown';
 import Spinner from 'components/Spinner';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
@@ -54,7 +61,6 @@ const CreateWallet = ({navigation, route}) => {
   const phrase = route?.params?.phrase;
   const privateKey = route?.params?.privateKey;
   const chain_name = route?.params?.chain_name;
-  const wallItem = route?.params?.item;
   const walletIndex = route?.params?.walletIndex?.toString();
   const currentWallet = useSelector(selectCurrentWallet);
   const currentWalletIndex = useSelector(_currentWalletIndexSelector);
@@ -64,7 +70,6 @@ const CreateWallet = ({navigation, route}) => {
   const finalAllWallets = useRef(
     allWalletName.filter(subItem => subItem !== walletName),
   );
-  const notificationAlerts = useSelector(getNotificationAlerts);
   // const [currentWalletName, setCurrentWalletName] = useState(walletName);
   // const currentWalletName = currentWallet.name;
   // const allCoins = useSelector(getAllCoins);
@@ -72,8 +77,30 @@ const CreateWallet = ({navigation, route}) => {
   const defaultNewWalletName = currentWallet?.walletName; //`Wallet ${allWallets.length}`;
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const floatingHeight = useFloatingHeight();
   // const key = useSelector(getNewKey);
+
+  // The wallet being edited (only reachable while it's visible, i.e. never
+  // hidden+locked - see selectVisibleWallets), as opposed to `currentWallet`
+  // which is the globally active wallet.
+  const editingWallet =
+    walletIndex !== undefined ? allWallets[walletIndex] : null;
+
+  // Coin scan (1 per 24h per wallet) targets the wallet being edited
+  const scanTargetIndex = walletIndex ?? currentWalletIndex;
+  const scanWallet = editingWallet ?? currentWallet;
+  const {isAvailable: isScanAvailable, remainingLabel: scanRemainingLabel} =
+    useCoinScanCooldown(scanWallet?.lastCoinsScanTimestamp);
+  const isCoinSyncRunning = useSelector(selectIsSyncing);
+  const syncingWalletIndex = useSelector(selectSyncingWalletIndex);
+  const syncingWalletName = useSelector(selectSyncingWalletName);
+  const isScanningThisWallet =
+    isCoinSyncRunning &&
+    syncingWalletIndex !== null &&
+    Number(syncingWalletIndex) === Number(scanTargetIndex);
+  // Only one scan can run at a time - lock the row while another wallet scans
+  const isScanningOtherWallet = isCoinSyncRunning && !isScanningThisWallet;
+  const isScanRowEnabled =
+    isScanningThisWallet || (isScanAvailable && !isScanningOtherWallet);
 
   const [wrong, setWrong] = useState(false);
   const isCurrentWallet = walletName === defaultNewWalletName;
@@ -140,9 +167,9 @@ const CreateWallet = ({navigation, route}) => {
   }, []);
 
   const validateNewWalletName = value => {
-    if (currentWallet?.walletName !== value) {
+    if (editingWallet?.walletName !== value) {
       const wrong = allWallets.some(({walletName}, index) => {
-        if (walletName === value && index !== currentWallet.id) {
+        if (walletName === value && index !== Number(walletIndex)) {
           return true;
         }
         return false;
@@ -158,21 +185,12 @@ const CreateWallet = ({navigation, route}) => {
     const walletToDelete = allWallets.find(
       (_, index) => index.toString() === walletIndex,
     );
-    if (walletToDelete) {
-      // Get notification alerts for this wallet
-      const walletAlerts = notificationAlerts.filter(
-        alert =>
-          alert.walletClientId === walletToDelete.clientId ||
-          alert.walletId === walletToDelete.clientId,
+    if (walletToDelete?.clientId) {
+      // Delete every notification subscription for this wallet in a single
+      // backend call. Wallet deletion proceeds even if this fails.
+      await dispatch(
+        deleteAlertsForWalletThunk({walletClientId: walletToDelete.clientId}),
       );
-
-      // Delete all notification subscriptions for this wallet
-      if (walletAlerts.length > 0) {
-        const deletePromises = walletAlerts.map(alert =>
-          dispatch(deleteAlertThunk({item: alert})),
-        );
-        await Promise.all(deletePromises);
-      }
     }
 
     navigation.reset({
@@ -185,54 +203,68 @@ const CreateWallet = ({navigation, route}) => {
         dispatch(deleteWallet(walletIndex));
       }
     }, 1000);
-  }, [dispatch, navigation, walletIndex, allWallets, notificationAlerts]);
+  }, [dispatch, navigation, walletIndex, allWallets]);
 
   const onPressNo = useCallback(() => {
     setShowDeleteModal(false);
   }, []);
 
-  const handleSubmit = async values => {
-    if (walletName) {
-      dispatch(
-        updateWalletName({
-          index: walletIndex ?? currentWalletIndex,
-          walletName: values.name,
-        }),
-      );
-      navigation.navigate('Sidebar', {
-        screen: 'Home',
-      });
-    } else {
-      // Check if importing by private key - skip SelectCoins screen
-      if (privateKey && chain_name) {
-        try {
-          setIsLoading(true);
-          await dispatch(
-            createWallet({
-              walletName: values.name || 'Main Wallet',
-              phrase,
-              privateKey,
-              chain_name,
-            }),
-          ).unwrap();
-          setIsLoading(false);
-          navigation.reset({
-            index: 0,
-            routes: [{name: 'Sidebar'}],
-          });
-        } catch (e) {
-          setIsLoading(false);
-          console.error('error in create wallet', e.stack);
-        }
-      } else {
-        // Navigate to SelectCoins screen for new wallet or mnemonic import
-        navigation.navigate('SelectCoins', {
-          walletName: values.name || 'Main Wallet',
-          phrase,
+  const performWalletSave = useCallback(
+    async values => {
+      if (walletName) {
+        const targetIndex = walletIndex ?? currentWalletIndex;
+        dispatch(
+          updateWalletName({
+            index: targetIndex,
+            walletName: values.name,
+          }),
+        );
+
+        navigation.navigate('Sidebar', {
+          screen: 'Home',
         });
+      } else {
+        // Check if importing by private key - skip SelectCoins screen
+        if (privateKey && chain_name) {
+          try {
+            setIsLoading(true);
+            await dispatch(
+              createWallet({
+                walletName: values.name || 'Main Wallet',
+                phrase,
+                privateKey,
+                chain_name,
+              }),
+            ).unwrap();
+            setIsLoading(false);
+            navigation.reset({
+              index: 0,
+              routes: [{name: 'Sidebar'}],
+            });
+          } catch (e) {
+            setIsLoading(false);
+            console.error('error in create wallet', e.stack);
+          }
+        } else {
+          // Navigate to SelectCoins screen for new wallet or mnemonic import
+          navigation.navigate('SelectCoins', {
+            walletName: values.name || 'Main Wallet',
+            phrase,
+          });
+        }
       }
-    }
-  };
+    },
+    [
+      walletName,
+      walletIndex,
+      currentWalletIndex,
+      dispatch,
+      navigation,
+      privateKey,
+      chain_name,
+      phrase,
+    ],
+  );
 
   const validationSchema = Yup.object().shape({
     name: Yup.string()
@@ -256,7 +288,7 @@ const CreateWallet = ({navigation, route}) => {
               }}
               innerRef={formikRef}
               validationSchema={validationSchema}
-              onSubmit={handleSubmit}>
+              onSubmit={performWalletSave}>
               {({
                 handleChange,
                 handleBlur,
@@ -269,7 +301,11 @@ const CreateWallet = ({navigation, route}) => {
                   style={{
                     flex: 1,
                   }}>
-                  <View style={{flex: 1}}>
+                  <ScrollView
+                    style={{flex: 1}}
+                    contentContainerStyle={{flexGrow: 1}}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}>
                     <TextInput
                       style={styles.input}
                       label="Name"
@@ -355,10 +391,108 @@ const CreateWallet = ({navigation, route}) => {
                         </View>
                       </View>
                     ) : null}
-                  </View>
+
+                    {walletName ? (
+                      <TouchableOpacity
+                        style={{...styles.item, marginTop: 20}}
+                        onPress={() =>
+                          navigation.navigate('HideWallet', {walletIndex})
+                        }>
+                        <View style={styles.itemIcon}>
+                          <MaterialCommunityIcons
+                            name="eye-off-outline"
+                            size={22}
+                            color={theme.font}
+                          />
+                        </View>
+                        <View style={styles.itemSection}>
+                          <Text style={styles.itemName}>Hide Wallet</Text>
+                          <Text style={{...styles.itemText, color: theme.gray}}>
+                            {editingWallet?.hideSettings
+                              ? 'Hidden'
+                              : 'Not hidden'}
+                          </Text>
+                        </View>
+                        <View style={{flex: 1}} />
+                        <MaterialCommunityIcons
+                          name="chevron-right"
+                          size={22}
+                          color={theme.font}
+                        />
+                      </TouchableOpacity>
+                    ) : null}
+
+                    {walletName ? (
+                      <TouchableOpacity
+                        style={{
+                          ...styles.item,
+                          opacity: isScanRowEnabled ? 1 : 0.5,
+                        }}
+                        disabled={!isScanRowEnabled}
+                        onPress={() =>
+                          navigation.navigate('CoinSyncScreen', {
+                            walletIndex: Number(scanTargetIndex),
+                          })
+                        }>
+                        <View
+                          style={{
+                            ...styles.scanIconBubble,
+                            ...(!isScanRowEnabled
+                              ? styles.scanIconBubbleDisabled
+                              : {}),
+                          }}>
+                          {isScanningThisWallet ? (
+                            <ActivityIndicator
+                              size="small"
+                              color={theme.background}
+                            />
+                          ) : (
+                            <MaterialCommunityIcons
+                              name={
+                                isScanningOtherWallet
+                                  ? 'timer-sand'
+                                  : isScanAvailable
+                                  ? 'radar'
+                                  : 'clock-outline'
+                              }
+                              size={22}
+                              color={
+                                isScanRowEnabled ? theme.background : theme.gray
+                              }
+                            />
+                          )}
+                        </View>
+                        <View style={styles.itemSection}>
+                          <Text style={styles.itemName}>Scan Coins</Text>
+                          <Text style={{...styles.itemText, color: theme.gray}}>
+                            {isScanningThisWallet
+                              ? 'Scanning in progress — tap to view'
+                              : isScanningOtherWallet
+                              ? syncingWalletName
+                                ? `Scanning "${syncingWalletName}"…`
+                                : 'Another wallet is being scanned…'
+                              : isScanAvailable
+                              ? 'Discover assets across 200+ coins'
+                              : `Available in ${scanRemainingLabel}`}
+                          </Text>
+                        </View>
+                        <View style={{flex: 1}} />
+                        {isScanRowEnabled && (
+                          <MaterialCommunityIcons
+                            name="chevron-right"
+                            size={22}
+                            color={theme.font}
+                          />
+                        )}
+                      </TouchableOpacity>
+                    ) : null}
+                  </ScrollView>
                   <TouchableOpacity
                     disabled={wrong && true}
-                    style={{...styles.button, opacity: wrong && 0.5}}
+                    style={{
+                      ...styles.button,
+                      opacity: wrong ? 0.5 : 1,
+                    }}
                     onPress={handleSubmit}>
                     <Text style={styles.buttonTitle}>
                       {walletName

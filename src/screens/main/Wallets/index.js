@@ -21,14 +21,15 @@ import AddIcon from 'assets/images/sidebarIcons/Add.svg';
 import FilterListIcon from 'assets/images/icons/filter-list.svg';
 import SortMenu from 'components/SortMenu';
 import {
-  getCurrentWalletIndex,
+  isWalletHiddenAndLocked,
   selectAllWallets,
   selectCurrentWallet,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
+  findHiddenWalletByCode,
   rearrangeWallet,
   setCurrentWalletIndex,
-  setWalletPosition,
+  setWalletRevealed,
   sortWallets,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import DraggableFlatList, {
@@ -44,11 +45,18 @@ import {
 import {setWalletsSortOption} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
 import {currencySymbol} from 'data/currency';
 import {
+  debounce,
   formatBalance,
   getCoinsCount,
   getTopTwoCoins,
   getWalletTotalBalance,
 } from 'dok-wallet-blockchain-networks/helper';
+import {
+  normalizeSecretCode,
+  SECRET_CODE_MAX_LENGTH,
+  SECRET_CODE_MIN_LENGTH,
+} from 'utils/hideWallet';
+import {store} from 'redux/store';
 
 const WALLET_SORT_OPTIONS = {
   DEFAULT: 'default',
@@ -59,20 +67,43 @@ const WALLET_SORT_OPTIONS = {
 };
 
 const Wallets = ({navigation}) => {
-  const currentWalletName = useSelector(selectCurrentWallet)?.walletName;
+  const currentWallet = useSelector(selectCurrentWallet);
+  const currentWalletName = currentWallet?.walletName;
   const allWallets = useSelector(selectAllWallets);
-  const currentWalletIndex = useSelector(getCurrentWalletIndex);
   const localCurrency = useSelector(getLocalCurrency);
   const walletSheetRef = useRef();
-  const allWalletsLength = useMemo(() => {
-    return allWallets.length;
-  }, [allWallets]);
+  const visibleWallets = useMemo(
+    () => allWallets.filter(wallet => !isWalletHiddenAndLocked(wallet)),
+    [allWallets],
+  );
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const dispatch = useDispatch();
   const [searchQuery, setSearchQuery] = useState('');
+  const [matchedReveal, setMatchedReveal] = useState(null);
   const isFocus = useIsFocused();
-  const [searchWallets, setSearchWallets] = useState([]);
+  const displayedWallets = useMemo(() => {
+    const nameMatches = visibleWallets;
+    if (!searchQuery) {
+      return nameMatches;
+    }
+    const query = searchQuery.toLowerCase();
+    const normalizedQuery = normalizeSecretCode(searchQuery);
+    const filteredNameMatches = nameMatches.filter(item =>
+      item?.walletName?.toLowerCase()?.includes(query),
+    );
+    if (matchedReveal && normalizedQuery === matchedReveal.code) {
+      const matchedWallet = allWallets.find(
+        item => item.walletName === matchedReveal.walletName,
+      );
+      // Once revealed (tapped), the wallet may already be in the name
+      // matches - appending it again would duplicate the row (and its key).
+      if (matchedWallet && !filteredNameMatches.includes(matchedWallet)) {
+        return [...filteredNameMatches, matchedWallet];
+      }
+    }
+    return filteredNameMatches;
+  }, [searchQuery, visibleWallets, allWallets, matchedReveal]);
   const sortOption = useSelector(getWalletsSortOption);
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({top: 0, right: 0});
@@ -88,6 +119,8 @@ const Wallets = ({navigation}) => {
   useEffect(() => {
     if (!isFocus) {
       Keyboard.dismiss();
+      setSearchQuery('');
+      setMatchedReveal(null);
     }
   }, [isFocus]);
 
@@ -130,53 +163,84 @@ const Wallets = ({navigation}) => {
     });
   }, [navigation, theme.font, theme.background]);
 
-  const onPressMove = useCallback(
-    (index, isMoveUp) => {
-      dispatch(setWalletPosition({index, isMoveUp}));
+  const commitDisplayedOrder = useCallback(
+    newDisplayedOrder => {
+      let visibleCursor = 0;
+      const newFullOrder = allWallets.map(wallet =>
+        isWalletHiddenAndLocked(wallet)
+          ? wallet
+          : newDisplayedOrder[visibleCursor++],
+      );
+      const newCurrentWalletIndex = newFullOrder.findIndex(
+        wallet =>
+          (wallet?.clientId || wallet?.id) ===
+          (currentWallet?.clientId || currentWallet?.id),
+      );
+      dispatch(
+        rearrangeWallet({
+          allWallets: newFullOrder,
+          currentWalletIndex:
+            newCurrentWalletIndex !== -1 ? newCurrentWalletIndex : undefined,
+        }),
+      );
+      // A manual rearrange means the user is taking over the ordering. If a
+      // sort option stayed active, the mount-time sortWallets dispatch would
+      // silently discard this order on the next visit to this screen.
+      if (sortOption !== WALLET_SORT_OPTIONS.DEFAULT) {
+        dispatch(setWalletsSortOption(WALLET_SORT_OPTIONS.DEFAULT));
+      }
     },
-    [dispatch],
+    [allWallets, currentWallet, sortOption, dispatch],
+  );
+
+  const onPressMove = useCallback(
+    (visibleIndex, isMoveUp) => {
+      const targetIndex = isMoveUp ? visibleIndex - 1 : visibleIndex + 1;
+      if (targetIndex < 0 || targetIndex >= displayedWallets.length) {
+        return;
+      }
+      const reordered = [...displayedWallets];
+      const [moved] = reordered.splice(visibleIndex, 1);
+      reordered.splice(targetIndex, 0, moved);
+      commitDisplayedOrder(reordered);
+    },
+    [displayedWallets, commitDisplayedOrder],
+  );
+
+  const attemptRevealByCode = useMemo(
+    () =>
+      debounce(async code => {
+        const result = await findHiddenWalletByCode(store.getState(), code);
+        setMatchedReveal(
+          result?.matched
+            ? {code: normalizeSecretCode(code), walletName: result.walletName}
+            : null,
+        );
+      }, 400),
+    [],
   );
 
   const handleSearch = useCallback(
     query => {
       setSearchQuery(query);
-      if (query) {
-        const newList = allWallets?.filter(item => {
-          return item?.walletName
-            ?.toLowerCase()
-            ?.includes(query?.toLowerCase());
-        });
-        setSearchWallets(newList);
+      const trimmed = query?.trim() || '';
+      if (
+        trimmed.length >= SECRET_CODE_MIN_LENGTH &&
+        trimmed.length <= SECRET_CODE_MAX_LENGTH
+      ) {
+        attemptRevealByCode(trimmed);
       } else {
-        setSearchWallets([]);
+        setMatchedReveal(null);
       }
     },
-    [allWallets],
+    [attemptRevealByCode],
   );
 
   const onDragEnd = useCallback(
-    ({data, from, to}) => {
-      const isMoveDown = to > from;
-      dispatch(
-        rearrangeWallet({
-          allWallets: data,
-          currentWalletIndex:
-            //logic update current wallet index when we update the the positions of the wallet.
-            from === currentWalletIndex
-              ? to
-              : isMoveDown &&
-                to >= currentWalletIndex &&
-                from < currentWalletIndex
-              ? currentWalletIndex - 1
-              : !isMoveDown &&
-                to <= currentWalletIndex &&
-                from > currentWalletIndex
-              ? currentWalletIndex + 1
-              : undefined,
-        }),
-      );
+    ({data}) => {
+      commitDisplayedOrder(data);
     },
-    [currentWalletIndex, dispatch],
+    [commitDisplayedOrder],
   );
 
   const handleSortSelect = useCallback(
@@ -223,23 +287,29 @@ const Wallets = ({navigation}) => {
           <DraggableFlatList
             bounces={false}
             keyboardShouldPersistTaps={'always'}
-            data={searchQuery ? searchWallets : allWallets}
+            data={displayedWallets}
             contentContainerStyle={{flexGrow: 1}}
             keyExtractor={item => item.walletName}
             onDragBegin={() => {
               Keyboard.dismiss();
             }}
             onDragEnd={onDragEnd}
-            renderItem={({item, drag, isActive, getIndex}) => {
-              const index = getIndex();
+            renderItem={({item, drag, isActive}) => {
+              const index = allWallets.findIndex(
+                subItem => subItem.walletName === item.walletName,
+              );
+              const visibleIndex = displayedWallets.findIndex(
+                subItem => subItem.walletName === item.walletName,
+              );
               const isSelectedWallet = item.walletName === currentWalletName;
               const totalBalance = getWalletTotalBalance(item?.coins);
               const topCoins = getTopTwoCoins(item?.coins);
               const coinsCount = getCoinsCount(item?.coins);
               const symbol = currencySymbol[localCurrency] || '$';
-              const canMoveUp = index > 0;
-              const canMoveDown = index < allWalletsLength - 1;
-              const showMoveButtons = allWalletsLength > 1 && !searchQuery;
+              const canMoveUp = visibleIndex > 0;
+              const canMoveDown = visibleIndex < displayedWallets.length - 1;
+              const showMoveButtons =
+                displayedWallets.length > 1 && !searchQuery;
 
               return (
                 <ScaleDecorator>
@@ -250,14 +320,15 @@ const Wallets = ({navigation}) => {
                       isSelectedWallet && styles.walletCardSelected,
                     ]}
                     onPress={() => {
-                      if (searchQuery) {
-                        const foundIndex = allWallets.findIndex(
-                          subItem => subItem.walletName === item.walletName,
-                        );
-                        if (foundIndex !== -1) {
-                          dispatch(setCurrentWalletIndex(foundIndex));
+                      if (index !== -1) {
+                        if (isWalletHiddenAndLocked(item)) {
+                          dispatch(
+                            setWalletRevealed({
+                              walletIndex: index,
+                              isHidden: false,
+                            }),
+                          );
                         }
-                      } else {
                         dispatch(setCurrentWalletIndex(index));
                       }
                       navigation.popTo('Sidebar', {
@@ -309,7 +380,7 @@ const Wallets = ({navigation}) => {
                               disabled={!canMoveUp}
                               onPress={() => {
                                 Keyboard.dismiss();
-                                onPressMove(index, true);
+                                onPressMove(visibleIndex, true);
                               }}>
                               <AntIcon
                                 name={'caretup'}
@@ -322,7 +393,7 @@ const Wallets = ({navigation}) => {
                               style={styles.moveBtn}
                               onPress={() => {
                                 Keyboard.dismiss();
-                                onPressMove(index, false);
+                                onPressMove(visibleIndex, false);
                               }}>
                               <AntIcon
                                 name={'caretdown'}
