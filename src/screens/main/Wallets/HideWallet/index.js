@@ -25,7 +25,6 @@ import DokRadioButton from 'components/DokRadioButton';
 import ModalHideWalletConfirm from 'components/ModalHideWalletConfirm';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {
-  _currentWalletIndexSelector,
   selectAllWalletName,
   selectAllWallets,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
@@ -261,7 +260,6 @@ const HideWallet = ({navigation, route}) => {
 
   const doHideSave = useCallback(async () => {
     let syncResult = null;
-    const walletIndexBeforeSave = _currentWalletIndexSelector(store.getState());
     if (isHideEnabled) {
       if (secretCode) {
         // Code was already validated (name-inclusion + not-in-use-by-
@@ -322,12 +320,11 @@ const HideWallet = ({navigation, route}) => {
       }
       // totalCount === 0: no alerts exist for this wallet - nothing to sync.
     }
-    const walletIndexAfterSave = _currentWalletIndexSelector(store.getState());
-    if (walletIndexAfterSave !== walletIndexBeforeSave) {
-      // Hiding/clearing this wallet's settings reassigned the current
-      // wallet out from under whatever screen is below us on the stack
-      // (see reassignCurrentWalletIndexIfHidden) - a plain goBack() would
-      // leave that screen mounted showing the old current wallet's data.
+    if (isHideEnabled) {
+      // The wallet is now hidden (setWalletHideSettings always re-locks it),
+      // so screens below on the stack - the wallet list, or Home if this was
+      // the current wallet - may still be showing it. Land on Home instead
+      // of going back.
       navigation.reset({
         index: 0,
         routes: [{name: 'Sidebar'}],

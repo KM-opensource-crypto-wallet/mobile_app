@@ -327,7 +327,7 @@ const CreateWallet = ({navigation, route}) => {
                       mode="outlined"
                       blurOnSubmit={false}
                       name="name"
-                      autoFocus={false}
+                      autoFocusc={!walletName}
                       onChangeText={handleChange('name')}
                       // onBlur={handleBlur('name')}
                       onBlur={() => {
