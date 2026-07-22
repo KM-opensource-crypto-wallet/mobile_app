@@ -30,7 +30,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSelectors';
 import {
   syncAllCoins,
-  cancelSync,
+  cancelSyncWithCooldown,
   resetCoinSync,
   toggleCoinSelection,
 } from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSlice';
@@ -42,7 +42,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {showToast} from 'utils/toast';
 import CoinSyncItem from 'components/CoinSyncItem';
-import CoinSyncDiscardModal from 'components/CoinSyncDiscardModal';
+import ConfirmationModal from 'components/ConfirmationModal';
 import InteractionBlocker from 'components/InteractionBlocker';
 import CoinSyncProgress from 'components/CoinSyncProgress';
 import CoinSyncActionButton from 'components/CoinSyncActionButton';
@@ -87,6 +87,7 @@ const CoinSyncScreen = () => {
   // Coins found but not yet added - leaving the screen would discard them
   const hasPendingCoins = isCompleted && coinsWithBalanceCount > 0;
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const resultsHeaderText = useMemo(() => {
     if (isCompleted) {
@@ -96,6 +97,23 @@ const CoinSyncScreen = () => {
     }
     return '';
   }, [isCompleted, coinsWithBalanceCount]);
+
+  // Copy for the leave-with-pending-coins confirmation
+  const discardCopy = useMemo(() => {
+    const walletName = syncingWalletName || targetWalletName;
+    const isSingle = coinsWithBalanceCount === 1;
+    const coinWord = isSingle ? 'coin' : 'coins';
+    return {
+      title: `Discard ${coinsWithBalanceCount} found ${coinWord}?`,
+      subtitle: `We found ${coinsWithBalanceCount} ${coinWord} with a balance${
+        walletName ? ` in "${walletName}"` : ''
+      }. Going back now removes ${
+        isSingle ? 'it' : 'them'
+      } from this scan without adding ${
+        isSingle ? 'it' : 'them'
+      } to your wallet.`,
+    };
+  }, [coinsWithBalanceCount, syncingWalletName, targetWalletName]);
 
   // Clear leftovers from a previous scan of a DIFFERENT wallet (cancelled or
   // completed-and-never-dismissed) so this wallet's screen starts pristine.
@@ -153,9 +171,41 @@ const CoinSyncScreen = () => {
     dispatch(syncAllCoins({walletIndex: resolvedWalletIndex}));
   }, [dispatch, allWallets, resolvedWalletIndex]);
 
+  // Cancelling arms the 24h cooldown, so always confirm first
   const handleCancel = useCallback(() => {
-    dispatch(cancelSync());
-  }, [dispatch]);
+    setShowCancelConfirm(true);
+  }, []);
+
+  const handleConfirmCancelScan = useCallback(() => {
+    setShowCancelConfirm(false);
+    if (!isSyncing) {
+      // Scan finished while the modal was open - completion already
+      // armed the cooldown, nothing left to cancel
+      return;
+    }
+    dispatch(cancelSyncWithCooldown());
+    if (coinsWithBalanceCount === 0) {
+      // With partial results the 'completed' selection UI stays visible;
+      // with nothing found the state resets, so explain the cooldown
+      showToast({
+        type: 'warningToast',
+        title: 'Scan Cancelled',
+        message: 'You can scan this wallet again in 24 hours',
+      });
+    }
+  }, [dispatch, isSyncing, coinsWithBalanceCount]);
+
+  const handleDismissCancelScan = useCallback(() => {
+    setShowCancelConfirm(false);
+  }, []);
+
+  // Close the cancel confirmation if the scan finishes or errors
+  // underneath it - there is nothing left to cancel
+  useEffect(() => {
+    if (showCancelConfirm && !isSyncing) {
+      setShowCancelConfirm(false);
+    }
+  }, [showCancelConfirm, isSyncing]);
 
   const handleGoBack = useCallback(() => {
     if (isCreatingWallets) {
@@ -319,12 +369,34 @@ const CoinSyncScreen = () => {
         </View>
       </DokSafeAreaView>
       <InteractionBlocker visible={isCreatingWallets} theme={theme} />
-      <CoinSyncDiscardModal
+      <ConfirmationModal
         visible={showLeaveConfirm}
-        coinCount={coinsWithBalanceCount}
-        walletName={syncingWalletName || targetWalletName}
-        onDiscard={handleConfirmLeave}
-        onStay={handleCancelLeave}
+        title={discardCopy.title}
+        subtitle={discardCopy.subtitle}
+        infoText={
+          "Scanning is limited to once every 24 hours, so you won't be able to rescan this wallet until tomorrow."
+        }
+        confirmLabel={'Discard'}
+        dismissLabel={'Stay'}
+        onConfirm={handleConfirmLeave}
+        onDismiss={handleCancelLeave}
+      />
+      <ConfirmationModal
+        visible={showCancelConfirm}
+        title={'Cancel scan?'}
+        subtitle={
+          "Are you sure you want to cancel? Once you cancel, you won't be able to scan this wallet again for 24 hours."
+        }
+        infoText={
+          coinsWithBalanceCount > 0
+            ? 'Coins found so far will still be available to add to your wallet.'
+            : null
+        }
+        infoIcon={'check-circle-outline'}
+        confirmLabel={'Cancel Scan'}
+        dismissLabel={'Keep Scanning'}
+        onConfirm={handleConfirmCancelScan}
+        onDismiss={handleDismissCancelScan}
       />
     </View>
   );

@@ -1,7 +1,6 @@
 import {useCallback, useEffect, useState} from 'react';
 import dayjs from 'dayjs';
-
-const SCAN_COOLDOWN_HOURS = 24;
+import {COIN_SCAN_COOLDOWN_HOURS} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 
 /**
  * Tracks the 24h coin-scan cooldown for a wallet.
@@ -17,7 +16,7 @@ const useCoinScanCooldown = lastCoinsScanTimestamp => {
     if (!lastScan.isValid()) {
       return {isAvailable: true, remainingLabel: ''};
     }
-    const availableAt = lastScan.add(SCAN_COOLDOWN_HOURS, 'hour');
+    const availableAt = lastScan.add(COIN_SCAN_COOLDOWN_HOURS, 'hour');
     const remainingSeconds = availableAt.diff(dayjs(), 'second');
     if (remainingSeconds <= 0) {
       return {isAvailable: true, remainingLabel: ''};

@@ -89,21 +89,21 @@ const myStyles = theme =>
       justifyContent: 'center',
       alignItems: 'center',
     },
-    discardBtn: {
+    confirmBtn: {
       backgroundColor: 'transparent',
       borderWidth: 1.5,
       borderColor: DANGER,
     },
-    discardText: {
+    confirmText: {
       color: DANGER,
       fontSize: 16,
       fontFamily: 'Roboto-Medium',
       fontWeight: '600',
     },
-    stayBtn: {
+    dismissBtn: {
       backgroundColor: theme.background,
     },
-    stayText: {
+    dismissText: {
       color: '#FFFFFF',
       fontSize: 16,
       fontFamily: 'Roboto-Medium',
