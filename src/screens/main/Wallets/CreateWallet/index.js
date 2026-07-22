@@ -271,7 +271,7 @@ const CreateWallet = ({navigation, route}) => {
       .required('* Name cannot be empty')
       .notOneOf(finalAllWallets.current, 'The name of wallet already existed'),
   });
-  console.log('walletname', walletName);
+
   return (
     <DokSafeAreaView style={styles.safeAreaView}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
