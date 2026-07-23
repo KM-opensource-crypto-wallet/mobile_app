@@ -36,7 +36,7 @@ abstract_target 'coinswalletCommonPod' do
   # permissions_path = '../node_modules/react-native-permissions/ios'
   # pod 'Permission-Camera', :path => "#{permissions_path}/Camera"
   # OpenSSL-Universal removed - QuickCrypto provides its own OpenSSL.xcframework
-  pod 'TrustWalletCore', '3.2.9'
+  pod 'TrustWalletCore', '4.3.15'
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.

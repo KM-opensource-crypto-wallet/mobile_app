@@ -54,6 +54,7 @@ public class NativeKeygenModule extends ReactContextBaseJavaModule {
     CoinFactory.registerCoin("filecoin", FilecoinCoin::new);
     CoinFactory.registerCoin("bitcoin_legacy", BitcoinLegacyCoin::new);
     CoinFactory.registerCoin("bitcoin_segwit", BitcoinSegwitCoin::new);
+    CoinFactory.registerCoin("bitcoin_taproot", BitcoinTaprootCoin::new);
     // Add similar lines for other coin classes
   }
 

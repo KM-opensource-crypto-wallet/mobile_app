@@ -76,6 +76,9 @@ extension Data {
     CoinFactory.registerCoin(name: "bitcoin_segwit") { mnemonic in
       return BitcoinSegwitCoin(mnemonic: mnemonic)
     }
+    CoinFactory.registerCoin(name: "bitcoin_taproot") { mnemonic in
+      return BitcoinTaprootCoin(mnemonic: mnemonic)
+    }
   }
 
   @objc static func requiresMainQueueSetup() -> Bool { return true }

@@ -10,6 +10,7 @@
 		042789952A03DABE00B8290E /* fonts in Resources */ = {isa = PBXBuildFile; fileRef = 042789942A03DABE00B8290E /* fonts */; };
 		16C505E77ADE3AF1360D9C33 /* libPods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CC6161522675D0B58D58A53B /* libPods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.a */; };
 		1C66517DDBF543F6AECC0244 /* Roboto-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 64FC04C990DE41D18CB05715 /* Roboto-Bold.ttf */; };
+		20DB55EA3891386AD4EDF7A8 /* BitcoinTaprootCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C3090379A8E5B37D096A9F /* BitcoinTaprootCoin.swift */; };
 		2A332286CB656AD0F26CE591 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EE541A76E5065EEB2D0CBFD1 /* GoogleService-Info.plist */; };
 		3C700B031638CCA30B56032A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 5086BFA010089ADFD66C5175 /* GoogleService-Info.plist */; };
 		3F1834F72A4F0A1A004B7D37 /* CustomMethods.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F1834F62A4F0A1A004B7D37 /* CustomMethods.swift */; };
@@ -81,6 +82,7 @@
 		D2F828102AB1EAEF004381E3 /* commonExternsion.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F8280F2AB1EAEF004381E3 /* commonExternsion.swift */; };
 		D2F849AC2DC8D32F006B2140 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D2F849A82DC8D32F006B2140 /* Images.xcassets */; };
 		D2F849B62DC8D334006B2140 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D2F849B12DC8D334006B2140 /* Images.xcassets */; };
+		EF77FC3B648E79262E0C2038 /* BitcoinTaprootCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C3090379A8E5B37D096A9F /* BitcoinTaprootCoin.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -144,6 +146,7 @@
 		6BAFDDE82DCA48BA00A5C1C0 /* FilecoinCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilecoinCoin.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = coinswallet/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8AA329522FA3344C94C795A3 /* Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.release.xcconfig"; path = "Target Support Files/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.release.xcconfig"; sourceTree = "<group>"; };
+		A0C3090379A8E5B37D096A9F /* BitcoinTaprootCoin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BitcoinTaprootCoin.swift; sourceTree = "<group>"; };
 		B7372A6ACC47B552D88F0050 /* Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.debug.xcconfig"; path = "Target Support Files/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet/Pods-coinswalletCommonPod-OneSignalNotificationServiceExtensionKimlWallet.debug.xcconfig"; sourceTree = "<group>"; };
 		C386D48D108B452E86A44CA6 /* Roboto-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Roboto-Regular.ttf"; path = "../src/assets/fonts/Roboto-Regular.ttf"; sourceTree = "<group>"; };
 		C8B0BA0A2F3B3CA000E9A906 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
@@ -276,6 +279,7 @@
 				3F911F042A501CAE000E5820 /* EthereumCoin.swift */,
 				3F911F072A502908000E5820 /* TronCoin.swift */,
 				D26968C82CA6B1C400052999 /* BitcoinCashCoin.swift */,
+				A0C3090379A8E5B37D096A9F /* BitcoinTaprootCoin.swift */,
 			);
 			name = coins;
 			sourceTree = "<group>";
@@ -818,6 +822,7 @@
 				D23105EA2B569AA100BC45DD /* TezosCoin.swift in Sources */,
 				D279746B2BDBE24500FE26D5 /* TonCoin.swift in Sources */,
 				D2D4AE3B2C06FBCE00DA419A /* AptosCoin.swift in Sources */,
+				EF77FC3B648E79262E0C2038 /* BitcoinTaprootCoin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -865,6 +870,7 @@
 				D2E7E5B82DC8CB0E00A414F5 /* TezosCoin.swift in Sources */,
 				D2E7E5BA2DC8CB0E00A414F5 /* TonCoin.swift in Sources */,
 				D2E7E5BB2DC8CB0E00A414F5 /* AptosCoin.swift in Sources */,
+				20DB55EA3891386AD4EDF7A8 /* BitcoinTaprootCoin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
