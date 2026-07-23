@@ -44,8 +44,8 @@ import {
   getExchangeAllowanceLoading,
 } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
 import {selectUserCoins} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import AdvancedFeesSheet from '../AdvancedFeesSheet';
-import ModalConfirmTransaction from '../ModalConfirmTransaction';
+import AdvancedFeesSheet from 'components/AdvancedFeesSheet';
+import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
 
 const selectNativeBalance = (chainName, chainSymbol) => state => {
   const allCoins = selectUserCoins(state);

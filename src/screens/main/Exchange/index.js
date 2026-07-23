@@ -563,7 +563,12 @@ const Exchange = ({navigation}) => {
 
   const onDoneEditingSlippage = useCallback(() => {
     setIsEditingSlippage(false);
-  }, []);
+    getExchangeQuoteForFrom(
+      selectedFromAsset,
+      selectedToAsset,
+      amountFrom,
+    ).then();
+  }, [amountFrom, getExchangeQuoteForFrom, selectedFromAsset, selectedToAsset]);
 
   useEffect(() => {
     if (isEditingSlippage && keyboardHeight > 0) {
