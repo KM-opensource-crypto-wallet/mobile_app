@@ -17,6 +17,7 @@ export const chainLogoMap = {
   optimism_binance_smart_chain: require('../../assets/chain_logo/optimism_binance_smart_chain.png'),
   polygon: require('../../assets/chain_logo/polygon.png'),
   ripple: require('../../assets/chain_logo/ripple.png'),
+  robinhood: require('../../assets/chain_logo/robinhood.webp'),
   solana: require('../../assets/chain_logo/solana.png'),
   stellar: require('../../assets/chain_logo/stellar.png'),
   tezos: require('../../assets/chain_logo/tezos.png'),
