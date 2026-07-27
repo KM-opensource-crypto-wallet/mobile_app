@@ -173,6 +173,7 @@ const AllowanceInfoSheet = forwardRef(
       const action = isExchange
         ? fetchExchangeApproveEstimationFee({
             feesType: selectedFeesTypeRef.current,
+            nonce: customNonceRef.current || latestAllowanceData?.nonce,
           })
         : fetchStakingApproveEstimationFee({
             isFetchNonce: false,
@@ -229,6 +230,12 @@ const AllowanceInfoSheet = forwardRef(
         selectedFeesTypeRef.current = 'recommended';
         isPauseCalculateFees.current = false;
         setHasError(false);
+        console.log(
+          '[AllowanceInfoSheetDebug] present() called, inner ref current:',
+          !!bottomSheetRef.current,
+          'isExchange:',
+          isExchange,
+        );
         bottomSheetRef.current?.present();
       },
       close: () => {
@@ -588,17 +595,19 @@ const AllowanceInfoSheet = forwardRef(
                       </Text>
                     </>
                   )}
-                  {/* Network Fee Row — tap to open AdvancedFeesSheet (staking only; exchange is read-only) */}
-                  {isExchange ? (
-                    <View style={styles.feeRow}>
-                      <View style={styles.feeLabelRow}>
-                        <MaterialCommunityIcons
-                          name="gas-station"
-                          size={16}
-                          color={theme.background}
-                        />
-                        <Text style={styles.feeSectionLabel}>Network Fee</Text>
-                      </View>
+                  {/* Network Fee Row — tap to open AdvancedFeesSheet */}
+                  <TouchableOpacity
+                    style={styles.feeRow}
+                    onPress={() => advancedFeesSheetRef.current?.present()}>
+                    <View style={styles.feeLabelRow}>
+                      <MaterialCommunityIcons
+                        name="gas-station"
+                        size={16}
+                        color={theme.background}
+                      />
+                      <Text style={styles.feeSectionLabel}>Network Fee</Text>
+                    </View>
+                    <View style={styles.feeValueRow}>
                       <Text style={styles.feeSectionValue}>
                         {isFetchingFeesAgain
                           ? 'Refreshing...'
@@ -606,35 +615,13 @@ const AllowanceInfoSheet = forwardRef(
                               chainSymbol || ''
                             }`}
                       </Text>
+                      <MaterialCommunityIcons
+                        name="chevron-right"
+                        size={18}
+                        color={theme.gray}
+                      />
                     </View>
-                  ) : (
-                    <TouchableOpacity
-                      style={styles.feeRow}
-                      onPress={() => advancedFeesSheetRef.current?.present()}>
-                      <View style={styles.feeLabelRow}>
-                        <MaterialCommunityIcons
-                          name="gas-station"
-                          size={16}
-                          color={theme.background}
-                        />
-                        <Text style={styles.feeSectionLabel}>Network Fee</Text>
-                      </View>
-                      <View style={styles.feeValueRow}>
-                        <Text style={styles.feeSectionValue}>
-                          {isFetchingFeesAgain
-                            ? 'Refreshing...'
-                            : `${allowanceData?.transactionFee || '0'} ${
-                                chainSymbol || ''
-                              }`}
-                        </Text>
-                        <MaterialCommunityIcons
-                          name="chevron-right"
-                          size={18}
-                          color={theme.gray}
-                        />
-                      </View>
-                    </TouchableOpacity>
-                  )}
+                  </TouchableOpacity>
                   {isInsufficientFeeBalance ? (
                     <Text style={styles.errorText}>
                       {`Insufficient ${
@@ -672,24 +659,22 @@ const AllowanceInfoSheet = forwardRef(
             visible={showConfirmModal}
             onSuccess={onSuccess}
           />
-          {!isExchange && (
-            <AdvancedFeesSheet
-              ref={advancedFeesSheetRef}
-              feesOptions={allowanceData?.feesOptions}
-              selectedFeesType={selectedFeesType}
-              customFees={customFees}
-              customNonce={customNonce}
-              chainName={convertedChainName}
-              gasCurrency={GAS_CURRENCY[convertedChainName] || 'Gwei'}
-              onSelectFeesType={onSelectFeesType}
-              onChangeCustomFees={onChangeCustomFees}
-              onChangeCustomNonce={onChangeCustomNonce}
-              // Opens OVER the allowance sheet: layer above it and keep the
-              // allowance sheet mounted (dimmed + non-interactive) underneath.
-              zIndex={10001}
-              stackBehavior="push"
-            />
-          )}
+          <AdvancedFeesSheet
+            ref={advancedFeesSheetRef}
+            feesOptions={allowanceData?.feesOptions}
+            selectedFeesType={selectedFeesType}
+            customFees={customFees}
+            customNonce={customNonce}
+            chainName={convertedChainName}
+            gasCurrency={GAS_CURRENCY[convertedChainName] || 'Gwei'}
+            onSelectFeesType={onSelectFeesType}
+            onChangeCustomFees={onChangeCustomFees}
+            onChangeCustomNonce={onChangeCustomNonce}
+            // Opens OVER the allowance sheet: layer above it and keep the
+            // allowance sheet mounted (dimmed + non-interactive) underneath.
+            zIndex={10001}
+            stackBehavior="push"
+          />
         </DokBottomSheet>
       </>
     );

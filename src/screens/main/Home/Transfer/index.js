@@ -1087,8 +1087,7 @@ const Transfer = ({navigation, route}) => {
                 : renderVotingUI()}
               {/* Advanced Options Card */}
               {isFeesOptionChain(convertedChainName) &&
-                !!feesOptions?.length &&
-                !isExchangeScreen && (
+                !!feesOptions?.length && (
                   <TouchableOpacity
                     style={styles.advancedOptionsCard}
                     onPress={openAdvancedOptionsSheet}

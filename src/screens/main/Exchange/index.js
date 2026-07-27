@@ -651,15 +651,18 @@ const Exchange = ({navigation}) => {
     dispatch(calculateExchange());
   };
 
-  const onAllowanceContinue = async () => {
-    try {
-      await dispatch(approveSwapAllowance()).unwrap();
-      exchangeAllowanceSheetRef.current?.close();
-      navigation.navigate('Transfer', {fromScreen: 'Exchange'});
-    } catch (error) {
-      console.error('Error approving swap allowance', error);
-    }
-  };
+  const onAllowanceContinue = useCallback(
+    async ({isFetchNonce, type: allowanceType}) => {
+      try {
+        await dispatch(approveSwapAllowance({type: allowanceType})).unwrap();
+        exchangeAllowanceSheetRef.current?.close();
+        navigation.navigate('Transfer', {fromScreen: 'Exchange'});
+      } catch (error) {
+        console.error('Error approving swap allowance', error);
+      }
+    },
+    [dispatch, navigation],
+  );
 
   return (
     <DokSafeAreaView style={styles.container}>
@@ -1035,15 +1038,6 @@ const Exchange = ({navigation}) => {
             onContinue={onAllowanceContinue}
           />
         )}
-        {/*<ModalExchange*/}
-        {/*  visible={true}*/}
-        {/*  hideModal={setmodalVisible}*/}
-        {/*  reset={() => {*/}
-        {/*    setAmountFrom('');*/}
-        {/*    setAmountTo('');*/}
-        {/*  }}*/}
-        {/*  navigation={navigation}*/}
-        {/*/>*/}
       </View>
     </DokSafeAreaView>
   );
