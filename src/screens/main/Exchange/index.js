@@ -41,13 +41,17 @@ import {
 import {
   getExchange,
   getExchangeApproveLoading,
+  getExchangePermitApproveLoading,
 } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
 import {
+  approveExchangePermit2,
   approveSwapAllowance,
   calculateExchange,
   fetchExchangeAllowance,
+  fetchExchangePermitAllowance,
   setExchangeFields,
 } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
+import {getTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSelector';
 import BigNumber from 'bignumber.js';
 import {
   calculateSliderValue,
@@ -69,6 +73,7 @@ import ExchangeProviderItem from 'components/ExchangeProviderItem';
 import {getExchangeProviders} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import AllowanceInfoSheet from 'components/AllowanceInfoSheet';
+import PermitInfoSheet from 'components/PermitInfoSheet';
 
 const calculateEstimatePrice = async (
   selectedFromAsset,
@@ -158,6 +163,11 @@ const Exchange = ({navigation}) => {
     slippage,
   } = useSelector(getExchange);
   const exchangeApproveLoading = useSelector(getExchangeApproveLoading);
+  const exchangePermitApproveLoading = useSelector(
+    getExchangePermitApproveLoading,
+  );
+  const transferData = useSelector(getTransferData);
+  const isPermit2Flow = Boolean(transferData?.swapData?.permit_abi);
   const localCurrency = useSelector(getLocalCurrency);
 
   const keyboardHeight = useKeyboardHeight();
@@ -176,6 +186,7 @@ const Exchange = ({navigation}) => {
   const isFocused = useIsFocused();
   const addMoreCoinsSheet = useRef();
   const exchangeAllowanceSheetRef = useRef();
+  const exchangePermitSheetRef = useRef();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debounceEstimateAmount = useCallback(
@@ -609,6 +620,24 @@ const Exchange = ({navigation}) => {
     !!selectedFromAsset?.contractAddress;
   const showApproveAndSwap = isERC20FromAsset && !isButtonDisabled;
 
+  // After the ERC20-level allowance is confirmed (already approved, or just
+  // approved via the AllowanceInfoSheet), a permit2 swap quote still needs a
+  // separate router-level (Permit2) allowance before it's safe to swap.
+  const handlePermitCheckAndProceed = useCallback(async () => {
+    if (!isPermit2Flow) {
+      navigation.navigate('Transfer', {fromScreen: 'Exchange'});
+      return;
+    }
+    const permitResult = await dispatch(
+      fetchExchangePermitAllowance(),
+    ).unwrap();
+    if (permitResult?.isApproved) {
+      navigation.navigate('Transfer', {fromScreen: 'Exchange'});
+    } else {
+      exchangePermitSheetRef.current?.present();
+    }
+  }, [dispatch, navigation, isPermit2Flow]);
+
   const handleSubmit = async () => {
     dispatch(setCurrentTransferSuccess(false));
     if (showApproveAndSwap) {
@@ -624,9 +653,9 @@ const Exchange = ({navigation}) => {
         console.log('[ExchangeDebug] fetchExchangeAllowance result', result);
         if (result?.isApproved) {
           console.log(
-            '[ExchangeDebug] already approved, navigating to Transfer',
+            '[ExchangeDebug] already approved, checking permit2 allowance',
           );
-          navigation.navigate('Transfer', {fromScreen: 'Exchange'});
+          await handlePermitCheckAndProceed();
         } else {
           console.log(
             '[ExchangeDebug] not approved, presenting sheet. ref current:',
@@ -652,13 +681,58 @@ const Exchange = ({navigation}) => {
   };
 
   const onAllowanceContinue = useCallback(
-    async ({isFetchNonce, type: allowanceType}) => {
+    async ({
+      type,
+      gasFee,
+      maxPriorityFeePerGas,
+      nonce,
+      feesType,
+      estimateGas,
+    }) => {
       try {
-        await dispatch(approveSwapAllowance({type: allowanceType})).unwrap();
+        await dispatch(
+          approveSwapAllowance({
+            type,
+            gasFee,
+            maxPriorityFeePerGas,
+            nonce,
+            feesType,
+            estimateGas,
+          }),
+        ).unwrap();
         exchangeAllowanceSheetRef.current?.close();
-        navigation.navigate('Transfer', {fromScreen: 'Exchange'});
+        await handlePermitCheckAndProceed();
       } catch (error) {
         console.error('Error approving swap allowance', error);
+      }
+    },
+    [dispatch, handlePermitCheckAndProceed],
+  );
+
+  const onPermitAllowanceContinue = useCallback(
+    async ({
+      type,
+      gasFee,
+      maxPriorityFeePerGas,
+      nonce,
+      feesType,
+      estimateGas,
+    }) => {
+      try {
+        await dispatch(
+          approveExchangePermit2({
+            type,
+            gasFee,
+            maxPriorityFeePerGas,
+            nonce,
+            feesType,
+            estimateGas,
+          }),
+        ).unwrap();
+        exchangePermitSheetRef.current?.close();
+        navigation.navigate('Transfer', {fromScreen: 'Exchange'});
+      } catch (error) {
+        console.error('Error approving permit2 allowance', error);
       }
     },
     [dispatch, navigation],
@@ -1026,17 +1100,29 @@ const Exchange = ({navigation}) => {
           onDismiss={onDismissAddCoinsSheet}
         />
         {isERC20FromAsset && (
-          <AllowanceInfoSheet
-            ref={exchangeAllowanceSheetRef}
-            source="exchange"
-            tokenSymbol={selectedFromAsset?.symbol}
-            requiredAmount={amountFrom}
-            availableAmount={selectedFromAsset?.totalAmount}
-            chainName={selectedFromAsset?.chain_name}
-            chainSymbol={selectedFromAsset?.chain_symbol}
-            approveLoading={exchangeApproveLoading}
-            onContinue={onAllowanceContinue}
-          />
+          <>
+            <AllowanceInfoSheet
+              ref={exchangeAllowanceSheetRef}
+              source="exchange"
+              tokenSymbol={selectedFromAsset?.symbol}
+              requiredAmount={amountFrom}
+              availableAmount={selectedFromAsset?.totalAmount}
+              chainName={selectedFromAsset?.chain_name}
+              chainSymbol={selectedFromAsset?.chain_symbol}
+              approveLoading={exchangeApproveLoading}
+              onContinue={onAllowanceContinue}
+            />
+            <PermitInfoSheet
+              ref={exchangePermitSheetRef}
+              tokenSymbol={selectedFromAsset?.symbol}
+              requiredAmount={amountFrom}
+              availableAmount={selectedFromAsset?.totalAmount}
+              chainName={selectedFromAsset?.chain_name}
+              chainSymbol={selectedFromAsset?.chain_symbol}
+              approveLoading={exchangePermitApproveLoading}
+              onContinue={onPermitAllowanceContinue}
+            />
+          </>
         )}
       </View>
     </DokSafeAreaView>
