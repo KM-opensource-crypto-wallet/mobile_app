@@ -135,7 +135,6 @@ const ModalConfirmTransaction = ({visible, hideModal, onSuccess}) => {
                   activeOutlineColor={errors.currentPassword ? 'red' : '#222'}
                   autoCapitalize="none"
                   returnKeyType="next"
-                  mode="flet"
                   secureTextEntry={true}
                   textAlign="center"
                   blurOnSubmit={false}

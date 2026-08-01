@@ -129,7 +129,6 @@ const ModalBackupPassword = ({
                   activeOutlineColor={errors.backupPassword ? 'red' : '#222'}
                   autoCapitalize="none"
                   returnKeyType={isCreate ? 'next' : 'done'}
-                  mode="flet"
                   secureTextEntry={hide}
                   blurOnSubmit={false}
                   name="backupPassword"
@@ -171,7 +170,6 @@ const ModalBackupPassword = ({
                       }
                       autoCapitalize="none"
                       returnKeyType="done"
-                      mode="flet"
                       secureTextEntry={hideConfirm}
                       blurOnSubmit={false}
                       name="backupPasswordConfirm"

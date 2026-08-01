@@ -277,8 +277,14 @@ const deriveKey = (password, salt) => {
 // The user's backup password is the load-bearing secret; the app secret only
 // adds defense in depth. WALLET_BACKUP_SECRET must never change once shipped —
 // v2 backups mix it into their key and would become unrecoverable.
-const getV2KeyMaterial = userPassword =>
-  `${userPassword}\x00${process.env.WALLET_BACKUP_SECRET || ''}`;
+const getV2KeyMaterial = userPassword => {
+  if (!process.env.WALLET_BACKUP_SECRET) {
+    throw new Error(
+      'WALLET_BACKUP_SECRET is not configured. Check your .env file and rebuild the app.',
+    );
+  }
+  return `${userPassword}\x00${process.env.WALLET_BACKUP_SECRET}`;
+};
 
 // Payload layout (same for v1/v2): [16-byte salt][12-byte nonce][ciphertext][16-byte auth tag]
 const parsePayload = (ciphertext, prefix) => {

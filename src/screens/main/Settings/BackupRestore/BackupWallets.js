@@ -55,6 +55,8 @@ const BackupWallets = ({navigation}) => {
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [showDriveGuideModal, setShowDriveGuideModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordMode, setPasswordMode] = useState('create');
+  const [passwordError, setPasswordError] = useState('');
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -178,6 +180,8 @@ const BackupWallets = ({navigation}) => {
         const user = await googleDrive.googleSignIn();
         setUserInfo(user?.data?.user || user?.user || null);
       }
+      setPasswordMode('create');
+      setPasswordError('');
       setShowPasswordModal(true);
     } catch (err) {
       // Handle known cancellation error for UX
@@ -231,11 +235,8 @@ const BackupWallets = ({navigation}) => {
     } catch (err) {
       console.error('Backup Failed:', err);
       if (err?.code === BACKUP_ERROR_CODES.WRONG_PASSWORD) {
-        showToast({
-          type: 'errorToast',
-          title: 'Password Mismatch',
-          message: err?.message,
-        });
+        setPasswordMode('enter');
+        setPasswordError(err?.message || 'Incorrect backup password.');
         setShowPasswordModal(true);
         return;
       }
@@ -328,7 +329,8 @@ const BackupWallets = ({navigation}) => {
 
       <ModalBackupPassword
         visible={showPasswordModal}
-        mode="create"
+        mode={passwordMode}
+        errorText={passwordError}
         hideModal={() => setShowPasswordModal(false)}
         onSuccess={handleBackupPasswordSuccess}
       />
