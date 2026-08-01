@@ -240,8 +240,24 @@ export const googleDrive = {
     }),
 };
 
-// Version prefix for encrypted payloads
+// Version prefixes for encrypted payloads
+// v1-gcm: key derived from the app-wide WALLET_BACKUP_SECRET only (legacy)
+// v2-gcm: key derived from a user-supplied backup password + WALLET_BACKUP_SECRET
 const VERSION_V1_GCM = 'v1-gcm:';
+const VERSION_V2_GCM = 'v2-gcm:';
+
+export const BACKUP_ERROR_CODES = {
+  PASSWORD_REQUIRED: 'BACKUP_PASSWORD_REQUIRED',
+  WRONG_PASSWORD: 'BACKUP_WRONG_PASSWORD',
+  CORRUPTED: 'BACKUP_CORRUPTED',
+  NO_BACKUP: 'BACKUP_NOT_FOUND',
+};
+
+const createBackupError = (code, message) => {
+  const error = new Error(message);
+  error.code = code;
+  return error;
+};
 
 if (!process.env.WALLET_BACKUP_SECRET) {
   console.error(
@@ -258,14 +274,47 @@ const deriveKey = (password, salt) => {
   return crypto.pbkdf2Sync(passwordBuffer, salt, 100000, 32, 'sha256');
 };
 
+// The user's backup password is the load-bearing secret; the app secret only
+// adds defense in depth. WALLET_BACKUP_SECRET must never change once shipped —
+// v2 backups mix it into their key and would become unrecoverable.
+const getV2KeyMaterial = userPassword =>
+  `${userPassword}\x00${process.env.WALLET_BACKUP_SECRET || ''}`;
+
+// Payload layout (same for v1/v2): [16-byte salt][12-byte nonce][ciphertext][16-byte auth tag]
+const parsePayload = (ciphertext, prefix) => {
+  const base64Data = ciphertext.slice(prefix.length);
+  const rawData = Buffer.from(base64Data, 'base64');
+
+  // Minimum size: 16 (salt) + 12 (nonce) + 1 (min ciphertext) + 16 (auth tag) = 45 bytes
+  if (rawData.length < 45) {
+    throw createBackupError(
+      BACKUP_ERROR_CODES.CORRUPTED,
+      'Invalid encrypted data: too short',
+    );
+  }
+
+  return {
+    salt: rawData.subarray(0, 16),
+    nonce: rawData.subarray(16, 28),
+    authTag: rawData.subarray(rawData.length - 16),
+    encrypted: rawData.subarray(28, rawData.length - 16),
+  };
+};
+
 // Encryption with AES-256-GCM (authenticated encryption)
-// Format: "v1-gcm:" + base64([16-byte salt][12-byte nonce][ciphertext][16-byte auth tag])
-const encryptData = data => {
+// Always writes the v2 format keyed by the user's backup password
+const encryptData = (data, userPassword) => {
+  if (!userPassword) {
+    throw createBackupError(
+      BACKUP_ERROR_CODES.PASSWORD_REQUIRED,
+      'A backup password is required to encrypt the backup.',
+    );
+  }
   try {
     const jsonString = JSON.stringify(data);
     const salt = crypto.randomBytes(16);
     const nonce = crypto.randomBytes(12); // GCM standard nonce size
-    const key = deriveKey(process.env.WALLET_BACKUP_SECRET, salt);
+    const key = deriveKey(getV2KeyMaterial(userPassword), salt);
 
     const cipher = crypto.createCipheriv('aes-256-gcm', key, nonce);
     const encrypted = Buffer.concat([
@@ -274,9 +323,8 @@ const encryptData = data => {
     ]);
     const authTag = cipher.getAuthTag(); // 16 bytes
 
-    // v1-gcm format: salt + nonce + ciphertext + authTag
     const payload = Buffer.concat([salt, nonce, encrypted, authTag]);
-    return VERSION_V1_GCM + payload.toString('base64');
+    return VERSION_V2_GCM + payload.toString('base64');
   } catch (error) {
     console.error('Encryption Failed:', error);
     throw new Error('Failed to encrypt wallet data');
@@ -284,40 +332,62 @@ const encryptData = data => {
 };
 
 // Decryption with AES-256-GCM (authenticated decryption)
-const decryptData = ciphertext => {
+// v1 backups decrypt with the app secret (no password), v2 with the user's password
+const decryptData = (ciphertext, userPassword) => {
+  const isV2 =
+    typeof ciphertext === 'string' && ciphertext.startsWith(VERSION_V2_GCM);
+  const isV1 =
+    typeof ciphertext === 'string' && ciphertext.startsWith(VERSION_V1_GCM);
+
+  if (!isV1 && !isV2) {
+    throw createBackupError(
+      BACKUP_ERROR_CODES.CORRUPTED,
+      'Failed to decrypt wallet backup. Invalid password or corrupted file.',
+    );
+  }
+  if (isV2 && !userPassword) {
+    throw createBackupError(
+      BACKUP_ERROR_CODES.PASSWORD_REQUIRED,
+      'A backup password is required to unlock this backup.',
+    );
+  }
+
   try {
-    if (!ciphertext.startsWith(VERSION_V1_GCM)) {
-      throw new Error('Invalid encrypted data format');
-    }
+    const {salt, nonce, authTag, encrypted} = parsePayload(
+      ciphertext,
+      isV2 ? VERSION_V2_GCM : VERSION_V1_GCM,
+    );
 
-    const base64Data = ciphertext.slice(VERSION_V1_GCM.length);
-    const rawData = Buffer.from(base64Data, 'base64');
-
-    // Minimum size: 16 (salt) + 12 (nonce) + 1 (min ciphertext) + 16 (auth tag) = 45 bytes
-    if (rawData.length < 45) {
-      throw new Error('Invalid encrypted data: too short');
-    }
-
-    const salt = rawData.subarray(0, 16);
-    const nonce = rawData.subarray(16, 28);
-    const authTag = rawData.subarray(rawData.length - 16);
-    const encrypted = rawData.subarray(28, rawData.length - 16);
-
-    const key = deriveKey(process.env.WALLET_BACKUP_SECRET, salt);
+    const key = deriveKey(
+      isV2 ? getV2KeyMaterial(userPassword) : process.env.WALLET_BACKUP_SECRET,
+      salt,
+    );
 
     const decipher = crypto.createDecipheriv('aes-256-gcm', key, nonce);
     decipher.setAuthTag(authTag);
 
-    // GCM authentication happens during decryption - will throw if tag is invalid
-    const decrypted = Buffer.concat([
-      decipher.update(encrypted),
-      decipher.final(), // Throws if auth tag verification fails
-    ]);
+    let decrypted;
+    try {
+      // GCM authentication happens during decryption - throws if tag is invalid
+      decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
+    } catch (authError) {
+      if (isV2) {
+        throw createBackupError(
+          BACKUP_ERROR_CODES.WRONG_PASSWORD,
+          'Incorrect backup password.',
+        );
+      }
+      throw authError;
+    }
 
     return JSON.parse(decrypted.toString('utf8'));
   } catch (error) {
     console.error('Decryption Failed:', error);
-    throw new Error(
+    if (error?.code) {
+      throw error;
+    }
+    throw createBackupError(
+      BACKUP_ERROR_CODES.CORRUPTED,
       'Failed to decrypt wallet backup. Invalid password or corrupted file.',
     );
   }
@@ -332,14 +402,21 @@ export const initGoogleDrive = () => {
   googleDrive.configure();
 };
 
-export const backupWalletsToDrive = async payload => {
+export const backupWalletsToDrive = async (payload, userPassword) => {
+  if (!userPassword) {
+    throw createBackupError(
+      BACKUP_ERROR_CODES.PASSWORD_REQUIRED,
+      'A backup password is required to encrypt the backup.',
+    );
+  }
   try {
     let finalWallets = [];
     let masterClientId = payload.masterClientId;
 
     // 1. Try to fetch existing backup to merge
     try {
-      const existingData = await restoreWalletsFromDrive();
+      const {encryptedData} = await fetchEncryptedBackup();
+      const existingData = decryptData(encryptedData, userPassword);
       if (existingData && Array.isArray(existingData.wallets)) {
         finalWallets = existingData.wallets;
         // Keep existing masterClientId if not provided in new payload (though usually it is)
@@ -348,8 +425,17 @@ export const backupWalletsToDrive = async payload => {
         }
       }
     } catch (e) {
+      if (e?.code === BACKUP_ERROR_CODES.WRONG_PASSWORD) {
+        throw createBackupError(
+          BACKUP_ERROR_CODES.WRONG_PASSWORD,
+          "This password doesn't match your existing backup. Enter the same password you used before, or delete the existing backup first.",
+        );
+      }
       const msg = e?.message || e?.json?.error?.message;
-      if (msg !== 'No backup file found.') {
+      if (
+        e?.code !== BACKUP_ERROR_CODES.NO_BACKUP &&
+        msg !== 'No backup file found.'
+      ) {
         throw e;
       }
     }
@@ -379,15 +465,15 @@ export const backupWalletsToDrive = async payload => {
       wallets: finalWallets,
       masterClientId,
       timestamp: new Date().toISOString(),
-      version: 1,
+      version: 2,
     };
 
     // 3. Encrypt Data
-    const encryptedData = encryptData(mergedData);
+    const encryptedData = encryptData(mergedData, userPassword);
     const fileContent = JSON.stringify({
       data: encryptedData,
       timestamp: new Date().toISOString(),
-      version: 1,
+      version: 2,
     });
 
     const fileBase64 = Buffer.from(fileContent).toString('base64');
@@ -417,7 +503,9 @@ export const backupWalletsToDrive = async payload => {
   }
 };
 
-export const restoreWalletsFromDrive = async () => {
+// Downloads the encrypted backup file without decrypting it, so callers can
+// check needsPassword and prompt the user before attempting decryption
+export const fetchEncryptedBackup = async () => {
   try {
     const filesList = await googleDrive.getFileList('appDataFolder');
     const files = filesList.files || [];
@@ -426,7 +514,10 @@ export const restoreWalletsFromDrive = async () => {
     );
 
     if (!existingFile) {
-      throw new Error('No backup file found.');
+      throw createBackupError(
+        BACKUP_ERROR_CODES.NO_BACKUP,
+        'No backup file found.',
+      );
     }
 
     const content = await googleDrive.getTextFromGDriveFile(existingFile.id);
@@ -440,10 +531,31 @@ export const restoreWalletsFromDrive = async () => {
     }
 
     if (!parsedContent || !parsedContent.data) {
-      throw new Error('Invalid backup file format.');
+      throw createBackupError(
+        BACKUP_ERROR_CODES.CORRUPTED,
+        'Invalid backup file format.',
+      );
     }
 
-    return decryptData(parsedContent.data);
+    return {
+      encryptedData: parsedContent.data,
+      needsPassword:
+        typeof parsedContent.data === 'string' &&
+        parsedContent.data.startsWith(VERSION_V2_GCM),
+    };
+  } catch (error) {
+    console.error('Fetch Backup Failed:', error);
+    throw error?.json?.error || error;
+  }
+};
+
+export const decryptBackup = (encryptedData, userPassword) =>
+  decryptData(encryptedData, userPassword);
+
+export const restoreWalletsFromDrive = async userPassword => {
+  try {
+    const {encryptedData} = await fetchEncryptedBackup();
+    return decryptData(encryptedData, userPassword);
   } catch (error) {
     console.error('Restore Failed:', error);
     throw error?.json?.error || error;
