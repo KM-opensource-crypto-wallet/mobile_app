@@ -137,6 +137,8 @@ const HomeScreen = ({navigation, route}) => {
   const filterButtonRef = useRef(null);
   const sortOption = useSelector(selectCurrentWalletSortOption);
   // const allCoins = useSelector(getAllCoins);
+  const state = useSelector(state => state);
+  console.log(state, 'state homescreen');
   const requestedModalVisible = useSelector(selectRequestedModalVisible);
   const transactionModalVisible = useSelector(selectTransactionModalVisible);
   const selectedConversation = useSelector(

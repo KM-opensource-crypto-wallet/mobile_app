@@ -5,6 +5,7 @@ import {
 } from 'redux-persist';
 import createSensitiveStorage from 'redux-persist-sensitive-storage';
 import {configureStore} from '@reduxjs/toolkit';
+import {v4} from 'uuid';
 
 import {authSlice} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {settingsSlice} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
@@ -48,7 +49,25 @@ const walletsPersistTransform = createTransform(
         : wallet,
     ),
   }),
-  outboundState => outboundState,
+  // One-time migration for users persisted currentWalletIndex
+  outboundState => {
+    if (outboundState?.currentWalletClientId) {
+      return outboundState;
+    }
+    const allWallets = outboundState?.allWallets?.map(wallet => ({
+      ...wallet,
+      clientId: wallet?.clientId || v4(),
+    }));
+    const {currentWalletIndex, ...restState} = outboundState || {};
+    return {
+      ...restState,
+      allWallets,
+      currentWalletClientId:
+        allWallets?.[currentWalletIndex]?.clientId ||
+        allWallets?.[0]?.clientId ||
+        null,
+    };
+  },
   {whitelist: [walletsSlice.name]},
 );
 
