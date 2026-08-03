@@ -24,6 +24,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 import BigNumber from 'bignumber.js';
 import {
   isBalanceNotAvailable,
+  isEVMChain,
   GAS_CURRENCY,
   delay,
   validateNumberInInput,
@@ -37,6 +38,8 @@ import {
 import {selectUserCoins} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import AdvancedFeesSheet from 'components/AdvancedFeesSheet';
 import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
+
+const FEES_TYPE_TO_INDEX = {recommended: 0, normal: 1};
 
 const selectNativeBalance = (chainName, chainSymbol) => state => {
   const allCoins = selectUserCoins(state);
@@ -89,6 +92,7 @@ const PermitInfoSheet = forwardRef(
     const selectedFeesTypeRef = useRef('recommended');
     const isPauseCalculateFees = useRef(false);
     const [customFees, setCustomFees] = useState('');
+    const convertedChainName = isEVMChain(chainName) ? 'ethereum' : chainName;
 
     // Refs mirror volatile values so the fetch can read them at call time
     // without being recreated on every change (keeps the interval stable).
@@ -113,13 +117,17 @@ const PermitInfoSheet = forwardRef(
       }
     }, [permitAllowanceData?.nonce]);
 
-    // Sync custom gas price default when feesOptions arrive, but not if user has selected custom
+    // Sync custom gas price when feesOptions arrive/refresh, tracking whichever
+    // non-custom tier is currently selected (not always the first option).
     useEffect(() => {
-      if (
-        permitAllowanceData?.feesOptions?.[0]?.gasPrice &&
-        selectedFeesTypeRef.current !== 'custom'
-      ) {
-        setCustomFees(permitAllowanceData?.feesOptions?.[0]?.gasPrice);
+      const currentType = selectedFeesTypeRef.current;
+      if (currentType === 'custom') {
+        return;
+      }
+      const tierIndex = FEES_TYPE_TO_INDEX[currentType] ?? 0;
+      const gasPrice = permitAllowanceData?.feesOptions?.[tierIndex]?.gasPrice;
+      if (gasPrice) {
+        setCustomFees(gasPrice);
       }
     }, [permitAllowanceData?.feesOptions]);
 
@@ -221,8 +229,8 @@ const PermitInfoSheet = forwardRef(
 
     const isInsufficientFeeBalance = useMemo(
       () =>
-        !!nativeBalance &&
-        !!permitAllowanceData?.transactionFee &&
+        nativeBalance != null &&
+        permitAllowanceData?.transactionFee != null &&
         isBalanceNotAvailable(
           nativeBalance,
           permitAllowanceData.transactionFee,
@@ -244,6 +252,9 @@ const PermitInfoSheet = forwardRef(
         isPauseCalculateFees.current = false;
         setSelectedFeesType(type);
         selectedFeesTypeRef.current = type;
+        if (gasPrice) {
+          setCustomFees(gasPrice);
+        }
       }
     }, []);
 
@@ -331,7 +342,7 @@ const PermitInfoSheet = forwardRef(
                   <MaterialCommunityIcons
                     name="alert-circle-outline"
                     size={48}
-                    color="#F44336"
+                    color={theme.error}
                   />
                   <Text style={styles.errorViewTitle}>
                     Something went wrong
@@ -363,7 +374,9 @@ const PermitInfoSheet = forwardRef(
                         }
                         size={18}
                         color={
-                          permitAllowanceData.isApproved ? '#4CAF50' : '#FF9800'
+                          permitAllowanceData.isApproved
+                            ? theme.success
+                            : theme.warning
                         }
                       />
                       <Text
@@ -507,7 +520,7 @@ const PermitInfoSheet = forwardRef(
                           size={16}
                           color={
                             selectedType === 'unlimited'
-                              ? '#FF9800'
+                              ? theme.warning
                               : theme.gray
                           }
                         />
@@ -601,8 +614,8 @@ const PermitInfoSheet = forwardRef(
             selectedFeesType={selectedFeesType}
             customFees={customFees}
             customNonce={customNonce}
-            chainName="ethereum"
-            gasCurrency={GAS_CURRENCY.ethereum || 'Gwei'}
+            chainName={convertedChainName}
+            gasCurrency={GAS_CURRENCY[convertedChainName] || 'Gwei'}
             onSelectFeesType={onSelectFeesType}
             onChangeCustomFees={onChangeCustomFees}
             onChangeCustomNonce={onChangeCustomNonce}
@@ -710,10 +723,10 @@ const myStyles = theme =>
       flexShrink: 1,
     },
     statusApproved: {
-      color: '#4CAF50',
+      color: theme.success,
     },
     statusPending: {
-      color: '#FF9800',
+      color: theme.warning,
     },
     sectionLabel: {
       fontSize: 13,
@@ -745,7 +758,7 @@ const myStyles = theme =>
       color: theme.gray,
     },
     selectionNoteWarning: {
-      color: '#FF9800',
+      color: theme.warning,
     },
     cardsRow: {
       flexDirection: 'row',
@@ -811,7 +824,7 @@ const myStyles = theme =>
     errorText: {
       fontSize: 12,
       fontFamily: 'Roboto-Regular',
-      color: '#F44336',
+      color: theme.error,
       lineHeight: 18,
       marginBottom: 12,
     },
@@ -856,7 +869,7 @@ const myStyles = theme =>
       marginBottom: 16,
     },
     buttonDisabled: {
-      backgroundColor: '#708090',
+      backgroundColor: theme.disabledButton,
     },
     buttonText: {
       fontSize: 16,
