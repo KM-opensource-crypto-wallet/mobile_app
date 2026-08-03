@@ -98,7 +98,6 @@ const ChangePassword = ({navigation}) => {
                       }
                       autoCapitalize="none"
                       returnKeyType="next"
-                      mode="flet"
                       secureTextEntry={hide ? true : false}
                       blurOnSubmit={false}
                       right={
@@ -148,7 +147,6 @@ const ChangePassword = ({navigation}) => {
                       }
                       autoCapitalize="none"
                       returnKeyType="next"
-                      mode="flet"
                       secureTextEntry={hide ? true : false}
                       blurOnSubmit={false}
                       right={
@@ -183,7 +181,6 @@ const ChangePassword = ({navigation}) => {
                       }
                       autoCapitalize="none"
                       returnKeyType="next"
-                      mode="flet"
                       secureTextEntry={hide ? true : false}
                       blurOnSubmit={false}
                       right={

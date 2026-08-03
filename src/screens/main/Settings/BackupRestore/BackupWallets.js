@@ -16,7 +16,7 @@ import Checkbox from 'components/Checkbox';
 import BackupRestoreUserMenu from 'components/BackupRestore/BackupRestoreUserMenu';
 
 import {
-  selectAllWallets,
+  selectVisibleWallets,
   getMasterClientId,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
@@ -26,11 +26,13 @@ import {
   deleteWalletBackup,
   googleDrive,
   initGoogleDrive,
+  BACKUP_ERROR_CODES,
 } from 'utils/googleDriveBackup';
 import {showToast} from 'utils/toast';
 
 import WalletSelectionCard from 'components/BackupRestore/WalletSelectionCard';
 import ModalDeleteBackup from 'components/ModalDeleteBackup';
+import ModalBackupPassword from 'components/ModalBackupPassword';
 import myStyles from './styles';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
@@ -40,7 +42,7 @@ const BackupWallets = ({navigation}) => {
   const styles = myStyles(theme, bottom);
   const [userInfo, setUserInfo] = useState(null);
 
-  const allWallets = useSelector(selectAllWallets);
+  const allWallets = useSelector(selectVisibleWallets);
   const masterClientId = useSelector(getMasterClientId);
   const localCurrency = useSelector(getLocalCurrency);
   const symbol = currencySymbol[localCurrency] || '$';
@@ -52,6 +54,9 @@ const BackupWallets = ({navigation}) => {
 
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [showDriveGuideModal, setShowDriveGuideModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordMode, setPasswordMode] = useState('create');
+  const [passwordError, setPasswordError] = useState('');
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -169,14 +174,38 @@ const BackupWallets = ({navigation}) => {
 
   const handleDriveGuideContinue = async () => {
     setShowDriveGuideModal(false);
-    setIsBackingUp(true);
 
     try {
       if (!userInfo) {
         const user = await googleDrive.googleSignIn();
         setUserInfo(user?.data?.user || user?.user || null);
       }
+      setPasswordMode('create');
+      setPasswordError('');
+      setShowPasswordModal(true);
+    } catch (err) {
+      // Handle known cancellation error for UX
+      // err.code === statusCodes.SIGN_IN_CANCELLED
+      console.error('Backup Failed:', err);
+      if (err?.message?.includes('insufficient authentication scopes')) {
+        await handleLogout();
+      }
+      showToast({
+        type: 'errorToast',
+        title: 'Backup Failed',
+        message:
+          !err?.message || err?.message?.includes('DEVELOPER_ERROR')
+            ? 'An unexpected error occurred during backup.'
+            : err?.message,
+      });
+    }
+  };
 
+  const handleBackupPasswordSuccess = async password => {
+    setShowPasswordModal(false);
+    setIsBackingUp(true);
+
+    try {
       const selectedWallets = allWallets.filter(w =>
         selectedWalletIds.includes(w.clientId),
       );
@@ -196,7 +225,7 @@ const BackupWallets = ({navigation}) => {
         masterClientId: masterClientId || '',
       };
 
-      await backupWalletsToDrive(backupData);
+      await backupWalletsToDrive(backupData, password);
 
       showToast({
         type: 'successToast',
@@ -204,9 +233,13 @@ const BackupWallets = ({navigation}) => {
         message: 'Your wallets have been safely backed up to Google Drive.',
       });
     } catch (err) {
-      // Handle known cancellation error for UX
-      // err.code === statusCodes.SIGN_IN_CANCELLED
       console.error('Backup Failed:', err);
+      if (err?.code === BACKUP_ERROR_CODES.WRONG_PASSWORD) {
+        setPasswordMode('enter');
+        setPasswordError(err?.message || 'Incorrect backup password.');
+        setShowPasswordModal(true);
+        return;
+      }
       if (err?.message?.includes('insufficient authentication scopes')) {
         await handleLogout();
       }
@@ -292,6 +325,14 @@ const BackupWallets = ({navigation}) => {
       <DriveGuideModal
         visible={showDriveGuideModal}
         onContinue={handleDriveGuideContinue}
+      />
+
+      <ModalBackupPassword
+        visible={showPasswordModal}
+        mode={passwordMode}
+        errorText={passwordError}
+        hideModal={() => setShowPasswordModal(false)}
+        onSuccess={handleBackupPasswordSuccess}
       />
 
       <ModalDeleteBackup

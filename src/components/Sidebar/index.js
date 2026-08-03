@@ -4,13 +4,11 @@ import {
   DrawerItemList,
   DrawerItem,
 } from '@react-navigation/drawer';
-import {View, Text, Button, Image, StyleSheet} from 'react-native';
+import {Text, TouchableOpacity} from 'react-native';
 import React, {useState, useEffect, useContext, useMemo} from 'react';
 
 import BuyCrypto from 'screens/main/BuyCrypto';
-import ResetWallet from 'screens/main/ResetWallet';
 import Settings from 'screens/main/Settings';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import BackIcon from 'assets/images/sidebarIcons/Back.svg';
 import HomeIcon from 'assets/images/sidebarIcons/Home.svg';
 import BuyCryptoIcon from 'assets/images/sidebarIcons/BuyCrypto.svg';
@@ -20,13 +18,10 @@ import ResetWalletIcon from 'assets/images/sidebarIcons/ResetWallet.svg';
 import WallestIcon from 'assets/images/sidebarIcons/Wallet.svg';
 import WalletConnectIcon from 'assets/images/sidebarIcons/WalletConnect.svg';
 import ContactUsIcon from 'assets/images/sidebarIcons/contact_us.svg';
-import AddIcon from 'assets/images/sidebarIcons/Add.svg';
 import ConvertIcon from 'assets/images/sidebarIcons/CryptoConvert.svg';
-import Home from 'screens/main/Home';
 import Wallets from 'screens/main/Wallets';
 import {useSelector, useDispatch} from 'react-redux';
 import ModalReset from 'components/ModalReset';
-import {useFocusEffect} from '@react-navigation/native';
 import {DrawerActions} from '@react-navigation/native';
 import Exchange from 'screens/main/Exchange';
 import LogOutIcon from 'assets/images/sidebarIcons/Logout.svg';

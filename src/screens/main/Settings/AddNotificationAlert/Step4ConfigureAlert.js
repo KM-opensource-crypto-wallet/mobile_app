@@ -10,10 +10,14 @@ import {useDispatch, useSelector} from 'react-redux';
 import {CommonActions} from '@react-navigation/native';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './AddNotificationAlertStyles';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  isWalletHiddenAndLocked,
+  selectAllWallets,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {getNotificationAlerts} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSelector';
 import {
   createCustomAlert,
+  deleteAlertThunk,
   updateAlertThunk,
 } from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
 import {v4} from 'uuid';
@@ -88,7 +92,9 @@ const AddNotificationAlertConfig = ({navigation, route}) => {
     const wallet = allWallets.find(
       w => w.clientId === existingAlert.walletClientId,
     );
-    if (!wallet) {
+    // A hidden (locked) wallet's name must never render here - treat it
+    // like a missing wallet if this screen is ever reached for one.
+    if (!wallet || isWalletHiddenAndLocked(wallet)) {
       return [];
     }
     const coin = wallet.coins?.find(c => c._id === existingAlert.coinId);
@@ -190,25 +196,33 @@ const AddNotificationAlertConfig = ({navigation, route}) => {
   const doSave = useCallback(async () => {
     setIsSaving(true);
 
-    const basePayload = (entry, key, wallet) => ({
-      walletClientId: entry.walletClientId,
-      walletId: entry.walletId,
-      walletName: entry.walletName,
-      coinId: entry.coin._id,
-      coinSymbol: entry.coin.symbol,
-      coinName: entry.coin.name,
-      coinIcon: entry.coin.icon,
-      chainName: entry.coin.chain_name,
-      chainDisplayName: entry.coin.chain_display_name || '',
-      coinType: entry.coin.type,
-      coinDecimal: entry.coin.decimal ?? 18,
-      contractAddress:
-        entry.coin.type === 'token' ? entry.coin.contractAddress : null,
-      wallet,
-      minAmount: minAmountMap[key],
-      notifyOnReceive,
-      notifyOnSend,
-    });
+    const basePayload = (entry, key, wallet) => {
+      const hideSettings = allWallets.find(
+        w => w.clientId === entry.walletClientId,
+      )?.hideSettings;
+      const hideNotification =
+        !!hideSettings?.isHidden && (hideSettings?.hideNotification ?? true);
+      return {
+        walletClientId: entry.walletClientId,
+        walletId: entry.walletId,
+        walletName: entry.walletName,
+        coinId: entry.coin._id,
+        coinSymbol: entry.coin.symbol,
+        coinName: entry.coin.name,
+        coinIcon: entry.coin.icon,
+        chainName: entry.coin.chain_name,
+        chainDisplayName: entry.coin.chain_display_name || '',
+        coinType: entry.coin.type,
+        coinDecimal: entry.coin.decimal ?? 18,
+        contractAddress:
+          entry.coin.type === 'token' ? entry.coin.contractAddress : null,
+        wallet,
+        minAmount: minAmountMap[key],
+        notifyOnReceive,
+        notifyOnSend,
+        hideNotification,
+      };
+    };
 
     try {
       const oneSignalPlayerId = await initOneSignal();
@@ -221,16 +235,27 @@ const AddNotificationAlertConfig = ({navigation, route}) => {
           backendId: existingAlert.backendId ?? null,
           ...basePayload(entry, key, addressMap[key] || existingAlert.wallet),
         };
-        await dispatch(updateAlertThunk({payload, oneSignalPlayerId})).unwrap();
-        showToast({
-          type: 'successToast',
-          title: 'Alert updated',
-          message: `${payload.coinSymbol} · Min ${payload.minAmount} ${payload.coinSymbol}`,
-        });
+        if (payload.hideNotification) {
+          await dispatch(deleteAlertThunk({item: payload})).unwrap();
+          showToast({
+            type: 'successToast',
+            title: 'Alert removed',
+            message: `${payload.coinSymbol}: this wallet has notifications hidden, so the alert was deleted.`,
+          });
+        } else {
+          await dispatch(
+            updateAlertThunk({payload, oneSignalPlayerId}),
+          ).unwrap();
+          showToast({
+            type: 'successToast',
+            title: 'Alert updated',
+            message: `${payload.coinSymbol} · Min ${payload.minAmount} ${payload.coinSymbol}`,
+          });
+        }
       } else {
-        const promises = selectedCoinEntries.map(entry => {
+        const payloads = selectedCoinEntries.map(entry => {
           const key = coinKey(entry.walletClientId, entry.coin._id);
-          const payload = {
+          return {
             id: v4(),
             backendId: null,
             createdAt: Date.now(),
@@ -240,14 +265,27 @@ const AddNotificationAlertConfig = ({navigation, route}) => {
               addressMap[key] || entry.coin.address || '',
             ),
           };
-          return dispatch(
-            createCustomAlert({payload, oneSignalPlayerId}),
-          ).unwrap();
         });
+        const toCreate = payloads.filter(payload => !payload.hideNotification);
+        const skippedCount = payloads.length - toCreate.length;
+        const s = n => (n > 1 ? 's' : '');
+
+        if (toCreate.length === 0) {
+          showToast({
+            type: 'errorToast',
+            title: 'No alerts created',
+            message:
+              'This wallet has notifications hidden, so no alert was created, go to hidden wallet configuration and change hide notification setting.',
+          });
+          return;
+        }
+
+        const promises = toCreate.map(payload =>
+          dispatch(createCustomAlert({payload, oneSignalPlayerId})).unwrap(),
+        );
         const results = await Promise.allSettled(promises);
         const failed = results.filter(r => r.status === 'rejected');
         const successCount = results.length - failed.length;
-        const s = n => (n > 1 ? 's' : '');
         if (successCount === 0) {
           const reason = failed[0]?.reason?.message || failed[0]?.reason;
           showToast({
@@ -271,7 +309,11 @@ const AddNotificationAlertConfig = ({navigation, route}) => {
                 type: 'successToast',
                 title: `${successCount} alert${s(successCount)} created`,
                 message:
-                  'You will receive notifications for the selected coins.',
+                  skippedCount > 0
+                    ? `${skippedCount} coin${s(
+                        skippedCount,
+                      )} skipped - wallet has notifications hidden.`
+                    : 'You will receive notifications for the selected coins.',
               },
         );
       }
@@ -299,15 +341,16 @@ const AddNotificationAlertConfig = ({navigation, route}) => {
       setIsSaving(false);
     }
   }, [
-    isEditMode,
-    selectedCoinEntries,
-    addressMap,
     minAmountMap,
     notifyOnReceive,
     notifyOnSend,
-    existingAlert,
-    dispatch,
+    allWallets,
+    isEditMode,
     navigation,
+    selectedCoinEntries,
+    existingAlert,
+    addressMap,
+    dispatch,
   ]);
 
   const onSubmit = useCallback(() => {

@@ -33,9 +33,9 @@ import {
   isPendingTransactionSupportedChain,
   isTransactionListLimit100,
 } from 'dok-wallet-blockchain-networks/helper';
-import {InAppBrowser} from 'react-native-inappbrowser-reborn';
 import Loading from 'components/Loading';
 import {inAppBrowserOptions} from 'utils/common';
+import {openInAppBrowser} from 'utils/inAppBrowser';
 import {useNavigation} from '@react-navigation/native';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
@@ -204,7 +204,7 @@ const TransactionList = () => {
     if (chain_name && type && tempAddress) {
       const url = getAddressDetailsUrl(chain_name, type, tempAddress);
       if (url) {
-        InAppBrowser.open(url, inAppBrowserOptions).then();
+        openInAppBrowser(url, inAppBrowserOptions).then();
       }
     }
   }, [currentCoin?.address, currentCoin?.chain_name, currentCoin?.type]);

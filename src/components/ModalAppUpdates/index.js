@@ -6,6 +6,7 @@ import myStyles from './ModalAppUpdates';
 import {IS_IOS} from 'utils/dimensions';
 import {getBundleId} from 'react-native-device-info';
 import {IOS_APPSTORE_URL, WL_APP_NAME} from 'utils/wlData';
+import {markExpectedBackground} from 'utils/expectedBackground';
 
 const WIDTH = Dimensions.get('window').width + 80;
 
@@ -51,6 +52,7 @@ Please update it to continue using app.`}
                 const link = IS_IOS
                   ? IOS_APPSTORE_URL
                   : `https://play.google.com/store/apps/details?id=${getBundleId()}`;
+                markExpectedBackground();
                 await Linking.openURL(link);
               } catch (e) {
                 console.error('Error in click of update', e);

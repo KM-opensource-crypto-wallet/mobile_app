@@ -20,8 +20,8 @@ import CryptoCheckbox from 'components/CryptoCheckbox';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {addOTC} from 'dok-wallet-blockchain-networks/service/dokApi';
 import {getUserCoinsOptions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {InAppBrowser} from 'react-native-inappbrowser-reborn';
 import {inAppBrowserOptions} from 'utils/common';
+import {openInAppBrowser} from 'utils/inAppBrowser';
 
 const amountOptions = [
   {
@@ -240,7 +240,7 @@ export const OTC2Screen = ({navigation, route}) => {
           number={'1'}
           title={'terms and conditions'}
           onPress={() => {
-            InAppBrowser.open(
+            openInAppBrowser(
               'https://ozaraglobal.com/terms.php',
               inAppBrowserOptions,
             ).then();
@@ -256,7 +256,7 @@ export const OTC2Screen = ({navigation, route}) => {
           number={'2'}
           title={'Risk disclaimer'}
           onPress={() => {
-            InAppBrowser.open(
+            openInAppBrowser(
               'https://ozaraglobal.com/policy.php',
               inAppBrowserOptions,
             ).then();

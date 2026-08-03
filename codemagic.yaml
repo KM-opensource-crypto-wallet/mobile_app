@@ -23,7 +23,7 @@ workflows:
         - common # common env variables
       vars:
         PACKAGE_NAME: "com.coinswallet" # <-- Put your package name here e.g. com.domain.myapp
-      node: 20
+      node: v24
 
     scripts:
       - name: Generate .env file
@@ -63,6 +63,7 @@ workflows:
           DOK_ANDROID_PLAY_INTEGRITY_PROJECT_NUMBER=$DOK_ANDROID_PLAY_INTEGRITY_PROJECT_NUMBER
           DOK_WALLET_ONESIGNAL_APP_ID=$DOK_WALLET_ONESIGNAL_APP_ID
           KIML_WALLET_ONESIGNAL_APP_ID=$KIML_WALLET_ONESIGNAL_APP_ID
+          BLOCKSCOUT_API_KEY=$BLOCKSCOUT_API_KEY
           EOF
       - name: Install yarn dependencies
         script: |
@@ -126,7 +127,7 @@ workflows:
         XCODE_WORKSPACE: "coinswallet.xcworkspace" # <-- Put the name of your Xcode workspace here
         XCODE_SCHEME: "coinswallet" # <-- Put the name of your Xcode scheme here
         APP_ID: 1533065700 # <-- Put the app id number here. This is found in App Store Connect > App > General > App Information
-      node: v20
+      node: v24
       xcode: 26.2
       cocoapods: default
     scripts:
@@ -167,6 +168,7 @@ workflows:
           DOK_ANDROID_PLAY_INTEGRITY_PROJECT_NUMBER=$DOK_ANDROID_PLAY_INTEGRITY_PROJECT_NUMBER
           DOK_WALLET_ONESIGNAL_APP_ID=$DOK_WALLET_ONESIGNAL_APP_ID
           KIML_WALLET_ONESIGNAL_APP_ID=$KIML_WALLET_ONESIGNAL_APP_ID
+           BLOCKSCOUT_API_KEY=$BLOCKSCOUT_API_KEY
           EOF
       - name: Install yarn dependencies
         script: |
@@ -189,6 +191,7 @@ workflows:
           agvtool new-marketing-version $DOKWALLET_IOS_VERSION
       - name: Build ipa for distribution
         script: |
+          export NODE_OPTIONS="--max-old-space-size=8192"
           xcode-project build-ipa \
             --workspace "$CM_BUILD_DIR/ios/$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME"
@@ -233,7 +236,7 @@ workflows:
         XCODE_WORKSPACE: "coinswallet.xcworkspace" # <-- Put the name of your Xcode workspace here
         XCODE_SCHEME: "kimlwallet" # <-- Put the name of your Xcode scheme here
         APP_ID: 6746929530 # <-- Put the app id number here. This is found in App Store Connect > App > General > App Information
-      node: v20
+      node: v24
       xcode: 26.2
       cocoapods: default
     scripts:
@@ -274,6 +277,7 @@ workflows:
           DOK_ANDROID_PLAY_INTEGRITY_PROJECT_NUMBER=$DOK_ANDROID_PLAY_INTEGRITY_PROJECT_NUMBER
           DOK_WALLET_ONESIGNAL_APP_ID=$DOK_WALLET_ONESIGNAL_APP_ID
           KIML_WALLET_ONESIGNAL_APP_ID=$KIML_WALLET_ONESIGNAL_APP_ID
+          BLOCKSCOUT_API_KEY=$BLOCKSCOUT_API_KEY
           EOF
       - name: Install yarn dependencies
         script: |
@@ -296,6 +300,7 @@ workflows:
           agvtool new-marketing-version $KIMLWALLET_IOS_VERSION
       - name: Build ipa for distribution
         script: |
+          export NODE_OPTIONS="--max-old-space-size=8192"
           xcode-project build-ipa \
             --workspace "$CM_BUILD_DIR/ios/$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME"

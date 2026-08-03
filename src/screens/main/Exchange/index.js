@@ -36,7 +36,7 @@ import DokDropdown from 'components/DokDropdown';
 import {
   _currentWalletIndexSelector,
   getCoinsOptions,
-  selectAllWallets,
+  selectVisibleWallets,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
   getExchange,
@@ -143,7 +143,7 @@ const Exchange = ({navigation}) => {
 
   const exchangeProvidersText = useSelector(getExchangeProviders);
   const coinOptions = useSelector(getCoinsOptions, shallowEqual);
-  const allWallets = useSelector(selectAllWallets);
+  const allWallets = useSelector(selectVisibleWallets);
   const currentWalletIndex = useSelector(_currentWalletIndexSelector);
   const {
     selectedCoinToOptions,

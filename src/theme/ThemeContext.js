@@ -103,6 +103,7 @@ export const lightTheme = {
   successBottom: '#71C441',
   warningBottom: '#ffcc00',
   blue: '#006ee6',
+  error: '#f44336',
 };
 
 export const darkTheme = {
@@ -129,4 +130,5 @@ export const darkTheme = {
   successBottom: '#71C441',
   warningBottom: '#ffcc00',
   blue: '#006ee6',
+  error: '#f44336',
 };

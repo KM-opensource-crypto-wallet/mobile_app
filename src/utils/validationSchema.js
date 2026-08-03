@@ -96,6 +96,24 @@ export const validationSchemaFingerprintVerification = Yup.object().shape({
   currentPassword: Yup.string().required('* Wrong password'),
 });
 
+export const validationSchemaBackupPasswordCreate = Yup.object().shape({
+  backupPassword: Yup.string()
+    .required(
+      'Create your password using 8 characters or more. It MUST include at least one uppercase character, lowercase character, number and symbol.',
+    )
+    .matches(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/,
+      'Create your password using 8 characters or more. It MUST include at least one uppercase character, lowercase character, number and symbol.',
+    ),
+  backupPasswordConfirm: Yup.string()
+    .required('Please confirm your password')
+    .oneOf([Yup.ref('backupPassword'), null], "Passwords don't match."),
+});
+
+export const validationSchemaBackupPasswordEnter = Yup.object().shape({
+  backupPassword: Yup.string().required('* Password cannot be empty'),
+});
+
 export const validationSchemaOTC = Yup.object().shape({
   fullname: Yup.string().required('Full name is required'),
   email: Yup.string()

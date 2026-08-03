@@ -3,7 +3,7 @@ import {View} from 'react-native';
 import {useSelector} from 'react-redux';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './AddNotificationAlertStyles';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectVisibleWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import NotificationWalletStep from 'components/NotificationWalletStep';
 import {
   isEVMChain,
@@ -13,7 +13,7 @@ import {
 const AddNotificationAlert = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-  const allWallets = useSelector(selectAllWallets);
+  const allWallets = useSelector(selectVisibleWallets);
 
   const coinFilter = useCallback(
     c =>
