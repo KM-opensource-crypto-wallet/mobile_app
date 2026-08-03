@@ -289,15 +289,16 @@ const Exchange = ({navigation}) => {
       let possibleCoinDetails = [];
       for (let i = 0; i < allWallets.length; i++) {
         const tempWallet = allWallets[i];
-        const tempCoinDetails = tempWallet?.coins.find(
+        const rawCoinDetails = tempWallet?.coins.find(
           item =>
             item?.symbol?.toUpperCase() ===
               coinDetails?.options?.symbol?.toUpperCase() &&
             item?.chain_name === coinDetails?.options?.chain_name,
         );
-        if (tempCoinDetails?.chain_symbol === 'BNB') {
-          tempCoinDetails.chain_symbol = 'BSC';
-        }
+        const tempCoinDetails =
+          rawCoinDetails?.chain_symbol === 'BNB'
+            ? {...rawCoinDetails, chain_symbol: 'BSC'}
+            : rawCoinDetails;
         if (i === currentWalletIndex && tempCoinDetails) {
           selectedCoinDetails = tempCoinDetails;
           selectedWalletDetails = tempWallet;
@@ -309,11 +310,15 @@ const Exchange = ({navigation}) => {
             value: tempAddress,
             options: {
               coinDetails: tempCoinDetails,
-              walletDetails: selectedWalletDetails,
+              walletDetails: tempWallet,
             },
           };
           possibleCoinDetails.push(optionPayload);
         }
+      }
+      if (!selectedCoinDetails?.symbol && possibleCoinDetails.length) {
+        selectedCoinDetails = possibleCoinDetails[0].options.coinDetails;
+        selectedWalletDetails = possibleCoinDetails[0].options.walletDetails;
       }
       return {selectedCoinDetails, possibleCoinDetails, selectedWalletDetails};
     },
