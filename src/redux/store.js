@@ -5,7 +5,6 @@ import {
 } from 'redux-persist';
 import createSensitiveStorage from 'redux-persist-sensitive-storage';
 import {configureStore} from '@reduxjs/toolkit';
-import {v4} from 'uuid';
 
 import {authSlice} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {settingsSlice} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
@@ -56,7 +55,7 @@ const walletsPersistTransform = createTransform(
     }
     const allWallets = outboundState?.allWallets?.map(wallet => ({
       ...wallet,
-      clientId: wallet?.clientId || v4(),
+      clientId: wallet?.clientId,
     }));
     const {currentWalletIndex, ...restState} = outboundState || {};
     return {
