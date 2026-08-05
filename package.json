@@ -254,7 +254,7 @@
     "react-native-permissions": "^5.5.1",
     "protobufjs": "7.5.5",
     "elliptic": "^6.6.1",
-    "tar": "7.5.4",
+    "tar": "7.5.22",
     "@stablelib/ed25519": "2.1.0",
     "h3": "1.15.6",
     "node-forge": "^1.4.0",
