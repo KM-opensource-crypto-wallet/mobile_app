@@ -25,7 +25,7 @@ import {
   selectIsSyncing,
   selectSelectedCount,
   selectCoinsWithBalanceCount,
-  selectSyncingWalletIndex,
+  selectSyncingWalletClientId,
   selectSyncingWalletName,
 } from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSelectors';
 import {
@@ -37,7 +37,7 @@ import {
 import {addCoinsToWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {
   selectAllWallets,
-  getCurrentWalletIndex,
+  selectCurrentWalletClientId,
   isCoinScanAvailableForTimestamp,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {showToast} from 'utils/toast';
@@ -58,17 +58,16 @@ const CoinSyncScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   // Wallet to scan (from the Scan Coins row); undefined = current wallet
-  const targetWalletIndex = route?.params?.walletIndex;
+  const targetWalletClientId = route?.params?.walletClientId;
   const allWallets = useSelector(selectAllWallets);
-  const currentWalletIndex = useSelector(getCurrentWalletIndex);
-  const resolvedWalletIndex =
-    targetWalletIndex !== undefined && targetWalletIndex !== null
-      ? Number(targetWalletIndex)
-      : currentWalletIndex;
-  const targetWalletName =
-    targetWalletIndex !== undefined && targetWalletIndex !== null
-      ? allWallets?.[resolvedWalletIndex]?.walletName || null
-      : null;
+  const currentWalletClientId = useSelector(selectCurrentWalletClientId);
+  const resolvedWalletClientId = targetWalletClientId || currentWalletClientId;
+  const resolvedWallet = allWallets?.find(
+    item => item?.clientId === resolvedWalletClientId,
+  );
+  const targetWalletName = targetWalletClientId
+    ? resolvedWallet?.walletName || null
+    : null;
 
   // Selectors
   const status = useSelector(selectCoinSyncStatus);
@@ -79,7 +78,7 @@ const CoinSyncScreen = () => {
   const isCreatingWallets = useSelector(selectIsCreatingWallets);
   const isSyncing = useSelector(selectIsSyncing);
   const selectedCount = useSelector(selectSelectedCount);
-  const syncingWalletIndex = useSelector(selectSyncingWalletIndex);
+  const syncingWalletClientId = useSelector(selectSyncingWalletClientId);
   const syncingWalletName = useSelector(selectSyncingWalletName);
 
   // Derived state
@@ -121,8 +120,8 @@ const CoinSyncScreen = () => {
   useEffect(() => {
     if (
       !isSyncing &&
-      syncingWalletIndex !== null &&
-      Number(syncingWalletIndex) !== Number(resolvedWalletIndex)
+      syncingWalletClientId !== null &&
+      syncingWalletClientId !== resolvedWalletClientId
     ) {
       dispatch(resetCoinSync());
     }
@@ -158,8 +157,7 @@ const CoinSyncScreen = () => {
 
   // Handlers
   const handleStartSync = useCallback(() => {
-    const lastScanTimestamp =
-      allWallets?.[resolvedWalletIndex]?.lastCoinsScanTimestamp;
+    const lastScanTimestamp = resolvedWallet?.lastCoinsScanTimestamp;
     if (!isCoinScanAvailableForTimestamp(lastScanTimestamp)) {
       showToast({
         type: 'errorToast',
@@ -168,8 +166,8 @@ const CoinSyncScreen = () => {
       });
       return;
     }
-    dispatch(syncAllCoins({walletIndex: resolvedWalletIndex}));
-  }, [dispatch, allWallets, resolvedWalletIndex]);
+    dispatch(syncAllCoins({walletClientId: resolvedWalletClientId}));
+  }, [dispatch, resolvedWallet, resolvedWalletClientId]);
 
   // Cancelling arms the 24h cooldown, so always confirm first
   const handleCancel = useCallback(() => {
@@ -283,7 +281,7 @@ const CoinSyncScreen = () => {
     dispatch(
       addCoinsToWallet({
         coins: selectedCoins,
-        walletIndex: syncingWalletIndex,
+        clientId: syncingWalletClientId,
       }),
     );
     showToast({
@@ -295,7 +293,7 @@ const CoinSyncScreen = () => {
     });
     dispatch(resetCoinSync());
     navigation.goBack();
-  }, [coinsWithBalance, dispatch, navigation, syncingWalletIndex]);
+  }, [coinsWithBalance, dispatch, navigation, syncingWalletClientId]);
 
   const renderItem = useCallback(
     ({item, index}) => (

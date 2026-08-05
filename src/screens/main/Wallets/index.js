@@ -28,7 +28,7 @@ import {
 import {
   findHiddenWalletByCode,
   rearrangeWallet,
-  setCurrentWalletIndex,
+  setCurrentWalletClientId,
   setWalletRevealed,
   sortWallets,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
@@ -171,18 +171,7 @@ const Wallets = ({navigation}) => {
           ? wallet
           : newDisplayedOrder[visibleCursor++],
       );
-      const newCurrentWalletIndex = newFullOrder.findIndex(
-        wallet =>
-          (wallet?.clientId || wallet?.id) ===
-          (currentWallet?.clientId || currentWallet?.id),
-      );
-      dispatch(
-        rearrangeWallet({
-          allWallets: newFullOrder,
-          currentWalletIndex:
-            newCurrentWalletIndex !== -1 ? newCurrentWalletIndex : undefined,
-        }),
-      );
+      dispatch(rearrangeWallet({allWallets: newFullOrder}));
       // A manual rearrange means the user is taking over the ordering. If a
       // sort option stayed active, the mount-time sortWallets dispatch would
       // silently discard this order on the next visit to this screen.
@@ -190,7 +179,7 @@ const Wallets = ({navigation}) => {
         dispatch(setWalletsSortOption(WALLET_SORT_OPTIONS.DEFAULT));
       }
     },
-    [allWallets, currentWallet, sortOption, dispatch],
+    [allWallets, sortOption, dispatch],
   );
 
   const onPressMove = useCallback(
@@ -300,9 +289,6 @@ const Wallets = ({navigation}) => {
             }}
             onDragEnd={onDragEnd}
             renderItem={({item, drag, isActive}) => {
-              const index = allWallets.findIndex(
-                subItem => subItem.walletName === item.walletName,
-              );
               const visibleIndex = displayedWallets.findIndex(
                 subItem => subItem.walletName === item.walletName,
               );
@@ -325,17 +311,15 @@ const Wallets = ({navigation}) => {
                       isSelectedWallet && styles.walletCardSelected,
                     ]}
                     onPress={() => {
-                      if (index !== -1) {
-                        if (isWalletHiddenAndLocked(item)) {
-                          dispatch(
-                            setWalletRevealed({
-                              walletIndex: index,
-                              isHidden: false,
-                            }),
-                          );
-                        }
-                        dispatch(setCurrentWalletIndex(index));
+                      if (isWalletHiddenAndLocked(item)) {
+                        dispatch(
+                          setWalletRevealed({
+                            clientId: item.clientId,
+                            isHidden: false,
+                          }),
+                        );
                       }
+                      dispatch(setCurrentWalletClientId(item.clientId));
                       navigation.popTo('Sidebar', {
                         screen: 'Home',
                       });
@@ -414,7 +398,7 @@ const Wallets = ({navigation}) => {
                           onPress={() =>
                             navigation.navigate('CreateWallet', {
                               walletName: item.walletName,
-                              walletIndex: index,
+                              walletClientId: item.clientId,
                             })
                           }>
                           <IoniconsIcon

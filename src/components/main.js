@@ -39,11 +39,11 @@ import {
   resetCoinsToDefaultAddressForPrivacyMode,
   resetNfts,
   setCurrentCoin,
-  setCurrentWalletIndex,
+  setCurrentWalletClientId,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {
-  _currentWalletIndexSelector,
   isWalletHiddenAndLocked,
+  selectCurrentWalletClientId,
   selectAllWallets,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {store} from 'redux/store';
@@ -372,15 +372,15 @@ const Main = () => {
             consumeExpectedBackground() || isInAppBrowserSessionActive();
           lastBackgroundSelfInitiated.current = isSelfInitiatedBackground;
           if (!isSelfInitiatedBackground) {
-            const walletIndexBeforeRehide = _currentWalletIndexSelector(
+            const walletClientIdBeforeRehide = selectCurrentWalletClientId(
               store.getState(),
             );
             dispatch(rehideWalletsOnBackground());
-            const walletIndexAfterRehide = _currentWalletIndexSelector(
+            const walletClientIdAfterRehide = selectCurrentWalletClientId(
               store.getState(),
             );
 
-            if (walletIndexAfterRehide !== walletIndexBeforeRehide) {
+            if (walletClientIdAfterRehide !== walletClientIdBeforeRehide) {
               MainNavigation.reset({
                 index: 0,
                 routes: [{name: 'Sidebar'}],
@@ -410,9 +410,9 @@ const Main = () => {
         return;
       }
       const wallets = selectAllWallets(store.getState());
-      const walletIndex = data.walletId
-        ? wallets.findIndex(w => w.clientId === data.walletId)
-        : wallets.findIndex(w =>
+      const wallet = data.walletId
+        ? wallets.find(w => w.clientId === data.walletId)
+        : wallets.find(w =>
             w.coins?.some(
               c =>
                 c.chain_name === data.chainName &&
@@ -420,13 +420,13 @@ const Main = () => {
                 c.isInWallet,
             ),
           );
-      if (walletIndex === -1) {
+      if (!wallet) {
         return;
       }
-      if (isWalletHiddenAndLocked(wallets[walletIndex])) {
+      if (isWalletHiddenAndLocked(wallet)) {
         return;
       }
-      const coin = wallets[walletIndex].coins?.find(
+      const coin = wallet.coins?.find(
         c =>
           c.chain_name === data.chainName &&
           c.symbol === data.coin &&
@@ -435,7 +435,7 @@ const Main = () => {
       if (!coin) {
         return;
       }
-      dispatch(setCurrentWalletIndex(walletIndex));
+      dispatch(setCurrentWalletClientId(wallet.clientId));
       dispatch(setCurrentCoin(coin._id));
       dispatch(setRouteStateData({navigateToTransactionList: true}));
       MainNavigation.reset({
