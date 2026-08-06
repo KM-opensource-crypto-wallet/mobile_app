@@ -403,7 +403,11 @@ const Transfer = ({navigation, route}) => {
   }, []);
 
   const submitTransferData = useCallback(async () => {
-    if (isExchangeScreen && isEVMChain(selectedFromAsset?.chain_name)) {
+    if (
+      !transferData.toAddress &&
+      isExchangeScreen &&
+      isEVMChain(selectedFromAsset?.chain_name)
+    ) {
       return await dispatch(
         sendSwap({nonce: customNonce, navigation}),
       ).unwrap();
