@@ -34,7 +34,7 @@ import FastImage from '@d11/react-native-fast-image';
 
 import DokDropdown from 'components/DokDropdown';
 import {
-  _currentWalletIndexSelector,
+  selectCurrentWalletClientId,
   getCoinsOptions,
   selectVisibleWallets,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
@@ -144,7 +144,7 @@ const Exchange = ({navigation}) => {
   const exchangeProvidersText = useSelector(getExchangeProviders);
   const coinOptions = useSelector(getCoinsOptions, shallowEqual);
   const allWallets = useSelector(selectVisibleWallets);
-  const currentWalletIndex = useSelector(_currentWalletIndexSelector);
+  const currentWalletClientId = useSelector(selectCurrentWalletClientId);
   const {
     selectedCoinToOptions,
     selectedFromAsset,
@@ -299,7 +299,7 @@ const Exchange = ({navigation}) => {
           rawCoinDetails?.chain_symbol === 'BNB'
             ? {...rawCoinDetails, chain_symbol: 'BSC'}
             : rawCoinDetails;
-        if (i === currentWalletIndex && tempCoinDetails) {
+        if (tempWallet?.clientId === currentWalletClientId && tempCoinDetails) {
           selectedCoinDetails = tempCoinDetails;
           selectedWalletDetails = tempWallet;
         }
@@ -322,7 +322,7 @@ const Exchange = ({navigation}) => {
       }
       return {selectedCoinDetails, possibleCoinDetails, selectedWalletDetails};
     },
-    [allWallets, currentWalletIndex],
+    [allWallets, currentWalletClientId],
   );
 
   const onChangeFromValues = useCallback(
