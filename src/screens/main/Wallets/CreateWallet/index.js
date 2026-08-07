@@ -30,7 +30,7 @@ import ThemedIcon from 'components/ThemedIcon';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import ModalDelete from 'components/ModalDelete';
 import {
-  _currentWalletIndexSelector,
+  selectCurrentWalletClientId,
   selectAllWalletName,
   selectAllWallets,
   selectCurrentWallet,
@@ -43,7 +43,7 @@ import {
 import {deleteAlertsForWalletThunk} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
 import {
   selectIsSyncing,
-  selectSyncingWalletIndex,
+  selectSyncingWalletClientId,
   selectSyncingWalletName,
 } from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSelectors';
 import useCoinScanCooldown from 'hooks/useCoinScanCooldown';
@@ -61,11 +61,10 @@ const CreateWallet = ({navigation, route}) => {
   const phrase = route?.params?.phrase;
   const privateKey = route?.params?.privateKey;
   const chain_name = route?.params?.chain_name;
-  const walletIndex = route?.params?.walletIndex?.toString();
+  const walletClientId = route?.params?.walletClientId;
   const currentWallet = useSelector(selectCurrentWallet);
-  const currentWalletIndex = useSelector(_currentWalletIndexSelector);
+  const currentWalletClientId = useSelector(selectCurrentWalletClientId);
   const allWalletName = useSelector(selectAllWalletName, shallowEqual);
-  // const currentWalletIndex = useSelector(currentWalletIndexSelector);
   const allWallets = useSelector(selectAllWallets);
   const finalAllWallets = useRef(
     allWalletName.filter(subItem => subItem !== walletName),
@@ -83,20 +82,18 @@ const CreateWallet = ({navigation, route}) => {
   // hidden+locked - see selectVisibleWallets), as opposed to `currentWallet`
   // which is the globally active wallet.
   const editingWallet =
-    walletIndex !== undefined ? allWallets[walletIndex] : null;
+    allWallets.find(item => item?.clientId === walletClientId) || null;
 
   // Coin scan (1 per 24h per wallet) targets the wallet being edited
-  const scanTargetIndex = walletIndex ?? currentWalletIndex;
+  const scanTargetClientId = walletClientId ?? currentWalletClientId;
   const scanWallet = editingWallet ?? currentWallet;
   const {isAvailable: isScanAvailable, remainingLabel: scanRemainingLabel} =
     useCoinScanCooldown(scanWallet?.lastCoinsScanTimestamp);
   const isCoinSyncRunning = useSelector(selectIsSyncing);
-  const syncingWalletIndex = useSelector(selectSyncingWalletIndex);
+  const syncingWalletClientId = useSelector(selectSyncingWalletClientId);
   const syncingWalletName = useSelector(selectSyncingWalletName);
   const isScanningThisWallet =
-    isCoinSyncRunning &&
-    syncingWalletIndex !== null &&
-    Number(syncingWalletIndex) === Number(scanTargetIndex);
+    isCoinSyncRunning && syncingWalletClientId === scanTargetClientId;
   // Only one scan can run at a time - lock the row while another wallet scans
   const isScanningOtherWallet = isCoinSyncRunning && !isScanningThisWallet;
   const isScanRowEnabled =
@@ -168,12 +165,9 @@ const CreateWallet = ({navigation, route}) => {
 
   const validateNewWalletName = value => {
     if (editingWallet?.walletName !== value) {
-      const wrong = allWallets.some(({walletName}, index) => {
-        if (walletName === value && index !== Number(walletIndex)) {
-          return true;
-        }
-        return false;
-      });
+      const wrong = allWallets.some(
+        item => item?.walletName === value && item?.clientId !== walletClientId,
+      );
       setWrong(wrong);
     }
   };
@@ -183,7 +177,7 @@ const CreateWallet = ({navigation, route}) => {
 
     // Find the wallet being deleted
     const walletToDelete = allWallets.find(
-      (_, index) => index.toString() === walletIndex,
+      item => item?.clientId === walletClientId,
     );
     if (walletToDelete?.clientId) {
       // Delete every notification subscription for this wallet in a single
@@ -199,11 +193,11 @@ const CreateWallet = ({navigation, route}) => {
     });
 
     setTimeout(() => {
-      if (walletIndex !== null && walletIndex !== undefined) {
-        dispatch(deleteWallet(walletIndex));
+      if (walletClientId) {
+        dispatch(deleteWallet(walletClientId));
       }
     }, 1000);
-  }, [dispatch, navigation, walletIndex, allWallets]);
+  }, [dispatch, navigation, walletClientId, allWallets]);
 
   const onPressNo = useCallback(() => {
     setShowDeleteModal(false);
@@ -212,10 +206,9 @@ const CreateWallet = ({navigation, route}) => {
   const performWalletSave = useCallback(
     async values => {
       if (walletName) {
-        const targetIndex = walletIndex ?? currentWalletIndex;
         dispatch(
           updateWalletName({
-            index: targetIndex,
+            clientId: walletClientId ?? currentWalletClientId,
             walletName: values.name,
           }),
         );
@@ -256,8 +249,8 @@ const CreateWallet = ({navigation, route}) => {
     },
     [
       walletName,
-      walletIndex,
-      currentWalletIndex,
+      walletClientId,
+      currentWalletClientId,
       dispatch,
       navigation,
       privateKey,
@@ -401,7 +394,7 @@ const CreateWallet = ({navigation, route}) => {
                       <TouchableOpacity
                         style={{...styles.item, marginTop: 20}}
                         onPress={() =>
-                          navigation.navigate('HideWallet', {walletIndex})
+                          navigation.navigate('HideWallet', {walletClientId})
                         }>
                         <View style={styles.itemIcon}>
                           <MaterialCommunityIcons
@@ -436,7 +429,7 @@ const CreateWallet = ({navigation, route}) => {
                         disabled={!isScanRowEnabled}
                         onPress={() =>
                           navigation.navigate('CoinSyncScreen', {
-                            walletIndex: Number(scanTargetIndex),
+                            walletClientId: scanTargetClientId,
                           })
                         }>
                         <View

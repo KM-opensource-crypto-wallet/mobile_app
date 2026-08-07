@@ -20,10 +20,12 @@ import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {createWalletsBatch} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {
-  restoreWalletsFromDrive,
+  fetchEncryptedBackup,
+  decryptBackup,
   deleteWalletBackup,
   googleDrive,
   initGoogleDrive,
+  BACKUP_ERROR_CODES,
 } from 'utils/googleDriveBackup';
 import {showToast} from 'utils/toast';
 import Checkbox from 'components/Checkbox';
@@ -32,6 +34,7 @@ import BackupRestoreUserMenu from 'components/BackupRestore/BackupRestoreUserMen
 import WalletSelectionCard from 'components/BackupRestore/WalletSelectionCard';
 import DriveGuideModal from 'components/BackupRestore/DriveGuideModal';
 import ModalDeleteBackup from 'components/ModalDeleteBackup';
+import ModalBackupPassword from 'components/ModalBackupPassword';
 import myStyles from './styles';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
@@ -52,6 +55,52 @@ const RestoreWallets = ({navigation}) => {
   const [showDriveGuideModal, setShowDriveGuideModal] = useState(false);
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [encryptedBackup, setEncryptedBackup] = useState(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+
+  const processBackupData = useCallback(data => {
+    if (data && data.wallets && Array.isArray(data.wallets)) {
+      const wallets = data.wallets.filter(w => w.phrase || w.privateKey);
+      setRestorableWallets(wallets);
+      setSelectedWalletIds(wallets.map(w => w.clientId));
+    } else {
+      setRestorableWallets([]);
+      showToast({
+        type: 'warningToast',
+        title: 'No Data',
+        message: 'No valid wallet backup found.',
+      });
+    }
+  }, []);
+
+  const fetchBackup = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const {encryptedData, needsPassword} = await fetchEncryptedBackup();
+
+      if (needsPassword) {
+        setEncryptedBackup(encryptedData);
+        setPasswordError('');
+        setShowPasswordModal(true);
+      } else {
+        processBackupData(decryptBackup(encryptedData));
+      }
+    } catch (err) {
+      setError(err);
+      showToast({
+        type: 'errorToast',
+        title: 'Download Failed',
+        message:
+          !err?.message || err?.message?.includes('DEVELOPER_ERROR')
+            ? 'Failed to download backup.'
+            : err?.message,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [processBackupData]);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -82,7 +131,7 @@ const RestoreWallets = ({navigation}) => {
       }
     };
     checkSession();
-  }, []);
+  }, [fetchBackup]);
 
   const handleConnect = () => {
     setShowDriveGuideModal(true);
@@ -111,6 +160,9 @@ const RestoreWallets = ({navigation}) => {
       setUserInfo(null);
       setRestorableWallets([]);
       setError(null);
+      setEncryptedBackup(null);
+      setShowPasswordModal(false);
+      setPasswordError('');
       if (!notShowToast) {
         showToast({type: 'successToast', message: 'Logged out successfully'});
       }
@@ -124,6 +176,9 @@ const RestoreWallets = ({navigation}) => {
       await deleteWalletBackup();
       setRestorableWallets([]);
       setSelectedWalletIds([]);
+      setEncryptedBackup(null);
+      setShowPasswordModal(false);
+      setPasswordError('');
       showToast({
         type: 'successToast',
         title: 'Backup Deleted',
@@ -155,41 +210,47 @@ const RestoreWallets = ({navigation}) => {
   }, [navigation, userInfo, styles, handleLogout]);
 
   const handleRetry = async () => {
+    if (
+      error?.code === BACKUP_ERROR_CODES.PASSWORD_REQUIRED &&
+      encryptedBackup
+    ) {
+      setError(null);
+      setPasswordError('');
+      setShowPasswordModal(true);
+      return;
+    }
     await handleLogout(true);
     handleConnect();
   };
 
-  const fetchBackup = async () => {
-    setLoading(true);
-    setError(null);
+  const handleRestorePasswordSuccess = password => {
     try {
-      const data = await restoreWalletsFromDrive();
-
-      if (data && data.wallets && Array.isArray(data.wallets)) {
-        const wallets = data.wallets.filter(w => w.phrase || w.privateKey);
-        setRestorableWallets(wallets);
-        setSelectedWalletIds(wallets.map(w => w.clientId));
-      } else {
-        setRestorableWallets([]);
-        showToast({
-          type: 'warningToast',
-          title: 'No Data',
-          message: 'No valid wallet backup found.',
-        });
-      }
+      const data = decryptBackup(encryptedBackup, password);
+      setShowPasswordModal(false);
+      setPasswordError('');
+      processBackupData(data);
     } catch (err) {
+      if (err?.code === BACKUP_ERROR_CODES.WRONG_PASSWORD) {
+        setPasswordError('Incorrect backup password. Please try again.');
+        return;
+      }
+      setShowPasswordModal(false);
       setError(err);
       showToast({
         type: 'errorToast',
-        title: 'Download Failed',
-        message:
-          !err?.message || err?.message?.includes('DEVELOPER_ERROR')
-            ? 'Failed to download backup.'
-            : err?.message,
+        title: 'Restore Failed',
+        message: err?.message || 'Failed to decrypt backup.',
       });
-    } finally {
-      setLoading(false);
     }
+  };
+
+  const handlePasswordCancel = () => {
+    setShowPasswordModal(false);
+    setPasswordError('');
+    setError({
+      code: BACKUP_ERROR_CODES.PASSWORD_REQUIRED,
+      message: 'A password is required to unlock this backup.',
+    });
   };
 
   const isAllSelected =
@@ -336,12 +397,16 @@ const RestoreWallets = ({navigation}) => {
 
   // Logged In but Fetch Error (Retry State)
   if (error) {
+    const isPasswordRequired =
+      error?.code === BACKUP_ERROR_CODES.PASSWORD_REQUIRED;
     return (
       <DokSafeAreaView style={[styles.container, styles.center]}>
         <View style={styles.emptyStateContainer}>
           <Text
             style={[styles.text, styles.emptyStateTitle, {color: theme.red}]}>
-            Failed to fetch backups.
+            {isPasswordRequired
+              ? 'Backup is password protected.'
+              : 'Failed to fetch backups.'}
           </Text>
           <Text style={[styles.subTitle, styles.emptyStateDescription]}>
             {error.message ||
@@ -351,9 +416,19 @@ const RestoreWallets = ({navigation}) => {
             style={styles.button}
             onPress={handleRetry}
             activeOpacity={0.8}>
-            <Text style={styles.buttonText}>Retry</Text>
+            <Text style={styles.buttonText}>
+              {isPasswordRequired ? 'Enter Password' : 'Retry'}
+            </Text>
           </TouchableOpacity>
         </View>
+
+        <ModalBackupPassword
+          visible={showPasswordModal}
+          mode="enter"
+          errorText={passwordError}
+          hideModal={handlePasswordCancel}
+          onSuccess={handleRestorePasswordSuccess}
+        />
 
         <ModalDeleteBackup
           visible={showDeleteModal}
@@ -424,6 +499,14 @@ const RestoreWallets = ({navigation}) => {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <ModalBackupPassword
+        visible={showPasswordModal}
+        mode="enter"
+        errorText={passwordError}
+        hideModal={handlePasswordCancel}
+        onSuccess={handleRestorePasswordSuccess}
+      />
 
       <ModalDeleteBackup
         visible={showDeleteModal}
