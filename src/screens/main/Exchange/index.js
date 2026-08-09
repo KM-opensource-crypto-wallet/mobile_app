@@ -2,14 +2,13 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
-  useState,
 } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   ScrollView,
   ActivityIndicator,
   TouchableWithoutFeedback,
@@ -17,22 +16,26 @@ import {
 } from 'react-native';
 import {TextInput as TextField} from 'react-native-paper';
 import structuredClone from '@ungap/structured-clone';
-import {showToast} from 'utils/toast';
+import {shallowEqual, useSelector, useDispatch} from 'react-redux';
+import {useIsFocused} from '@react-navigation/native';
+import BigNumber from 'bignumber.js';
 
+import {showToast} from 'utils/toast';
+import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './ExchangeStyles';
 
-import {shallowEqual, useSelector, useDispatch} from 'react-redux';
-import ArrIcon from 'assets/images/icons/ic_arrow_right.svg';
-import InfoIcon from 'assets/images/icons/info.svg';
-import EditIcon from 'assets/images/icons/edit.svg';
-import ScurvedIcon from 'assets/images/icons/S-curved.svg';
-
-import SelectInputExchange from 'components/SelectInputExchange';
-
-import {ThemeContext} from 'theme/ThemeContext';
-import FastImage from '@d11/react-native-fast-image';
-
 import DokDropdown from 'components/DokDropdown';
+import ModalAddCoins from 'components/ModalAddCoins';
+import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import AllowanceInfoSheet from 'components/AllowanceInfoSheet';
+import PermitInfoSheet from 'components/PermitInfoSheet';
+import SwapCard from './components/SwapCard';
+import FlipButton from './components/FlipButton';
+import AmountChips from './components/AmountChips';
+import CoinSelectorSheet from './components/CoinSelectorSheet';
+import ProviderList from './components/ProviderList';
+import SlippageEditor from './components/SlippageEditor';
+
 import {
   selectCurrentWalletClientId,
   getCoinsOptions,
@@ -42,6 +45,11 @@ import {
   getExchange,
   getExchangeApproveLoading,
   getExchangePermitApproveLoading,
+  selectProviderRows,
+  selectIsQuoteFetching,
+  selectQuoteError,
+  selectQuoteFetchedAt,
+  selectLowestPairMinimum,
 } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
 import {
   approveExchangePermit2,
@@ -49,97 +57,35 @@ import {
   calculateExchange,
   fetchExchangeAllowance,
   fetchExchangePermitAllowance,
+  fetchExchangeQuotes,
+  fetchPairMinimums,
   setExchangeFields,
 } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
-import {getTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSelector';
-import BigNumber from 'bignumber.js';
 import {
-  calculateSliderValue,
-  debounce,
   isEVMChain,
   multiplyBNWithFixed,
   validateNumber,
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
-import Slider from '@react-native-community/slider';
-import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
-import ModalAddCoins from 'components/ModalAddCoins';
+import {
+  buildExchangePairKey,
+  createDebounced,
+  getSmartDefaultAmount,
+} from 'dok-wallet-blockchain-networks/helper/exchangeHelpers';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {currencySymbol} from 'data/currency';
-import {useIsFocused} from '@react-navigation/native';
 import {setCurrentTransferSuccess} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import {getExchangeQuote} from 'dok-wallet-blockchain-networks/service/dokApi';
-import ExchangeProviderItem from 'components/ExchangeProviderItem';
 import {getExchangeProviders} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
-import {DokSafeAreaView} from 'components/DokSafeAreaView';
-import AllowanceInfoSheet from 'components/AllowanceInfoSheet';
-import PermitInfoSheet from 'components/PermitInfoSheet';
+import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
 
-const calculateEstimatePrice = async (
-  selectedFromAsset,
-  selectedToAsset,
-  data,
-  dispatch,
-  callback,
-  slippage,
-) => {
-  const fromSymbol = selectedFromAsset?.symbol;
-  const fromNetwork = selectedFromAsset?.chain_symbol;
-  const toSymbol = selectedToAsset?.symbol;
-  const toNetwork = selectedToAsset?.chain_symbol;
-
-  const payload = {
-    coinFrom: fromSymbol,
-    coinTo: toSymbol,
-    networkFrom: fromNetwork,
-    networkTo: toNetwork,
-    amount: validateNumber(data)?.toString() || '1',
-    rateType: 'fixed',
-    fromChainName: selectedFromAsset?.chain_name,
-    toChainName: selectedToAsset?.chain_name,
-    fromContractAddress: selectedFromAsset?.contractAddress,
-    toContractAddress: selectedToAsset?.contractAddress,
-    fromAddress: selectedFromAsset?.address,
-    slippage: slippage ? Number(slippage) : undefined,
-  };
-
-  const resp = await getExchangeQuote(payload);
-  const respData = resp?.data;
-  let max = new BigNumber(1);
-  let maxIndex = 0;
-  for (let i = 0; i <= respData.length; i++) {
-    const currentResponse = respData?.[i];
-    const toAmount = currentResponse?.toAmount;
-    if (toAmount) {
-      if (new BigNumber(toAmount).gt(max)) {
-        max = new BigNumber(toAmount);
-        maxIndex = i;
-      }
-    }
-  }
-  const finalResp = respData[maxIndex];
-  if (finalResp?.toAmount) {
-    const payloadd = {
-      amountTo: finalResp?.toAmount + '',
-      selectedExchangeChain: finalResp,
-      extraData: finalResp?.extraData,
-      availableProviders: respData,
-    };
-    dispatch(setExchangeFields(payloadd));
-  } else {
-    dispatch(
-      setExchangeFields({
-        amountTo: '0',
-        availableProviders: [],
-      }),
-    );
-  }
-  callback?.();
-};
+const QUOTE_DEBOUNCE_MS = 700;
 
 const Exchange = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
+  const dispatch = useDispatch();
+  const isFocused = useIsFocused();
+  const keyboardHeight = useKeyboardHeight();
 
   const exchangeProvidersText = useSelector(getExchangeProviders);
   const coinOptions = useSelector(getCoinsOptions, shallowEqual);
@@ -156,69 +102,57 @@ const Exchange = ({navigation}) => {
     amountTo,
     customOption,
     customAddress,
-    sliderValue,
     fiatPay,
-    availableProviders,
     selectedExchangeChain,
     slippage,
+    lastQuotedAmount,
   } = useSelector(getExchange);
+  const providerRows = useSelector(selectProviderRows);
+  const isQuoteFetching = useSelector(selectIsQuoteFetching);
+  const quoteError = useSelector(selectQuoteError);
+  const quoteFetchedAt = useSelector(selectQuoteFetchedAt);
+  const lowestPairMinimum = useSelector(selectLowestPairMinimum);
   const exchangeApproveLoading = useSelector(getExchangeApproveLoading);
   const exchangePermitApproveLoading = useSelector(
     getExchangePermitApproveLoading,
   );
-  const transferData = useSelector(getTransferData);
-  const isPermit2Flow = Boolean(transferData?.swapData?.permit_abi);
   const localCurrency = useSelector(getLocalCurrency);
+  const fiatSymbol = currencySymbol[localCurrency] || '$';
 
-  const keyboardHeight = useKeyboardHeight();
+  const [isPreparingAllowance, setIsPreparingAllowance] = React.useState(false);
+  // Set on submit: from that moment the auto-refresh countdown is removed so
+  // a background quote refresh can never rewrite the amounts/provider under
+  // the approval sheets or the Transfer screen. Cleared when the user edits
+  // the form again or returns to this screen.
+  const [isQuoteLocked, setIsQuoteLocked] = React.useState(false);
 
-  const [isFetching, setIsFetching] = useState({from: false, to: false});
-  const [isEditingSlippage, setIsEditingSlippage] = useState(false);
-  const [isPreparingAllowance, setIsPreparingAllowance] = useState(false);
-
-  const minimumAmountRef = useRef({});
-  const sliderRef = useRef();
-  const scrollViewRef = useRef();
-
-  const dispatch = useDispatch();
-  const coinFromRef = useRef();
-  const coinToRef = useRef();
-  const isFocused = useIsFocused();
+  const coinSelectorSheetRef = useRef();
   const addMoreCoinsSheet = useRef();
   const exchangeAllowanceSheetRef = useRef();
   const exchangePermitSheetRef = useRef();
+  // Carries "this quote needs a permit2 approval too" across the allowance
+  // sheet, which resolves asynchronously after handleSubmit has returned.
+  const permitRequiredRef = useRef(false);
+  // Smart default is applied at most once per pair, and never over typed input.
+  const defaultAppliedPairRef = useRef(null);
+  const amountFromRef = useRef(amountFrom);
+  amountFromRef.current = amountFrom;
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debounceEstimateAmount = useCallback(
-    debounce(
-      (
-        localSelectedFromAsset,
-        localSelectedToAsset,
-        localData,
-        localDispatch,
-        callback,
-        localSlippage,
-      ) =>
-        calculateEstimatePrice(
-          localSelectedFromAsset,
-          localSelectedToAsset,
-          localData,
-          localDispatch,
-          callback,
-          localSlippage,
-        ),
-      1000,
-    ),
-    [],
+  const pairKey = buildExchangePairKey(selectedFromAsset, selectedToAsset);
+
+  const debouncedFetchQuotes = useMemo(
+    () =>
+      createDebounced(amount => {
+        dispatch(fetchExchangeQuotes({amount}));
+      }, QUOTE_DEBOUNCE_MS),
+    [dispatch],
   );
+  useEffect(() => () => debouncedFetchQuotes.cancel(), [debouncedFetchQuotes]);
 
-  const handleFromChange = useCallback(
-    async (data, isNotUpdateSlider) => {
-      if (selectedToAsset) {
-        setIsFetching({from: false, to: true});
-      }
+  const handleAmountChange = useCallback(
+    value => {
       const tempValues = validateNumberInInput(
-        data,
+        value,
         selectedFromAsset?.decimal,
       );
       const tempFiatPay = multiplyBNWithFixed(
@@ -226,62 +160,22 @@ const Exchange = ({navigation}) => {
         selectedFromAsset?.currencyRate,
         2,
       );
-      if (!isNotUpdateSlider) {
-        const balance = selectedFromAsset?.totalAmount;
-        if (balance) {
-          const tempSliderValue = calculateSliderValue(balance, tempValues);
-          dispatch(
-            setExchangeFields({
-              amountFrom: tempValues,
-              fiatPay: tempFiatPay,
-              sliderValue: Number(tempSliderValue),
-            }),
-          );
-        }
-      } else {
-        dispatch(
-          setExchangeFields({amountFrom: tempValues, fiatPay: tempFiatPay}),
-        );
-      }
-      if (selectedFromAsset?.symbol && selectedToAsset?.symbol) {
-        await debounceEstimateAmount(
-          selectedFromAsset,
-          selectedToAsset,
-          tempValues,
-          dispatch,
-          () => {
-            setIsFetching({from: false, to: false});
-          },
-          slippage,
-        );
-      }
+      dispatch(
+        setExchangeFields({amountFrom: tempValues, fiatPay: tempFiatPay}),
+      );
+      setIsQuoteLocked(false);
+      debouncedFetchQuotes(tempValues);
     },
     [
-      debounceEstimateAmount,
       dispatch,
-      selectedFromAsset,
-      selectedToAsset,
-      slippage,
+      debouncedFetchQuotes,
+      selectedFromAsset?.decimal,
+      selectedFromAsset?.currencyRate,
     ],
   );
 
-  const onSliderValueChange = useCallback(
-    value => {
-      dispatch(setExchangeFields({sliderValue: value}));
-      const balance = selectedFromAsset?.totalAmount;
-      if (balance) {
-        const balanceBN = new BigNumber(balance);
-        const valueBN = new BigNumber(value);
-        const amount = balanceBN
-          .multipliedBy(valueBN)
-          .dividedBy(new BigNumber(100))
-          .toFixed(6);
-        handleFromChange(amount, true).then();
-      }
-    },
-    [dispatch, handleFromChange, selectedFromAsset?.totalAmount],
-  );
-
+  // Finds, per wallet, the matching coin for a picked option; mirrors the
+  // wallet the current selection belongs to.
   const getCoinDetails = useCallback(
     coinDetails => {
       let selectedCoinDetails = {};
@@ -305,15 +199,14 @@ const Exchange = ({navigation}) => {
         }
         if (tempCoinDetails) {
           const tempAddress = tempCoinDetails?.address;
-          const optionPayload = {
+          possibleCoinDetails.push({
             label: `${tempWallet?.walletName}: ${tempAddress}`,
             value: tempAddress,
             options: {
               coinDetails: tempCoinDetails,
               walletDetails: tempWallet,
             },
-          };
-          possibleCoinDetails.push(optionPayload);
+          });
         }
       }
       if (!selectedCoinDetails?.symbol && possibleCoinDetails.length) {
@@ -329,127 +222,17 @@ const Exchange = ({navigation}) => {
     item => {
       const {possibleCoinDetails, selectedCoinDetails, selectedWalletDetails} =
         getCoinDetails(item);
-      const balance = selectedCoinDetails?.totalAmount;
-      const tempSliderValue = calculateSliderValue(balance, amountFrom);
       dispatch(
         setExchangeFields({
           selectedCoinFromOptions: item,
           possibleFromCoin: possibleCoinDetails,
           selectedFromAsset: selectedCoinDetails,
           selectedFromWallet: selectedWalletDetails,
-          sliderValue: tempSliderValue,
         }),
       );
     },
-    [getCoinDetails, amountFrom, dispatch],
+    [getCoinDetails, dispatch],
   );
-
-  const getExchangeQuoteForFrom = useCallback(
-    async (localSelectFromAsset, localSelectToAsset, localAmount) => {
-      const fromSymbol = localSelectFromAsset?.symbol;
-      const fromNetwork = localSelectFromAsset?.chain_symbol;
-      const toSymbol = localSelectToAsset?.symbol;
-      const toNetwork = localSelectToAsset?.chain_symbol;
-      let key = null;
-      if (fromSymbol && fromNetwork && toNetwork && toSymbol) {
-        key = `${fromNetwork}:${fromSymbol}_${toNetwork}:${toSymbol}`;
-      }
-      const minimumValue = minimumAmountRef.current[key];
-      const minimumValueBN = new BigNumber(minimumValue);
-      const fromAmountBN = new BigNumber(localAmount);
-      if (
-        fromSymbol &&
-        localSelectToAsset?.symbol &&
-        (!minimumValue || fromAmountBN.gte(minimumValueBN))
-      ) {
-        setIsFetching({from: true, to: true});
-        const payload = {
-          coinFrom: fromSymbol,
-          coinTo: localSelectToAsset?.symbol,
-          networkFrom: fromNetwork,
-          networkTo: localSelectToAsset?.chain_symbol,
-          amount: localAmount ? localAmount : '0',
-          rateType: 'fixed',
-          fromChainName: localSelectFromAsset?.chain_name,
-          toChainName: localSelectToAsset?.chain_name,
-          fromContractAddress: localSelectFromAsset?.contractAddress,
-          toContractAddress: localSelectToAsset?.contractAddress,
-          isFetchMinimum: true,
-          fromAddress: localSelectFromAsset?.address,
-          slippage: slippage ? Number(slippage) : undefined,
-        };
-        if (!minimumValue) {
-          payload.amount = null;
-        }
-        const resp = await getExchangeQuote(payload);
-        const data = resp?.data;
-        const selectedProvider = data?.[0];
-        const finalAvailableProviders = data;
-        const minAmount = selectedProvider?.minAmount;
-        if (minAmount) {
-          minimumAmountRef.current[key] = minAmount;
-        }
-        const toAmount = selectedProvider?.toAmount;
-        const fromAmount = selectedProvider?.fromAmount;
-        if (toAmount) {
-          const tempFiatPay = multiplyBNWithFixed(
-            fromAmount,
-            selectedFromAsset?.currencyRate,
-            2,
-          );
-          dispatch(
-            setExchangeFields({
-              fiatPay: tempFiatPay,
-              amountFrom: fromAmount + '',
-              amountTo: toAmount + '',
-              extraData: selectedProvider?.extraData,
-              selectedExchangeChain: selectedProvider,
-              sliderValue: calculateSliderValue(
-                selectedFromAsset?.totalAmount,
-                fromAmount,
-              ),
-              availableProviders: finalAvailableProviders,
-            }),
-          );
-        } else {
-          dispatch(
-            setExchangeFields({
-              amountTo: '0',
-              availableProviders: [],
-            }),
-          );
-        }
-        setIsFetching({from: false, to: false});
-      }
-    },
-    [
-      dispatch,
-      selectedFromAsset?.currencyRate,
-      selectedFromAsset?.totalAmount,
-      slippage,
-    ],
-  );
-
-  useEffect(() => {
-    getExchangeQuoteForFrom(
-      selectedFromAsset,
-      selectedToAsset,
-      amountFrom,
-    ).then();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFromAsset, selectedToAsset]);
-
-  useEffect(() => {
-    if (isFocused) {
-      if (selectedCoinToOptions) {
-        onChangeToValues(selectedCoinToOptions);
-      }
-      if (selectedCoinFromOptions) {
-        onChangeFromValues(selectedCoinFromOptions);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused]);
 
   const onChangeToValues = useCallback(
     item => {
@@ -457,10 +240,7 @@ const Exchange = ({navigation}) => {
       const customPayload = {
         label: 'Custom',
         value: 'Custom',
-        options: {
-          coinDetails: {},
-          walletDetails: {},
-        },
+        options: {coinDetails: {}, walletDetails: {}},
       };
       dispatch(
         setExchangeFields({
@@ -472,6 +252,65 @@ const Exchange = ({navigation}) => {
     },
     [dispatch, getCoinDetails],
   );
+
+  const onSelectCoin = useCallback(
+    (item, direction) => {
+      if (direction === 'to') {
+        onChangeToValues(item);
+      } else {
+        onChangeFromValues(item);
+      }
+    },
+    [onChangeFromValues, onChangeToValues],
+  );
+
+  // Pair change: refresh provider minimums, and re-quote a kept amount.
+  useEffect(() => {
+    if (pairKey) {
+      setIsQuoteLocked(false);
+      dispatch(fetchPairMinimums());
+      if (validateNumber(amountFromRef.current)) {
+        debouncedFetchQuotes(amountFromRef.current);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pairKey, dispatch]);
+
+  // Smart default: once per pair, when the amount field is empty, pre-fill
+  // roughly $100 of the from-coin (capped at balance) so most providers
+  // clear their minimums.
+  useEffect(() => {
+    if (!pairKey || defaultAppliedPairRef.current === pairKey) {
+      return;
+    }
+    if (validateNumber(amountFromRef.current)) {
+      defaultAppliedPairRef.current = pairKey;
+      return;
+    }
+    const defaultAmount = getSmartDefaultAmount({
+      fromAsset: selectedFromAsset,
+      lowestMinimum: lowestPairMinimum,
+    });
+    if (defaultAmount) {
+      defaultAppliedPairRef.current = pairKey;
+      handleAmountChange(defaultAmount);
+    }
+  }, [pairKey, lowestPairMinimum, selectedFromAsset, handleAmountChange]);
+
+  // Re-derive wallet/balance data when the screen regains focus (coins can
+  // be added from the sheet, balances refresh in the background).
+  useEffect(() => {
+    if (isFocused) {
+      setIsQuoteLocked(false);
+      if (selectedCoinToOptions) {
+        onChangeToValues(selectedCoinToOptions);
+      }
+      if (selectedCoinFromOptions) {
+        onChangeFromValues(selectedCoinFromOptions);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFocused]);
 
   const onSelectFromAsset = useCallback(
     item => {
@@ -501,60 +340,97 @@ const Exchange = ({navigation}) => {
     [dispatch],
   );
 
-  const onPressSwap = useCallback(() => {
-    const tempPossibleToCoin = structuredClone(possibleFromCoin);
-    const tempPossibleFromCoin = structuredClone(possibleToCoins);
-    const tempSelectedFromAssets = structuredClone(selectedToAsset);
-    const tempSelectedToAssets = structuredClone(selectedFromAsset);
-    const tempSelectedCoinFromOptions = structuredClone(selectedCoinToOptions);
-    const tempSelectedCoinToOptions = structuredClone(selectedCoinFromOptions);
+  const onFlip = useCallback(() => {
+    const fromOption = structuredClone(selectedCoinToOptions);
+    const toOption = structuredClone(selectedCoinFromOptions);
+    const newAmountFrom = validateNumber(amountTo) ? `${amountTo}` : '';
+    if (fromOption) {
+      onChangeFromValues(fromOption);
+    }
+    if (toOption) {
+      onChangeToValues(toOption);
+    }
     dispatch(
       setExchangeFields({
-        selectedCoinFromOptions: tempSelectedCoinFromOptions,
-        selectedCoinToOptions: tempSelectedCoinToOptions,
-        selectedToAsset: tempSelectedToAssets,
-        selectedFromAsset: tempSelectedFromAssets,
-        possibleToCoins: tempPossibleToCoin,
-        possibleFromCoin: tempPossibleFromCoin,
+        amountFrom: newAmountFrom,
+        fiatPay: multiplyBNWithFixed(
+          newAmountFrom,
+          selectedToAsset?.currencyRate,
+          2,
+        ),
+        amountTo: '',
+        customOption: '',
+        customAddress: '',
       }),
     );
+    setIsQuoteLocked(false);
+    if (newAmountFrom) {
+      debouncedFetchQuotes(newAmountFrom);
+    }
   }, [
-    possibleFromCoin,
-    possibleToCoins,
-    selectedToAsset,
-    selectedFromAsset,
-    selectedCoinToOptions,
-    selectedCoinFromOptions,
     dispatch,
+    amountTo,
+    selectedCoinFromOptions,
+    selectedCoinToOptions,
+    selectedToAsset?.currencyRate,
+    onChangeFromValues,
+    onChangeToValues,
+    debouncedFetchQuotes,
   ]);
 
+  const onSelectFraction = useCallback(
+    fraction => {
+      const balance = new BigNumber(selectedFromAsset?.totalAmount ?? NaN);
+      if (!balance.isFinite() || balance.lte(0)) {
+        return;
+      }
+      const decimals = Math.min(Number(selectedFromAsset?.decimal) || 8, 8);
+      const amount = balance
+        .multipliedBy(fraction)
+        .decimalPlaces(decimals, BigNumber.ROUND_DOWN)
+        .toFixed();
+      handleAmountChange(amount);
+    },
+    [
+      handleAmountChange,
+      selectedFromAsset?.totalAmount,
+      selectedFromAsset?.decimal,
+    ],
+  );
+
   const onPressProvider = useCallback(
-    item => {
-      const toAmount = item?.toAmount;
-      const fromAmount = item?.fromAmount;
-      if (toAmount) {
-        const tempFiatPay = multiplyBNWithFixed(
-          fromAmount,
-          selectedFromAsset?.currencyRate,
-          2,
-        );
-        dispatch(
-          setExchangeFields({
-            fiatPay: tempFiatPay,
-            amountFrom: fromAmount + '',
-            amountTo: toAmount + '',
-            extraData: item?.extraData,
-            selectedExchangeChain: item,
-            sliderValue: calculateSliderValue(
-              selectedFromAsset?.totalAmount,
-              fromAmount,
-            ),
-          }),
-        );
+    row => {
+      const quote = row?.quote;
+      if (!quote?.toAmount) {
+        return;
+      }
+      dispatch(
+        setExchangeFields({
+          selectedExchangeChain: quote,
+          extraData: quote?.extraData,
+          amountTo: quote.toAmount + '',
+          isProviderManuallySelected: true,
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  const onCommitSlippage = useCallback(
+    value => {
+      dispatch(setExchangeFields({slippage: value}));
+      if (validateNumber(amountFromRef.current)) {
+        dispatch(fetchExchangeQuotes({amount: amountFromRef.current}));
       }
     },
-    [dispatch, selectedFromAsset?.currencyRate, selectedFromAsset?.totalAmount],
+    [dispatch],
   );
+
+  const onRefreshQuotes = useCallback(() => {
+    if (validateNumber(amountFromRef.current)) {
+      dispatch(fetchExchangeQuotes({amount: amountFromRef.current}));
+    }
+  }, [dispatch]);
 
   const onPressAddMoreCoin = useCallback(() => {
     addMoreCoinsSheet?.current?.close?.();
@@ -565,124 +441,160 @@ const Exchange = ({navigation}) => {
     addMoreCoinsSheet?.current?.close?.();
   }, []);
 
-  const onPressSlippage = useCallback(() => {
-    setIsEditingSlippage(true);
-  }, []);
-
-  const onChangeSlippageValue = useCallback(
-    text => {
-      const sanitized = validateNumberInInput(text, 2);
-      dispatch(setExchangeFields({slippage: sanitized}));
-    },
-    [dispatch],
-  );
-
-  const onDoneEditingSlippage = useCallback(() => {
-    setIsEditingSlippage(false);
-    getExchangeQuoteForFrom(
-      selectedFromAsset,
-      selectedToAsset,
-      amountFrom,
-    ).then();
-  }, [amountFrom, getExchangeQuoteForFrom, selectedFromAsset, selectedToAsset]);
-
-  useEffect(() => {
-    if (isEditingSlippage && keyboardHeight > 0) {
-      scrollViewRef.current?.scrollToEnd({animated: true});
-    }
-  }, [isEditingSlippage, keyboardHeight]);
-
-  const fromSymbol = selectedFromAsset?.symbol;
-  const fromNetwork = selectedFromAsset?.chain_symbol;
-  let minimumValue = null;
-  const toSymbol = selectedToAsset?.symbol;
-  const toNetwork = selectedToAsset?.chain_symbol;
-  if (fromSymbol && fromNetwork && toNetwork && toSymbol) {
-    minimumValue = selectedExchangeChain?.minAmount || null;
-  }
+  // ---- Validation ----------------------------------------------------
+  const minimumValue = selectedExchangeChain?.minAmount || null;
   const backendSlippage = selectedExchangeChain?.extraData?.slippage;
-  const displaySlippage = slippage || backendSlippage;
-  const isMinimumValueGreater = minimumValue > amountFrom;
-  const isBalanceLess = new BigNumber(selectedFromAsset?.totalAmount).lt(
-    new BigNumber(amountFrom),
+  const amountFromBN = new BigNumber(amountFrom || NaN);
+  const isMinimumValueGreater = !!(
+    minimumValue &&
+    amountFromBN.isFinite() &&
+    new BigNumber(minimumValue).gt(amountFromBN)
   );
+  const isBalanceLess =
+    amountFromBN.isFinite() &&
+    new BigNumber(selectedFromAsset?.totalAmount ?? 0).lt(amountFromBN);
   const isCustomAddressRequire = customOption === 'Custom' && !customAddress;
-  const balance = isNaN(selectedFromAsset?.totalAmount)
-    ? ''
-    : Number(selectedFromAsset?.totalAmount).toFixed(6) || '';
+
+  const balanceDisplay = validateNumber(selectedFromAsset?.totalAmount)
+    ? new BigNumber(selectedFromAsset?.totalAmount)
+        .decimalPlaces(6, BigNumber.ROUND_DOWN)
+        .toFixed()
+    : '0';
+  const balanceText = selectedFromAsset?.symbol
+    ? `Balance: ${balanceDisplay} ${selectedFromAsset?.symbol?.toUpperCase()}`
+    : '';
+
+  // Typing sits in a debounce window before the quote request even starts;
+  // until the shown quote matches the entered amount, submitting would send
+  // a rateId/provider that belongs to the previous amount.
+  const isQuoteStaleForAmount = amountFrom !== lastQuotedAmount;
 
   const isButtonDisabled =
-    !amountFrom ||
-    !minimumValue ||
+    !validateNumber(amountFrom) ||
     !validateNumber(amountTo) ||
+    !selectedExchangeChain ||
     isMinimumValueGreater ||
     isBalanceLess ||
     isCustomAddressRequire ||
-    isFetching.to;
+    isQuoteFetching ||
+    isQuoteStaleForAmount ||
+    !!quoteError;
 
   const isERC20FromAsset =
     isEVMChain(selectedFromAsset?.chain_name) &&
     !!selectedFromAsset?.contractAddress;
   const showApproveAndSwap = isERC20FromAsset && !isButtonDisabled;
 
+  // Why the CTA is disabled, in the order the user should resolve things.
+  // `transient` renders neutral (a wait state), everything else as an error.
+  let disabledReason = null;
+  if (isButtonDisabled && !isPreparingAllowance) {
+    const fromSymbolText = selectedFromAsset?.symbol?.toUpperCase() || '';
+    if (!selectedFromAsset?.symbol || !selectedToAsset?.symbol) {
+      disabledReason = {text: 'Select the coins you want to swap.'};
+    } else if (!validateNumber(amountFrom)) {
+      disabledReason = {text: 'Enter an amount to swap.'};
+    } else if (isBalanceLess) {
+      disabledReason = {
+        text: `You don't have enough ${fromSymbolText}. Your balance is ${balanceDisplay} ${fromSymbolText}.`,
+      };
+    } else if (isMinimumValueGreater) {
+      disabledReason = {
+        text: `Minimum for ${
+          selectedExchangeChain?.title || 'this provider'
+        } is ${minimumValue} ${fromSymbolText}.`,
+      };
+    } else if (isCustomAddressRequire) {
+      disabledReason = {
+        text: 'Enter the address that will receive the funds.',
+      };
+    } else if (isQuoteFetching || isQuoteStaleForAmount) {
+      disabledReason = {text: 'Fetching the latest quote…', transient: true};
+    } else if (quoteError) {
+      disabledReason = {
+        text: "Quotes couldn't be fetched. Tap Retry in the providers list.",
+      };
+    } else if (!selectedExchangeChain || !validateNumber(amountTo)) {
+      disabledReason = {
+        text: "No provider can swap this amount. Check each provider's minimum in the list.",
+      };
+    }
+  }
+
+  // ---- Approval / submit flow (unchanged behaviour) --------------------
+  const goToTransfer = useCallback(() => {
+    navigation.navigate('Transfer', {fromScreen: 'Exchange'});
+  }, [navigation]);
+
   // After the ERC20-level allowance is confirmed (already approved, or just
   // approved via the AllowanceInfoSheet), a permit2 swap quote still needs a
   // separate router-level (Permit2) allowance before it's safe to swap.
-  const handlePermitCheckAndProceed = useCallback(async () => {
-    if (!isPermit2Flow) {
-      navigation.navigate('Transfer', {fromScreen: 'Exchange'});
-      return;
-    }
-    const permitResult = await dispatch(
-      fetchExchangePermitAllowance(),
-    ).unwrap();
-    if (permitResult?.isApproved) {
-      navigation.navigate('Transfer', {fromScreen: 'Exchange'});
-    } else {
-      exchangePermitSheetRef.current?.present();
-    }
-  }, [dispatch, navigation, isPermit2Flow]);
+  // needsPermit is read off the quote we just fetched rather than off state, so
+  // it can't lag behind the provider the user actually picked.
+  const handlePermitCheckAndProceed = useCallback(
+    async needsPermit => {
+      if (!needsPermit) {
+        goToTransfer();
+        return;
+      }
+      const permitResult = await dispatch(
+        fetchExchangePermitAllowance(),
+      ).unwrap();
+      if (permitResult?.isApproved) {
+        goToTransfer();
+      } else {
+        exchangePermitSheetRef.current?.present();
+      }
+    },
+    [dispatch, goToTransfer],
+  );
 
   const handleSubmit = async () => {
+    setIsQuoteLocked(true);
     dispatch(setCurrentTransferSuccess(false));
-    if (showApproveAndSwap) {
-      console.log('[ExchangeDebug] entering approve flow', {
-        contractAddress: selectedFromAsset?.contractAddress,
-        chain_name: selectedFromAsset?.chain_name,
-      });
-      setIsPreparingAllowance(true);
-      try {
-        await dispatch(calculateExchange()).unwrap();
-        console.log('[ExchangeDebug] calculateExchange resolved');
-        const result = await dispatch(fetchExchangeAllowance()).unwrap();
-        console.log('[ExchangeDebug] fetchExchangeAllowance result', result);
-        if (result?.isApproved) {
-          console.log(
-            '[ExchangeDebug] already approved, checking permit2 allowance',
-          );
-          await handlePermitCheckAndProceed();
-        } else {
-          console.log(
-            '[ExchangeDebug] not approved, presenting sheet. ref current:',
-            !!exchangeAllowanceSheetRef.current,
-          );
-          exchangeAllowanceSheetRef.current?.present();
-        }
-      } catch (error) {
-        console.log('[ExchangeDebug] threw error', error?.message, error);
-        console.error('Error preparing swap allowance', error);
-        showToast({
-          type: 'errorToast',
-          title: error?.message || 'Failed to check token allowance',
-        });
-      } finally {
-        setIsPreparingAllowance(false);
-      }
+    if (!showApproveAndSwap) {
+      goToTransfer();
+      dispatch(calculateExchange());
       return;
     }
-    console.log('[ExchangeDebug] showApproveAndSwap is false, plain Next flow');
-    navigation.navigate('Transfer', {fromScreen: 'Exchange'});
-    dispatch(calculateExchange());
+    setIsPreparingAllowance(true);
+    try {
+      // showApproveAndSwap is computed before the quote exists, so it only tells
+      // us the source is an ERC20. Whether an approval is actually needed
+      // depends on the quote: only a DEX aggregator returns calldata with a
+      // spender. Deposit-address providers are plain transfers.
+      const quote = await dispatch(calculateExchange()).unwrap();
+      if (!quote) {
+        // Fulfilled without data (e.g. empty backend response): navigating
+        // would show the Transfer screen against stale transfer state.
+        showToast({
+          type: 'errorToast',
+          title: 'Failed to create the exchange. Please try again.',
+        });
+        return;
+      }
+      const spender = quote?.swapData?.spender;
+      if (!spender) {
+        goToTransfer();
+        return;
+      }
+      const needsPermit = Boolean(quote?.swapData?.permit_abi);
+      const result = await dispatch(fetchExchangeAllowance()).unwrap();
+      if (result?.isApproved) {
+        await handlePermitCheckAndProceed(needsPermit);
+      } else {
+        permitRequiredRef.current = needsPermit;
+        exchangeAllowanceSheetRef.current?.present();
+      }
+    } catch (error) {
+      console.error('Error preparing swap allowance', error);
+      showToast({
+        type: 'errorToast',
+        title: error?.message || 'Failed to check token allowance',
+      });
+    } finally {
+      setIsPreparingAllowance(false);
+    }
   };
 
   const onAllowanceContinue = useCallback(
@@ -706,7 +618,7 @@ const Exchange = ({navigation}) => {
           }),
         ).unwrap();
         exchangeAllowanceSheetRef.current?.close();
-        await handlePermitCheckAndProceed();
+        await handlePermitCheckAndProceed(permitRequiredRef.current);
       } catch (error) {
         console.error('Error approving swap allowance', error);
       }
@@ -735,131 +647,86 @@ const Exchange = ({navigation}) => {
           }),
         ).unwrap();
         exchangePermitSheetRef.current?.close();
-        navigation.navigate('Transfer', {fromScreen: 'Exchange'});
+        goToTransfer();
       } catch (error) {
         console.error('Error approving permit2 allowance', error);
       }
     },
-    [dispatch, navigation],
+    [dispatch, goToTransfer],
   );
+
+  // Paused off-focus too: the Exchange drawer screen stays mounted beneath
+  // Transfer, and a background refresh there would rewrite amountTo/provider
+  // under the confirmation screen the user is reading.
+  const refreshPaused =
+    !isFocused ||
+    isPreparingAllowance ||
+    exchangeApproveLoading ||
+    exchangePermitApproveLoading;
 
   return (
     <DokSafeAreaView style={styles.container}>
       <View style={styles.container}>
         <ScrollView
-          ref={scrollViewRef}
           contentContainerStyle={styles.contentContainerStyle}
           keyboardShouldPersistTaps={'always'}>
-          <TouchableWithoutFeedback
-            style={styles.container}
-            onPress={() => Keyboard.dismiss()}>
-            <View style={styles.container}>
-              <View style={styles.lable}>
-                <Text style={styles.title}>FROM</Text>
-                <View style={styles.amountAvailable}>
-                  <Text style={styles.amountAvailableText}>
-                    Available amount: {balance}
-                    {'0 '}
-                    {` ${
-                      selectedCoinFromOptions?.options?.symbol?.toUpperCase() ||
-                      ''
-                    }`}
-                  </Text>
-
-                  <InfoIcon width={24} height={24} stroke={theme.background} />
-                </View>
-              </View>
-              <View style={styles.inputFrom}>
-                <TouchableOpacity
-                  style={styles.select}
-                  onPress={() => coinFromRef.current.open()}>
-                  {selectedCoinFromOptions?.options?.icon && (
-                    <View style={styles.iconBox}>
-                      <FastImage
-                        source={{uri: selectedCoinFromOptions?.options?.icon}}
-                        resizeMode={'contain'}
-                        style={{height: '100%', width: '100%'}}
-                      />
-                    </View>
-                  )}
-                  <View style={styles.selectInput}>
-                    <SelectInputExchange
-                      selectRef={coinFromRef}
-                      listData={coinOptions}
-                      selectedValue={selectedCoinFromOptions?.value}
-                      onValueChange={onChangeFromValues}
-                    />
-                  </View>
-                  <Text style={styles.coinTitle}>
-                    {selectedCoinFromOptions?.options?.symbol?.toUpperCase()}
-                  </Text>
-                  <View style={styles.arrow}>
-                    <ArrIcon width={12} height={12} fill={theme.gray} />
-                  </View>
-                </TouchableOpacity>
-                <View
-                  style={[
-                    styles.select,
-                    {marginLeft: 20, flex: 1, justifyContent: 'flex-end'},
-                  ]}>
-                  {isFetching?.from ? (
-                    <ActivityIndicator
-                      size={'large'}
-                      color={theme.background}
-                    />
-                  ) : (
-                    <TextInput
-                      style={{
-                        ...styles.coinTitle,
-                        color: isBalanceLess ? '#ff0000' : theme.font,
-                        flex: 1,
-                        textAlign: 'right',
-                      }}
-                      onChangeText={handleFromChange}
-                      value={amountFrom}
-                      placeholder="0.0"
-                      keyboardType="numeric"
-                    />
-                  )}
-                  <View style={styles.arrowAmount}>
-                    <ArrIcon width={12} height={12} fill={theme.gray} />
-                  </View>
-                </View>
-              </View>
-              {!!minimumValue && isMinimumValueGreater && (
-                <Text
-                  style={
-                    styles.errorText
-                  }>{`Minimum value is ${minimumValue} ${selectedFromAsset?.symbol}`}</Text>
+          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+            <View>
+              <SwapCard
+                label="You pay"
+                coinOption={selectedCoinFromOptions}
+                amount={amountFrom}
+                fiatValue={
+                  validateNumber(fiatPay) ? `~${fiatSymbol}${fiatPay}` : ''
+                }
+                balanceText={balanceText}
+                editable={true}
+                onChangeAmount={handleAmountChange}
+                onPressCoin={() =>
+                  coinSelectorSheetRef.current?.present('from')
+                }
+                hasError={isBalanceLess}>
+                {new BigNumber(selectedFromAsset?.totalAmount ?? 0).gt(0) && (
+                  <AmountChips onSelectFraction={onSelectFraction} />
+                )}
+              </SwapCard>
+              <FlipButton onPress={onFlip} />
+              <SwapCard
+                label="You receive (estimated)"
+                coinOption={selectedCoinToOptions}
+                amount={validateNumber(amountTo) ? `${amountTo}` : ''}
+                fiatValue={
+                  validateNumber(amountTo) && selectedToAsset?.currencyRate
+                    ? `~${fiatSymbol}${multiplyBNWithFixed(
+                        amountTo,
+                        selectedToAsset?.currencyRate,
+                        2,
+                      )}`
+                    : ''
+                }
+                editable={false}
+                onPressCoin={() => coinSelectorSheetRef.current?.present('to')}
+                isFetching={isQuoteFetching}
+              />
+              {isMinimumValueGreater && (
+                <Text style={styles.errorText}>
+                  {`Minimum for ${
+                    selectedExchangeChain?.title || 'this provider'
+                  } is ${minimumValue} ${selectedFromAsset?.symbol || ''}`}
+                </Text>
               )}
               {isBalanceLess && (
-                <Text
-                  style={
-                    styles.errorText
-                  }>{`You don't have ${amountFrom} ${selectedFromAsset?.symbol}`}</Text>
+                <Text style={styles.errorText}>
+                  {`You don't have ${amountFrom} ${
+                    selectedFromAsset?.symbol || ''
+                  }`}
+                </Text>
               )}
-              {Number(selectedFromAsset?.totalAmount) > 0 ? (
-                <View style={styles.sliderContainer}>
-                  <Text style={styles.sliderValue}>{`${sliderValue}%`}</Text>
-                  <Slider
-                    ref={sliderRef}
-                    style={styles.slider}
-                    minimumValue={0}
-                    maximumValue={100}
-                    step={1}
-                    minimumTrackTintColor={theme.background}
-                    maximumTrackTintColor={theme.font}
-                    tapToSeek={true}
-                    onValueChange={onSliderValueChange}
-                    value={sliderValue}
-                  />
-                </View>
-              ) : null}
               {!!possibleFromCoin?.length && (
                 <View style={styles.addressView}>
                   <DokDropdown
-                    placeholder={'Select address'}
-                    title={'Select address'}
+                    placeholder={'Pay from address'}
+                    title={'Pay from address'}
                     data={possibleFromCoin}
                     onChangeValue={onSelectFromAsset}
                     value={selectedFromAsset?.address}
@@ -867,85 +734,11 @@ const Exchange = ({navigation}) => {
                   />
                 </View>
               )}
-              <View style={styles.scurvedIcon}>
-                <TouchableOpacity
-                  onPress={onPressSwap}
-                  hitSlop={{top: 10, left: 10, bottom: 10, right: 10}}>
-                  <ScurvedIcon
-                    width={25}
-                    height={20}
-                    stroke={theme.background}
-                  />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.lable}>
-                <Text style={styles.title}>TO</Text>
-              </View>
-              <View style={styles.inputFrom}>
-                <TouchableOpacity
-                  style={styles.select}
-                  onPress={() => coinToRef.current.open()}>
-                  {selectedCoinToOptions?.options?.icon && (
-                    <View style={styles.iconBox}>
-                      <FastImage
-                        source={{uri: selectedCoinToOptions?.options?.icon}}
-                        resizeMode={'contain'}
-                        style={{height: '100%', width: '100%'}}
-                      />
-                    </View>
-                  )}
-                  <View style={styles.selectInput}>
-                    <SelectInputExchange
-                      selectRef={coinToRef}
-                      listData={coinOptions}
-                      selectedValue={selectedCoinToOptions?.value}
-                      onValueChange={onChangeToValues}
-                    />
-                  </View>
-                  <Text style={styles.coinTitle}>
-                    {selectedCoinToOptions?.options?.symbol?.toUpperCase()}
-                  </Text>
-                  <View style={styles.arrow}>
-                    <ArrIcon width={12} height={12} fill={theme.gray} />
-                  </View>
-                </TouchableOpacity>
-                <View
-                  style={[
-                    styles.select,
-                    {marginLeft: 20, flex: 1, justifyContent: 'flex-end'},
-                  ]}>
-                  {isFetching?.to ? (
-                    <ActivityIndicator
-                      size={'large'}
-                      color={theme.background}
-                    />
-                  ) : (
-                    <TextInput
-                      style={[styles.coinTitle, {flex: 1, textAlign: 'right'}]}
-                      value={amountTo}
-                      placeholder="0.0"
-                      keyboardType="numeric"
-                      editable={false}
-                    />
-                  )}
-                  <View style={styles.arrowAmount}>
-                    <ArrIcon width={12} height={12} fill={theme.gray} />
-                  </View>
-                </View>
-              </View>
-              <Text style={styles.addCoinText}>
-                {'Looking for more coins?'}
-                <Text
-                  style={{color: theme.background}}
-                  onPress={onPressAddMoreCoin}>
-                  {' Click here for add coins on selected wallet'}
-                </Text>
-              </Text>
               {!!possibleToCoins?.length && (
                 <View style={styles.addressView}>
                   <DokDropdown
-                    placeholder={'Select address'}
-                    title={'Select address'}
+                    placeholder={'Receive to address'}
+                    title={'Receive to address'}
                     data={possibleToCoins}
                     onChangeValue={onSelectToAsset}
                     value={customOption || selectedToAsset?.address}
@@ -959,10 +752,7 @@ const Exchange = ({navigation}) => {
                   label="To Address"
                   placeholder={'Enter to address'}
                   theme={{
-                    colors: {
-                      onSurfaceVariant: '#989898',
-                      primary: '#989898',
-                    },
+                    colors: {onSurfaceVariant: '#989898', primary: '#989898'},
                   }}
                   outlineColor={'#989898'}
                   autoCapitalize="none"
@@ -977,121 +767,71 @@ const Exchange = ({navigation}) => {
                   value={customAddress}
                 />
               )}
-              {!isFetching?.to && !!availableProviders?.length && (
-                <>
-                  <Text style={styles.selectTitle}>{'Exchange Providers'}</Text>
-                  {availableProviders?.map(item => (
-                    <ExchangeProviderItem
-                      key={item?.providerName}
-                      item={item}
-                      selectedToAsset={selectedToAsset}
-                      selectedFromAsset={selectedFromAsset}
-                      selectedExchangeChain={selectedExchangeChain}
-                      onPressItem={onPressProvider}
+              <Text style={styles.addCoinText}>
+                {'Looking for more coins?'}
+                <Text style={styles.addCoinLink} onPress={onPressAddMoreCoin}>
+                  {' Add coins to this wallet'}
+                </Text>
+              </Text>
+              {!!selectedExchangeChain &&
+                (backendSlippage !== undefined && backendSlippage !== null
+                  ? true
+                  : !!slippage) && (
+                  <View style={styles.detailsCard}>
+                    <SlippageEditor
+                      slippage={slippage}
+                      backendSlippage={backendSlippage}
+                      onCommit={onCommitSlippage}
                     />
-                  ))}
-                </>
-              )}
-              <View style={styles.textContainer}>
-                <Text style={styles.text}>Minimum amount</Text>
-                <View style={styles.amountAvailable}>
-                  <Text style={styles.textValue}>{`${minimumValue || 0} ${
-                    selectedFromAsset?.symbol || ''
-                  }`}</Text>
-                </View>
-              </View>
-              {!!selectedExchangeChain && !!backendSlippage && (
-                <View style={styles.textContainer}>
-                  <Text style={styles.text}>Slippage</Text>
-                  {isEditingSlippage ? (
-                    <View style={styles.amountAvailable}>
-                      <TextInput
-                        style={styles.textValue}
-                        keyboardType="numeric"
-                        autoFocus={true}
-                        value={`${displaySlippage}`}
-                        onChangeText={onChangeSlippageValue}
-                        onBlur={onDoneEditingSlippage}
-                        onSubmitEditing={onDoneEditingSlippage}
-                      />
-                      <EditIcon
-                        width={14}
-                        height={14}
-                        fill={theme.gray}
-                        style={styles.editIcon}
-                      />
-                    </View>
-                  ) : (
-                    <TouchableOpacity
-                      style={styles.amountAvailable}
-                      onPress={onPressSlippage}>
-                      <Text style={styles.textValue}>
-                        {`${displaySlippage}%`}
-                      </Text>
-                      <EditIcon
-                        width={14}
-                        height={14}
-                        fill={theme.gray}
-                        style={styles.editIcon}
-                      />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              )}
-              <View style={styles.textContainer}>
-                <Text style={{...styles.text, fontFamily: 'Roboto-Bold'}}>
-                  You pay
-                </Text>
-                <View style={styles.amountAvailable}>
-                  <Text
-                    style={{...styles.textValue, fontFamily: 'Roboto-Bold'}}>
-                    {amountFrom || '0.0'}
-                    {` ${
-                      selectedCoinFromOptions?.options?.symbol?.toUpperCase() ||
-                      ''
-                    }`}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.textContainer}>
-                <Text style={{...styles.text, fontFamily: 'Roboto-Bold'}}>
-                  You pay in fiat
-                </Text>
-                <View style={styles.amountAvailable}>
-                  <Text
-                    style={{...styles.textValue, fontFamily: 'Roboto-Bold'}}>
-                    {`${currencySymbol[localCurrency]}${fiatPay || '0.0'}`}
-                  </Text>
-                </View>
-              </View>
-
+                  </View>
+                )}
+              <ProviderList
+                rows={providerRows}
+                isFetching={isQuoteFetching}
+                error={quoteError}
+                onRetry={onRefreshQuotes}
+                onPressProvider={onPressProvider}
+                fromSymbol={selectedFromAsset?.symbol?.toUpperCase()}
+                toSymbol={selectedToAsset?.symbol?.toUpperCase()}
+                fiatSymbol={fiatSymbol}
+                quoteFetchedAt={isQuoteLocked ? null : quoteFetchedAt}
+                refreshPaused={refreshPaused}
+                onRefresh={onRefreshQuotes}
+              />
               <View style={styles.boxFooter}>
                 <Text style={styles.textStyle}>
                   {`Swap services are available through third-party API provider (${exchangeProvidersText}).`}
                 </Text>
-
                 {customOption === 'Custom' && (
-                  <Text style={[styles.warningText]}>
+                  <Text style={styles.warningText}>
                     {
                       'Please ensure the custom wallet address before exchanging.'
                     }
                   </Text>
                 )}
+                {!!disabledReason && (
+                  <Text
+                    style={
+                      disabledReason.transient
+                        ? styles.buttonHintInfo
+                        : styles.buttonHintError
+                    }>
+                    {disabledReason.text}
+                  </Text>
+                )}
                 <TouchableOpacity
-                  style={{
-                    ...styles.button,
-                    backgroundColor:
-                      isButtonDisabled || isPreparingAllowance
-                        ? '#708090'
-                        : theme.background,
-                  }}
+                  style={[
+                    styles.button,
+                    (isButtonDisabled || isPreparingAllowance) &&
+                      styles.buttonDisabled,
+                  ]}
                   onPress={handleSubmit}
                   disabled={isButtonDisabled || isPreparingAllowance}>
                   {isPreparingAllowance ? (
                     <ActivityIndicator size="small" color={theme.title} />
                   ) : (
                     <Text style={styles.buttonTitle}>
-                      {showApproveAndSwap ? 'Approve and Swap' : 'Next'}
+                      {showApproveAndSwap ? 'Approve and swap' : 'Next'}
                     </Text>
                   )}
                 </TouchableOpacity>
@@ -1100,6 +840,11 @@ const Exchange = ({navigation}) => {
             </View>
           </TouchableWithoutFeedback>
         </ScrollView>
+        <CoinSelectorSheet
+          ref={coinSelectorSheetRef}
+          options={coinOptions}
+          onSelect={onSelectCoin}
+        />
         <ModalAddCoins
           bottomSheetRef={ref => (addMoreCoinsSheet.current = ref)}
           onDismiss={onDismissAddCoinsSheet}

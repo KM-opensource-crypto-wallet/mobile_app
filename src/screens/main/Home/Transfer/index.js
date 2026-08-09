@@ -59,7 +59,6 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import ScurvedIcon from 'assets/images/icons/S-curved.svg';
 import {getExchange} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
-import {sendSwap} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import FastImage from '@d11/react-native-fast-image';
 import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
 import ValidatorItem from 'components/ValidatorItem';
@@ -172,6 +171,14 @@ const Transfer = ({navigation, route}) => {
     const numericValue = text.replace(/[^0-9]/g, '');
     setCustomNonce(numericValue);
   };
+
+  // customNonce is a string and is '' until the estimated nonce arrives, which
+  // would defeat the `?? transferData.nonce` fallbacks in the send thunks.
+  // Normalise once here so every branch receives a number or undefined.
+  const finalNonce = useMemo(() => {
+    const parsed = Number(customNonce);
+    return customNonce === '' || isNaN(parsed) ? undefined : parsed;
+  }, [customNonce]);
 
   const onSelectFeesType = useCallback(
     (type, gasPrice) => {
@@ -312,7 +319,7 @@ const Transfer = ({navigation, route}) => {
                 ? transferData?.selectedVotes
                 : null,
               isBatchTransaction,
-              isSwapFee: isExchangeScreen,
+              isExchange: isExchangeScreen,
               currentCoin: isBatchTransaction
                 ? transferData?.currentCoin
                 : null,
@@ -403,20 +410,11 @@ const Transfer = ({navigation, route}) => {
   }, []);
 
   const submitTransferData = useCallback(async () => {
-    if (
-      !transferData.toAddress &&
-      isExchangeScreen &&
-      isEVMChain(selectedFromAsset?.chain_name)
-    ) {
-      return await dispatch(
-        sendSwap({nonce: customNonce, navigation}),
-      ).unwrap();
-    }
     return await dispatch(
       sendFunds({
         to: transferData.toAddress,
         memo: transferData.memo,
-        nonce: customNonce,
+        nonce: finalNonce,
         amount:
           isSendFundScreen || isStakingScreen || isSellCryptoScreen
             ? transferData?.amount
@@ -487,7 +485,6 @@ const Transfer = ({navigation, route}) => {
     ).unwrap();
   }, [
     dispatch,
-    selectedFromAsset?.chain_name,
     transferData.toAddress,
     transferData.memo,
     transferData?.amount,
@@ -511,7 +508,7 @@ const Transfer = ({navigation, route}) => {
     transferData?.selectedNFT?.name,
     transferData?.selectedNFT?.symbol,
     transferData?.selectedNFT?.metadata?.image,
-    customNonce,
+    finalNonce,
     isSendFundScreen,
     isStakingScreen,
     isSellCryptoScreen,

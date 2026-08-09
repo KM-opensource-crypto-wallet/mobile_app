@@ -38,7 +38,10 @@ import {
   getStakingAllowance,
   getStakingAllowanceLoading,
 } from 'dok-wallet-blockchain-networks/redux/staking/stakingSelectors';
-import {fetchExchangeApproveEstimationFee} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
+import {
+  fetchExchangeApproveEstimationFee,
+  updateExchangeApproveFees,
+} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import {
   getExchangeAllowance,
   getExchangeAllowanceLoading,
@@ -143,15 +146,23 @@ const AllowanceInfoSheet = forwardRef(
       }
     }, [allowanceData?.feesOptions]);
 
+    // Each flow keeps its fee on its own slice, so the recompute has to be routed
+    // to the matching one. Dispatching the staking action unconditionally used to
+    // write into state.staking.allowanceData even in exchange mode, which left the
+    // exchange fee on screen unchanged and corrupted staking state.
+    const updateFeesAction = isExchange
+      ? updateExchangeApproveFees
+      : updateApproveFees;
+
     const onChangeCustomFees = useCallback(
       text => {
         const tempValues = validateNumberInInput(text, allowanceData?.decimal);
         setCustomFees(tempValues);
         dispatch(
-          updateApproveFees({gasPrice: tempValues || '0', convertedChainName}),
+          updateFeesAction({gasPrice: tempValues || '0', convertedChainName}),
         );
       },
-      [allowanceData?.decimal, convertedChainName, dispatch],
+      [allowanceData?.decimal, convertedChainName, dispatch, updateFeesAction],
     );
 
     const onChangeCustomNonce = useCallback(text => {
@@ -230,12 +241,6 @@ const AllowanceInfoSheet = forwardRef(
         selectedFeesTypeRef.current = 'recommended';
         isPauseCalculateFees.current = false;
         setHasError(false);
-        console.log(
-          '[AllowanceInfoSheetDebug] present() called, inner ref current:',
-          !!bottomSheetRef.current,
-          'isExchange:',
-          isExchange,
-        );
         bottomSheetRef.current?.present();
       },
       close: () => {
@@ -284,11 +289,12 @@ const AllowanceInfoSheet = forwardRef(
           setSelectedFeesType(type);
           selectedFeesTypeRef.current = type;
           if (gasPrice) {
-            dispatch(updateApproveFees({gasPrice, convertedChainName}));
+            setCustomFees(gasPrice);
+            dispatch(updateFeesAction({gasPrice, convertedChainName}));
           }
         }
       },
-      [dispatch, convertedChainName],
+      [dispatch, convertedChainName, updateFeesAction],
     );
 
     const isDisabled =

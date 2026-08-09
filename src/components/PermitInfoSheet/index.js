@@ -30,7 +30,10 @@ import {
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
 import {useDispatch, useSelector} from 'react-redux';
-import {fetchExchangePermitApproveEstimationFee} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
+import {
+  fetchExchangePermitApproveEstimationFee,
+  updateExchangeApproveFees,
+} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import {
   getExchangePermitAllowance,
   getExchangePermitAllowanceLoading,
@@ -138,8 +141,17 @@ const PermitInfoSheet = forwardRef(
           permitAllowanceData?.decimal,
         );
         setCustomFees(tempValues);
+        // Without this the displayed Network Fee ignored a custom gas price
+        // entirely, even though the value was still used to sign the approval.
+        dispatch(
+          updateExchangeApproveFees({
+            target: 'permit',
+            gasPrice: tempValues || '0',
+            convertedChainName,
+          }),
+        );
       },
-      [permitAllowanceData?.decimal],
+      [permitAllowanceData?.decimal, convertedChainName, dispatch],
     );
 
     const onChangeCustomNonce = useCallback(text => {
@@ -243,20 +255,30 @@ const PermitInfoSheet = forwardRef(
       isPauseCalculateFees.current = true;
     }, []);
 
-    const onSelectFeesType = useCallback((type, gasPrice) => {
-      if (type === 'custom') {
-        isPauseCalculateFees.current = true;
-        setSelectedFeesType('custom');
-        selectedFeesTypeRef.current = 'custom';
-      } else {
-        isPauseCalculateFees.current = false;
-        setSelectedFeesType(type);
-        selectedFeesTypeRef.current = type;
-        if (gasPrice) {
-          setCustomFees(gasPrice);
+    const onSelectFeesType = useCallback(
+      (type, gasPrice) => {
+        if (type === 'custom') {
+          isPauseCalculateFees.current = true;
+          setSelectedFeesType('custom');
+          selectedFeesTypeRef.current = 'custom';
+        } else {
+          isPauseCalculateFees.current = false;
+          setSelectedFeesType(type);
+          selectedFeesTypeRef.current = type;
+          if (gasPrice) {
+            setCustomFees(gasPrice);
+            dispatch(
+              updateExchangeApproveFees({
+                target: 'permit',
+                gasPrice,
+                convertedChainName,
+              }),
+            );
+          }
         }
-      }
-    }, []);
+      },
+      [convertedChainName, dispatch],
+    );
 
     const isDisabled =
       isLoading ||
