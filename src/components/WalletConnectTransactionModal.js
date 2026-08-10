@@ -60,6 +60,10 @@ import {
   XRPL_SUBMIT_TRANSACTION,
   XRPL_SIGN_MESSAGE,
 } from 'dok-wallet-blockchain-networks/service/rippleWalletConnect';
+import {
+  POLKADOT_SIGN_TRANSACTION,
+  POLKADOT_SIGN_MESSAGE,
+} from 'dok-wallet-blockchain-networks/service/polkadotWalletConnect';
 
 const displayMessage = (method, message) => {
   switch (method) {
@@ -143,7 +147,8 @@ const WalletConnectTransactionModal = props => {
       transactionData?.chainId?.includes('solana') ||
       transactionData?.chainId?.includes('ton') ||
       transactionData?.chainId?.includes('stellar') ||
-      transactionData?.chainId?.includes('xrpl')
+      transactionData?.chainId?.includes('xrpl') ||
+      transactionData?.chainId?.includes('polkadot')
     ) {
       if (
         transactionData?.method === TRON_SIGN_MESSAGE ||
@@ -210,9 +215,20 @@ const WalletConnectTransactionModal = props => {
           signTypeData: transactionData?.params?.message,
         };
       }
+      if (transactionData?.method === POLKADOT_SIGN_TRANSACTION) {
+        return {
+          finaltransactionData: transactionData?.params,
+          signTypeData: transactionData?.params,
+        };
+      }
+      if (transactionData?.method === POLKADOT_SIGN_MESSAGE) {
+        return {
+          signTypeData: transactionData?.params?.data,
+        };
+      }
     } else {
       if (transactionData?.method?.includes('wallet_sendCalls')) {
-        const batchCalls = (transactionData?.params?.[0].calls || []).map(
+        const batchCalls = (transactionData?.params?.[0]?.calls || []).map(
           call => ({
             ...call,
             etherValue: call?.value ? parseBalance(call.value, 18) : '',
@@ -268,7 +284,7 @@ const WalletConnectTransactionModal = props => {
         createWalletConnectTransaction({
           transactionData: {
             ...getTransactionRequestData?.finaltransactionData,
-            batchCalls: transactionData?.params?.[0].calls,
+            batchCalls: transactionData?.params?.[0]?.calls,
             from: transactionData?.from,
           },
           isBatchTransaction: transactionData?.isBatchTransaction,
