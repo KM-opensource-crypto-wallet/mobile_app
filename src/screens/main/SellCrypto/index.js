@@ -31,8 +31,8 @@ import {validateNumber} from 'dok-wallet-blockchain-networks/helper';
 import {currencySymbol} from 'data/currency';
 import Loading from 'components/Loading';
 import {WebViewModal} from './WebViewModal';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {_currentWalletIndexSelector} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectVisibleWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectCurrentWalletClientId} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {getSellCryptoProviders} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
 import {getSellCryptoLoading} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
 import {setSellCryptoLoading} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
@@ -73,8 +73,8 @@ const SellCrypto = ({navigation}) => {
   const [webViewUri, setWebViewUri] = useState('');
   const isLoading = useSelector(getSellCryptoLoading);
   const coinOptions = useSelector(getUserCoinsOptions, shallowEqual);
-  const allWallets = useSelector(selectAllWallets);
-  const currentWalletIndex = useSelector(_currentWalletIndexSelector);
+  const allWallets = useSelector(selectVisibleWallets);
+  const currentWalletClientId = useSelector(selectCurrentWalletClientId);
   const sellCryptoRequestDetails = useSelector(getSellCryptoRequestDetails);
   const selectedCountry = useSelector(getSelectedCountry);
 
@@ -96,7 +96,7 @@ const SellCrypto = ({navigation}) => {
         if (tempCoinDetails?.chain_symbol === 'BNB') {
           tempCoinDetails.chain_symbol = 'BSC';
         }
-        if (i === currentWalletIndex && tempCoinDetails) {
+        if (tempWallet?.clientId === currentWalletClientId && tempCoinDetails) {
           selectedCoinDetails = tempCoinDetails;
           selectedWalletDetails = tempWallet;
         }
@@ -115,7 +115,7 @@ const SellCrypto = ({navigation}) => {
       }
       return {selectedCoinDetails, possibleCoinDetails, selectedWalletDetails};
     },
-    [allWallets, currentWalletIndex],
+    [allWallets, currentWalletClientId],
   );
 
   const onPressItem = useCallback(

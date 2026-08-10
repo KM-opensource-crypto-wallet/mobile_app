@@ -28,6 +28,11 @@ abstract_target 'coinswalletCommonPod' do
 
   config = use_native_modules!
   pod 'SDWebImage', '5.21.0'
+  # AppCheckCore (pulled in by GoogleSignIn) is a Swift pod that imports these
+  # Obj-C pods, which don't define modulemaps. Enable modular headers so they
+  # can be imported when linking statically.
+  pod 'GoogleUtilities', :modular_headers => true
+  pod 'RecaptchaInterop', :modular_headers => true
   # permissions_path = '../node_modules/react-native-permissions/ios'
   # pod 'Permission-Camera', :path => "#{permissions_path}/Camera"
   # OpenSSL-Universal removed - QuickCrypto provides its own OpenSSL.xcframework

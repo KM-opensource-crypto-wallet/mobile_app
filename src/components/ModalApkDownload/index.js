@@ -4,6 +4,7 @@ import {Modal, Portal, Text} from 'react-native-paper';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './ModalApkDownload';
 import {WL_APP_NAME} from 'utils/wlData';
+import {markExpectedBackground} from 'utils/expectedBackground';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -122,6 +123,7 @@ const ModalApkDownload = ({visible}) => {
             onPress={async () => {
               try {
                 const link = 'https://kimlwallet.com';
+                markExpectedBackground();
                 await Linking.openURL(link);
               } catch (e) {
                 console.error('Error opening kimlwallet.com', e);

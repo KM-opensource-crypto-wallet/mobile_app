@@ -1,4 +1,11 @@
-import React, {useCallback, useContext, useMemo, useEffect} from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useMemo,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from 'react';
 import {
   View,
   FlatList,
@@ -8,7 +15,7 @@ import {
 } from 'react-native';
 import {ThemeContext} from 'theme/ThemeContext';
 import {useSelector, useDispatch} from 'react-redux';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {
   selectCoinSyncStatus,
   selectCoinSyncProgress,
@@ -18,24 +25,30 @@ import {
   selectIsSyncing,
   selectSelectedCount,
   selectCoinsWithBalanceCount,
-  selectSyncingWalletIndex,
+  selectSyncingWalletClientId,
   selectSyncingWalletName,
 } from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSelectors';
 import {
   syncAllCoins,
-  cancelSync,
+  cancelSyncWithCooldown,
   resetCoinSync,
   toggleCoinSelection,
 } from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSlice';
 import {addCoinsToWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {
+  selectAllWallets,
+  selectCurrentWalletClientId,
+  isCoinScanAvailableForTimestamp,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {showToast} from 'utils/toast';
 import CoinSyncItem from 'components/CoinSyncItem';
+import ConfirmationModal from 'components/ConfirmationModal';
 import InteractionBlocker from 'components/InteractionBlocker';
 import CoinSyncProgress from 'components/CoinSyncProgress';
 import CoinSyncActionButton from 'components/CoinSyncActionButton';
 import CoinSyncEmptyState from 'components/CoinSyncEmptyState';
 import myStyles from './CoinSyncScreenStyles';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import Back from 'assets/images/sidebarIcons/Back.svg';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
 const CoinSyncScreen = () => {
@@ -43,6 +56,18 @@ const CoinSyncScreen = () => {
   const styles = myStyles(theme);
   const dispatch = useDispatch();
   const navigation = useNavigation();
+  const route = useRoute();
+  // Wallet to scan (from the Scan Coins row); undefined = current wallet
+  const targetWalletClientId = route?.params?.walletClientId;
+  const allWallets = useSelector(selectAllWallets);
+  const currentWalletClientId = useSelector(selectCurrentWalletClientId);
+  const resolvedWalletClientId = targetWalletClientId || currentWalletClientId;
+  const resolvedWallet = allWallets?.find(
+    item => item?.clientId === resolvedWalletClientId,
+  );
+  const targetWalletName = targetWalletClientId
+    ? resolvedWallet?.walletName || null
+    : null;
 
   // Selectors
   const status = useSelector(selectCoinSyncStatus);
@@ -53,11 +78,15 @@ const CoinSyncScreen = () => {
   const isCreatingWallets = useSelector(selectIsCreatingWallets);
   const isSyncing = useSelector(selectIsSyncing);
   const selectedCount = useSelector(selectSelectedCount);
-  const syncingWalletIndex = useSelector(selectSyncingWalletIndex);
+  const syncingWalletClientId = useSelector(selectSyncingWalletClientId);
   const syncingWalletName = useSelector(selectSyncingWalletName);
 
   // Derived state
   const isCompleted = status === 'completed';
+  // Coins found but not yet added - leaving the screen would discard them
+  const hasPendingCoins = isCompleted && coinsWithBalanceCount > 0;
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const resultsHeaderText = useMemo(() => {
     if (isCompleted) {
@@ -68,10 +97,55 @@ const CoinSyncScreen = () => {
     return '';
   }, [isCompleted, coinsWithBalanceCount]);
 
-  // Block back during wallet creation
+  // Copy for the leave-with-pending-coins confirmation
+  const discardCopy = useMemo(() => {
+    const walletName = syncingWalletName || targetWalletName;
+    const isSingle = coinsWithBalanceCount === 1;
+    const coinWord = isSingle ? 'coin' : 'coins';
+    return {
+      title: `Discard ${coinsWithBalanceCount} found ${coinWord}?`,
+      subtitle: `We found ${coinsWithBalanceCount} ${coinWord} with a balance${
+        walletName ? ` in "${walletName}"` : ''
+      }. Going back now removes ${
+        isSingle ? 'it' : 'them'
+      } from this scan without adding ${
+        isSingle ? 'it' : 'them'
+      } to your wallet.`,
+    };
+  }, [coinsWithBalanceCount, syncingWalletName, targetWalletName]);
+
+  // Clear leftovers from a previous scan of a DIFFERENT wallet (cancelled or
+  // completed-and-never-dismissed) so this wallet's screen starts pristine.
+  // Never clears an actively running scan or this wallet's own results.
+  useEffect(() => {
+    if (
+      !isSyncing &&
+      syncingWalletClientId !== null &&
+      syncingWalletClientId !== resolvedWalletClientId
+    ) {
+      dispatch(resetCoinSync());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Disable iOS swipe-back while found coins are pending, so the user
+  // can't discard them without going through the confirmation modal
+  useEffect(() => {
+    navigation.setOptions({gestureEnabled: !hasPendingCoins});
+  }, [navigation, hasPendingCoins]);
+
+  // Block back during wallet creation; confirm before discarding
+  // pending found coins (Android hardware back)
   useEffect(() => {
     const onBackPress = () => {
-      return isCreatingWallets;
+      if (isCreatingWallets) {
+        return true;
+      }
+      if (hasPendingCoins) {
+        setShowLeaveConfirm(true);
+        return true;
+      }
+      return false;
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -79,19 +153,65 @@ const CoinSyncScreen = () => {
       onBackPress,
     );
     return () => backHandler.remove();
-  }, [isCreatingWallets]);
+  }, [isCreatingWallets, hasPendingCoins]);
 
   // Handlers
   const handleStartSync = useCallback(() => {
-    dispatch(syncAllCoins());
-  }, [dispatch]);
+    const lastScanTimestamp = resolvedWallet?.lastCoinsScanTimestamp;
+    if (!isCoinScanAvailableForTimestamp(lastScanTimestamp)) {
+      showToast({
+        type: 'errorToast',
+        title: 'Scan Unavailable',
+        message: 'You can scan each wallet once every 24 hours',
+      });
+      return;
+    }
+    dispatch(syncAllCoins({walletClientId: resolvedWalletClientId}));
+  }, [dispatch, resolvedWallet, resolvedWalletClientId]);
 
+  // Cancelling arms the 24h cooldown, so always confirm first
   const handleCancel = useCallback(() => {
-    dispatch(cancelSync());
-  }, [dispatch]);
+    setShowCancelConfirm(true);
+  }, []);
+
+  const handleConfirmCancelScan = useCallback(() => {
+    setShowCancelConfirm(false);
+    if (!isSyncing) {
+      // Scan finished while the modal was open - completion already
+      // armed the cooldown, nothing left to cancel
+      return;
+    }
+    dispatch(cancelSyncWithCooldown());
+    if (coinsWithBalanceCount === 0) {
+      // With partial results the 'completed' selection UI stays visible;
+      // with nothing found the state resets, so explain the cooldown
+      showToast({
+        type: 'warningToast',
+        title: 'Scan Cancelled',
+        message: 'You can scan this wallet again in 24 hours',
+      });
+    }
+  }, [dispatch, isSyncing, coinsWithBalanceCount]);
+
+  const handleDismissCancelScan = useCallback(() => {
+    setShowCancelConfirm(false);
+  }, []);
+
+  // Close the cancel confirmation if the scan finishes or errors
+  // underneath it - there is nothing left to cancel
+  useEffect(() => {
+    if (showCancelConfirm && !isSyncing) {
+      setShowCancelConfirm(false);
+    }
+  }, [showCancelConfirm, isSyncing]);
 
   const handleGoBack = useCallback(() => {
     if (isCreatingWallets) {
+      return;
+    }
+
+    if (hasPendingCoins) {
+      setShowLeaveConfirm(true);
       return;
     }
 
@@ -99,7 +219,50 @@ const CoinSyncScreen = () => {
       dispatch(resetCoinSync());
     }
     navigation.goBack();
-  }, [dispatch, navigation, isSyncing, isCreatingWallets]);
+  }, [dispatch, navigation, isSyncing, isCreatingWallets, hasPendingCoins]);
+
+  const headerTitle =
+    syncingWalletName && (isSyncing || isCompleted)
+      ? `Sync - ${syncingWalletName}`
+      : targetWalletName
+      ? `Sync - ${targetWalletName}`
+      : 'Sync Coin Balances';
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: headerTitle,
+      headerLeft: () => (
+        <TouchableOpacity
+          style={styles.headerBackButton}
+          onPress={handleGoBack}
+          disabled={isCreatingWallets}>
+          <Back
+            width="22"
+            height="18"
+            fill={isCreatingWallets ? theme.gray : theme.borderActiveColor}
+          />
+        </TouchableOpacity>
+      ),
+    });
+  }, [
+    navigation,
+    headerTitle,
+    handleGoBack,
+    isCreatingWallets,
+    styles.headerBackButton,
+    theme.gray,
+    theme.borderActiveColor,
+  ]);
+
+  const handleConfirmLeave = useCallback(() => {
+    setShowLeaveConfirm(false);
+    dispatch(resetCoinSync());
+    navigation.goBack();
+  }, [dispatch, navigation]);
+
+  const handleCancelLeave = useCallback(() => {
+    setShowLeaveConfirm(false);
+  }, []);
 
   const handleToggleSelection = useCallback(
     index => {
@@ -118,7 +281,7 @@ const CoinSyncScreen = () => {
     dispatch(
       addCoinsToWallet({
         coins: selectedCoins,
-        walletIndex: syncingWalletIndex,
+        clientId: syncingWalletClientId,
       }),
     );
     showToast({
@@ -130,7 +293,7 @@ const CoinSyncScreen = () => {
     });
     dispatch(resetCoinSync());
     navigation.goBack();
-  }, [coinsWithBalance, dispatch, navigation, syncingWalletIndex]);
+  }, [coinsWithBalance, dispatch, navigation, syncingWalletClientId]);
 
   const renderItem = useCallback(
     ({item, index}) => (
@@ -166,25 +329,6 @@ const CoinSyncScreen = () => {
     <View style={styles.safeArea}>
       <DokSafeAreaView style={styles.container}>
         <View style={styles.container}>
-          <View style={styles.navHeaderContainer}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={handleGoBack}
-              disabled={isCreatingWallets}>
-              <MaterialCommunityIcons
-                name="arrow-left"
-                size={24}
-                color={isCreatingWallets ? theme.gray : theme.font}
-              />
-            </TouchableOpacity>
-            <Text style={styles.title} numberOfLines={1}>
-              {syncingWalletName && (isSyncing || isCompleted)
-                ? `Sync - ${syncingWalletName}`
-                : 'Sync Coin Balances'}
-            </Text>
-            <View style={styles.placeholder} />
-          </View>
-
           <FlatList
             data={coinsWithBalance}
             renderItem={renderItem}
@@ -223,6 +367,35 @@ const CoinSyncScreen = () => {
         </View>
       </DokSafeAreaView>
       <InteractionBlocker visible={isCreatingWallets} theme={theme} />
+      <ConfirmationModal
+        visible={showLeaveConfirm}
+        title={discardCopy.title}
+        subtitle={discardCopy.subtitle}
+        infoText={
+          "Scanning is limited to once every 24 hours, so you won't be able to rescan this wallet until tomorrow."
+        }
+        confirmLabel={'Discard'}
+        dismissLabel={'Stay'}
+        onConfirm={handleConfirmLeave}
+        onDismiss={handleCancelLeave}
+      />
+      <ConfirmationModal
+        visible={showCancelConfirm}
+        title={'Cancel scan?'}
+        subtitle={
+          "Are you sure you want to cancel? Once you cancel, you won't be able to scan this wallet again for 24 hours."
+        }
+        infoText={
+          coinsWithBalanceCount > 0
+            ? 'Coins found so far will still be available to add to your wallet.'
+            : null
+        }
+        infoIcon={'check-circle-outline'}
+        confirmLabel={'Cancel Scan'}
+        dismissLabel={'Keep Scanning'}
+        onConfirm={handleConfirmCancelScan}
+        onDismiss={handleDismissCancelScan}
+      />
     </View>
   );
 };

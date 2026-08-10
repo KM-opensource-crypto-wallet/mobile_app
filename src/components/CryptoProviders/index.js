@@ -13,7 +13,7 @@ import {shallowEqual, useDispatch, useSelector} from 'react-redux';
 import {Portal, Provider, TextInput} from 'react-native-paper';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {ThemeContext} from 'theme/ThemeContext';
-import {InAppBrowser} from 'react-native-inappbrowser-reborn';
+import {isInAppBrowserAvailable, openInAppBrowser} from 'utils/inAppBrowser';
 import {getUserCoinsOptions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import FastImage from '@d11/react-native-fast-image';
 import DokDropdown from 'components/DokDropdown';
@@ -42,13 +42,9 @@ import {
   validateNumber,
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
-import {IS_ANDROID, IS_IOS} from 'utils/dimensions';
+import {IS_ANDROID} from 'utils/dimensions';
 import ModalAddCoins from 'components/ModalAddCoins';
-import PaymentOptionItem from 'components/PaymentOptionItem';
-import ApplePayMark from 'components/ApplePayMark';
-import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {IS_KIML_WALLET} from 'utils/wlData';
 
 const currencyPicker = [
   {
@@ -115,11 +111,11 @@ const CryptoProviders = () => {
         formikRef?.current?.setFieldTouched('amount', true);
         return;
       }
-      const isAvailable = await InAppBrowser.isAvailable();
+      const isAvailable = await isInAppBrowserAvailable();
       if (isAvailable) {
         const url = item?.extraData?.url;
         if (item?.extraData?.url) {
-          await InAppBrowser.open(url, inAppBrowserOptions);
+          await openInAppBrowser(url, inAppBrowserOptions);
         } else {
           const resp = await getBuyCryptoUrl({
             ...item,
@@ -130,7 +126,7 @@ const CryptoProviders = () => {
             appVersion: APP_VERSION,
             from_device: Platform.OS,
           });
-          await InAppBrowser.open(resp?.data, inAppBrowserOptions);
+          await openInAppBrowser(resp?.data, inAppBrowserOptions);
         }
       } else {
         console.error('Provider not found');
@@ -217,8 +213,8 @@ const CryptoProviders = () => {
                   amount: '100',
                   selectedCoin: null,
                   fiatCurrency: localCurrency,
-                  selectedPaymentMethod:
-                    IS_IOS && IS_KIML_WALLET ? paymentOptions[0] : null,
+                  selectedPaymentMethod: null,
+                  // IS_IOS && IS_KIML_WALLET ? paymentOptions[0] : null,
                 }}
                 validationSchema={amountValidation}
                 onSubmit={onSubmit}>
@@ -232,53 +228,53 @@ const CryptoProviders = () => {
                   setFieldValue,
                 }) => (
                   <View>
-                    {IS_IOS && IS_KIML_WALLET && (
-                      <>
-                        <DokDropdown
-                          titleStyle={{color: theme.primary}}
-                          placeholder={'Select payment method'}
-                          title={'Select Payment Method'}
-                          data={paymentOptions}
-                          dropdownStyle={{height: 70}}
-                          onChangeValue={item => {
-                            setFieldValue('selectedPaymentMethod', item);
-                            onSubmit(
-                              {...values, selectedPaymentMethod: item},
-                              null,
-                              true,
-                              false,
-                            );
-                          }}
-                          value={values.selectedPaymentMethod?.value}
-                          renderItem={item => {
-                            return <PaymentOptionItem item={item} />;
-                          }}
-                          selectedTextStyle={{
-                            marginLeft: 12,
-                            color: theme.primary,
-                            fontWeight: '600',
-                            fontSize: 16,
-                          }}
-                          renderLeftIcon={() =>
-                            values.selectedPaymentMethod?.value ===
-                            'apple_pay' ? (
-                              <ApplePayMark />
-                            ) : (
-                              values.selectedPaymentMethod?.options?.icon && (
-                                <MaterialCommunityIcon
-                                  name={
-                                    values.selectedPaymentMethod?.options?.icon
-                                  }
-                                  color={theme.font}
-                                  size={32}
-                                />
-                              )
-                            )
-                          }
-                        />
-                        <View style={styles.paddingView} />
-                      </>
-                    )}
+                    {/*{IS_IOS && IS_KIML_WALLET && (*/}
+                    {/*  <>*/}
+                    {/*    <DokDropdown*/}
+                    {/*      titleStyle={{color: theme.primary}}*/}
+                    {/*      placeholder={'Select payment method'}*/}
+                    {/*      title={'Select Payment Method'}*/}
+                    {/*      data={paymentOptions}*/}
+                    {/*      dropdownStyle={{height: 70}}*/}
+                    {/*      onChangeValue={item => {*/}
+                    {/*        setFieldValue('selectedPaymentMethod', item);*/}
+                    {/*        onSubmit(*/}
+                    {/*          {...values, selectedPaymentMethod: item},*/}
+                    {/*          null,*/}
+                    {/*          true,*/}
+                    {/*          false,*/}
+                    {/*        );*/}
+                    {/*      }}*/}
+                    {/*      value={values.selectedPaymentMethod?.value}*/}
+                    {/*      renderItem={item => {*/}
+                    {/*        return <PaymentOptionItem item={item} />;*/}
+                    {/*      }}*/}
+                    {/*      selectedTextStyle={{*/}
+                    {/*        marginLeft: 12,*/}
+                    {/*        color: theme.primary,*/}
+                    {/*        fontWeight: '600',*/}
+                    {/*        fontSize: 16,*/}
+                    {/*      }}*/}
+                    {/*      renderLeftIcon={() =>*/}
+                    {/*        values.selectedPaymentMethod?.value ===*/}
+                    {/*        'apple_pay' ? (*/}
+                    {/*          <ApplePayMark />*/}
+                    {/*        ) : (*/}
+                    {/*          values.selectedPaymentMethod?.options?.icon && (*/}
+                    {/*            <MaterialCommunityIcon*/}
+                    {/*              name={*/}
+                    {/*                values.selectedPaymentMethod?.options?.icon*/}
+                    {/*              }*/}
+                    {/*              color={theme.font}*/}
+                    {/*              size={32}*/}
+                    {/*            />*/}
+                    {/*          )*/}
+                    {/*        )*/}
+                    {/*      }*/}
+                    {/*    />*/}
+                    {/*    <View style={styles.paddingView} />*/}
+                    {/*  </>*/}
+                    {/*)}*/}
                     <DokDropdown
                       titleStyle={{color: theme.primary}}
                       placeholder={'Select Crypto'}

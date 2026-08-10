@@ -23,7 +23,7 @@ import myStyles from './NotificationAlertsStyles';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import KeyboardHeightView from 'components/KeyboardHeightView';
 import {useDispatch, useSelector} from 'react-redux';
-import {getNotificationAlerts} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSelector';
+import {getVisibleNotificationAlerts} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSelector';
 import {Searchbar} from 'react-native-paper';
 import NotificationAlertItem from 'components/NotificationAlertItem';
 import ModalConfirm from 'components/ModalConfirm';
@@ -42,6 +42,7 @@ import {
   openSettings as openNotificationSettings,
   RESULTS,
 } from 'react-native-permissions';
+import {markExpectedBackground} from 'utils/expectedBackground';
 
 const MAX_ALERTS = 20;
 const FIFTEEN_MIN_MS = 15 * 60 * 1000;
@@ -50,7 +51,7 @@ const NotificationAlerts = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
   const {bottom} = useSafeAreaInsets();
   const styles = myStyles(theme, bottom);
-  const notificationAlerts = useSelector(getNotificationAlerts);
+  const notificationAlerts = useSelector(getVisibleNotificationAlerts);
   const [searchText, setSearchText] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -161,6 +162,7 @@ const NotificationAlerts = ({navigation}) => {
   }, [searchText, notificationAlerts]);
 
   const openSettings = useCallback(() => {
+    markExpectedBackground();
     openNotificationSettings('notifications');
   }, []);
 

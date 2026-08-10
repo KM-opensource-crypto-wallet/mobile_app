@@ -10,12 +10,12 @@ import {
   addEVMAndTronDeriveAddresses,
   removeEVMDeriveAddresses,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectVisibleWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {Avatar, Switch} from 'react-native-paper';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
 const EVMWalletDerivation = () => {
-  const allWallets = useSelector(selectAllWallets);
+  const visibleWallets = useSelector(selectVisibleWallets);
 
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
@@ -29,10 +29,10 @@ const EVMWalletDerivation = () => {
           {'Add or remove derives address for all EVM, SOL and TRX coins.'}
         </Text>
         <FlatList
-          data={allWallets}
+          data={visibleWallets}
           contentContainerStyle={styles.contentContainerStyle}
-          keyExtractor={item => item.walletName}
-          renderItem={({item, index}) =>
+          keyExtractor={item => item.clientId}
+          renderItem={({item}) =>
             item?.isImportWalletWithPrivateKey ? null : (
               <View style={styles.walletBox}>
                 <View style={styles.rowView}>
@@ -53,10 +53,15 @@ const EVMWalletDerivation = () => {
                     onValueChange={value => {
                       if (value) {
                         dispatch(
-                          addEVMAndTronDeriveAddresses({index, wallet: item}),
+                          addEVMAndTronDeriveAddresses({
+                            clientId: item.clientId,
+                            wallet: item,
+                          }),
                         );
                       } else {
-                        dispatch(removeEVMDeriveAddresses({index}));
+                        dispatch(
+                          removeEVMDeriveAddresses({clientId: item.clientId}),
+                        );
                       }
                     }}
                     trackColor={{false: 'gray', true: '#E8E8E8'}}

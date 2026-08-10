@@ -33,6 +33,10 @@ import {
   useCodeScanner,
 } from 'react-native-vision-camera';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {
+  markExpectedBackground,
+  consumeExpectedBackground,
+} from 'utils/expectedBackground';
 
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 const screenAspectRatio = SCREEN_HEIGHT / SCREEN_WIDTH;
@@ -225,8 +229,19 @@ const Scanner = ({navigation, route}) => {
   });
 
   useEffect(() => {
-    requestPermission();
-  }, [requestPermission]);
+    if (hasPermission) {
+      return;
+    }
+    // The Android system permission dialog backgrounds the app - mark it as
+    // self-initiated so the login modal/relock listeners in components/main.js
+    // don't treat it as the user leaving. Cleared once the request settles so
+    // no stale mark can suppress a later, genuine background (on iOS the
+    // dialog never fires 'background', so the mark would otherwise linger).
+    markExpectedBackground();
+    requestPermission().finally(() => {
+      consumeExpectedBackground();
+    });
+  }, [hasPermission, requestPermission]);
 
   if (isSimulator) {
     return (

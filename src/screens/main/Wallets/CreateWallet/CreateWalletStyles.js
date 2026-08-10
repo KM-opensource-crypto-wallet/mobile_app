@@ -58,6 +58,8 @@ const myStyles = theme =>
       marginLeft: 20,
     },
     itemIcon: {
+      width: 40,
+      height: 40,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -66,6 +68,17 @@ const myStyles = theme =>
       fontSize: 16,
       fontFamily: 'Roboto-Regular',
       fontWeight: 'bold',
+    },
+    scanIconBubble: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.background + '15',
+    },
+    scanIconBubbleDisabled: {
+      backgroundColor: theme.gray + '20',
     },
     itemText: {
       fontSize: 12,

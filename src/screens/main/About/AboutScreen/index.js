@@ -4,6 +4,8 @@ import {aboutList} from 'data/aboutList';
 import KeyboardArrow from 'assets/images/icons/keyboard-arrow-right.svg';
 import {ThemeContext} from 'theme/ThemeContext';
 import {useContext} from 'react';
+import {inAppBrowserOptions} from 'utils/common';
+import {openInAppBrowser} from 'utils/inAppBrowser';
 
 const AboutScreen = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -15,7 +17,13 @@ const AboutScreen = ({navigation}) => {
         <TouchableOpacity
           key={index}
           style={styles.list}
-          onPress={() => navigation.navigate(item.page)}>
+          onPress={() => {
+            if (item.url) {
+              openInAppBrowser(item.url, inAppBrowserOptions).then();
+            } else {
+              navigation.navigate(item.page);
+            }
+          }}>
           <View style={styles.box}>
             <View style={styles.iconBox}>{item.icon}</View>
             <Text style={styles.title}>{item.page}</Text>

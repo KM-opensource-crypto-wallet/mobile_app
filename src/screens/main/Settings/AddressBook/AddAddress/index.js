@@ -28,7 +28,7 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {useDispatch, useSelector} from 'react-redux';
 import {
-  selectAllWallets,
+  selectVisibleWallets,
   selectCurrentWallet,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import WalletsPicker from 'components/WalletsPicker';
@@ -118,7 +118,7 @@ const AddAddress = ({navigation, route}) => {
     };
   }, [route?.params]);
 
-  const allWallets = useSelector(selectAllWallets);
+  const allWallets = useSelector(selectVisibleWallets);
   const walletData = useMemo(() => {
     return allWallets.map(wallet => {
       return {

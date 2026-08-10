@@ -41,6 +41,9 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {getFingerprintName} from 'dok-wallet-blockchain-networks/helper';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome6';
+import {inAppBrowserOptions} from 'utils/common';
+import {openInAppBrowser} from 'utils/inAppBrowser';
+import {URLData} from 'utils/wlData';
 
 const Settings = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -293,7 +296,9 @@ const Settings = ({navigation}) => {
           )}
           {/* /////////////////////////////// */}
           <TouchableOpacity
-            onPress={() => navigation.navigate('Terms & Conditions')}
+            onPress={() =>
+              openInAppBrowser(URLData.terms, inAppBrowserOptions).then()
+            }
             style={{
               ...styles.btn,
               borderBottomWidth: 0.5,
@@ -306,7 +311,12 @@ const Settings = ({navigation}) => {
           </TouchableOpacity>
           {/* /////////////////////////////// */}
           <TouchableOpacity
-            onPress={() => navigation.navigate('Privacy Policy')}
+            onPress={() =>
+              openInAppBrowser(
+                URLData.privacyPolicy,
+                inAppBrowserOptions,
+              ).then()
+            }
             style={styles.btn}>
             <Privacy width="25" height="25" fill={theme.font} />
             <View style={styles.box}>

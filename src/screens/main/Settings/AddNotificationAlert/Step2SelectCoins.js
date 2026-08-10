@@ -3,7 +3,7 @@ import {View} from 'react-native';
 import {useSelector} from 'react-redux';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './AddNotificationAlertStyles';
-import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectVisibleWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import NotificationCoinStep from 'components/NotificationCoinStep';
 import {coinKey, buildAddressOptions} from 'utils/notificationAlertHelpers';
 import {
@@ -16,7 +16,7 @@ const AddNotificationAlertCoins = ({navigation, route}) => {
   const styles = myStyles(theme);
   const {walletClientId} = route.params;
 
-  const allWallets = useSelector(selectAllWallets);
+  const allWallets = useSelector(selectVisibleWallets);
   const selectedWallet = useMemo(
     () => allWallets.find(w => w.clientId === walletClientId),
     [allWallets, walletClientId],
