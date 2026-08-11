@@ -31,7 +31,7 @@ import {
 import WalletConnect from 'assets/images/WalletConnect.png';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
-import {getTonSessionProperties} from 'dok-wallet-blockchain-networks/service/tonWalletConnect';
+import {getTonSessionProperties} from 'dok-wallet-blockchain-networks/service/walletConnect/tonWalletConnect';
 import {chainLogoMap} from 'assets/chain_logo';
 
 const WalletConnectRequestModal = props => {

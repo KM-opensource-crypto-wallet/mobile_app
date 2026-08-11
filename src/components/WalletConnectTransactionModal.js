@@ -39,31 +39,57 @@ import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {
   TRON_SIGN_MESSAGE,
   TRON_SIGN_TRANSACTION,
-} from 'dok-wallet-blockchain-networks/service/tronWalletConnect';
+} from 'dok-wallet-blockchain-networks/service/walletConnect/tronWalletConnect';
 import {
   parseSolanaSignTransaction,
   SOLANA_SIGN_AND_SEND_TRANSACTION,
   SOLANA_SIGN_MESSAGE,
   SOLANA_SIGN_TRANSACTION,
-} from 'dok-wallet-blockchain-networks/service/solanaWalletConnect';
+} from 'dok-wallet-blockchain-networks/service/walletConnect/solanaWalletConnect';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {
   TON_SEND_MESSAGE,
   TON_SIGN_DATA,
-} from 'dok-wallet-blockchain-networks/service/tonWalletConnect';
+} from 'dok-wallet-blockchain-networks/service/walletConnect/tonWalletConnect';
 import {
   STELLAR_SIGN_AND_SUBMIT_XDR,
   STELLAR_SIGN_XDR,
-} from 'dok-wallet-blockchain-networks/service/stellarWalletConnect';
+} from 'dok-wallet-blockchain-networks/service/walletConnect/stellarWalletConnect';
 import {
   XRPL_SIGN_TRANSACTION,
   XRPL_SUBMIT_TRANSACTION,
   XRPL_SIGN_MESSAGE,
-} from 'dok-wallet-blockchain-networks/service/rippleWalletConnect';
+} from 'dok-wallet-blockchain-networks/service/walletConnect/rippleWalletConnect';
 import {
   POLKADOT_SIGN_TRANSACTION,
   POLKADOT_SIGN_MESSAGE,
-} from 'dok-wallet-blockchain-networks/service/polkadotWalletConnect';
+} from 'dok-wallet-blockchain-networks/service/walletConnect/polkadotWalletConnect';
+import {
+  COSMOS_SIGN_DIRECT,
+  COSMOS_SIGN_AMINO,
+  COSMOS_GET_ACCOUNTS,
+} from 'dok-wallet-blockchain-networks/service/walletConnect/cosmosWalletConnect';
+import {
+  HEDERA_SIGN_MESSAGE,
+  HEDERA_SIGN_TRANSACTION,
+  HEDERA_SIGN_AND_EXECUTE_TRANSACTION,
+} from 'dok-wallet-blockchain-networks/service/walletConnect/hederaWalletConnect';
+import {
+  APTOS_SIGN_MESSAGE,
+  APTOS_SIGN_TRANSACTION,
+  APTOS_SIGN_AND_SUBMIT_TRANSACTION,
+} from 'dok-wallet-blockchain-networks/service/walletConnect/aptosWalletConnect';
+import {
+  TEZOS_GET_ACCOUNTS,
+  TEZOS_SIGN,
+  TEZOS_SEND,
+} from 'dok-wallet-blockchain-networks/service/walletConnect/tezosWalletConnect';
+import {
+  BITCOIN_GET_ACCOUNT_ADDRESSES,
+  BITCOIN_SIGN_MESSAGE,
+  BITCOIN_SIGN_PSBT,
+  BITCOIN_SEND_TRANSFER,
+} from 'dok-wallet-blockchain-networks/service/walletConnect/bitcoinWalletConnect';
 
 const displayMessage = (method, message) => {
   switch (method) {
@@ -93,6 +119,32 @@ const displayMessage = (method, message) => {
     }
     case XRPL_SIGN_MESSAGE: {
       return convertHexToUtf8IfPossible(message);
+    }
+    case COSMOS_SIGN_DIRECT:
+    case COSMOS_GET_ACCOUNTS:
+    case COSMOS_SIGN_AMINO: {
+      return safelyJsonStringify(message);
+    }
+    case HEDERA_SIGN_MESSAGE:
+    case HEDERA_SIGN_TRANSACTION:
+    case HEDERA_SIGN_AND_EXECUTE_TRANSACTION: {
+      return safelyJsonStringify(message);
+    }
+    case APTOS_SIGN_MESSAGE:
+    case APTOS_SIGN_TRANSACTION:
+    case APTOS_SIGN_AND_SUBMIT_TRANSACTION: {
+      return safelyJsonStringify(message);
+    }
+    case TEZOS_GET_ACCOUNTS:
+    case TEZOS_SIGN:
+    case TEZOS_SEND: {
+      return safelyJsonStringify(message);
+    }
+    case BITCOIN_GET_ACCOUNT_ADDRESSES:
+    case BITCOIN_SIGN_MESSAGE:
+    case BITCOIN_SIGN_PSBT:
+    case BITCOIN_SEND_TRANSFER: {
+      return safelyJsonStringify(message);
     }
     default: {
       return safelyJsonStringify(message);
@@ -148,7 +200,12 @@ const WalletConnectTransactionModal = props => {
       transactionData?.chainId?.includes('ton') ||
       transactionData?.chainId?.includes('stellar') ||
       transactionData?.chainId?.includes('xrpl') ||
-      transactionData?.chainId?.includes('polkadot')
+      transactionData?.chainId?.includes('polkadot') ||
+      transactionData?.chainId?.includes('cosmos') ||
+      transactionData?.chainId?.includes('hedera') ||
+      transactionData?.chainId?.includes('aptos') ||
+      transactionData?.chainId?.includes('tezos') ||
+      transactionData?.chainId?.includes('bip122')
     ) {
       if (
         transactionData?.method === TRON_SIGN_MESSAGE ||
@@ -226,6 +283,74 @@ const WalletConnectTransactionModal = props => {
           signTypeData: transactionData?.params?.data,
         };
       }
+      if (
+        transactionData?.method === COSMOS_SIGN_DIRECT ||
+        transactionData?.method === COSMOS_SIGN_AMINO
+      ) {
+        return {
+          finaltransactionData: transactionData?.params,
+          signTypeData: transactionData?.params,
+        };
+      }
+      if (
+        transactionData?.method === HEDERA_SIGN_TRANSACTION ||
+        transactionData?.method === HEDERA_SIGN_AND_EXECUTE_TRANSACTION
+      ) {
+        return {
+          finaltransactionData: transactionData?.params,
+          signTypeData: transactionData?.params,
+        };
+      }
+      if (transactionData?.method === HEDERA_SIGN_MESSAGE) {
+        return {
+          signTypeData: transactionData?.params,
+        };
+      }
+      if (
+        transactionData?.method === APTOS_SIGN_TRANSACTION ||
+        transactionData?.method === APTOS_SIGN_AND_SUBMIT_TRANSACTION
+      ) {
+        return {
+          finaltransactionData: transactionData?.params,
+          signTypeData: transactionData?.params,
+        };
+      }
+      if (transactionData?.method === APTOS_SIGN_MESSAGE) {
+        return {
+          signTypeData: transactionData?.params,
+        };
+      }
+      if (
+        transactionData?.method === TEZOS_SIGN ||
+        transactionData?.method === TEZOS_SEND
+      ) {
+        return {
+          finaltransactionData: transactionData?.params,
+          signTypeData: transactionData?.params,
+        };
+      }
+      if (transactionData?.method === TEZOS_GET_ACCOUNTS) {
+        return {
+          signTypeData: transactionData?.params,
+        };
+      }
+      if (
+        transactionData?.method === BITCOIN_SIGN_PSBT ||
+        transactionData?.method === BITCOIN_SEND_TRANSFER
+      ) {
+        return {
+          finaltransactionData: transactionData?.params,
+          signTypeData: transactionData?.params,
+        };
+      }
+      if (
+        transactionData?.method === BITCOIN_GET_ACCOUNT_ADDRESSES ||
+        transactionData?.method === BITCOIN_SIGN_MESSAGE
+      ) {
+        return {
+          signTypeData: transactionData?.params,
+        };
+      }
     } else {
       if (transactionData?.method?.includes('wallet_sendCalls')) {
         const batchCalls = (transactionData?.params?.[0]?.calls || []).map(
@@ -294,6 +419,7 @@ const WalletConnectTransactionModal = props => {
           topic,
           method,
           signTypeData: getTransactionRequestData?.signTypeData,
+          domain: transactionData?.peerMeta?.url,
         }),
       );
     } catch (e) {
