@@ -34,12 +34,20 @@ import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {getTonSessionProperties} from 'dok-wallet-blockchain-networks/service/walletConnect/tonWalletConnect';
 import {chainLogoMap} from 'assets/chain_logo';
 
+const BTC_VARIANT_CHAIN_NAMES = ['bitcoin', 'bitcoin_segwit', 'bitcoin_legacy'];
+const BTC_VARIANT_LABELS = {
+  bitcoin: 'Native SegWit',
+  bitcoin_segwit: 'SegWit',
+  bitcoin_legacy: 'Legacy',
+};
+
 const WalletConnectRequestModal = props => {
   const requestData = useSelector(selectWalletConnectRequestData);
   const allCoins = useSelector(selectAllCoins);
   const currentWallet = useSelector(selectCurrentWallet);
   const [chainData, setChainData] = useState([]);
   const [isValidChain, setIsValidChain] = useState(false);
+  const [bitcoinAddressType, setBitcoinAddressType] = useState('bitcoin');
   const dispatch = useDispatch();
   const image = requestData?.icons[0] || null;
   const title = requestData?.name || '';
@@ -116,11 +124,26 @@ const WalletConnectRequestModal = props => {
               item.chain_name === chain.chain_name,
           )
         ) {
-          const foundCoin = allCoins.find(
-            item =>
-              item.symbol === chain.symbol &&
-              item.chain_name === chain.chain_name,
-          );
+          let foundCoin;
+          if (chain.chain_name === 'bitcoin') {
+            // bip122 has a single chain id regardless of address type, so
+            // native-segwit/segwit/legacy is our own choice, not the dApp's.
+            const btcVariants = allCoins.filter(
+              item =>
+                item.symbol === 'BTC' &&
+                BTC_VARIANT_CHAIN_NAMES.includes(item.chain_name),
+            );
+            foundCoin =
+              btcVariants.find(
+                item => item.chain_name === bitcoinAddressType,
+              ) || btcVariants[0];
+          } else {
+            foundCoin = allCoins.find(
+              item =>
+                item.symbol === chain.symbol &&
+                item.chain_name === chain.chain_name,
+            );
+          }
           if (foundCoin) {
             finalData.push({...chain, ...foundCoin});
           }
@@ -129,7 +152,16 @@ const WalletConnectRequestModal = props => {
       setChainData(finalData);
       setIsValidChain(isValidChainLocal);
     }
-  }, [requestData, allCoins]);
+  }, [requestData, allCoins, bitcoinAddressType]);
+
+  const btcVariantCoins = allCoins.filter(
+    item =>
+      item.symbol === 'BTC' &&
+      BTC_VARIANT_CHAIN_NAMES.includes(item.chain_name),
+  );
+  const hasBitcoinRequest = chainData.some(item =>
+    BTC_VARIANT_CHAIN_NAMES.includes(item.chain_name),
+  );
 
   const onPressApprove = async () => {
     try {
@@ -283,6 +315,28 @@ const WalletConnectRequestModal = props => {
         <View style={[styles.borderView, {marginTop: 12}]} />
         <Text style={styles.chainTitle}>{'Chains'}</Text>
         {chainData.map((item, index) => renderItem(item, index))}
+        {hasBitcoinRequest && btcVariantCoins.length > 1 && (
+          <View style={styles.addressTypeView}>
+            <Text style={styles.chainTitle}>{'Bitcoin address type'}</Text>
+            <View style={styles.addressTypeRow}>
+              {btcVariantCoins.map(coin => (
+                <TouchableOpacity
+                  key={coin.chain_name}
+                  style={[
+                    styles.addressTypeChip,
+                    bitcoinAddressType === coin.chain_name && {
+                      backgroundColor: theme.background,
+                    },
+                  ]}
+                  onPress={() => setBitcoinAddressType(coin.chain_name)}>
+                  <Text style={styles.addressTypeChipText}>
+                    {BTC_VARIANT_LABELS[coin.chain_name] || coin.chain_name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
         <View style={styles.bottomView}>
           {!isValidChain && (
             <Text style={styles.errorText}>
@@ -450,6 +504,26 @@ const myStyles = theme =>
       justifyContent: 'space-between',
       flex: 1,
       height: '100%',
+    },
+    addressTypeView: {
+      width: '90%',
+    },
+    addressTypeRow: {
+      flexDirection: 'row',
+      marginLeft: '5%',
+    },
+    addressTypeChip: {
+      borderWidth: 1,
+      borderColor: theme.gray,
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      marginRight: 12,
+    },
+    addressTypeChipText: {
+      color: theme.font,
+      fontSize: 14,
+      fontFamily: 'Roboto-Regular',
     },
     button: {
       backgroundColor: theme.background,

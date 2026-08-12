@@ -491,7 +491,7 @@ const WalletConnectTransactionModal = props => {
     const signTypeData = getTransactionRequestData?.signTypeData;
     const message = displayMessage(method, signTypeData);
     return (
-      <View style={{flex: 1}}>
+      <View style={{flex: 1, width: '100%', paddingHorizontal: '5%'}}>
         <Text style={[styles.chainTitle, {marginLeft: 0}]}>{'Message'}</Text>
         <ScrollView
           style={styles.scrollView}
@@ -782,9 +782,9 @@ const myStyles = theme =>
     },
     scrollView: {
       flex: 1,
-      backgroundColor: '#F6F6F6',
+      backgroundColor: theme.whiteOutline,
       marginTop: 12,
-      borderRadius: 8,
+      borderRadius: 12,
     },
     formInput: {
       width: '100%',
@@ -820,6 +820,13 @@ const myStyles = theme =>
     transferTitle: {
       color: theme.font,
       fontSize: 16,
+      textAlign: 'left',
+      fontFamily: 'Roboto-Regular',
+    },
+    messageStyle: {
+      color: theme.font,
+      fontSize: 14,
+      lineHeight: 20,
       textAlign: 'left',
       fontFamily: 'Roboto-Regular',
     },
