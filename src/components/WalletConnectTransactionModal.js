@@ -20,7 +20,7 @@ import {
   ETH_SIGN,
   isWalletConnectTransaction,
   PERSONAL_SIGN,
-} from 'dok-wallet-blockchain-networks/service/etherWalletConnect';
+} from 'dok-wallet-blockchain-networks/service/walletConnect/etherWalletConnect';
 import {ethers} from 'ethers';
 import {
   convertHexToUtf8IfPossible,
