@@ -3371,6 +3371,11 @@
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.8.0.tgz#cee43d801fcef9644b11b8194857695acd5f815a"
   integrity sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==
 
+"@noble/hashes@2.3.0", "@noble/hashes@^2.2.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-2.3.0.tgz#505fd39c3134a37e67c8c4e6c6049a496154879c"
+  integrity sha512-oN+QwyX7VSHotibwubG3kpzbwKrfnyR6OOO+3Nk/53ADL7FmgHHz4TgrbaYKvvOw09u6QTx0oiH1cNCIOuN0CQ==
+
 "@noble/hashes@^2.0.1":
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-2.2.0.tgz#22da1d16a469954fce877055d559900a6c73b63b"
@@ -4482,6 +4487,13 @@
     "@noble/hashes" "~1.8.0"
     "@scure/base" "~1.2.5"
 
+"@scure/bip39@^2.2.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@scure/bip39/-/bip39-2.3.0.tgz#38da3f75760e8b599eb0bfd4e52ed491e5ba4fff"
+  integrity sha512-qdyWuxoYwi3+YmqIsfkpz1I029m980WkVPilj+kG7VxSm+gKQ2BmQru3nv3LbMtpSUXuyZwdFT65JkpKu5OHOQ==
+  dependencies:
+    "@noble/hashes" "2.3.0"
+
 "@scure/sr25519@^0.2.0":
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/@scure/sr25519/-/sr25519-0.2.0.tgz#b2de2407a2d59522d7d0f26fafbac260fd9314d2"
@@ -4709,15 +4721,6 @@
   dependencies:
     "@stablelib/int" "^2.0.1"
 
-"@stablelib/blake2b@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@stablelib/blake2b/-/blake2b-1.0.1.tgz#0045a77e182c4cf3260bc9b533fc4cd5c287f8ea"
-  integrity sha512-B3KyKoBAjkIFeH7romcF96i+pVFYk7K2SBQ1pZvaxV+epSBXJ+n0C66esUhyz6FF+5FbdQVm77C5fzGFcEZpKA==
-  dependencies:
-    "@stablelib/binary" "^1.0.1"
-    "@stablelib/hash" "^1.0.1"
-    "@stablelib/wipe" "^1.0.1"
-
 "@stablelib/bytes@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@stablelib/bytes/-/bytes-1.0.1.tgz#0f4aa7b03df3080b878c7dea927d01f42d6a20d8"
@@ -4728,7 +4731,7 @@
   resolved "https://registry.yarnpkg.com/@stablelib/constant-time/-/constant-time-1.0.1.tgz#bde361465e1cf7b9753061b77e376b0ca4c77e35"
   integrity sha512-tNOs3uD0vSJcK6z1fvef4Y+buN7DXhzHDPqRLSXUel1UfqMB1PWNsnnAezrKfEwTLpN0cGH2p9NNjs6IqeD0eg==
 
-"@stablelib/ed25519@2.1.0", "@stablelib/ed25519@^1.0.3":
+"@stablelib/ed25519@2.1.0":
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/@stablelib/ed25519/-/ed25519-2.1.0.tgz#29f7f540fc2cc4a5f3d623c4b5b8300519c0a3eb"
   integrity sha512-8GLWoJur9nJiErABKHs5MjceSiYJJ2n8QP9k8Q5x6GWU2y5oAQ6qzPh8kCgQy5aHlUxcmRA1frQ5Gu2bHoIDPw==
@@ -4737,24 +4740,10 @@
     "@stablelib/sha512" "^2.0.1"
     "@stablelib/wipe" "^2.0.1"
 
-"@stablelib/hash@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@stablelib/hash/-/hash-1.0.1.tgz#3c944403ff2239fad8ebb9015e33e98444058bc5"
-  integrity sha512-eTPJc/stDkdtOcrNMZ6mcMK1e6yBbqRBaNW55XA1jU8w/7QdnCF0CmMmOD1m7VSkBR44PWrMHU2l6r8YEQHMgg==
-
 "@stablelib/hash@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@stablelib/hash/-/hash-2.0.0.tgz#7b74c372dc07187e273844e970a475f1338e92cf"
   integrity sha512-u3WPSqGido8lwJuMcrBgM5K54LrPGhkWAdtsyccf7dGsLixAZUds77zOAbu7bvKPwQlmoByH0txBi5rTmEKuHg==
-
-"@stablelib/hmac@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@stablelib/hmac/-/hmac-1.0.1.tgz#3d4c1b8cf194cb05d28155f0eed8a299620a07ec"
-  integrity sha512-V2APD9NSnhVpV/QMYgCVMIYKiYG6LSqw1S65wxVoirhU/51ACio6D4yDVSwMzuTJXWZoVHbDdINioBwKy5kVmA==
-  dependencies:
-    "@stablelib/constant-time" "^1.0.1"
-    "@stablelib/hash" "^1.0.1"
-    "@stablelib/wipe" "^1.0.1"
 
 "@stablelib/int@^1.0.1":
   version "1.0.1"
@@ -4783,16 +4772,6 @@
     "@stablelib/wipe" "^1.0.1"
     "@stablelib/x25519" "^1.0.3"
     "@stablelib/xsalsa20" "^1.0.2"
-
-"@stablelib/pbkdf2@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@stablelib/pbkdf2/-/pbkdf2-1.0.1.tgz#ba4d4379385db3ca46fb48e504ff7933c451be1d"
-  integrity sha512-d5jwK6jW1DkMyzqY8D1Io+fRXcsUVr95lk5LKX9ghaUdAITTc1ZL0bff+R0IrwSixbHluxhnivG7vDw59AZ/Nw==
-  dependencies:
-    "@stablelib/binary" "^1.0.1"
-    "@stablelib/hash" "^1.0.1"
-    "@stablelib/hmac" "^1.0.1"
-    "@stablelib/wipe" "^1.0.1"
 
 "@stablelib/poly1305@^1.0.1":
   version "1.0.1"
@@ -4825,15 +4804,6 @@
   dependencies:
     "@stablelib/binary" "^1.0.1"
     "@stablelib/constant-time" "^1.0.1"
-    "@stablelib/wipe" "^1.0.1"
-
-"@stablelib/sha512@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@stablelib/sha512/-/sha512-1.0.1.tgz#6da700c901c2c0ceacbd3ae122a38ac57c72145f"
-  integrity sha512-13gl/iawHV9zvDKciLo1fQ8Bgn2Pvf7OV6amaRVKiq3pjQ3UmEpXxWiAfV8tYjUpeZroBxtyrwtdooQT/i3hzw==
-  dependencies:
-    "@stablelib/binary" "^1.0.1"
-    "@stablelib/hash" "^1.0.1"
     "@stablelib/wipe" "^1.0.1"
 
 "@stablelib/sha512@^2.0.1":
@@ -5073,106 +5043,100 @@
   dependencies:
     defer-to-connect "^2.0.0"
 
-"@taquito/core@^23.1.0":
-  version "23.1.0"
-  resolved "https://registry.yarnpkg.com/@taquito/core/-/core-23.1.0.tgz#493bb44f0c411dc6101d2ee40559706e7a303f61"
-  integrity sha512-7gTcQ2XtyGzXRPuph0mBRd2AfwOzagGrIZ6OPwlurl3RlOvUSInA0v8GOud7JwNVgLJJCz4L4EEfkdOZY9/LIg==
+"@taquito/core@^25.0.0":
+  version "25.0.0"
+  resolved "https://registry.yarnpkg.com/@taquito/core/-/core-25.0.0.tgz#9d9f59430c18308e3e2f78063118885ce1d2a4fe"
+  integrity sha512-TlU+eMEn47mAmIjTFP2U4ReHRU05FsnyVn/c5DQnJC0psZ6LRJXimAIA1KQ94afsCDByewsXLN5fjKwn47l72A==
   dependencies:
     json-stringify-safe "^5.0.1"
 
-"@taquito/http-utils@^23.1.0":
-  version "23.1.0"
-  resolved "https://registry.yarnpkg.com/@taquito/http-utils/-/http-utils-23.1.0.tgz#66b4b4f5b7b94a8456bd02b666a5d73e22d6b89e"
-  integrity sha512-720BWBvkYAhuRbKYpU7ebNV8EWlUp5eD0/ra2ZfWrLV6iYxDf1tayER/cKYkLvJhw4B0ZK12/G+B3urf8ot+OQ==
+"@taquito/http-utils@^25.0.0":
+  version "25.0.0"
+  resolved "https://registry.yarnpkg.com/@taquito/http-utils/-/http-utils-25.0.0.tgz#452049010bcf7e4a49d3f630bbf3bde2f0d70342"
+  integrity sha512-/nkwDeTXEW10lSQdyTrLgp9GIWQc2yi6wQLjEFvXveevrMjuA+lfFU8QoOOZxXH0GM42KEmU/y/VA1wcgl+gKQ==
   dependencies:
-    "@taquito/core" "^23.1.0"
-    node-fetch "^2.7.0"
+    "@taquito/core" "^25.0.0"
 
-"@taquito/local-forging@^23.1.0":
-  version "23.1.0"
-  resolved "https://registry.yarnpkg.com/@taquito/local-forging/-/local-forging-23.1.0.tgz#445e7236471327e5e2694052fc100313a809d3aa"
-  integrity sha512-6JZTWY60fEfhutXj3xx167tQgluzXdBwov694ESrZ8wi7wGEQYa69F047SGJIQFM53o/iGMVSgaGsPCSOaDf/Q==
+"@taquito/local-forging@^25.0.0":
+  version "25.0.0"
+  resolved "https://registry.yarnpkg.com/@taquito/local-forging/-/local-forging-25.0.0.tgz#dac07124f67d41d61d4e966d30989a7bf403067e"
+  integrity sha512-sFeObpxya59PP5xFFsPWb3zLxASe3QwQqQ1fJWTPCs/Fph7/cxk5Kj0Oco961SC7CVSkG/ayz4/WINmm+oTlPA==
   dependencies:
-    "@taquito/core" "^23.1.0"
-    "@taquito/utils" "^23.1.0"
-    bignumber.js "^9.1.2"
+    "@taquito/core" "^25.0.0"
+    "@taquito/utils" "^25.0.0"
+    bignumber.js "^10.0.2"
     fast-text-encoding "^1.0.6"
 
-"@taquito/michel-codec@^23.1.0":
-  version "23.1.0"
-  resolved "https://registry.yarnpkg.com/@taquito/michel-codec/-/michel-codec-23.1.0.tgz#e6d4192091c74480cc0292e6eaa6c32edba79300"
-  integrity sha512-lrCfw7yrVkONDjw8cq4PwGzi8DycBMp6QpNfqoLB2t7DsCyGBwfudz+iTo+RIRPCXtBi7SP6U9u6GhOK/dWs1Q==
+"@taquito/michel-codec@^25.0.0":
+  version "25.0.0"
+  resolved "https://registry.yarnpkg.com/@taquito/michel-codec/-/michel-codec-25.0.0.tgz#b2df638bc2c2a1535c8e088404d0581190cc8e8f"
+  integrity sha512-ITM3lM3tEAblPVdzQk5Rv2nLMMOalrXbnIt5b5St8OVYwqaDyfsH3fxSGIVDPxRQyyBdgJ1403aVu6768/8m4Q==
   dependencies:
-    "@taquito/core" "^23.1.0"
+    "@taquito/core" "^25.0.0"
 
-"@taquito/michelson-encoder@^23.1.0":
-  version "23.1.0"
-  resolved "https://registry.yarnpkg.com/@taquito/michelson-encoder/-/michelson-encoder-23.1.0.tgz#6fd3c7502c682b1ed8ce4e2e41933045143376ca"
-  integrity sha512-zUYXWUIxaQQlL6GCRLfTdUiguHea7YlJ9Hv5QMayegDu2We97AAOJSD8QttpeKii+YDhhybbvMX7KrXQidSt2g==
+"@taquito/michelson-encoder@^25.0.0":
+  version "25.0.0"
+  resolved "https://registry.yarnpkg.com/@taquito/michelson-encoder/-/michelson-encoder-25.0.0.tgz#5cac6caa3c33810ccc0d7992819dcdf81613c837"
+  integrity sha512-BWwAAwBhY3zngcMK8SkmBWDZ5aNVRnHlHvi7Xu6jnGW109yM3n9awxxCrFD8jOXPb3dly+/pulGnkv28+EvIIQ==
   dependencies:
-    "@taquito/core" "^23.1.0"
-    "@taquito/rpc" "^23.1.0"
-    "@taquito/signer" "^23.1.0"
-    "@taquito/utils" "^23.1.0"
-    bignumber.js "^9.1.2"
+    "@taquito/core" "^25.0.0"
+    "@taquito/rpc" "^25.0.0"
+    "@taquito/signer" "^25.0.0"
+    "@taquito/utils" "^25.0.0"
+    bignumber.js "^10.0.2"
     fast-json-stable-stringify "^2.1.0"
 
-"@taquito/rpc@^23.1.0":
-  version "23.1.0"
-  resolved "https://registry.yarnpkg.com/@taquito/rpc/-/rpc-23.1.0.tgz#e1a905517e3eb0c56f644f9604bd1b1c3bc135d9"
-  integrity sha512-daP1M42qC66Wyc91qWVUPfoHNRbv2SFVZvwcAx/jwhrV+Jpd2YkyZUArYJ13PYUEIRAKiFV2ym67cobEShsMkQ==
+"@taquito/rpc@^25.0.0":
+  version "25.0.0"
+  resolved "https://registry.yarnpkg.com/@taquito/rpc/-/rpc-25.0.0.tgz#91f66241e1132796b22480e3733e309f5cf1f820"
+  integrity sha512-qqV4boldGOavsM6ZzK6xky4xAEyllYDyIO5C16cvkoUzoMCCsWMpRuXa1csSrQc+0IECkkDurNLTbrMJPne9tA==
   dependencies:
-    "@taquito/core" "^23.1.0"
-    "@taquito/http-utils" "^23.1.0"
-    "@taquito/utils" "^23.1.0"
-    bignumber.js "^9.1.2"
+    "@taquito/core" "^25.0.0"
+    "@taquito/http-utils" "^25.0.0"
+    "@taquito/utils" "^25.0.0"
+    bignumber.js "^10.0.2"
 
-"@taquito/signer@^23.1.0":
-  version "23.1.0"
-  resolved "https://registry.yarnpkg.com/@taquito/signer/-/signer-23.1.0.tgz#d602647d2eda1c19480db80071db6a3aab0bfc88"
-  integrity sha512-eA4Z0L88L57RG6CGzhPFSa2I9VTrMSvycKA3UXi1zBwSnxWh1atL4ndPKUeg+qVFC9k/thOAo7x8eT1C4MZ3RA==
+"@taquito/signer@^25.0.0":
+  version "25.0.0"
+  resolved "https://registry.yarnpkg.com/@taquito/signer/-/signer-25.0.0.tgz#9b2543cb8dfa594e4096a81bd85127869edf66b5"
+  integrity sha512-UDHwWd3O0VwZjbEw0NDsoQoIhoQv+xHxb/XAKW7ruSjUT6OkH5whhHpgTZ+T2eJLPDBZLY1RH8IdSl+6ZFtUXg==
   dependencies:
     "@noble/curves" "^1.9.7"
-    "@stablelib/blake2b" "^1.0.1"
-    "@stablelib/ed25519" "^1.0.3"
-    "@stablelib/hmac" "^1.0.1"
+    "@noble/hashes" "^2.2.0"
+    "@scure/bip39" "^2.2.0"
     "@stablelib/nacl" "^1.0.4"
-    "@stablelib/pbkdf2" "^1.0.1"
-    "@stablelib/sha512" "^1.0.1"
-    "@taquito/core" "^23.1.0"
-    "@taquito/utils" "^23.1.0"
+    "@taquito/core" "^25.0.0"
+    "@taquito/utils" "^25.0.0"
     "@types/bn.js" "^5.1.5"
-    bip39 "3.1.0"
-    pbkdf2 "^3.1.2"
+    bn.js "^5.2.2"
     typedarray-to-buffer "^4.0.0"
 
-"@taquito/taquito@^23.1.0":
-  version "23.1.0"
-  resolved "https://registry.yarnpkg.com/@taquito/taquito/-/taquito-23.1.0.tgz#ac8b3d9bad00e29f6424320a9a4d0ce37838dfbb"
-  integrity sha512-M3GtA9ICmZ6KHn3z8jKgzr/5D9cOnjZ/guXm8gtyzmJPyJssL5JRykPQS5H0UdXBvEfSc3GOCqSioqbJFrl6Vg==
+"@taquito/taquito@^25.0.0":
+  version "25.0.0"
+  resolved "https://registry.yarnpkg.com/@taquito/taquito/-/taquito-25.0.0.tgz#b3f5e037fa84f63ca98cbd55d4610195cb2f25ce"
+  integrity sha512-MBNKXK1CrOlwBrI0IkjWbVcuwY238ZF8B6fuf2qA0uYp+UmVjukUJ4QCvRf+bayWzfiWBbkYP0upY6VGV3C1VQ==
   dependencies:
-    "@taquito/core" "^23.1.0"
-    "@taquito/http-utils" "^23.1.0"
-    "@taquito/local-forging" "^23.1.0"
-    "@taquito/michel-codec" "^23.1.0"
-    "@taquito/michelson-encoder" "^23.1.0"
-    "@taquito/rpc" "^23.1.0"
-    "@taquito/signer" "^23.1.0"
-    "@taquito/utils" "^23.1.0"
-    bignumber.js "^9.1.2"
+    "@taquito/core" "^25.0.0"
+    "@taquito/http-utils" "^25.0.0"
+    "@taquito/local-forging" "^25.0.0"
+    "@taquito/michel-codec" "^25.0.0"
+    "@taquito/michelson-encoder" "^25.0.0"
+    "@taquito/rpc" "^25.0.0"
+    "@taquito/signer" "^25.0.0"
+    "@taquito/utils" "^25.0.0"
+    bignumber.js "^10.0.2"
     rxjs "^7.8.2"
 
-"@taquito/utils@^23.1.0":
-  version "23.1.0"
-  resolved "https://registry.yarnpkg.com/@taquito/utils/-/utils-23.1.0.tgz#b67476ada9e15da2c912ffaca651892ef6c63ad1"
-  integrity sha512-CC6dLj6Ppjn28HZEok3q/7IjwCAyCUUC9olczz1S9diEAByxgI+XKKbkCXAOjAC8ogpCosHvU3n3crQuCd8ycg==
+"@taquito/utils@^25.0.0":
+  version "25.0.0"
+  resolved "https://registry.yarnpkg.com/@taquito/utils/-/utils-25.0.0.tgz#35cbb2f02916371d2d85cb1c1be32e48e872f70d"
+  integrity sha512-I/9hndZcx0yL6f1djPMhgxCpAopbh/E1ta5kYGs3AxDGrYKt0QpbWAvvUV7fwU9kgzHRQlm7fX8DP7zUbz7ntg==
   dependencies:
     "@noble/curves" "^1.9.7"
-    "@stablelib/blake2b" "^1.0.1"
-    "@stablelib/ed25519" "^1.0.3"
-    "@taquito/core" "^23.1.0"
+    "@noble/hashes" "^2.2.0"
+    "@taquito/core" "^25.0.0"
     "@types/bs58check" "^2.1.2"
-    bignumber.js "^9.1.2"
+    bignumber.js "^10.0.2"
     blakejs "^1.2.1"
     bs58check "^3.0.1"
     buffer "^6.0.3"
@@ -6992,6 +6956,11 @@ bn.js@^5.0.0, bn.js@^5.1.1, bn.js@^5.1.2, bn.js@^5.2.0, bn.js@^5.2.1, bn.js@^5.2
   version "5.2.4"
   resolved "https://registry.yarnpkg.com/bn.js/-/bn.js-5.2.4.tgz#1208fc250bb193fc5f8f0b5fa59e642e706f7103"
   integrity sha512-QL7sb18rJ1PbdsKsqPA0guxL563vIMwRHgzNrW/uzQuRGN1Cjqd/wonUBAVqHox9KwzHA6vCbM0lXx3k4iQMow==
+
+bn.js@^5.2.2:
+  version "5.2.5"
+  resolved "https://registry.yarnpkg.com/bn.js/-/bn.js-5.2.5.tgz#e81ce41cf25e6f0cd1e05f20a9db8c18405e375f"
+  integrity sha512-Vq886eXykuP5E6HcKSSStP3bJgrE6In5WKxVUvJ8XGpWWYs2xZHWqUwzCtGgEtBcxyd57KBFDPFoUfNzdaHCNg==
 
 body-parser@^2.2.2:
   version "2.3.0"
@@ -12605,7 +12574,7 @@ path-type@^4.0.0:
   resolved "https://registry.yarnpkg.com/path-type/-/path-type-4.0.0.tgz#84ed01c0a7ba380afe09d90a8c180dcd9d03043b"
   integrity sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==
 
-pbkdf2@^3.0.17, pbkdf2@^3.1.2, pbkdf2@^3.1.3, pbkdf2@^3.1.5:
+pbkdf2@^3.0.17, pbkdf2@^3.1.3, pbkdf2@^3.1.5:
   version "3.1.6"
   resolved "https://registry.yarnpkg.com/pbkdf2/-/pbkdf2-3.1.6.tgz#935cb1d99e491880cb48cb070bb539a6901e57d6"
   integrity sha512-BT6eelPB1EyGHo8pC0o9Bl6k6SYVhKO1jEbd3lcTrtr7XHdjP8BW1YpfCV3G9Kwkxgattk+S5q2/RvuttCsS1g==
