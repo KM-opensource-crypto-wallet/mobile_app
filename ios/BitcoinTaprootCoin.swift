@@ -53,8 +53,9 @@ class BitcoinTaprootCoin: CoinFactory.Coin {
 
   override func getDeriveAddresses(isTestNet: Bool) -> NSMutableArray {
     let result = NSMutableArray()
+    let coinType = isTestNet ? 1 : 0
     for i in 0..<20 {
-      let derivePath = "m/86'/0'/0'/\(i)/0"
+      let derivePath = "m/86'/\(coinType)'/0'/0/\(i)"
       let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: derivePath)
       let publicKey = privateKey.getPublicKeySecp256k1(compressed: true)
       let address: String

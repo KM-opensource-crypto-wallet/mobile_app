@@ -43,12 +43,24 @@ public class BitcoinTaprootCoin extends CoinFactory.Coin {
 
     @Override
     public String getExtendedPublicKey(Boolean isTestNet) {
-        return wallet.getExtendedPublicKey(Purpose.BIP86, CoinType.BITCOIN, HDVersion.XPUB);
+        Derivation derivation = Derivation.BITCOINTAPROOT;
+        HDVersion version = HDVersion.XPUB;
+        if (isTestNet) {
+            derivation = Derivation.BITCOINTESTNET;
+            version = HDVersion.VPUB;
+        }
+        return wallet.getExtendedPublicKeyDerivation(Purpose.BIP86, CoinType.BITCOIN, derivation, version);
     }
 
     @Override
     public String getExtendedPrivateKey(Boolean isTestNet) {
-        return wallet.getExtendedPrivateKey(Purpose.BIP86, CoinType.BITCOIN, HDVersion.XPRV);
+        Derivation derivation = Derivation.BITCOINTAPROOT;
+        HDVersion version = HDVersion.XPRV;
+        if (isTestNet) {
+            derivation = Derivation.BITCOINTESTNET;
+            version = HDVersion.VPRV;
+        }
+        return wallet.getExtendedPrivateKeyDerivation(Purpose.BIP86, CoinType.BITCOIN, derivation, version);
     }
 
     @Override
@@ -78,7 +90,7 @@ public class BitcoinTaprootCoin extends CoinFactory.Coin {
     public ReadableArray getDeriveAddresses(Boolean isTestNet) {
         WritableArray result = Arguments.createArray();
         for (int i = 0; i < 20; i++) {
-            String derivePath = "m/86'/0'/0'/" + i + "/0";
+            String derivePath = "m/86'/0'/0'/0/" + i;
             PrivateKey tempPrivateKey = wallet.getKey(CoinType.BITCOIN, derivePath);
             PublicKey publicKey = tempPrivateKey.getPublicKeySecp256k1(true);
             String address;
