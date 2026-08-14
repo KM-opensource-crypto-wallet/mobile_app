@@ -108,7 +108,7 @@ public class NativeKeygenModule extends ReactContextBaseJavaModule {
       result.putString("publicKey", coin.getPublicKeyHex());
       result.putString("extendedPublicKey", coin.getExtendedPublicKey(isTestNet));
       result.putString("extendedPrivateKey", coin.getExtendedPrivateKey(isTestNet));
-      if(coinName.equals("bitcoin") || coinName.equals("bitcoin_legacy") || coinName.equals("bitcoin_segwit")){
+      if(coinName.equals("bitcoin") || coinName.equals("bitcoin_legacy") || coinName.equals("bitcoin_segwit") || coinName.equals("bitcoin_taproot")){
           result.putArray("deriveAddresses", coin.getDeriveAddresses(isTestNet));
       }
       promise.resolve(result);

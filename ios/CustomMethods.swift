@@ -142,7 +142,7 @@ extension Data {
         "extendedPublicKey": extendedPublicKey,
         "extendedPrivateKey": extendedPrivateKey
       ]
-      if coinName == "bitcoin" || coinName == "bitcoin_legacy" || coinName == "bitcoin_segwit" {
+      if coinName == "bitcoin" || coinName == "bitcoin_legacy" || coinName == "bitcoin_segwit" || coinName == "bitcoin_taproot" {
         result["deriveAddresses"] = unwrappedCoin.getDeriveAddresses(isTestNet: isTestNet)
       }
       resolve(result)
