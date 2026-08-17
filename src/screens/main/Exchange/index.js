@@ -55,15 +55,20 @@ import {
   approveExchangePermit2,
   approveSwapAllowance,
   calculateExchange,
+  estimateExchangeFee,
   fetchExchangeAllowance,
   fetchExchangePermitAllowance,
   fetchExchangeQuotes,
   fetchPairMinimums,
+  refreshExchangeFromBalance,
   setExchangeFields,
 } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import {
+  getCustomizePublicAddress,
   isEVMChain,
+  isSwapApprovalChain,
   multiplyBNWithFixed,
+  swapNeedsApproval,
   validateNumber,
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
@@ -102,10 +107,11 @@ const Exchange = ({navigation}) => {
     amountTo,
     customOption,
     customAddress,
-    fiatPay,
     selectedExchangeChain,
     slippage,
     lastQuotedAmount,
+    selectedFromWallet,
+    fromBalanceLoading,
   } = useSelector(getExchange);
   const providerRows = useSelector(selectProviderRows);
   const isQuoteFetching = useSelector(selectIsQuoteFetching);
@@ -155,23 +161,11 @@ const Exchange = ({navigation}) => {
         value,
         selectedFromAsset?.decimal,
       );
-      const tempFiatPay = multiplyBNWithFixed(
-        tempValues,
-        selectedFromAsset?.currencyRate,
-        2,
-      );
-      dispatch(
-        setExchangeFields({amountFrom: tempValues, fiatPay: tempFiatPay}),
-      );
+      dispatch(setExchangeFields({amountFrom: tempValues}));
       setIsQuoteLocked(false);
       debouncedFetchQuotes(tempValues);
     },
-    [
-      dispatch,
-      debouncedFetchQuotes,
-      selectedFromAsset?.decimal,
-      selectedFromAsset?.currencyRate,
-    ],
+    [dispatch, debouncedFetchQuotes, selectedFromAsset?.decimal],
   );
 
   // Finds, per wallet, the matching coin for a picked option; mirrors the
@@ -183,16 +177,12 @@ const Exchange = ({navigation}) => {
       let possibleCoinDetails = [];
       for (let i = 0; i < allWallets.length; i++) {
         const tempWallet = allWallets[i];
-        const rawCoinDetails = tempWallet?.coins.find(
+        const tempCoinDetails = tempWallet?.coins.find(
           item =>
             item?.symbol?.toUpperCase() ===
               coinDetails?.options?.symbol?.toUpperCase() &&
             item?.chain_name === coinDetails?.options?.chain_name,
         );
-        const tempCoinDetails =
-          rawCoinDetails?.chain_symbol === 'BNB'
-            ? {...rawCoinDetails, chain_symbol: 'BSC'}
-            : rawCoinDetails;
         if (tempWallet?.clientId === currentWalletClientId && tempCoinDetails) {
           selectedCoinDetails = tempCoinDetails;
           selectedWalletDetails = tempWallet;
@@ -200,7 +190,9 @@ const Exchange = ({navigation}) => {
         if (tempCoinDetails) {
           const tempAddress = tempCoinDetails?.address;
           possibleCoinDetails.push({
-            label: `${tempWallet?.walletName}: ${tempAddress}`,
+            label: `${tempWallet?.walletName}: ${getCustomizePublicAddress(
+              tempAddress,
+            )}`,
             value: tempAddress,
             options: {
               coinDetails: tempCoinDetails,
@@ -312,6 +304,20 @@ const Exchange = ({navigation}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused]);
 
+  // Fetch a live balance whenever the from coin/address changes or the
+  // screen regains focus — selectedFromAsset is a detached snapshot, so it
+  // must be re-synced from the chain, not just re-copied from the store.
+  // The thunk's re-sync keeps the same _id, so this effect doesn't loop.
+  const fromAssetKey = `${selectedFromAsset?._id ?? ''}:${
+    selectedFromWallet?.clientId ?? ''
+  }`;
+  useEffect(() => {
+    if (isFocused && selectedFromAsset?._id) {
+      dispatch(refreshExchangeFromBalance());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromAssetKey, isFocused]);
+
   const onSelectFromAsset = useCallback(
     item => {
       dispatch(
@@ -353,11 +359,6 @@ const Exchange = ({navigation}) => {
     dispatch(
       setExchangeFields({
         amountFrom: newAmountFrom,
-        fiatPay: multiplyBNWithFixed(
-          newAmountFrom,
-          selectedToAsset?.currencyRate,
-          2,
-        ),
         amountTo: '',
         customOption: '',
         customAddress: '',
@@ -372,7 +373,6 @@ const Exchange = ({navigation}) => {
     amountTo,
     selectedCoinFromOptions,
     selectedCoinToOptions,
-    selectedToAsset?.currencyRate,
     onChangeFromValues,
     onChangeToValues,
     debouncedFetchQuotes,
@@ -480,10 +480,16 @@ const Exchange = ({navigation}) => {
     isQuoteStaleForAmount ||
     !!quoteError;
 
+  // Permit2 exists only on EVM; the allowance (approve) flow covers both
+  // EVM ERC20 and Tron TRC20 sources. Solana never needs approval — the
+  // whole route is bundled into the transaction the wallet signs.
   const isERC20FromAsset =
     isEVMChain(selectedFromAsset?.chain_name) &&
     !!selectedFromAsset?.contractAddress;
-  const showApproveAndSwap = isERC20FromAsset && !isButtonDisabled;
+  const isSwapApprovalAsset =
+    isSwapApprovalChain(selectedFromAsset?.chain_name) &&
+    !!selectedFromAsset?.contractAddress;
+  const showApproveAndSwap = isSwapApprovalAsset && !isButtonDisabled;
 
   // Why the CTA is disabled, in the order the user should resolve things.
   // `transient` renders neutral (a wait state), everything else as an error.
@@ -521,10 +527,16 @@ const Exchange = ({navigation}) => {
     }
   }
 
-  // ---- Approval / submit flow (unchanged behaviour) --------------------
-  const goToTransfer = useCallback(() => {
+  // ---- Approval / submit flow --------------------------------------------
+  // Every path converges here once approvals are settled: fire the fee
+  // estimate WITHOUT awaiting it and navigate immediately. The estimate's
+  // first synchronous action puts currentTransfer into loading, so Transfer
+  // mounts on its spinner and resolves to the form (or the error view, e.g.
+  // when the quote expired while the user idled) when the estimate lands.
+  const finishToTransfer = useCallback(() => {
+    dispatch(estimateExchangeFee());
     navigation.navigate('Transfer', {fromScreen: 'Exchange'});
-  }, [navigation]);
+  }, [dispatch, navigation]);
 
   // After the ERC20-level allowance is confirmed (already approved, or just
   // approved via the AllowanceInfoSheet), a permit2 swap quote still needs a
@@ -534,35 +546,29 @@ const Exchange = ({navigation}) => {
   const handlePermitCheckAndProceed = useCallback(
     async needsPermit => {
       if (!needsPermit) {
-        goToTransfer();
+        finishToTransfer();
         return;
       }
       const permitResult = await dispatch(
         fetchExchangePermitAllowance(),
       ).unwrap();
       if (permitResult?.isApproved) {
-        goToTransfer();
+        finishToTransfer();
       } else {
         exchangePermitSheetRef.current?.present();
       }
     },
-    [dispatch, goToTransfer],
+    [dispatch, finishToTransfer],
   );
 
   const handleSubmit = async () => {
     setIsQuoteLocked(true);
     dispatch(setCurrentTransferSuccess(false));
-    if (!showApproveAndSwap) {
-      goToTransfer();
-      dispatch(calculateExchange());
-      return;
-    }
     setIsPreparingAllowance(true);
     try {
-      // showApproveAndSwap is computed before the quote exists, so it only tells
-      // us the source is an ERC20. Whether an approval is actually needed
-      // depends on the quote: only a DEX aggregator returns calldata with a
-      // spender. Deposit-address providers are plain transfers.
+      // Always await the create before navigating: the Transfer screen's fee
+      // estimation and send path dispatch on currentTransfer.swapData, so
+      // navigating early would race a DEX quote into a plain transfer.
       const quote = await dispatch(calculateExchange()).unwrap();
       if (!quote) {
         // Fulfilled without data (e.g. empty backend response): navigating
@@ -573,9 +579,17 @@ const Exchange = ({navigation}) => {
         });
         return;
       }
-      const spender = quote?.swapData?.spender;
-      if (!spender) {
-        goToTransfer();
+      // Whether an approval is actually needed depends on the quote: only a
+      // DEX aggregator returns swapData with a spender, and only token
+      // sources on approval chains (ERC20/TRC20) have an allowance at all.
+      // Deposit-address providers and Solana swaps go straight through.
+      if (
+        !swapNeedsApproval({
+          swapData: quote?.swapData,
+          asset: selectedFromAsset,
+        })
+      ) {
+        finishToTransfer();
         return;
       }
       const needsPermit = Boolean(quote?.swapData?.permit_abi);
@@ -588,38 +602,31 @@ const Exchange = ({navigation}) => {
       }
     } catch (error) {
       console.error('Error preparing swap allowance', error);
+      // calculateExchange rejects with rejectWithValue, so unwrap() throws
+      // the plain string payload rather than an Error object.
       showToast({
         type: 'errorToast',
-        title: error?.message || 'Failed to check token allowance',
+        title:
+          (typeof error === 'string' ? error : error?.message) ||
+          'Failed to prepare the exchange',
       });
     } finally {
       setIsPreparingAllowance(false);
     }
   };
 
+  // Both sheets emit the same {type, gasFee, maxPriorityFeePerGas, nonce,
+  // feesType, estimateGas} payload, so it passes straight through to the
+  // approve thunk — the handlers differ only in thunk, sheet and next step.
   const onAllowanceContinue = useCallback(
-    async ({
-      type,
-      gasFee,
-      maxPriorityFeePerGas,
-      nonce,
-      feesType,
-      estimateGas,
-    }) => {
+    async approvalPayload => {
       try {
-        await dispatch(
-          approveSwapAllowance({
-            type,
-            gasFee,
-            maxPriorityFeePerGas,
-            nonce,
-            feesType,
-            estimateGas,
-          }),
-        ).unwrap();
+        await dispatch(approveSwapAllowance(approvalPayload)).unwrap();
         exchangeAllowanceSheetRef.current?.close();
         await handlePermitCheckAndProceed(permitRequiredRef.current);
       } catch (error) {
+        // approveSwapAllowance toasts its own failures; permit-allowance
+        // read errors land here and are visible in the console.
         console.error('Error approving swap allowance', error);
       }
     },
@@ -627,32 +634,16 @@ const Exchange = ({navigation}) => {
   );
 
   const onPermitAllowanceContinue = useCallback(
-    async ({
-      type,
-      gasFee,
-      maxPriorityFeePerGas,
-      nonce,
-      feesType,
-      estimateGas,
-    }) => {
+    async approvalPayload => {
       try {
-        await dispatch(
-          approveExchangePermit2({
-            type,
-            gasFee,
-            maxPriorityFeePerGas,
-            nonce,
-            feesType,
-            estimateGas,
-          }),
-        ).unwrap();
+        await dispatch(approveExchangePermit2(approvalPayload)).unwrap();
         exchangePermitSheetRef.current?.close();
-        goToTransfer();
+        finishToTransfer();
       } catch (error) {
         console.error('Error approving permit2 allowance', error);
       }
     },
-    [dispatch, goToTransfer],
+    [dispatch, finishToTransfer],
   );
 
   // Paused off-focus too: the Exchange drawer screen stays mounted beneath
@@ -677,9 +668,16 @@ const Exchange = ({navigation}) => {
                 coinOption={selectedCoinFromOptions}
                 amount={amountFrom}
                 fiatValue={
-                  validateNumber(fiatPay) ? `~${fiatSymbol}${fiatPay}` : ''
+                  validateNumber(amountFrom) && selectedFromAsset?.currencyRate
+                    ? `~${fiatSymbol}${multiplyBNWithFixed(
+                        amountFrom,
+                        selectedFromAsset?.currencyRate,
+                        2,
+                      )}`
+                    : ''
                 }
                 balanceText={balanceText}
+                isBalanceFetching={fromBalanceLoading}
                 editable={true}
                 onChangeAmount={handleAmountChange}
                 onPressCoin={() =>
@@ -687,7 +685,10 @@ const Exchange = ({navigation}) => {
                 }
                 hasError={isBalanceLess}>
                 {new BigNumber(selectedFromAsset?.totalAmount ?? 0).gt(0) && (
-                  <AmountChips onSelectFraction={onSelectFraction} />
+                  <AmountChips
+                    onSelectFraction={onSelectFraction}
+                    disabled={fromBalanceLoading}
+                  />
                 )}
               </SwapCard>
               <FlipButton onPress={onFlip} />
@@ -849,30 +850,30 @@ const Exchange = ({navigation}) => {
           bottomSheetRef={ref => (addMoreCoinsSheet.current = ref)}
           onDismiss={onDismissAddCoinsSheet}
         />
+        {isSwapApprovalAsset && (
+          <AllowanceInfoSheet
+            ref={exchangeAllowanceSheetRef}
+            source="exchange"
+            tokenSymbol={selectedFromAsset?.symbol}
+            requiredAmount={amountFrom}
+            availableAmount={selectedFromAsset?.totalAmount}
+            chainName={selectedFromAsset?.chain_name}
+            chainSymbol={selectedFromAsset?.chain_symbol}
+            approveLoading={exchangeApproveLoading}
+            onContinue={onAllowanceContinue}
+          />
+        )}
         {isERC20FromAsset && (
-          <>
-            <AllowanceInfoSheet
-              ref={exchangeAllowanceSheetRef}
-              source="exchange"
-              tokenSymbol={selectedFromAsset?.symbol}
-              requiredAmount={amountFrom}
-              availableAmount={selectedFromAsset?.totalAmount}
-              chainName={selectedFromAsset?.chain_name}
-              chainSymbol={selectedFromAsset?.chain_symbol}
-              approveLoading={exchangeApproveLoading}
-              onContinue={onAllowanceContinue}
-            />
-            <PermitInfoSheet
-              ref={exchangePermitSheetRef}
-              tokenSymbol={selectedFromAsset?.symbol}
-              requiredAmount={amountFrom}
-              availableAmount={selectedFromAsset?.totalAmount}
-              chainName={selectedFromAsset?.chain_name}
-              chainSymbol={selectedFromAsset?.chain_symbol}
-              approveLoading={exchangePermitApproveLoading}
-              onContinue={onPermitAllowanceContinue}
-            />
-          </>
+          <PermitInfoSheet
+            ref={exchangePermitSheetRef}
+            tokenSymbol={selectedFromAsset?.symbol}
+            requiredAmount={amountFrom}
+            availableAmount={selectedFromAsset?.totalAmount}
+            chainName={selectedFromAsset?.chain_name}
+            chainSymbol={selectedFromAsset?.chain_symbol}
+            approveLoading={exchangePermitApproveLoading}
+            onContinue={onPermitAllowanceContinue}
+          />
         )}
       </View>
     </DokSafeAreaView>

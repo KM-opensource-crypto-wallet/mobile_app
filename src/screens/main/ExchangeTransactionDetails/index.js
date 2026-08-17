@@ -10,6 +10,8 @@ import Loading from 'components/Loading';
 import EmptyView from 'components/EmptyView';
 import ExchangeStatusBadge from 'components/ExchangeHistory/ExchangeStatusBadge';
 import ExchangeDetailRow from 'components/ExchangeHistory/ExchangeDetailRow';
+import SwapCoinIcon from 'components/ExchangeHistory/SwapCoinIcon';
+import useSwapCoinDisplay from 'components/ExchangeHistory/useSwapCoinDisplay';
 import {
   truncateExchangeAmount,
   TERMINAL_EXCHANGE_STATUSES,
@@ -21,6 +23,7 @@ import {
 import {
   selectCurrentExchangeTransaction,
   selectExchangeDetailLoading,
+  selectExchangeDetailRefreshing,
   selectExchangeDetailError,
 } from 'dok-wallet-blockchain-networks/redux/exchangeHistory/exchangeHistorySelectors';
 import {
@@ -43,13 +46,15 @@ const ExchangeTransactionDetails = ({route}) => {
   const transactionId = route?.params?.transactionId;
   const transaction = useSelector(selectCurrentExchangeTransaction);
   const loading = useSelector(selectExchangeDetailLoading);
+  const refreshing = useSelector(selectExchangeDetailRefreshing);
   const error = useSelector(selectExchangeDetailError);
 
   const isTerminal = TERMINAL_EXCHANGE_STATUSES.includes(transaction?.status);
+  const {from: fromDisplay, to: toDisplay} = useSwapCoinDisplay(transaction);
 
   useEffect(() => {
     if (transactionId) {
-      dispatch(fetchExchangeTransactionDetails(transactionId));
+      dispatch(fetchExchangeTransactionDetails({id: transactionId}));
     }
     return () => {
       dispatch(clearCurrentExchangeTransaction());
@@ -61,14 +66,16 @@ const ExchangeTransactionDetails = ({route}) => {
       return;
     }
     const interval = setInterval(() => {
-      dispatch(fetchExchangeTransactionDetails(transactionId));
+      dispatch(fetchExchangeTransactionDetails({id: transactionId}));
     }, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [dispatch, transactionId, isTerminal]);
 
   const onRefresh = useCallback(() => {
     if (transactionId) {
-      dispatch(fetchExchangeTransactionDetails(transactionId));
+      dispatch(
+        fetchExchangeTransactionDetails({id: transactionId, refresh: true}),
+      );
     }
   }, [dispatch, transactionId]);
 
@@ -118,7 +125,7 @@ const ExchangeTransactionDetails = ({route}) => {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={loading}
+            refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={theme.background}
           />
@@ -146,14 +153,24 @@ const ExchangeTransactionDetails = ({route}) => {
           <View style={styles.amountBlock}>
             <Text style={styles.amountLabel}>You sent</Text>
             <View style={styles.amountRow}>
-              <View style={styles.monogramCircle}>
-                <Text style={styles.monogramText}>
-                  {fromSymbol.slice(0, 4) || '—'}
+              <SwapCoinIcon
+                icon={fromDisplay.icon}
+                symbol={fromSymbol}
+                chainName={fromDisplay.chainName}
+                size={38}
+              />
+              <View style={styles.amountTextBox}>
+                <Text style={styles.amountValue} numberOfLines={1}>
+                  {fromAmount
+                    ? `${fromAmount} ${fromSymbol}`
+                    : `— ${fromSymbol}`}
                 </Text>
+                {!!fromDisplay.chainDisplayName && (
+                  <Text style={styles.chainNameText} numberOfLines={1}>
+                    {`on ${fromDisplay.chainDisplayName}`}
+                  </Text>
+                )}
               </View>
-              <Text style={styles.amountValue} numberOfLines={1}>
-                {fromAmount ? `${fromAmount} ${fromSymbol}` : `— ${fromSymbol}`}
-              </Text>
             </View>
           </View>
 
@@ -176,14 +193,22 @@ const ExchangeTransactionDetails = ({route}) => {
                 : 'You receive'}
             </Text>
             <View style={styles.amountRow}>
-              <View style={styles.monogramCircle}>
-                <Text style={styles.monogramText}>
-                  {toSymbol.slice(0, 4) || '—'}
+              <SwapCoinIcon
+                icon={toDisplay.icon}
+                symbol={toSymbol}
+                chainName={toDisplay.chainName}
+                size={38}
+              />
+              <View style={styles.amountTextBox}>
+                <Text style={styles.amountValue} numberOfLines={1}>
+                  {toAmount ? `${toAmount} ${toSymbol}` : `— ${toSymbol}`}
                 </Text>
+                {!!toDisplay.chainDisplayName && (
+                  <Text style={styles.chainNameText} numberOfLines={1}>
+                    {`on ${toDisplay.chainDisplayName}`}
+                  </Text>
+                )}
               </View>
-              <Text style={styles.amountValue} numberOfLines={1}>
-                {toAmount ? `${toAmount} ${toSymbol}` : `— ${toSymbol}`}
-              </Text>
             </View>
           </View>
 
@@ -234,8 +259,16 @@ const ExchangeTransactionDetails = ({route}) => {
           <>
             <Text style={styles.sectionTitle}>Addresses</Text>
             <View style={styles.sectionCard}>
+              {/* from_address is the sending wallet — the app sets the swap's
+                  refundAddress to it, so it doubles as the refund address. */}
               <ExchangeDetailRow
                 isFirst
+                icon="send-outline"
+                label="Sender address"
+                value={transaction.from_address}
+                copyable
+              />
+              <ExchangeDetailRow
                 icon="wallet-outline"
                 label="Deposit address"
                 value={metadata.depositAddress}
@@ -251,12 +284,6 @@ const ExchangeTransactionDetails = ({route}) => {
                 icon="person-outline"
                 label="Recipient"
                 value={transaction.to_address}
-                copyable
-              />
-              <ExchangeDetailRow
-                icon="return-down-back-outline"
-                label="Refund address"
-                value={transaction.from_address}
                 copyable
               />
             </View>

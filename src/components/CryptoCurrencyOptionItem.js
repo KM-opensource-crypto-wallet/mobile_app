@@ -17,7 +17,7 @@ const CryptoCurrencyOptionItem = ({item}) => {
           <FastImage
             source={{uri: item?.options?.icon}}
             resizeMode={'contain'}
-            style={{height: '100%', width: '100%'}}
+            style={{height: '100%', width: '100%', borderRadius: 50}}
           />
         )}
       </View>

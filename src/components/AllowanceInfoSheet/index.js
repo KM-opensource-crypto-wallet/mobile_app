@@ -601,9 +601,13 @@ const AllowanceInfoSheet = forwardRef(
                       </Text>
                     </>
                   )}
-                  {/* Network Fee Row — tap to open AdvancedFeesSheet */}
+                  {/* Network Fee Row — tap to open AdvancedFeesSheet. Chains
+                      without fee knobs (e.g. Tron: energy/bandwidth priced by
+                      the network) return no feesOptions, so the row becomes
+                      display-only. */}
                   <TouchableOpacity
                     style={styles.feeRow}
+                    disabled={!allowanceData?.feesOptions?.length}
                     onPress={() => advancedFeesSheetRef.current?.present()}>
                     <View style={styles.feeLabelRow}>
                       <MaterialCommunityIcons
@@ -621,11 +625,13 @@ const AllowanceInfoSheet = forwardRef(
                               chainSymbol || ''
                             }`}
                       </Text>
-                      <MaterialCommunityIcons
-                        name="chevron-right"
-                        size={18}
-                        color={theme.gray}
-                      />
+                      {!!allowanceData?.feesOptions?.length && (
+                        <MaterialCommunityIcons
+                          name="chevron-right"
+                          size={18}
+                          color={theme.gray}
+                        />
+                      )}
                     </View>
                   </TouchableOpacity>
                   {isInsufficientFeeBalance ? (

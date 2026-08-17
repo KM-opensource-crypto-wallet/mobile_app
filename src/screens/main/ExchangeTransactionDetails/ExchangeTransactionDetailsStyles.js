@@ -51,19 +51,15 @@ const myStyles = theme =>
       flexDirection: 'row',
       alignItems: 'center',
     },
-    monogramCircle: {
-      width: 38,
-      height: 38,
-      borderRadius: 19,
-      backgroundColor: theme.background + '18',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 10,
+    amountTextBox: {
+      marginLeft: 10,
+      flexShrink: 1,
     },
-    monogramText: {
-      color: theme.background,
-      fontSize: 11,
-      fontFamily: 'Roboto-Bold',
+    chainNameText: {
+      color: theme.gray,
+      fontSize: 12,
+      fontFamily: 'Roboto-Regular',
+      marginTop: 2,
     },
     amountValue: {
       color: theme.font,

@@ -3,53 +3,65 @@ import {StyleSheet} from 'react-native';
 const myStyles = theme =>
   StyleSheet.create({
     card: {
+      backgroundColor: theme.lightBackground,
+      borderRadius: 14,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      marginBottom: 10,
+    },
+    headerRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.lightBackground,
-      borderRadius: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 12,
-      marginBottom: 8,
-      minHeight: 68,
+      justifyContent: 'space-between',
+      gap: 8,
     },
-    logoBox: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      overflow: 'hidden',
-      marginRight: 12,
-      backgroundColor: theme.backgroundColor,
+    headerMeta: {
+      color: theme.gray,
+      fontSize: 12,
+      fontFamily: 'Roboto-Regular',
+      flexShrink: 1,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: theme.headerBorder,
+      marginTop: 10,
+      marginBottom: 12,
+    },
+    coinRow: {
+      flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
     },
-    logo: {
-      height: '100%',
-      width: '100%',
-    },
-    infoBox: {
+    coinTextBox: {
       flex: 1,
-      marginRight: 10,
+      marginLeft: 10,
+      marginRight: 8,
     },
-    pair: {
+    coinSymbol: {
       color: theme.font,
       fontSize: 14,
       fontFamily: 'Roboto-Bold',
     },
-    subtitle: {
+    coinChain: {
       color: theme.gray,
       fontSize: 12,
       fontFamily: 'Roboto-Regular',
-      marginTop: 3,
+      marginTop: 2,
     },
-    rightBox: {
-      alignItems: 'flex-end',
-      marginRight: 6,
-    },
-    amount: {
-      color: theme.font,
+    sentAmount: {
+      color: theme.gray,
       fontSize: 13,
       fontFamily: 'Roboto-Medium',
-      marginBottom: 4,
+    },
+    receivedAmount: {
+      color: theme.font,
+      fontSize: 14,
+      fontFamily: 'Roboto-Bold',
+    },
+    // Aligned with the icon column so the arrow reads as sent → received.
+    connectorRow: {
+      width: 34,
+      alignItems: 'center',
+      paddingVertical: 4,
     },
   });
 

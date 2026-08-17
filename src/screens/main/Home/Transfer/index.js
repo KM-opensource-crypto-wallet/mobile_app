@@ -58,7 +58,17 @@ import {
   updateFees,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import ScurvedIcon from 'assets/images/icons/S-curved.svg';
-import {getExchange} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
+import {
+  selectExchangeAmountFrom,
+  selectExchangeAmountTo,
+  selectExchangeFromAsset,
+  selectExchangeFromWallet,
+  selectExchangeLoading,
+  selectExchangeToAddress,
+  selectExchangeToAsset,
+  selectExchangeToName,
+  selectSelectedExchangeChain,
+} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
 import FastImage from '@d11/react-native-fast-image';
 import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
 import ValidatorItem from 'components/ValidatorItem';
@@ -69,6 +79,285 @@ import {handleTransferRedirect} from 'utils/common';
 import BatchTransactionItem from 'components/BatchTransactionItem';
 import DuplicateTransactionModal from 'components/DuplicateTransactionModal';
 import dayjs from 'dayjs';
+
+// Single source of truth for the per-mode values that the estimate-fee poll,
+// sendFunds submit, duplicate-transaction check and fiat display all read.
+// Divergent fields are paired (…ForEstimate / …ForSend) because the two
+// payloads intentionally differ per mode; each pair notes the inline site it
+// reproduces.
+const buildTransferContext = ({
+  transferData,
+  flags,
+  selectedFromAsset,
+  selectedFromWallet,
+  amountFrom,
+  currentWallet,
+}) => {
+  const {
+    isSendFundScreen,
+    isExchangeScreen,
+    isSendNFT,
+    isStakingScreen,
+    isVoteStakingScreen,
+    isSellCryptoScreen,
+    isBatchTransaction,
+  } = flags;
+  return {
+    // fromAddress of the estimate-fee poll payload
+    fromForEstimate:
+      isSendFundScreen ||
+      isStakingScreen ||
+      isSellCryptoScreen ||
+      isBatchTransaction
+        ? transferData?.currentCoin?.address
+        : isExchangeScreen
+        ? selectedFromAsset?.address
+        : transferData?.selectedNFT?.coin?.address,
+    // `from` of the sendFunds payload (mode set differs from fromForEstimate)
+    fromForSend:
+      isStakingScreen ||
+      isSendNFT ||
+      isVoteStakingScreen ||
+      isSellCryptoScreen ||
+      isBatchTransaction
+        ? transferData?.currentCoin?.address
+        : null,
+    // `amount` of the estimate-fee poll payload
+    amountForEstimate:
+      isSendFundScreen || isStakingScreen || isSellCryptoScreen
+        ? transferData?.amount
+        : isExchangeScreen
+        ? amountFrom
+        : null,
+    // `amount` of the sendFunds payload (same ternary, but falls back to '0')
+    amountForSend:
+      isSendFundScreen || isStakingScreen || isSellCryptoScreen
+        ? transferData?.amount
+        : isExchangeScreen
+        ? amountFrom
+        : '0',
+    // `contractAddress` of the estimate-fee poll payload
+    contractAddressForEstimate: isSendNFT
+      ? transferData?.selectedNFT?.token_address ||
+        transferData?.selectedNFT?.associatedTokenAddress
+      : transferData?.currentCoin?.contractAddress,
+    // `contractAddress` of the sendFunds payload (non-NFT modes send null)
+    contractAddressForSend: isSendNFT
+      ? transferData?.selectedNFT?.token_address ||
+        transferData?.selectedNFT?.associatedTokenAddress
+      : null,
+    // `tokenAmount` of the estimate-fee poll payload (defaults to 1)
+    nftTokenAmountForEstimate: transferData?.selectedNFT?.amount || 1,
+    // `tokenAmount` of the sendFunds payload (no default)
+    nftTokenAmountForSend: transferData?.selectedNFT?.amount,
+    // poll `selectedWallet` == sendFunds `currentWallet`
+    walletForTx: isExchangeScreen
+      ? selectedFromWallet
+      : isSendNFT
+      ? currentWallet
+      : null,
+    // `selectedCoin` of the estimate-fee poll payload
+    coinForEstimate: isExchangeScreen
+      ? selectedFromAsset
+      : isSendNFT
+      ? transferData?.currentCoin
+      : null,
+    // currencyRate of the fiat total block
+    currencyRateForFiat:
+      (isSendFundScreen || isStakingScreen
+        ? transferData?.currentCoin?.currencyRate
+        : isExchangeScreen
+        ? selectedFromAsset?.currencyRate
+        : '0') || '0',
+    // Shared plain fields both payloads read verbatim.
+    nonce: transferData?.nonce,
+    estimateGas: transferData?.estimateGas,
+    toAddress: transferData?.toAddress,
+    memo: transferData?.memo,
+    balance: transferData?.currentCoin?.totalAmount,
+    currentCoin: transferData?.currentCoin,
+    contract_type: transferData?.selectedNFT?.contract_type,
+    mint: transferData?.selectedNFT?.mint,
+    tokenId: transferData?.selectedNFT?.token_id,
+    validatorPubKey: transferData?.validatorPubKey,
+    stakingBalance: transferData?.stakingBalance,
+    resourceType: transferData?.resourceType,
+    stakingAddress: transferData?.stakingAddress,
+    stakingProviderName: transferData?.stakingProviderName,
+    tokenDecimals: transferData?.currentCoin?.decimal,
+    isMaxCheckbox: transferData?.isMaxCheckbox,
+    selectedVotes: transferData?.selectedVotes,
+    calls: transferData?.calls,
+    transactionsData: transferData?.transactionsData,
+    numberOfStakeAccount: transferData?.currentCoin?.staking?.length || 0,
+    validatorName: transferData?.validatorName,
+    displayValidators: transferData?.displayValidators,
+    nftName:
+      transferData?.selectedNFT?.name || transferData?.selectedNFT?.symbol,
+    nftTokenId: transferData?.selectedNFT?.token_id,
+    nftImage: transferData?.selectedNFT?.metadata?.image,
+    chainName: transferData?.currentCoin?.chain_name,
+    symbol: transferData?.currentCoin?.symbol,
+  };
+};
+
+// Payload of the 10s calculateEstimateFee poll. Nonce/estimateGas come from
+// the context (carried fresh through transferContextRef) instead of a stale
+// transferData closure.
+const buildEstimateFeePayload = (ctx, flags, {feesType}) => ({
+  isFetchNonce: false,
+  existingNonce: ctx.nonce,
+  fromAddress: ctx.fromForEstimate,
+  toAddress: ctx.toAddress,
+  memo: ctx.memo,
+  amount: ctx.amountForEstimate,
+  contractAddress: ctx.contractAddressForEstimate,
+  balance: ctx.balance,
+  selectedWallet: ctx.walletForTx,
+  selectedCoin: ctx.coinForEstimate,
+  contract_type: flags.isSendNFT ? ctx.contract_type : null,
+  isNFT: flags.isSendNFT,
+  mint: flags.isSendNFT ? ctx.mint : null,
+  tokenId: flags.isSendNFT ? ctx.tokenId : null,
+  tokenAmount: flags.isSendNFT ? ctx.nftTokenAmountForEstimate : null,
+  validatorPubKey: flags.isStakingScreen ? ctx.validatorPubKey : null,
+  stakingBalance: flags.isStakingScreen ? ctx.stakingBalance : null,
+  resourceType: flags.isStakingScreen ? ctx.resourceType : null,
+  stakingAddress: flags.isStakingScreen ? ctx.stakingAddress : null,
+  selectedVotes: flags.isVoteStakingScreen ? ctx.selectedVotes : null,
+  isBatchTransaction: flags.isBatchTransaction,
+  isExchange: flags.isExchangeScreen,
+  currentCoin: flags.isBatchTransaction ? ctx.currentCoin : null,
+  calls: flags.isBatchTransaction ? ctx.calls : null,
+  isCreateStaking: flags.isCreateStaking,
+  isWithdrawStaking: !!flags.isWithdrawStaking,
+  isStakingRewards: !!flags.isStakingRewards,
+  isDeactivateStaking: !!flags.isDeactivateStaking,
+  stakingProviderName:
+    flags.isCreateStaking || flags.isDeactivateStaking || flags.isStakingRewards
+      ? ctx.stakingProviderName
+      : null,
+  tokenDecimals: flags.isStakingScreen ? ctx.tokenDecimals : null,
+  isMaxCheckbox: flags.isDeactivateStaking ? ctx.isMaxCheckbox : null,
+  feesType,
+  estimateGas: ctx.estimateGas,
+});
+
+// Payload of the sendFunds submit.
+const buildSendFundsPayload = (ctx, flags, {nonce, phrase, navigation}) => ({
+  to: ctx.toAddress,
+  memo: ctx.memo,
+  nonce,
+  amount: ctx.amountForSend,
+  currentCoin: ctx.currentCoin,
+  currentWallet: ctx.walletForTx,
+  balance: ctx.balance,
+  isExchange: flags.isExchangeScreen,
+  contract_type: flags.isSendNFT ? ctx.contract_type : null,
+  tokenId: flags.isSendNFT ? ctx.tokenId : null,
+  tokenAmount: flags.isSendNFT ? ctx.nftTokenAmountForSend : null,
+  contractAddress: ctx.contractAddressForSend,
+  mint: flags.isSendNFT ? ctx.mint : null,
+  isNFT: flags.isSendNFT,
+  isBatchTransaction: flags.isBatchTransaction,
+  calls: flags.isBatchTransaction ? ctx.calls : null,
+  transactionsData: flags.isBatchTransaction ? ctx.transactionsData : null,
+  from: ctx.fromForSend,
+  validatorPubKey: flags.isStakingScreen ? ctx.validatorPubKey : null,
+  isWithdrawStaking: !!flags.isWithdrawStaking,
+  isStakingRewards: !!flags.isStakingRewards,
+  isCreateStaking: flags.isCreateStaking,
+  stakingBalance: flags.isStakingScreen ? ctx.stakingBalance : null,
+  resourceType: flags.isStakingScreen ? ctx.resourceType : null,
+  selectedVotes: flags.isVoteStakingScreen ? ctx.selectedVotes : null,
+  isCreateVote: !!flags.isCreateVote,
+  isDeactivateStaking: !!flags.isDeactivateStaking,
+  stakingProviderName:
+    flags.isCreateStaking || flags.isDeactivateStaking || flags.isStakingRewards
+      ? ctx.stakingProviderName
+      : null,
+  stakingAddress: flags.isStakingScreen ? ctx.stakingAddress : null,
+  numberOfStakeAccount: flags.isStakingScreen ? ctx.numberOfStakeAccount : null,
+  validatorName: flags.isStakingScreen ? ctx.validatorName : null,
+  displayValidators: flags.isVoteStakingScreen ? ctx.displayValidators : null,
+  nftName: flags.isSendNFT ? ctx.nftName : null,
+  nftTokenId: flags.isSendNFT ? ctx.nftTokenId : null,
+  nftImage: flags.isSendNFT ? ctx.nftImage : null,
+  phrase,
+  navigation,
+});
+
+const InfoRow = ({styles, label, value, valueStyle, numberOfLines}) => (
+  <View style={styles.itemView}>
+    <Text style={styles.title} numberOfLines={numberOfLines}>
+      {label}
+    </Text>
+    <Text style={valueStyle || styles.boxBalance} numberOfLines={numberOfLines}>
+      {value}
+    </Text>
+  </View>
+);
+
+const FeeSummaryBox = ({
+  styles,
+  isRefreshing,
+  fee,
+  feeSymbol,
+  maxTotalDisplay,
+  children,
+}) => (
+  <View style={styles.box}>
+    {children}
+    <InfoRow
+      styles={styles}
+      label={'Network Fee'}
+      value={isRefreshing ? 'Refreshing' : `${fee || '0'} ${feeSymbol}`}
+    />
+    {maxTotalDisplay != null && (
+      <InfoRow styles={styles} label={'Max Total'} value={maxTotalDisplay} />
+    )}
+  </View>
+);
+
+const TransferDetailsBox = ({styles, transferData, chainName, children}) => (
+  <View style={styles.box}>
+    <InfoRow
+      styles={styles}
+      label={'Chain'}
+      value={transferData?.currentCoin?.chain_display_name}
+    />
+    <InfoRow
+      styles={styles}
+      label={'Asset'}
+      value={`${transferData?.currentCoin?.name} (${transferData?.currentCoin?.symbol})`}
+    />
+    <InfoRow
+      styles={styles}
+      label={'From'}
+      value={`${
+        isCustomAddressNotSupportedChain(chainName)
+          ? transferData?.currentCoin?.address
+          : getCustomizePublicAddress(transferData?.currentCoin?.address)
+      }`}
+    />
+    <InfoRow
+      styles={styles}
+      label={'To'}
+      value={`${
+        isCustomAddressNotSupportedChain(chainName)
+          ? transferData?.toAddress
+          : getCustomizePublicAddress(transferData?.toAddress)
+      }`}
+    />
+    {!!transferData?.validName && (
+      <InfoRow styles={styles} label={'DNS'} value={transferData?.validName} />
+    )}
+    {!!transferData?.memo && (
+      <InfoRow styles={styles} label={'Memo'} value={transferData?.memo} />
+    )}
+    {children}
+  </View>
+);
 
 const Transfer = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
@@ -91,25 +380,22 @@ const Transfer = ({navigation, route}) => {
   const selectedFeesTypeRef = useRef('recommended');
   const isFetchingRef = useRef(false);
   const isPauseCalculateFees = useRef(false);
-  const [isFetchedSuccessful, setIsFetchedSuccessful] = useState('null');
+  const [estimateStatus, setEstimateStatus] = useState('pending'); // 'pending' | 'success' | 'failed'
   const floatingHeight = useFloatingHeight();
   const dispatch = useDispatch();
   const currentWallet = useSelector(selectCurrentWallet);
   const fromScreen = route?.params?.fromScreen;
   const redirect_url = route?.params?.redirect_url;
   const meta = route?.params?.meta;
-  const {
-    selectedFromAsset,
-    selectedFromWallet,
-    selectedToAsset,
-    amountFrom,
-    amountTo,
-    isLoading: isExchangeLoading,
-    success: isExchangeSuccess,
-    exchangeToName,
-    exchangeToAddress,
-    selectedExchangeChain,
-  } = useSelector(getExchange);
+  const selectedFromAsset = useSelector(selectExchangeFromAsset);
+  const selectedFromWallet = useSelector(selectExchangeFromWallet);
+  const selectedToAsset = useSelector(selectExchangeToAsset);
+  const amountFrom = useSelector(selectExchangeAmountFrom);
+  const amountTo = useSelector(selectExchangeAmountTo);
+  const isExchangeLoading = useSelector(selectExchangeLoading);
+  const exchangeToName = useSelector(selectExchangeToName);
+  const exchangeToAddress = useSelector(selectExchangeToAddress);
+  const selectedExchangeChain = useSelector(selectSelectedExchangeChain);
   const [localImage, setLocalImage] = useState(
     transferData?.selectedNFT?.metadata?.image,
   );
@@ -127,6 +413,91 @@ const Transfer = ({navigation, route}) => {
   const isStakingRewards = route?.params?.isStakingRewards;
   const isCreateStaking = route?.params?.isCreateStaking;
   const isCreateVote = route?.params?.isCreateVote;
+
+  const flags = useMemo(
+    () => ({
+      isSendFundScreen,
+      isExchangeScreen,
+      isSendNFT,
+      isStakingScreen,
+      isVoteStakingScreen,
+      isSellCryptoScreen,
+      isBatchTransaction,
+      isCreateStaking,
+      isWithdrawStaking,
+      isDeactivateStaking,
+      isStakingRewards,
+      isCreateVote,
+    }),
+    [
+      isSendFundScreen,
+      isExchangeScreen,
+      isSendNFT,
+      isStakingScreen,
+      isVoteStakingScreen,
+      isSellCryptoScreen,
+      isBatchTransaction,
+      isCreateStaking,
+      isWithdrawStaking,
+      isDeactivateStaking,
+      isStakingRewards,
+      isCreateVote,
+    ],
+  );
+
+  const transferContext = useMemo(
+    () =>
+      buildTransferContext({
+        transferData,
+        flags,
+        selectedFromAsset,
+        selectedFromWallet,
+        amountFrom,
+        currentWallet,
+      }),
+    [
+      transferData,
+      flags,
+      selectedFromAsset,
+      selectedFromWallet,
+      amountFrom,
+      currentWallet,
+    ],
+  );
+  // Fresh context for long-lived closures (the 10s poll interval).
+  const transferContextRef = useRef();
+  transferContextRef.current = transferContext;
+
+  const quoteExpiresAt = useMemo(() => {
+    const created = transferData?.quoteCreatedAt;
+    const ttl = transferData?.quoteTtlSeconds;
+    return created && ttl ? created + ttl * 1000 : null;
+  }, [transferData?.quoteCreatedAt, transferData?.quoteTtlSeconds]);
+  const [isQuoteExpired, setIsQuoteExpired] = useState(false);
+  const isQuoteExpiredRef = useRef(false);
+
+  useEffect(() => {
+    if (!quoteExpiresAt) {
+      isQuoteExpiredRef.current = false;
+      setIsQuoteExpired(false);
+      return;
+    }
+    const remaining = quoteExpiresAt - Date.now();
+    if (remaining <= 0) {
+      isQuoteExpiredRef.current = true;
+      setIsQuoteExpired(true);
+      return;
+    }
+    isQuoteExpiredRef.current = false;
+    setIsQuoteExpired(false);
+    const timer = setTimeout(() => {
+      isQuoteExpiredRef.current = true;
+      setIsQuoteExpired(true);
+    }, remaining);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [quoteExpiresAt]);
 
   const chainName = isExchangeScreen
     ? selectedFromAsset?.chain_name
@@ -243,119 +614,59 @@ const Transfer = ({navigation, route}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isWithdrawStaking, isDeactivateStaking, isStakingRewards, isSendNFT]);
 
+  // Latch the render/poll state machine on the first successful estimate.
+  // Transfer can mount while the first estimate is still in flight, so this
+  // fires whenever feeSuccess arrives rather than at mount.
   useEffect(() => {
-    if (
-      (isExchangeSuccess && isExchangeScreen) ||
-      ((isSendFundScreen ||
-        isSellCryptoScreen ||
-        isSendNFT ||
-        isStakingScreen ||
-        isBatchTransaction) &&
-        feeSuccess)
-    ) {
-      setIsFetchedSuccessful('true');
-      let timeout = setInterval(() => {
-        if (!isFetchingRef.current && !isPauseCalculateFees.current) {
+    if (feeSuccess) {
+      setEstimateStatus('success');
+    }
+  }, [feeSuccess]);
+
+  useEffect(() => {
+    // VoteStaking was never part of the polling mode set — keep it out so
+    // its one-shot estimate isn't re-run every 10s.
+    if (estimateStatus === 'success' && !isVoteStakingScreen) {
+      let interval = setInterval(() => {
+        if (
+          !isFetchingRef.current &&
+          !isPauseCalculateFees.current &&
+          !isQuoteExpiredRef.current
+        ) {
           setIsFetchingFeesAgain(true);
 
           isFetchingRef.current = true;
 
           dispatch(
-            calculateEstimateFee({
-              isFetchNonce: false,
-              existingNonce: transferData?.nonce,
-              fromAddress:
-                isSendFundScreen ||
-                isStakingScreen ||
-                isSellCryptoScreen ||
-                isBatchTransaction
-                  ? transferData?.currentCoin?.address
-                  : isExchangeScreen
-                  ? selectedFromAsset?.address
-                  : transferData?.selectedNFT?.coin?.address,
-              toAddress: transferData.toAddress,
-              memo: transferData.memo,
-              amount:
-                isSendFundScreen || isStakingScreen || isSellCryptoScreen
-                  ? transferData?.amount
-                  : isExchangeScreen
-                  ? amountFrom
-                  : null,
-              contractAddress: isSendNFT
-                ? transferData?.selectedNFT?.token_address ||
-                  transferData?.selectedNFT?.associatedTokenAddress
-                : transferData?.currentCoin?.contractAddress,
-              balance: transferData?.currentCoin?.totalAmount,
-              selectedWallet: isExchangeScreen
-                ? selectedFromWallet
-                : isSendNFT
-                ? currentWallet
-                : null,
-              selectedCoin: isExchangeScreen
-                ? selectedFromAsset
-                : isSendNFT
-                ? transferData?.currentCoin
-                : null,
-              contract_type: isSendNFT
-                ? transferData?.selectedNFT?.contract_type
-                : null,
-              isNFT: isSendNFT,
-              mint: isSendNFT ? transferData?.selectedNFT?.mint : null,
-              tokenId: isSendNFT ? transferData?.selectedNFT?.token_id : null,
-              tokenAmount: isSendNFT
-                ? transferData?.selectedNFT?.amount || 1
-                : null,
-              validatorPubKey: isStakingScreen
-                ? transferData?.validatorPubKey
-                : null,
-              stakingBalance: isStakingScreen
-                ? transferData?.stakingBalance
-                : null,
-              resourceType: isStakingScreen ? transferData?.resourceType : null,
-              stakingAddress: isStakingScreen
-                ? transferData?.stakingAddress
-                : null,
-              selectedVotes: isVoteStakingScreen
-                ? transferData?.selectedVotes
-                : null,
-              isBatchTransaction,
-              isExchange: isExchangeScreen,
-              currentCoin: isBatchTransaction
-                ? transferData?.currentCoin
-                : null,
-              calls: isBatchTransaction ? transferData?.calls : null,
-              isCreateStaking: isCreateStaking,
-              isWithdrawStaking: !!isWithdrawStaking,
-              isStakingRewards: !!isStakingRewards,
-              isDeactivateStaking: !!isDeactivateStaking,
-              stakingProviderName:
-                isCreateStaking || isDeactivateStaking || isStakingRewards
-                  ? transferData?.stakingProviderName
-                  : null,
-              tokenDecimals: isStakingScreen
-                ? transferData?.currentCoin?.decimal
-                : null,
-              isMaxCheckbox: isDeactivateStaking
-                ? transferData?.isMaxCheckbox
-                : null,
-              feesType: selectedFeesTypeRef.current,
-              estimateGas: transferData?.estimateGas,
-            }),
+            calculateEstimateFee(
+              buildEstimateFeePayload(transferContextRef.current, flags, {
+                feesType: selectedFeesTypeRef.current,
+              }),
+            ),
           )
             .unwrap()
             .then(resp => {
               setIsFetchingFeesAgain(false);
               isFetchingRef.current = false;
-              setIsFetchedSuccessful(resp ? 'true' : 'false');
+              setEstimateStatus(resp ? 'success' : 'failed');
+            })
+            .catch(() => {
+              // calculateEstimateFee rethrows expired-quote errors; the slice
+              // already set customError, so flipping estimateStatus swaps the
+              // form for that message. Reset the in-flight flags or polling
+              // would stop permanently.
+              setIsFetchingFeesAgain(false);
+              isFetchingRef.current = false;
+              setEstimateStatus('failed');
             });
         }
       }, 10000);
       return () => {
-        clearTimeout(timeout);
+        clearInterval(interval);
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [feeSuccess, isExchangeSuccess]);
+  }, [estimateStatus]);
 
   useEffect(() => {
     setLocalImage(transferData?.selectedNFT?.metadata?.image);
@@ -368,30 +679,15 @@ const Transfer = ({navigation, route}) => {
         failedTimestamp &&
         dayjs().diff(dayjs(failedTimestamp), 'minutes') < 5
       ) {
-        const currentFrom =
-          isSendFundScreen ||
-          isStakingScreen ||
-          isSellCryptoScreen ||
-          isBatchTransaction
-            ? transferData?.currentCoin?.address
-            : isExchangeScreen
-            ? selectedFromAsset?.address
-            : transferData?.selectedNFT?.coin?.address;
-        const currentTo = transferData.toAddress;
-        const currentAmount =
-          isSendFundScreen || isStakingScreen || isSellCryptoScreen
-            ? transferData?.amount
-            : isExchangeScreen
-            ? amountFrom
-            : '0';
-        const currentContractAddress = isSendNFT
-          ? transferData?.selectedNFT?.token_address ||
-            transferData?.selectedNFT?.associatedTokenAddress
-          : transferData?.currentCoin?.contractAddress;
+        const currentFrom = transferContext.fromForEstimate;
+        const currentTo = transferContext.toAddress;
+        const currentAmount = transferContext.amountForSend;
+        const currentContractAddress =
+          transferContext.contractAddressForEstimate;
 
-        const currentChainName = transferData?.currentCoin?.chain_name;
-        const currentSymbol = transferData?.currentCoin?.symbol;
-        const currentCalls = transferData?.calls;
+        const currentChainName = transferContext.chainName;
+        const currentSymbol = transferContext.symbol;
+        const currentCalls = transferContext.calls;
         if (
           currentFrom === failedTransaction?.fromAddress &&
           currentTo === failedTransaction?.toAddress &&
@@ -411,142 +707,53 @@ const Transfer = ({navigation, route}) => {
 
   const submitTransferData = useCallback(async () => {
     return await dispatch(
-      sendFunds({
-        to: transferData.toAddress,
-        memo: transferData.memo,
-        nonce: finalNonce,
-        amount:
-          isSendFundScreen || isStakingScreen || isSellCryptoScreen
-            ? transferData?.amount
-            : isExchangeScreen
-            ? amountFrom
-            : '0',
-        currentCoin: transferData?.currentCoin,
-        currentWallet: isExchangeScreen
-          ? selectedFromWallet
-          : isSendNFT
-          ? currentWallet
-          : null,
-        balance: transferData?.currentCoin?.totalAmount,
-        isExchange: isExchangeScreen,
-        contract_type: isSendNFT
-          ? transferData?.selectedNFT?.contract_type
-          : null,
-        tokenId: isSendNFT ? transferData?.selectedNFT?.token_id : null,
-        tokenAmount: isSendNFT ? transferData?.selectedNFT?.amount : null,
-        contractAddress: isSendNFT
-          ? transferData?.selectedNFT?.token_address ||
-            transferData?.selectedNFT?.associatedTokenAddress
-          : null,
-        mint: isSendNFT ? transferData?.selectedNFT?.mint : null,
-        isNFT: isSendNFT,
-        isBatchTransaction,
-        calls: isBatchTransaction ? transferData?.calls : null,
-        transactionsData: isBatchTransaction
-          ? transferData?.transactionsData
-          : null,
-        from:
-          isStakingScreen ||
-          isSendNFT ||
-          isVoteStakingScreen ||
-          isSellCryptoScreen ||
-          isBatchTransaction
-            ? transferData?.currentCoin?.address
-            : null,
-        validatorPubKey: isStakingScreen ? transferData?.validatorPubKey : null,
-        isWithdrawStaking: !!isWithdrawStaking,
-        isStakingRewards: !!isStakingRewards,
-        isCreateStaking: isCreateStaking,
-        stakingBalance: isStakingScreen ? transferData?.stakingBalance : null,
-        resourceType: isStakingScreen ? transferData?.resourceType : null,
-        selectedVotes: isVoteStakingScreen ? transferData?.selectedVotes : null,
-        isCreateVote: !!isCreateVote,
-        isDeactivateStaking: !!isDeactivateStaking,
-        stakingProviderName:
-          isCreateStaking || isDeactivateStaking || isStakingRewards
-            ? transferData?.stakingProviderName
-            : null,
-        stakingAddress: isStakingScreen ? transferData?.stakingAddress : null,
-        numberOfStakeAccount: isStakingScreen
-          ? transferData?.currentCoin?.staking?.length || 0
-          : null,
-        validatorName: isStakingScreen ? transferData?.validatorName : null,
-        displayValidators: isVoteStakingScreen
-          ? transferData?.displayValidators
-          : null,
-        nftName: isSendNFT
-          ? transferData?.selectedNFT?.name || transferData?.selectedNFT?.symbol
-          : null,
-        nftTokenId: isSendNFT ? transferData?.selectedNFT?.token_id : null,
-        nftImage: isSendNFT ? transferData?.selectedNFT?.metadata?.image : null,
-        phrase,
-        navigation,
-      }),
+      sendFunds(
+        buildSendFundsPayload(transferContext, flags, {
+          nonce: finalNonce,
+          phrase,
+          navigation,
+        }),
+      ),
     ).unwrap();
-  }, [
-    dispatch,
-    transferData.toAddress,
-    transferData.memo,
-    transferData?.amount,
-    transferData?.currentCoin,
-    transferData?.selectedNFT?.contract_type,
-    transferData?.selectedNFT?.token_id,
-    transferData?.selectedNFT?.amount,
-    transferData?.selectedNFT?.token_address,
-    transferData?.selectedNFT?.associatedTokenAddress,
-    transferData?.selectedNFT?.mint,
-    transferData?.calls,
-    transferData?.transactionsData,
-    transferData?.validatorPubKey,
-    transferData?.stakingBalance,
-    transferData?.resourceType,
-    transferData?.selectedVotes,
-    transferData?.stakingProviderName,
-    transferData?.stakingAddress,
-    transferData?.validatorName,
-    transferData?.displayValidators,
-    transferData?.selectedNFT?.name,
-    transferData?.selectedNFT?.symbol,
-    transferData?.selectedNFT?.metadata?.image,
-    finalNonce,
-    isSendFundScreen,
-    isStakingScreen,
-    isSellCryptoScreen,
-    isExchangeScreen,
-    amountFrom,
-    selectedFromWallet,
-    isSendNFT,
-    currentWallet,
-    isBatchTransaction,
-    isVoteStakingScreen,
-    isWithdrawStaking,
-    isStakingRewards,
-    isCreateStaking,
-    isCreateVote,
-    isDeactivateStaking,
-    phrase,
-    navigation,
-  ]);
+  }, [dispatch, transferContext, flags, finalNonce, phrase, navigation]);
 
   const onSuccess = useCallback(async () => {
     setShowConfirmModal(false);
     await delay(300);
-    const data = await submitTransferData();
-    if (redirect_url && data?.tx_hash) {
-      try {
-        await handleTransferRedirect(
-          redirect_url,
-          data?.tx_hash,
-          data?.status,
-          meta,
-        );
-      } catch (error) {
-        console.error('Failed to open redirect URL:', error);
+    try {
+      // Recompute expiry rather than trusting the timer: the app may have
+      // been backgrounded past the deadline while the modal was open.
+      if (quoteExpiresAt && Date.now() >= quoteExpiresAt) {
+        isQuoteExpiredRef.current = true;
+        setIsQuoteExpired(true);
+        return;
       }
+      const data = await submitTransferData();
+      if (redirect_url && data?.tx_hash) {
+        try {
+          await handleTransferRedirect(
+            redirect_url,
+            data?.tx_hash,
+            data?.status,
+            meta,
+          );
+        } catch (error) {
+          console.error('Failed to open redirect URL:', error);
+        }
+      }
+    } finally {
+      // Resume fee polling after a failed/expired send; a successful send
+      // navigates away and unmounts anyway.
+      isPauseCalculateFees.current = false;
     }
-  }, [meta, redirect_url, submitTransferData]);
+  }, [meta, redirect_url, submitTransferData, quoteExpiresAt]);
 
   const handleSubmitForm = () => {
+    if (quoteExpiresAt && Date.now() >= quoteExpiresAt) {
+      isQuoteExpiredRef.current = true;
+      setIsQuoteExpired(true);
+      return;
+    }
     setShowConfirmModal(true);
     isPauseCalculateFees.current = true;
   };
@@ -569,18 +776,8 @@ const Transfer = ({navigation, route}) => {
     dispatch(updateFees({gasPrice: tempValues || '0', convertedChainName}));
   };
 
-  const currencyRate =
-    (isSendFundScreen || isStakingScreen
-      ? transferData?.currentCoin?.currencyRate
-      : isExchangeScreen
-      ? selectedFromAsset?.currencyRate
-      : '0') || '0';
-  const amount =
-    (isSendFundScreen || isStakingScreen || isSellCryptoScreen
-      ? transferData?.amount
-      : isExchangeScreen
-      ? amountFrom
-      : '0') || '0';
+  const currencyRate = transferContext.currencyRateForFiat;
+  const amount = transferContext.amountForSend || '0';
   const currentRateBN = new BigNumber(currencyRate);
   const amountBN = new BigNumber(amount);
   const priceValue = currentRateBN.multipliedBy(amountBN);
@@ -598,67 +795,18 @@ const Transfer = ({navigation, route}) => {
           {currencySymbol[localCurrency] || ''}
           {priceValue?.toFixed(2) || '0'}
         </Text>
-        <View style={styles.box}>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Chain'}</Text>
-            <Text style={styles.boxBalance}>
-              {transferData?.currentCoin?.chain_display_name}
-            </Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Asset'}</Text>
-            <Text
-              style={
-                styles.boxBalance
-              }>{`${transferData?.currentCoin?.name} (${transferData?.currentCoin?.symbol})`}</Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'From'}</Text>
-            <Text style={styles.boxBalance}>{`${
-              isCustomAddressNotSupportedChain(chainName)
-                ? transferData?.currentCoin?.address
-                : getCustomizePublicAddress(transferData?.currentCoin?.address)
-            }`}</Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'To'}</Text>
-            <Text style={styles.boxBalance}>{`${
-              isCustomAddressNotSupportedChain(chainName)
-                ? transferData?.toAddress
-                : getCustomizePublicAddress(transferData?.toAddress)
-            }`}</Text>
-          </View>
-          {!!transferData?.validName && (
-            <View style={styles.itemView}>
-              <Text style={styles.title}>{'DNS'}</Text>
-              <Text style={styles.boxBalance}>{transferData?.validName}</Text>
-            </View>
-          )}
-          {!!transferData?.memo && (
-            <View style={styles.itemView}>
-              <Text style={styles.title}>{'Memo'}</Text>
-              <Text style={styles.boxBalance}>{transferData?.memo}</Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.box}>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Network Fee'}</Text>
-            <Text style={styles.boxBalance}>
-              {isFetchingFeesAgain
-                ? 'Refreshing'
-                : `${transferData?.transactionFee || '0'} ${
-                    transferData?.currentCoin?.chain_symbol
-                  }`}
-            </Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Max Total'}</Text>
-            <Text style={styles.boxBalance}>{`${currencySymbol[localCurrency]}${
-              totalValue || 0
-            }`}</Text>
-          </View>
-        </View>
+        <TransferDetailsBox
+          styles={styles}
+          transferData={transferData}
+          chainName={chainName}
+        />
+        <FeeSummaryBox
+          styles={styles}
+          isRefreshing={isFetchingFeesAgain}
+          fee={transferData?.transactionFee}
+          feeSymbol={transferData?.currentCoin?.chain_symbol}
+          maxTotalDisplay={`${currencySymbol[localCurrency]}${totalValue || 0}`}
+        />
       </View>
     );
   };
@@ -669,73 +817,23 @@ const Transfer = ({navigation, route}) => {
         <Text style={styles.amountTitle}>{`-${transferData?.amount || 0} ${
           transferData?.currentCoin?.symbol || ''
         }`}</Text>
-        <View style={styles.box}>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Chain'}</Text>
-            <Text style={styles.boxBalance}>
-              {transferData?.currentCoin?.chain_display_name}
-            </Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Asset'}</Text>
-            <Text
-              style={
-                styles.boxBalance
-              }>{`${transferData?.currentCoin?.name} (${transferData?.currentCoin?.symbol})`}</Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'From'}</Text>
-            <Text style={styles.boxBalance}>{`${
-              isCustomAddressNotSupportedChain(chainName)
-                ? transferData?.currentCoin?.address
-                : getCustomizePublicAddress(transferData?.currentCoin?.address)
-            }`}</Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'To'}</Text>
-            <Text style={styles.boxBalance}>{`${
-              isCustomAddressNotSupportedChain(chainName)
-                ? transferData?.toAddress
-                : getCustomizePublicAddress(transferData?.toAddress)
-            }`}</Text>
-          </View>
-          {!!transferData?.validName && (
-            <View style={styles.itemView}>
-              <Text style={styles.title}>{'DNS'}</Text>
-              <Text style={styles.boxBalance}>{transferData?.validName}</Text>
-            </View>
-          )}
-          {!!transferData?.memo && (
-            <View style={styles.itemView}>
-              <Text style={styles.title}>{'Memo'}</Text>
-              <Text style={styles.boxBalance}>{transferData?.memo}</Text>
-            </View>
-          )}
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Provider'}</Text>
-            <Text style={styles.boxBalance}>
-              {sellCryptoRequestDetails?.providerDisplayName}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.box}>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Network Fee'}</Text>
-            <Text style={styles.boxBalance}>
-              {isFetchingFeesAgain
-                ? 'Refreshing'
-                : `${transferData?.transactionFee || '0'} ${
-                    transferData?.currentCoin?.chain_symbol
-                  }`}
-            </Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Max Total'}</Text>
-            <Text style={styles.boxBalance}>{`${currencySymbol[localCurrency]}${
-              totalValue || 0
-            }`}</Text>
-          </View>
-        </View>
+        <TransferDetailsBox
+          styles={styles}
+          transferData={transferData}
+          chainName={chainName}>
+          <InfoRow
+            styles={styles}
+            label={'Provider'}
+            value={sellCryptoRequestDetails?.providerDisplayName}
+          />
+        </TransferDetailsBox>
+        <FeeSummaryBox
+          styles={styles}
+          isRefreshing={isFetchingFeesAgain}
+          fee={transferData?.transactionFee}
+          feeSymbol={transferData?.currentCoin?.chain_symbol}
+          maxTotalDisplay={`${currencySymbol[localCurrency]}${totalValue || 0}`}
+        />
       </View>
     );
   };
@@ -744,98 +842,72 @@ const Transfer = ({navigation, route}) => {
     return (
       <View style={styles.formInput}>
         <View style={styles.box}>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Asset'}</Text>
-            <Text
-              style={
-                styles.boxBalance
-              }>{`${selectedFromAsset?.name} (${selectedFromAsset?.symbol})`}</Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'From'}</Text>
-            <Text style={styles.boxBalance}>{`${getCustomizePublicAddress(
-              selectedFromAsset?.address,
-            )}`}</Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Chain'}</Text>
-            <Text
-              style={
-                styles.boxBalance
-              }>{`${selectedFromAsset?.chain_display_name}`}</Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Pay Amount'}</Text>
-            <Text
-              style={
-                styles.boxBalance
-              }>{`${amountFrom} ${selectedFromAsset?.symbol}`}</Text>
-          </View>
+          <InfoRow
+            styles={styles}
+            label={'Asset'}
+            value={`${selectedFromAsset?.name} (${selectedFromAsset?.symbol})`}
+          />
+          <InfoRow
+            styles={styles}
+            label={'From'}
+            value={`${getCustomizePublicAddress(selectedFromAsset?.address)}`}
+          />
+          <InfoRow
+            styles={styles}
+            label={'Chain'}
+            value={`${selectedFromAsset?.chain_display_name}`}
+          />
+          <InfoRow
+            styles={styles}
+            label={'Pay Amount'}
+            value={`${amountFrom} ${selectedFromAsset?.symbol}`}
+          />
         </View>
         <View style={styles.iconView}>
           <ScurvedIcon width={25} height={20} stroke={theme.background} />
         </View>
         <View style={[styles.box, {marginTop: 0}]}>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Asset'}</Text>
-            <Text
-              style={
-                styles.boxBalance
-              }>{`${selectedToAsset?.name} (${selectedToAsset?.symbol})`}</Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'To'}</Text>
-            <Text style={styles.boxBalance}>{`${getCustomizePublicAddress(
-              exchangeToAddress,
-            )}`}</Text>
-          </View>
+          <InfoRow
+            styles={styles}
+            label={'Asset'}
+            value={`${selectedToAsset?.name} (${selectedToAsset?.symbol})`}
+          />
+          <InfoRow
+            styles={styles}
+            label={'To'}
+            value={`${getCustomizePublicAddress(exchangeToAddress)}`}
+          />
           {!!exchangeToName && (
-            <View style={styles.itemView}>
-              <Text style={styles.title}>{'DNS'}</Text>
-              <Text style={styles.boxBalance}>{exchangeToName}</Text>
-            </View>
+            <InfoRow styles={styles} label={'DNS'} value={exchangeToName} />
           )}
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Chain'}</Text>
-            <Text
-              style={
-                styles.boxBalance
-              }>{`${selectedToAsset?.chain_display_name}`}</Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Receive Amount'}</Text>
-            <Text
-              style={
-                styles.boxBalance
-              }>{`${amountTo} ${selectedToAsset?.symbol}`}</Text>
-          </View>
+          <InfoRow
+            styles={styles}
+            label={'Chain'}
+            value={`${selectedToAsset?.chain_display_name}`}
+          />
+          <InfoRow
+            styles={styles}
+            label={'Receive Amount'}
+            value={`${amountTo} ${selectedToAsset?.symbol}`}
+          />
         </View>
-        <View style={styles.box}>
+        <FeeSummaryBox
+          styles={styles}
+          isRefreshing={isFetchingFeesAgain}
+          fee={transferData?.transactionFee}
+          feeSymbol={selectedFromAsset?.chain_symbol}
+          maxTotalDisplay={`${currencySymbol[localCurrency]}${
+            totalValue || 0
+          }`}>
           {!!selectedExchangeChain?.providerName && (
-            <View style={styles.itemView}>
-              <Text style={styles.title}>{'Exchange Provider'}</Text>
-              <Text style={[styles.boxBalance, {textTransform: 'capitalize'}]}>
-                {selectedExchangeChain?.providerName}
-              </Text>
-            </View>
+            <InfoRow
+              styles={styles}
+              label={'Exchange Provider'}
+              value={selectedExchangeChain?.providerName}
+              valueStyle={[styles.boxBalance, {textTransform: 'capitalize'}]}
+            />
           )}
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Network Fee'}</Text>
-            <Text style={styles.boxBalance}>
-              {isFetchingFeesAgain
-                ? 'Refreshing'
-                : `${transferData?.transactionFee || '0'} ${
-                    selectedFromAsset?.chain_symbol
-                  }`}
-            </Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Max Total'}</Text>
-            <Text style={styles.boxBalance}>{`${currencySymbol[localCurrency]}${
-              totalValue || 0
-            }`}</Text>
-          </View>
-        </View>
+        </FeeSummaryBox>
       </View>
     );
   };
@@ -858,54 +930,49 @@ const Transfer = ({navigation, route}) => {
           )}
         </View>
         <View style={styles.box}>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Name'}</Text>
-            <Text style={styles.boxBalance}>{`${
+          <InfoRow
+            styles={styles}
+            label={'Name'}
+            value={`${
               transferData?.selectedNFT?.name ||
               transferData?.selectedNFT?.symbol
             } ${
               transferData?.selectedNFT?.token_id
                 ? `(${transferData?.selectedNFT?.token_id})`
                 : ''
-            }`}</Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Chain'}</Text>
-            <Text style={styles.boxBalance}>
-              {transferData?.currentCoin?.chain_display_name}
-            </Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'From'}</Text>
-            <Text style={styles.boxBalance}>{`${getCustomizePublicAddress(
+            }`}
+          />
+          <InfoRow
+            styles={styles}
+            label={'Chain'}
+            value={transferData?.currentCoin?.chain_display_name}
+          />
+          <InfoRow
+            styles={styles}
+            label={'From'}
+            value={`${getCustomizePublicAddress(
               transferData?.currentCoin?.address,
-            )}`}</Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'To'}</Text>
-            <Text style={styles.boxBalance}>{`${getCustomizePublicAddress(
-              transferData?.toAddress,
-            )}`}</Text>
-          </View>
+            )}`}
+          />
+          <InfoRow
+            styles={styles}
+            label={'To'}
+            value={`${getCustomizePublicAddress(transferData?.toAddress)}`}
+          />
           {!!transferData?.validName && (
-            <View style={styles.itemView}>
-              <Text style={styles.title}>{'DNS'}</Text>
-              <Text style={styles.boxBalance}>{transferData?.validName}</Text>
-            </View>
+            <InfoRow
+              styles={styles}
+              label={'DNS'}
+              value={transferData?.validName}
+            />
           )}
         </View>
-        <View style={styles.box}>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Network Fee'}</Text>
-            <Text style={styles.boxBalance}>
-              {isFetchingFeesAgain
-                ? 'Refreshing'
-                : `${transferData?.transactionFee || '0'} ${
-                    transferData?.currentCoin?.chain_symbol
-                  }`}
-            </Text>
-          </View>
-        </View>
+        <FeeSummaryBox
+          styles={styles}
+          isRefreshing={isFetchingFeesAgain}
+          fee={transferData?.transactionFee}
+          feeSymbol={transferData?.currentCoin?.chain_symbol}
+        />
       </View>
     );
   };
@@ -921,70 +988,55 @@ const Transfer = ({navigation, route}) => {
           {priceValue?.toFixed(2) || '0'}
         </Text>
         <View style={styles.box}>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Chain'}</Text>
-            <Text style={styles.boxBalance}>
-              {transferData?.currentCoin?.chain_display_name}
-            </Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Asset'}</Text>
-            <Text
-              style={
-                styles.boxBalance
-              }>{`${transferData?.currentCoin?.name} (${transferData?.currentCoin?.symbol})`}</Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'From'}</Text>
-            <Text style={styles.boxBalance}>{`${getCustomizePublicAddress(
+          <InfoRow
+            styles={styles}
+            label={'Chain'}
+            value={transferData?.currentCoin?.chain_display_name}
+          />
+          <InfoRow
+            styles={styles}
+            label={'Asset'}
+            value={`${transferData?.currentCoin?.name} (${transferData?.currentCoin?.symbol})`}
+          />
+          <InfoRow
+            styles={styles}
+            label={'From'}
+            value={`${getCustomizePublicAddress(
               transferData?.currentCoin?.address,
-            )}`}</Text>
-          </View>
+            )}`}
+          />
           {!!transferData?.validatorPubKey && (
-            <View style={styles.itemView}>
-              <Text style={styles.title}>{'Validator Address'}</Text>
-              <Text style={styles.boxBalance}>{`${getCustomizePublicAddress(
+            <InfoRow
+              styles={styles}
+              label={'Validator Address'}
+              value={`${getCustomizePublicAddress(
                 transferData?.validatorPubKey,
-              )}`}</Text>
-            </View>
+              )}`}
+            />
           )}
           {!!transferData?.validatorName && (
-            <View style={styles.itemView}>
-              <Text style={styles.title} numberOfLines={1}>
-                {'Validator Name'}
-              </Text>
-              <Text style={styles.boxBalance} numberOfLines={1}>
-                {transferData?.validatorName}
-              </Text>
-            </View>
+            <InfoRow
+              styles={styles}
+              label={'Validator Name'}
+              value={transferData?.validatorName}
+              numberOfLines={1}
+            />
           )}
           {!!transferData?.resourceType && (
-            <View style={styles.itemView}>
-              <Text style={styles.title}>{'Resource Type'}</Text>
-              <Text style={styles.boxBalance}>
-                {transferData?.resourceType}
-              </Text>
-            </View>
+            <InfoRow
+              styles={styles}
+              label={'Resource Type'}
+              value={transferData?.resourceType}
+            />
           )}
         </View>
-        <View style={styles.box}>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Network Fee'}</Text>
-            <Text style={styles.boxBalance}>
-              {isFetchingFeesAgain
-                ? 'Refreshing'
-                : `${transferData?.transactionFee || '0'} ${
-                    transferData?.currentCoin?.chain_symbol
-                  }`}
-            </Text>
-          </View>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Max Total'}</Text>
-            <Text style={styles.boxBalance}>{`${currencySymbol[localCurrency]}${
-              totalValue || 0
-            }`}</Text>
-          </View>
-        </View>
+        <FeeSummaryBox
+          styles={styles}
+          isRefreshing={isFetchingFeesAgain}
+          fee={transferData?.transactionFee}
+          feeSymbol={transferData?.currentCoin?.chain_symbol}
+          maxTotalDisplay={`${currencySymbol[localCurrency]}${totalValue || 0}`}
+        />
       </View>
     );
   };
@@ -1004,18 +1056,12 @@ const Transfer = ({navigation, route}) => {
             containerStyle={{marginHorizontal: 0, width: SCREEN_WIDTH - 40}}
           />
         ))}
-        <View style={styles.box}>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Network Fee'}</Text>
-            <Text style={styles.boxBalance}>
-              {isFetchingFeesAgain
-                ? 'Refreshing'
-                : `${transferData?.transactionFee || '0'} ${
-                    transferData?.currentCoin?.chain_symbol
-                  }`}
-            </Text>
-          </View>
-        </View>
+        <FeeSummaryBox
+          styles={styles}
+          isRefreshing={isFetchingFeesAgain}
+          fee={transferData?.transactionFee}
+          feeSymbol={transferData?.currentCoin?.chain_symbol}
+        />
       </View>
     );
   };
@@ -1036,18 +1082,12 @@ const Transfer = ({navigation, route}) => {
             localCurrency={localCurrency}
           />
         ))}
-        <View style={styles.box}>
-          <View style={styles.itemView}>
-            <Text style={styles.title}>{'Network Fee'}</Text>
-            <Text style={styles.boxBalance}>
-              {isFetchingFeesAgain
-                ? 'Refreshing'
-                : `${transferData?.transactionFee || '0'} ${
-                    transferData?.currentCoin?.chain_symbol
-                  }`}
-            </Text>
-          </View>
-        </View>
+        <FeeSummaryBox
+          styles={styles}
+          isRefreshing={isFetchingFeesAgain}
+          fee={transferData?.transactionFee}
+          feeSymbol={transferData?.currentCoin?.chain_symbol}
+        />
       </View>
     );
   };
@@ -1057,7 +1097,7 @@ const Transfer = ({navigation, route}) => {
       {!!isSubmitting && <Spinner />}
       {(isLoading || isExchangeLoading) && !isFetchingFeesAgain ? (
         <Loading />
-      ) : feeSuccess || isExchangeSuccess || isFetchedSuccessful === 'true' ? (
+      ) : feeSuccess || estimateStatus === 'success' ? (
         <KeyboardAwareScrollView
           enableOnAndroid={true}
           enableAutomaticScroll={true}
@@ -1141,12 +1181,17 @@ const Transfer = ({navigation, route}) => {
                     styles.errorText
                   }>{`You don't have enough balance for make transaction you require ${transferData?.transactionFee} ${transferData?.currentCoin?.chain_symbol} to complete the transaction `}</Text>
               )}
+              {isQuoteExpired && (
+                <Text style={styles.errorText}>
+                  {'Quote expired — go back and refresh the quote.'}
+                </Text>
+              )}
               <TouchableOpacity
-                disabled={isDisabled || isFetchingFeesAgain}
+                disabled={isDisabled || isFetchingFeesAgain || isQuoteExpired}
                 style={{
                   ...styles.button,
                   backgroundColor:
-                    isDisabled || isFetchingFeesAgain
+                    isDisabled || isFetchingFeesAgain || isQuoteExpired
                       ? '#708090'
                       : theme.background,
                 }}

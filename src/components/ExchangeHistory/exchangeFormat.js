@@ -1,4 +1,5 @@
 // Formatting helpers shared by the exchange history list and details screens.
+import {PrivateKeyList} from 'dok-wallet-blockchain-networks/helper';
 
 export const EXCHANGE_STATUS_CONFIG = {
   pending: {label: 'Pending', color: '#D97706'},
@@ -43,3 +44,31 @@ export const exchangePairLabel = transaction =>
   `${transaction?.from_currency?.toUpperCase() || '—'} → ${
     transaction?.to_currency?.toUpperCase() || '—'
   }`;
+
+// Chain identity of a swap. metadata.fromChainName/toChainName are always
+// canonical chain_name values when present; the top-level from_network/
+// to_network fields are canonical on new records but may hold a legacy
+// symbol on very old ones, so metadata wins.
+export const getExchangeChainNames = transaction => ({
+  fromChainName:
+    transaction?.metadata?.fromChainName || transaction?.from_network || '',
+  toChainName:
+    transaction?.metadata?.toChainName || transaction?.to_network || '',
+});
+
+// PrivateKeyList is the app's most complete chain_name → display-name list
+// (covers non-token chains like the bitcoin variants that ModalAddTokenList
+// omits). Built lazily once.
+let chainDisplayNameMap = null;
+export const getChainDisplayName = chainName => {
+  if (!chainName) {
+    return '';
+  }
+  if (!chainDisplayNameMap) {
+    chainDisplayNameMap = {};
+    for (const item of PrivateKeyList) {
+      chainDisplayNameMap[item.value] = item.label;
+    }
+  }
+  return chainDisplayNameMap[chainName.toLowerCase()] || '';
+};

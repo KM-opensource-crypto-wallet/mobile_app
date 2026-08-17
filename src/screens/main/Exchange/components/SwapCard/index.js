@@ -13,6 +13,7 @@ const SwapCard = ({
   amount,
   fiatValue,
   balanceText,
+  isBalanceFetching = false,
   editable = false,
   onChangeAmount,
   onPressCoin,
@@ -27,10 +28,15 @@ const SwapCard = ({
     <View style={styles.card}>
       <View style={styles.headerRow}>
         <Text style={styles.label}>{label}</Text>
-        {!!balanceText && (
-          <Text style={styles.balance} numberOfLines={1}>
-            {balanceText}
-          </Text>
+        {isBalanceFetching ? (
+          // theme.gray matches the balance text this replaces.
+          <ActivityIndicator size={'small'} color={theme.gray} />
+        ) : (
+          !!balanceText && (
+            <Text style={styles.balance} numberOfLines={1}>
+              {balanceText}
+            </Text>
+          )
         )}
       </View>
       <View style={styles.mainRow}>
