@@ -183,6 +183,7 @@
     "react-native-svg-transformer": "^1.5.0",
     "react-native-swiper": "^1.6.0",
     "react-native-tab-view": "^4.2.2",
+    "react-native-tcp-socket": "^6.4.2",
     "react-native-test-flight": "^1.1.0",
     "react-native-toast-message": "^2.3.3",
     "react-native-toast-notifications": "^3.3.1",

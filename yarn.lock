@@ -9041,7 +9041,7 @@ eventemitter3@5.0.1:
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-5.0.1.tgz#53f5ffd0a492ac800721bb42c66b841de96423c4"
   integrity sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==
 
-eventemitter3@^4.0.4:
+eventemitter3@^4.0.4, eventemitter3@^4.0.7:
   version "4.0.7"
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-4.0.7.tgz#2de9b68f6528d5644ef5c59526a1b4a07306169f"
   integrity sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==
@@ -13484,6 +13484,14 @@ react-native-tab-view@^4.2.2:
   integrity sha512-z2x4ZAJfdiy3Rk78/2tIfKu1DezMKHWOfIIw4bpfPlwVqg3i2ViFtvZJTadKWZpZJEnG43cfhJPNDzH5RZTK2Q==
   dependencies:
     use-latest-callback "^0.2.4"
+
+react-native-tcp-socket@^6.4.2:
+  version "6.4.2"
+  resolved "https://registry.yarnpkg.com/react-native-tcp-socket/-/react-native-tcp-socket-6.4.2.tgz#ddbd682910c5c21197b7d9155dd627f1047fb401"
+  integrity sha512-x3piN60BLaVA7or3n6HKhsa15QDpb1hu+X7Mh99ldV+ZXUGDVKymsLLyu7vzEybTzF3sC17ubpCEgjik5aXfcA==
+  dependencies:
+    buffer "^5.4.3"
+    eventemitter3 "^4.0.7"
 
 react-native-test-flight@^1.1.0:
   version "1.1.0"
