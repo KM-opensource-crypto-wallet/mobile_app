@@ -469,10 +469,20 @@ const Transfer = ({navigation, route}) => {
   transferContextRef.current = transferContext;
 
   const quoteExpiresAt = useMemo(() => {
+    // Quote TTLs only exist for exchange flows. Gating on the screen flag
+    // keeps a leftover quote window from a flow that skipped the entry
+    // reset from ever blocking a plain send with "Quote expired".
+    if (!flags.isExchangeScreen) {
+      return null;
+    }
     const created = transferData?.quoteCreatedAt;
     const ttl = transferData?.quoteTtlSeconds;
     return created && ttl ? created + ttl * 1000 : null;
-  }, [transferData?.quoteCreatedAt, transferData?.quoteTtlSeconds]);
+  }, [
+    flags.isExchangeScreen,
+    transferData?.quoteCreatedAt,
+    transferData?.quoteTtlSeconds,
+  ]);
   const [isQuoteExpired, setIsQuoteExpired] = useState(false);
   const isQuoteExpiredRef = useRef(false);
 
