@@ -27,7 +27,7 @@ import {IS_ANDROID, useFloatingHeight} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
 import {
   calculateEstimateFee,
-  setCurrentTransferData,
+  updateCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {currencySymbol} from 'data/currency';
@@ -353,7 +353,12 @@ const SendFunds = ({navigation, route}) => {
 
   const proceedToTransfer = (values, validAddress) => {
     dispatch(
-      setCurrentTransferData({
+      // Full reset+merge: drops whatever a previous flow (exchange quote,
+      // staking, NFT, batch) left behind in transferData. The UTXO fields are
+      // the one thing set before this dispatch (SelectUTXOsScreen) that the
+      // fee poll, the max clamp and the send itself still read from the
+      // store, so they must be carried through the reset.
+      updateCurrentTransferData({
         toAddress: validAddress || values?.send?.trim(),
         currentCoin,
         amount: validateBigNumberStr(values?.amount),
@@ -362,6 +367,8 @@ const SendFunds = ({navigation, route}) => {
         isSendFunds: true,
         validName: validAddress ? values?.send : null,
         memo: values?.memo?.trim(),
+        selectedUTXOs: transferData?.selectedUTXOs,
+        selectedUTXOsValue: transferData?.selectedUTXOsValue,
       }),
     );
     dispatch(

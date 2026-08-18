@@ -1,4 +1,10 @@
-import React, {useState, useEffect, useContext, useCallback} from 'react';
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+  useRef,
+} from 'react';
 import {Dimensions, TouchableOpacity, View} from 'react-native';
 import {Modal, Portal, Text, TextInput} from 'react-native-paper';
 import myStyles from './ModalConfirmTransactionStyles';
@@ -39,6 +45,21 @@ const ModalConfirmTransaction = ({visible, hideModal, onSuccess}) => {
   const [wrong, setWrong] = useState(false);
 
   const fingerprint = useSelector(isFingerprint);
+  const isSubmittingRef = useRef(false);
+
+  useEffect(() => {
+    if (!visible) {
+      isSubmittingRef.current = false;
+    }
+  }, [visible]);
+
+  const triggerSuccess = useCallback(() => {
+    if (isSubmittingRef.current) {
+      return;
+    }
+    isSubmittingRef.current = true;
+    onSuccess && onSuccess();
+  }, [onSuccess]);
 
   const handleFingerprintAuth = useCallback(async () => {
     if (fingerprint && visible) {
@@ -46,7 +67,7 @@ const ModalConfirmTransaction = ({visible, hideModal, onSuccess}) => {
         await FingerprintScanner.authenticate({
           description: `Unlock ${WL_APP_NAME} with your fingerprint`,
         });
-        onSuccess && onSuccess();
+        triggerSuccess();
       } catch (error) {
         if (error.name === 'SystemCancel') {
           console.error('Authentication was canceled by the system');
@@ -57,7 +78,7 @@ const ModalConfirmTransaction = ({visible, hideModal, onSuccess}) => {
         FingerprintScanner.release();
       }
     }
-  }, [fingerprint, onSuccess, visible]);
+  }, [fingerprint, triggerSuccess, visible]);
 
   useEffect(() => {
     if (visible) {
@@ -70,7 +91,7 @@ const ModalConfirmTransaction = ({visible, hideModal, onSuccess}) => {
   const onSubmit = values => {
     const {currentPassword} = values;
     if (currentPassword === storePassword) {
-      onSuccess && onSuccess();
+      triggerSuccess();
     } else {
       setWrong(true);
     }

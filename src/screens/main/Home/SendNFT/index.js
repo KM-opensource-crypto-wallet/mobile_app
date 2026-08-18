@@ -25,7 +25,7 @@ import {IS_ANDROID} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
 import {
   calculateEstimateFee,
-  setCurrentTransferData,
+  updateCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {
@@ -111,7 +111,7 @@ const SendNFT = ({navigation, route}) => {
     }
     if (isValid || validAddress) {
       dispatch(
-        setCurrentTransferData({
+        updateCurrentTransferData({
           toAddress: validAddress || values?.send,
           currentCoin: selectedNft?.coin,
           selectedNFT: selectedNft,

@@ -26,7 +26,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 
 import {
   calculateEstimateFee,
-  setCurrentTransferData,
+  updateCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {currencySymbol} from 'data/currency';
@@ -146,7 +146,7 @@ const CreateStaking = ({navigation}) => {
   const navigateToTransfer = useCallback(
     (values, allowanceType) => {
       dispatch(
-        setCurrentTransferData({
+        updateCurrentTransferData({
           validatorPubKey: values?.validatorPubKey?.value,
           validatorName: values?.validatorPubKey?.label,
           stakingProviderName: values?.validatorPubKey?.label,
