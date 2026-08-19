@@ -54,6 +54,8 @@ import SendNFT from 'screens/main/Home/SendNFT';
 import ImportWalletByPrivateKey from 'screens/main/ResetWallet/ImportWalletByPrivateKey';
 import EVMWalletDerivation from 'screens/main/Settings/EVMWalletDerivation';
 import TransactionList from 'screens/main/Home/TransactionList';
+import ExchangeTransactions from 'screens/main/ExchangeTransactions';
+import ExchangeTransactionDetails from 'screens/main/ExchangeTransactionDetails';
 import StakingList from 'screens/main/Home/StakingList';
 import CreateStaking from 'screens/main/Home/CreateStaking';
 import WithdrawStaking from 'screens/main/Home/WithdrawStaking';
@@ -957,6 +959,36 @@ export const useRoute = isAuth => {
           component={TransactionDetails}
           options={({navigation}) => ({
             title: `${currentCoin?.name || ''} Transaction`,
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+            ...fadeTransition,
+          })}
+        />
+        <Stack.Screen
+          name="ExchangeTransactions"
+          component={ExchangeTransactions}
+          options={({navigation}) => ({
+            title: 'Swap History',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+            ...fadeTransition,
+          })}
+        />
+        <Stack.Screen
+          name="ExchangeTransactionDetails"
+          component={ExchangeTransactionDetails}
+          options={({navigation}) => ({
+            title: 'Swap Details',
             headerLeft: () => (
               <TouchableOpacity
                 style={styles.headerLeftStyle}

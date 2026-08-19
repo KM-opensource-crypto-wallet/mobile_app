@@ -104,6 +104,9 @@ export const lightTheme = {
   warningBottom: '#ffcc00',
   blue: '#006ee6',
   error: '#f44336',
+  success: '#4CAF50',
+  warning: '#FF9800',
+  disabledButton: '#708090',
 };
 
 export const darkTheme = {
@@ -131,4 +134,7 @@ export const darkTheme = {
   warningBottom: '#ffcc00',
   blue: '#006ee6',
   error: '#f44336',
+  success: '#4CAF50',
+  warning: '#FF9800',
+  disabledButton: '#708090',
 };

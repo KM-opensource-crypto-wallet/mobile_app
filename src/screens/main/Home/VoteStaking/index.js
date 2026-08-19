@@ -14,7 +14,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 
 import {
   calculateEstimateFee,
-  setCurrentTransferData,
+  updateCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {KeyboardAwareFlatList} from 'react-native-keyboard-aware-scroll-view';
 import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
@@ -128,7 +128,7 @@ const VoteStaking = ({navigation}) => {
       }
     });
     dispatch(
-      setCurrentTransferData({
+      updateCurrentTransferData({
         selectedVotes: finalSelectedVotes,
         currentCoin,
         amount: values?.amount,

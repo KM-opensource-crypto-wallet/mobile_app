@@ -37,6 +37,7 @@ import ContactUs from 'screens/main/ContactUs';
 import SelectCountry from 'screens/main/BuyCrypto/SelectCountry';
 import ReceivePaymentUrl from 'screens/main/ReceivePaymentUrl';
 import Entypo from 'react-native-vector-icons/Entypo';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import {getCountry} from 'react-native-localize';
 import {IS_DOK_WALLET} from 'utils/wlData';
 
@@ -275,6 +276,20 @@ export default function Sidebar({navigation, route}) {
                 headerTitleAlign: 'center',
                 headerTitle: 'Swap',
                 title: 'Swap',
+                headerRight: () => (
+                  <TouchableOpacity
+                    style={{
+                      paddingRight: isIpad ? 50 : 11,
+                    }}
+                    hitSlop={{left: 11, right: 11, top: 11, bottom: 11}}
+                    onPress={() => navigation.navigate('ExchangeTransactions')}>
+                    <Ionicons
+                      name="time-outline"
+                      size={24}
+                      color={theme.borderActiveColor}
+                    />
+                  </TouchableOpacity>
+                ),
                 drawerIcon: ({focused}) => (
                   <ConvertIcon
                     width="25"
