@@ -31,9 +31,14 @@ import {
 import WalletConnect from 'assets/images/WalletConnect.png';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
-import {getTonSessionProperties} from 'dok-wallet-blockchain-networks/service/walletConnect/tonWalletConnect';
 import {chainLogoMap} from 'assets/chain_logo';
 
+const getTonSessionProperties = privateKey => {
+  const {
+    TonChain,
+  } = require('dok-wallet-blockchain-networks/cryptoChain/chains/TonChain');
+  return TonChain().getSessionProperties({privateKey});
+};
 const BTC_VARIANT_CHAIN_NAMES = ['bitcoin', 'bitcoin_segwit', 'bitcoin_legacy'];
 const BTC_VARIANT_LABELS = {
   bitcoin: 'Native SegWit',
@@ -49,7 +54,7 @@ const WalletConnectRequestModal = props => {
   const [isValidChain, setIsValidChain] = useState(false);
   const [bitcoinAddressType, setBitcoinAddressType] = useState('bitcoin');
   const dispatch = useDispatch();
-  const image = requestData?.icons[0] || null;
+  const image = requestData?.icons?.[0] || null;
   const title = requestData?.name || '';
   const url = requestData?.url || '';
   const id = requestData?.id || '';
@@ -261,20 +266,6 @@ const WalletConnectRequestModal = props => {
     }
   }, [id, navigation]);
 
-  // const onChangeChain = useCallback(
-  //     (item: any) => {
-  //         setSelectedChain(item);
-  //         //@ts-ignore
-  //         setWalletAddresses(getData[item.name.toLowerCase()]);
-  //         //@ts-ignore
-  //         setSelectedWalletAddess(getData[item.name.toLowerCase()][0]);
-  //     },
-  //     [getData],
-  // );
-  //
-  // const onChangeAddress = useCallback((item: any) => {
-  //     setSelectedWalletAddess(item);
-  // }, []);
   const {theme} = useContext(ThemeContext);
 
   const styles = myStyles(theme);

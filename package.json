@@ -46,6 +46,7 @@
     "@cosmos-client/core": "^0.47.4",
     "@d11/react-native-fast-image": "^8.13.0",
     "@ethersproject/shims": "^5.8.0",
+    "@exodus/patch-broken-hermes-typed-arrays": "^1.0.0-alpha.1",
     "@glif/filecoin-address": "^4.0.0",
     "@gorhom/bottom-sheet": "^5.2.14",
     "@hashgraph/sdk": "^2.47.0",

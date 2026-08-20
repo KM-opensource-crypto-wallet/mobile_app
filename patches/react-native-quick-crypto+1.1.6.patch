@@ -1,0 +1,30 @@
+diff --git a/node_modules/react-native-quick-crypto/QuickCrypto.podspec b/node_modules/react-native-quick-crypto/QuickCrypto.podspec
+index aa43069..f458c6c 100644
+--- a/node_modules/react-native-quick-crypto/QuickCrypto.podspec
++++ b/node_modules/react-native-quick-crypto/QuickCrypto.podspec
+@@ -28,7 +28,8 @@ Pod::Spec.new do |s|
+     sodium_version = "1.0.22"
+     sodium_dir = File.join(__dir__, "ios", "libsodium-stable")
+     sodium_header = File.join(sodium_dir, "src", "libsodium", "include", "sodium.h")
+-    unless File.exist?(sodium_header)
++    sodium_version_header = File.join(sodium_dir, "src", "libsodium", "include", "sodium", "version.h")
++    unless File.exist?(sodium_header) && File.exist?(sodium_version_header)
+       FileUtils.mkdir_p(File.join(__dir__, "ios"))
+       FileUtils.rm_rf(sodium_dir) if File.directory?(sodium_dir)
+ 
+@@ -39,6 +40,15 @@ Pod::Spec.new do |s|
+         File.delete("ios/libsodium.tar.gz") if File.exist?("ios/libsodium.tar.gz")
+       end
+       Pod::UI.puts "[QuickCrypto] ✅ libsodium source downloaded successfully"
++
++      # prepare_command (which normally runs configure/make) is skipped for :path pods,
++      # which is how autolinking references this package, so configure/build it here too.
++      Pod::UI.puts "[QuickCrypto] 🔧 Configuring and building libsodium..."
++      Dir.chdir(sodium_dir) do
++        system("./configure --disable-shared --enable-static") || raise("Failed to configure libsodium")
++        system("make -j$(sysctl -n hw.ncpu)") || raise("Failed to build libsodium")
++      end
++      Pod::UI.puts "[QuickCrypto] ✅ libsodium configured and built successfully"
+     end
+   end
+ 

@@ -2,6 +2,7 @@
  * @format
  */
 
+import '@exodus/patch-broken-hermes-typed-arrays';
 import 'node-libs-react-native/globals';
 import 'text-encoding-polyfill';
 import 'react-native-get-random-values';

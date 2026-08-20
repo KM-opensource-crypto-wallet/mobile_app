@@ -1,4 +1,10 @@
-import React, {useCallback, useContext, useMemo, useEffect} from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useMemo,
+  useEffect,
+  useState,
+} from 'react';
 import {
   View,
   StyleSheet,
@@ -9,6 +15,8 @@ import {
 } from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
 import {shallowEqual, useDispatch, useSelector} from 'react-redux';
+import Clipboard from '@react-native-clipboard/clipboard';
+import IoniconIcon from 'react-native-vector-icons/Ionicons';
 import {getWalletConnect} from 'dok-wallet-blockchain-networks/service/walletconnect';
 
 import {ThemeContext} from 'theme/ThemeContext';
@@ -17,140 +25,212 @@ import {SCREEN_WIDTH} from 'utils/dimensions';
 import {selectWalletConnectData} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import WalletConnect from 'assets/images/WalletConnect.png';
 import {
-  ETH_SIGN,
-  isWalletConnectTransaction,
-  PERSONAL_SIGN,
-} from 'dok-wallet-blockchain-networks/service/walletConnect/etherWalletConnect';
-import {ethers} from 'ethers';
-import {
   convertHexToUtf8IfPossible,
   decodeSolMessage,
   getCustomizePublicAddress,
   isValidBigInt,
   parseBalance,
+  safelyJsonParse,
   safelyJsonStringify,
 } from 'dok-wallet-blockchain-networks/helper';
-import {createWalletConnectTransaction} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectActions';
 import {currencySymbol} from 'data/currency';
 import BigNumber from 'bignumber.js';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {setWalletConnectTransactionModal} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSlice';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
-import {
-  TRON_SIGN_MESSAGE,
-  TRON_SIGN_TRANSACTION,
-} from 'dok-wallet-blockchain-networks/service/walletConnect/tronWalletConnect';
-import {
-  parseSolanaSignTransaction,
-  SOLANA_SIGN_AND_SEND_TRANSACTION,
-  SOLANA_SIGN_MESSAGE,
-  SOLANA_SIGN_TRANSACTION,
-} from 'dok-wallet-blockchain-networks/service/walletConnect/solanaWalletConnect';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import {showToast} from 'utils/toast';
 import {
-  TON_SEND_MESSAGE,
-  TON_SIGN_DATA,
-} from 'dok-wallet-blockchain-networks/service/walletConnect/tonWalletConnect';
-import {
-  STELLAR_SIGN_AND_SUBMIT_XDR,
-  STELLAR_SIGN_XDR,
-} from 'dok-wallet-blockchain-networks/service/walletConnect/stellarWalletConnect';
-import {
-  XRPL_SIGN_TRANSACTION,
-  XRPL_SUBMIT_TRANSACTION,
-  XRPL_SIGN_MESSAGE,
-} from 'dok-wallet-blockchain-networks/service/walletConnect/rippleWalletConnect';
-import {
-  POLKADOT_SIGN_TRANSACTION,
-  POLKADOT_SIGN_MESSAGE,
-} from 'dok-wallet-blockchain-networks/service/walletConnect/polkadotWalletConnect';
-import {
-  COSMOS_SIGN_DIRECT,
-  COSMOS_SIGN_AMINO,
-  COSMOS_GET_ACCOUNTS,
-} from 'dok-wallet-blockchain-networks/service/walletConnect/cosmosWalletConnect';
-import {
-  HEDERA_SIGN_MESSAGE,
-  HEDERA_SIGN_TRANSACTION,
-  HEDERA_SIGN_AND_EXECUTE_TRANSACTION,
-} from 'dok-wallet-blockchain-networks/service/walletConnect/hederaWalletConnect';
-import {
-  APTOS_SIGN_MESSAGE,
-  APTOS_SIGN_TRANSACTION,
-  APTOS_SIGN_AND_SUBMIT_TRANSACTION,
-} from 'dok-wallet-blockchain-networks/service/walletConnect/aptosWalletConnect';
-import {
-  TEZOS_GET_ACCOUNTS,
-  TEZOS_SIGN,
-  TEZOS_SEND,
-} from 'dok-wallet-blockchain-networks/service/walletConnect/tezosWalletConnect';
-import {
-  BITCOIN_GET_ACCOUNT_ADDRESSES,
-  BITCOIN_SIGN_MESSAGE,
-  BITCOIN_SIGN_PSBT,
-  BITCOIN_SEND_TRANSFER,
-} from 'dok-wallet-blockchain-networks/service/walletConnect/bitcoinWalletConnect';
+  EVM_SIGN_REQUEST_HANDLERS,
+  isNonEVMChain,
+  NON_EVM_METHOD_HANDLERS,
+} from 'dok-wallet-blockchain-networks/config/config';
+import {walletConnect} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 
-const displayMessage = (method, message) => {
+export const ETH_SEND_TRANSACTION = 'eth_sendTransaction';
+export const ETH_SIGN_TRANSACTION = 'eth_signTransaction';
+const transactionType = [ETH_SEND_TRANSACTION, ETH_SIGN_TRANSACTION];
+const isWalletConnectTransaction = method => transactionType.includes(method);
+function parseSolanaSignTransaction(txData) {
+  // Default values for summary properties
+  let sender = 'N/A';
+  let data = 'N/A';
+
+  try {
+    if (!txData || typeof txData !== 'object') {
+      throw new Error('Invalid transaction data provided');
+    }
+    sender = txData.feePayer || txData.pubkey || sender;
+    data = txData?.transaction
+      ? txData?.transaction
+      : Array.isArray(txData?.transactions)
+      ? JSON.stringify(txData?.transactions)
+      : data;
+  } catch (error) {
+    console.error('Error parsing transaction:', error);
+  }
+  return {
+    sender,
+    data,
+  };
+}
+const getMessageData = (method, message) => {
   switch (method) {
-    case PERSONAL_SIGN:
-    case ETH_SIGN: {
-      return convertHexToUtf8IfPossible(message);
-    }
-    case SOLANA_SIGN_MESSAGE: {
-      return decodeSolMessage(message);
-    }
-    case SOLANA_SIGN_TRANSACTION:
-    case SOLANA_SIGN_AND_SEND_TRANSACTION: {
-      return safelyJsonStringify(parseSolanaSignTransaction(message));
-    }
-    case TON_SEND_MESSAGE:
-    case TON_SIGN_DATA: {
-      return safelyJsonStringify(message);
-    }
-    case STELLAR_SIGN_XDR: {
-      return safelyJsonStringify(message);
-    }
-    case STELLAR_SIGN_AND_SUBMIT_XDR:
-      return safelyJsonStringify(message);
-    case XRPL_SIGN_TRANSACTION:
-    case XRPL_SUBMIT_TRANSACTION: {
-      return safelyJsonStringify(message);
-    }
-    case XRPL_SIGN_MESSAGE: {
-      return convertHexToUtf8IfPossible(message);
-    }
-    case COSMOS_SIGN_DIRECT:
-    case COSMOS_GET_ACCOUNTS:
-    case COSMOS_SIGN_AMINO: {
-      return safelyJsonStringify(message);
-    }
-    case HEDERA_SIGN_MESSAGE:
-    case HEDERA_SIGN_TRANSACTION:
-    case HEDERA_SIGN_AND_EXECUTE_TRANSACTION: {
-      return safelyJsonStringify(message);
-    }
-    case APTOS_SIGN_MESSAGE:
-    case APTOS_SIGN_TRANSACTION:
-    case APTOS_SIGN_AND_SUBMIT_TRANSACTION: {
-      return safelyJsonStringify(message);
-    }
-    case TEZOS_GET_ACCOUNTS:
-    case TEZOS_SIGN:
-    case TEZOS_SEND: {
-      return safelyJsonStringify(message);
-    }
-    case BITCOIN_GET_ACCOUNT_ADDRESSES:
-    case BITCOIN_SIGN_MESSAGE:
-    case BITCOIN_SIGN_PSBT:
-    case BITCOIN_SEND_TRANSFER: {
-      return safelyJsonStringify(message);
-    }
-    default: {
-      return safelyJsonStringify(message);
-    }
+    case 'personal_sign':
+    case 'eth_sign':
+      return {type: 'text', value: convertHexToUtf8IfPossible(message)};
+    case 'solana_signMessage':
+      return {type: 'text', value: decodeSolMessage(message)};
+    case 'solana_signTransaction':
+    case 'solana_signAndSendTransaction':
+      return {type: 'json', value: parseSolanaSignTransaction(message)};
+    case 'xrpl_signMessage':
+    case 'polkadot_signMessage':
+      return {type: 'text', value: convertHexToUtf8IfPossible(message)};
+    case 'stellar_signMessage':
+      return {type: 'text', value: message};
+    default:
+      return {
+        type: 'json',
+        value: typeof message === 'string' ? safelyJsonParse(message) : message,
+      };
   }
 };
+
+const formatKeyLabel = key => {
+  if (typeof key !== 'string') {
+    return String(key);
+  }
+  const spaced = key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ');
+  return spaced.replace(/\b\w/g, char => char.toUpperCase());
+};
+
+const stringifyPrimitive = value => {
+  if (value === null || value === undefined) {
+    return '—';
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false';
+  }
+  return String(value);
+};
+
+const MessageValueRow = ({label, value, styles, theme}) => {
+  const stringValue = stringifyPrimitive(value);
+  const isCopyable = typeof value === 'string' && value.length > 0;
+  const isLong = stringValue.length > 18;
+
+  const onCopy = () => {
+    if (!isCopyable) {
+      return;
+    }
+    Clipboard.setString(stringValue);
+    showToast({type: 'successToast', title: 'Copied to clipboard'});
+  };
+
+  return (
+    <TouchableOpacity
+      style={styles.msgRow}
+      activeOpacity={isCopyable ? 0.6 : 1}
+      disabled={!isCopyable}
+      onPress={onCopy}>
+      {!!label && (
+        <Text style={styles.msgRowLabel} numberOfLines={1}>
+          {label}
+        </Text>
+      )}
+      <View style={styles.msgRowValueWrap}>
+        <Text
+          style={styles.msgRowValue}
+          numberOfLines={isLong ? 1 : undefined}
+          ellipsizeMode="middle">
+          {stringValue}
+        </Text>
+        {isCopyable && (
+          <IoniconIcon
+            name="copy-outline"
+            size={14}
+            color={theme.gray}
+            style={styles.msgCopyIcon}
+          />
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+const MessageNode = ({label, value, styles, theme, depth = 0}) => {
+  const [expanded, setExpanded] = useState(true);
+  const isArray = Array.isArray(value);
+  const isObject = !isArray && value !== null && typeof value === 'object';
+
+  if (!isArray && !isObject) {
+    return (
+      <MessageValueRow
+        label={label}
+        value={value}
+        styles={styles}
+        theme={theme}
+      />
+    );
+  }
+
+  const entries = isArray
+    ? value.map((item, index) => [`#${index + 1}`, item])
+    : Object.entries(value);
+  const count = entries.length;
+  const countLabel = isArray
+    ? `${count} item${count === 1 ? '' : 's'}`
+    : `${count} field${count === 1 ? '' : 's'}`;
+  const isRoot = label == null;
+
+  const children = (
+    <View style={isRoot ? null : styles.msgNestedContainer}>
+      {entries.map(([key, val], index) => (
+        <React.Fragment key={key}>
+          {index > 0 && <View style={styles.msgDivider} />}
+          <MessageNode
+            label={isArray ? key : formatKeyLabel(key)}
+            value={val}
+            styles={styles}
+            theme={theme}
+            depth={depth + 1}
+          />
+        </React.Fragment>
+      ))}
+      {count === 0 && <Text style={styles.msgEmptyText}>{'Empty'}</Text>}
+    </View>
+  );
+
+  if (isRoot) {
+    return children;
+  }
+
+  return (
+    <View style={styles.msgSection}>
+      <TouchableOpacity
+        style={styles.msgSectionHeader}
+        activeOpacity={0.6}
+        onPress={() => setExpanded(prev => !prev)}>
+        <Text style={styles.msgRowLabel} numberOfLines={1}>
+          {label}
+        </Text>
+        <View style={styles.msgRowValueWrap}>
+          <Text style={styles.msgSectionCount}>{countLabel}</Text>
+          <IoniconIcon
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={14}
+            color={theme.gray}
+          />
+        </View>
+      </TouchableOpacity>
+      {expanded && children}
+    </View>
+  );
+};
+
 const WalletConnectTransactionModal = props => {
   const transactionData = useSelector(selectWalletConnectTransactionData);
   const dispatch = useDispatch();
@@ -194,163 +274,12 @@ const WalletConnectTransactionModal = props => {
   }, []);
 
   const getTransactionRequestData = useMemo(() => {
-    if (
-      transactionData?.chainId?.includes('tron') ||
-      transactionData?.chainId?.includes('solana') ||
-      transactionData?.chainId?.includes('ton') ||
-      transactionData?.chainId?.includes('stellar') ||
-      transactionData?.chainId?.includes('xrpl') ||
-      transactionData?.chainId?.includes('polkadot') ||
-      transactionData?.chainId?.includes('cosmos') ||
-      transactionData?.chainId?.includes('hedera') ||
-      transactionData?.chainId?.includes('aptos') ||
-      transactionData?.chainId?.includes('tezos') ||
-      transactionData?.chainId?.includes('bip122')
-    ) {
-      if (
-        transactionData?.method === TRON_SIGN_MESSAGE ||
-        transactionData?.method === SOLANA_SIGN_MESSAGE
-      ) {
-        return {
-          signTypeData: transactionData?.params?.message,
-        };
-      }
-      if (transactionData?.method === TRON_SIGN_TRANSACTION) {
-        return {
-          finaltransactionData:
-            transactionData?.params?.transaction?.transaction,
-          signTypeData: transactionData?.params?.transaction?.transaction,
-        };
-      }
-      if (
-        transactionData?.method === SOLANA_SIGN_TRANSACTION ||
-        transactionData?.method === SOLANA_SIGN_AND_SEND_TRANSACTION
-      ) {
-        return {
-          finaltransactionData: transactionData?.params?.transaction,
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (transactionData?.method === SOLANA_SIGN_MESSAGE) {
-        return {
-          finaltransactionData: transactionData?.params?.transaction,
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (transactionData?.method === TON_SEND_MESSAGE) {
-        return {
-          finaltransactionData: transactionData?.params,
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (transactionData?.method === TON_SIGN_DATA) {
-        return {
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (transactionData?.method === STELLAR_SIGN_XDR) {
-        return {
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (transactionData?.method === STELLAR_SIGN_AND_SUBMIT_XDR) {
-        return {
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (
-        transactionData?.method === XRPL_SIGN_TRANSACTION ||
-        transactionData?.method === XRPL_SUBMIT_TRANSACTION
-      ) {
-        return {
-          finaltransactionData: transactionData?.params,
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (transactionData?.method === XRPL_SIGN_MESSAGE) {
-        return {
-          signTypeData: transactionData?.params?.message,
-        };
-      }
-      if (transactionData?.method === POLKADOT_SIGN_TRANSACTION) {
-        return {
-          finaltransactionData: transactionData?.params,
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (transactionData?.method === POLKADOT_SIGN_MESSAGE) {
-        return {
-          signTypeData: transactionData?.params?.data,
-        };
-      }
-      if (
-        transactionData?.method === COSMOS_SIGN_DIRECT ||
-        transactionData?.method === COSMOS_SIGN_AMINO
-      ) {
-        return {
-          finaltransactionData: transactionData?.params,
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (
-        transactionData?.method === HEDERA_SIGN_TRANSACTION ||
-        transactionData?.method === HEDERA_SIGN_AND_EXECUTE_TRANSACTION
-      ) {
-        return {
-          finaltransactionData: transactionData?.params,
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (transactionData?.method === HEDERA_SIGN_MESSAGE) {
-        return {
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (
-        transactionData?.method === APTOS_SIGN_TRANSACTION ||
-        transactionData?.method === APTOS_SIGN_AND_SUBMIT_TRANSACTION
-      ) {
-        return {
-          finaltransactionData: transactionData?.params,
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (transactionData?.method === APTOS_SIGN_MESSAGE) {
-        return {
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (
-        transactionData?.method === TEZOS_SIGN ||
-        transactionData?.method === TEZOS_SEND
-      ) {
-        return {
-          finaltransactionData: transactionData?.params,
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (transactionData?.method === TEZOS_GET_ACCOUNTS) {
-        return {
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (
-        transactionData?.method === BITCOIN_SIGN_PSBT ||
-        transactionData?.method === BITCOIN_SEND_TRANSFER
-      ) {
-        return {
-          finaltransactionData: transactionData?.params,
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (
-        transactionData?.method === BITCOIN_GET_ACCOUNT_ADDRESSES ||
-        transactionData?.method === BITCOIN_SIGN_MESSAGE
-      ) {
-        return {
-          signTypeData: transactionData?.params,
-        };
-      }
+    if (isNonEVMChain(transactionData?.chainId)) {
+      const {finaltransactionData, signTypeData, expectedSignerAddress} =
+        NON_EVM_METHOD_HANDLERS[transactionData?.method](
+          transactionData?.params,
+        );
+      return {finaltransactionData, signTypeData, expectedSignerAddress};
     } else {
       if (transactionData?.method?.includes('wallet_sendCalls')) {
         const batchCalls = (transactionData?.params?.[0]?.calls || []).map(
@@ -367,10 +296,12 @@ const WalletConnectTransactionModal = props => {
         };
       }
       const finaltransactionData = transactionData?.params[0] || {};
-      const signTypeData =
-        transactionData?.method === PERSONAL_SIGN
-          ? transactionData?.params[0]
-          : transactionData?.params[1];
+      const {signTypeData, expectedSignerAddress} = EVM_SIGN_REQUEST_HANDLERS[
+        transactionData?.method
+      ]?.(transactionData?.params) || {
+        signTypeData: transactionData?.params[1],
+        expectedSignerAddress: undefined,
+      };
       if (finaltransactionData?.value) {
         const etherAmount = finaltransactionData?.value
           ? parseBalance(finaltransactionData?.value, 18)
@@ -390,6 +321,7 @@ const WalletConnectTransactionModal = props => {
           finaltransactionData,
           etherAmount,
           signTypeData,
+          expectedSignerAddress,
           transactionFees,
           fiatTransactionFees,
           toAddress,
@@ -398,6 +330,7 @@ const WalletConnectTransactionModal = props => {
       return {
         finaltransactionData,
         signTypeData,
+        expectedSignerAddress,
       };
     }
   }, [transactionData, walletData]);
@@ -406,7 +339,7 @@ const WalletConnectTransactionModal = props => {
     try {
       navigation.pop();
       dispatch(
-        createWalletConnectTransaction({
+        walletConnect({
           transactionData: {
             ...getTransactionRequestData?.finaltransactionData,
             batchCalls: transactionData?.params?.[0]?.calls,
@@ -415,6 +348,9 @@ const WalletConnectTransactionModal = props => {
           isBatchTransaction: transactionData?.isBatchTransaction,
           chain_name: walletData?.chain_name?.toLowerCase(),
           privateKey: walletData?.privateKey,
+          walletAddress: walletData?.address,
+          expectedSignerAddress:
+            getTransactionRequestData?.expectedSignerAddress,
           id,
           topic,
           method,
@@ -489,14 +425,51 @@ const WalletConnectTransactionModal = props => {
 
   const MessageView = () => {
     const signTypeData = getTransactionRequestData?.signTypeData;
-    const message = displayMessage(method, signTypeData);
+    const messageData = getMessageData(method, signTypeData);
+    const isStructured =
+      messageData.type === 'json' &&
+      messageData.value !== null &&
+      typeof messageData.value === 'object';
+
+    const onCopyAll = () => {
+      const text = isStructured
+        ? safelyJsonStringify(messageData.value)
+        : stringifyPrimitive(messageData.value);
+      Clipboard.setString(text || '');
+      showToast({type: 'successToast', title: 'Copied to clipboard'});
+    };
+
     return (
       <View style={{flex: 1, width: '100%', paddingHorizontal: '5%'}}>
-        <Text style={[styles.chainTitle, {marginLeft: 0}]}>{'Message'}</Text>
+        <View style={styles.msgHeaderRow}>
+          <Text style={[styles.chainTitle, {marginLeft: 0, marginTop: 0}]}>
+            {'Message'}
+          </Text>
+          <TouchableOpacity style={styles.msgCopyAllBtn} onPress={onCopyAll}>
+            <IoniconIcon name="copy-outline" size={14} color={theme.gray} />
+            <Text style={styles.msgCopyAllText}>{'Copy'}</Text>
+          </TouchableOpacity>
+        </View>
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.contentContainerStyle}>
-          <Text style={styles.messageStyle}>{message}</Text>
+          contentContainerStyle={[
+            styles.contentContainerStyle,
+            {alignItems: 'stretch', padding: 12},
+          ]}>
+          {isStructured ? (
+            <MessageNode
+              value={messageData.value}
+              styles={styles}
+              theme={theme}
+              depth={0}
+            />
+          ) : (
+            <Text style={styles.messageStyle}>
+              {messageData.type === 'text'
+                ? messageData.value
+                : stringifyPrimitive(messageData.value)}
+            </Text>
+          )}
         </ScrollView>
       </View>
     );
@@ -829,6 +802,89 @@ const myStyles = theme =>
       lineHeight: 20,
       textAlign: 'left',
       fontFamily: 'Roboto-Regular',
+    },
+    msgHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      width: '100%',
+      marginTop: 12,
+    },
+    msgCopyAllBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: 4,
+      paddingHorizontal: 8,
+    },
+    msgCopyAllText: {
+      fontSize: 13,
+      color: theme.gray,
+      fontFamily: 'Roboto-Regular',
+    },
+    msgSection: {
+      width: '100%',
+    },
+    msgSectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 16,
+      gap: 12,
+    },
+    msgSectionCount: {
+      fontSize: 12,
+      color: theme.gray,
+      fontFamily: 'Roboto-Regular',
+    },
+    msgNestedContainer: {
+      width: '100%',
+      marginTop: 4,
+      marginBottom: 8,
+      paddingHorizontal: 12,
+      borderRadius: 10,
+      backgroundColor: theme.backgroundColor,
+    },
+    msgRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 16,
+      gap: 12,
+    },
+    msgRowLabel: {
+      fontSize: 14,
+      color: theme.gray,
+      fontFamily: 'Roboto-Regular',
+      flexShrink: 0,
+      maxWidth: '40%',
+    },
+    msgRowValueWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      flexShrink: 1,
+    },
+    msgRowValue: {
+      fontSize: 14,
+      color: theme.font,
+      fontFamily: 'Roboto-Regular',
+      textAlign: 'right',
+      flexShrink: 1,
+    },
+    msgCopyIcon: {
+      flexShrink: 0,
+    },
+    msgDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: theme.backgroundColor,
+    },
+    msgEmptyText: {
+      fontSize: 13,
+      color: theme.gray,
+      fontFamily: 'Roboto-Regular',
+      fontStyle: 'italic',
+      paddingVertical: 8,
     },
   });
 

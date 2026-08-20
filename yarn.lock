@@ -2062,6 +2062,11 @@
     "@ethersproject/properties" "^5.8.0"
     "@ethersproject/strings" "^5.8.0"
 
+"@exodus/patch-broken-hermes-typed-arrays@^1.0.0-alpha.1":
+  version "1.0.0-alpha.1"
+  resolved "https://registry.yarnpkg.com/@exodus/patch-broken-hermes-typed-arrays/-/patch-broken-hermes-typed-arrays-1.0.0-alpha.1.tgz#c686f982fc801d9ad4a60e33e6a9f5a40eb5e132"
+  integrity sha512-oYv+2IJxaNVTnF7lJqS+wrW0JisE9kcKlgQnkrdhtlsfRmFlcYPdPSO8eaIXKHKkzKndy3I+ZzTELg+BVi3vSg==
+
 "@expo/config-plugins@*":
   version "56.0.9"
   resolved "https://registry.yarnpkg.com/@expo/config-plugins/-/config-plugins-56.0.9.tgz#bfe5f0e4c557451524e8521fedb387e879305651"
