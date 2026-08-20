@@ -64,6 +64,25 @@ class CoinFactory {
       var params: NSMutableDictionary = [:]
       return params
     }
+    // BIP44 account base path, e.g. "m/84'/0'/0'". Coins that support ranged
+    // derivation override this; others keep the empty default.
+    func accountBasePath() -> String {
+      return ""
+    }
+    // Derives `count` addresses on one BIP44 chain (0 = receive, 1 = change)
+    // starting at `startIndex`, reusing each coin's addCustomDerivation so the
+    // address type (bech32 / p2sh / legacy) stays coin-specific.
+    func getDeriveAddressRange(chainIndex: Int, startIndex: Int, count: Int, isTestNet: Bool) -> NSMutableArray {
+      let result = NSMutableArray()
+      let basePath = accountBasePath()
+      if basePath.isEmpty || count <= 0 || startIndex < 0 || chainIndex < 0 {
+        return result
+      }
+      for i in startIndex..<(startIndex + count) {
+        result.add(addCustomDerivation(derivePath: "\(basePath)/\(chainIndex)/\(i)", isTestNet: isTestNet))
+      }
+      return result
+    }
   }
 }
 

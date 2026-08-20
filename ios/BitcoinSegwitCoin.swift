@@ -50,19 +50,15 @@ class BitcoinSegwitCoin: CoinFactory.Coin {
     return dict
   }
 
+  override func accountBasePath() -> String {
+    return "m/49'/0'/0'"
+  }
+
   override func getDeriveAddresses(isTestNet: Bool) -> NSMutableArray {
+    // BIP49 standard: 20 external/receive (…/0/i) + 20 internal/change (…/1/i)
     let result = NSMutableArray()
-    for i in 0..<20 {
-      let derivePath = "m/49'/0'/0'/\(i)/0"
-      let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: derivePath)
-      let publicKey = privateKey.getPublicKeySecp256k1(compressed: true)
-      let address = buildP2SHP2WPKHAddress(publicKey: publicKey, isTestNet: isTestNet)
-      let dict: NSMutableDictionary = [:]
-      dict["derivePath"] = derivePath
-      dict["privateKey"] = Utils.convertToWif(data: privateKey.data, isTestNet: isTestNet, prefix: [0x80], testNetPrefix: [0xef])
-      dict["address"] = address
-      result.add(dict)
-    }
+    result.addObjects(from: getDeriveAddressRange(chainIndex: 0, startIndex: 0, count: 20, isTestNet: isTestNet) as! [Any])
+    result.addObjects(from: getDeriveAddressRange(chainIndex: 1, startIndex: 0, count: 20, isTestNet: isTestNet) as! [Any])
     return result
   }
 }

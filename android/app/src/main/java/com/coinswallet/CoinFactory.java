@@ -7,8 +7,10 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import android.util.Log;
 
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableArray;
 
 public class CoinFactory {
 
@@ -61,6 +63,28 @@ public class CoinFactory {
         public ReadableMap addCustomDerivation(String derivePath, Boolean isTestNet){
             return null;
         };
+        // BIP44 account base path, e.g. "m/84'/0'/0'". Coins that support
+        // ranged derivation override this; others keep the empty default.
+        public String accountBasePath() {
+            return "";
+        }
+        // Appends `count` addresses of one BIP44 chain (0 = receive,
+        // 1 = change) starting at `startIndex`, reusing each coin's
+        // addCustomDerivation so the address type stays coin-specific.
+        protected void appendDeriveAddressRange(WritableArray target, int chainIndex, int startIndex, int count, Boolean isTestNet) {
+            String basePath = accountBasePath();
+            if (basePath.isEmpty() || count <= 0 || startIndex < 0 || chainIndex < 0) {
+                return;
+            }
+            for (int i = startIndex; i < startIndex + count; i++) {
+                target.pushMap(addCustomDerivation(basePath + "/" + chainIndex + "/" + i, isTestNet));
+            }
+        }
+        public ReadableArray getDeriveAddressRange(int chainIndex, int startIndex, int count, Boolean isTestNet) {
+            WritableArray result = Arguments.createArray();
+            appendDeriveAddressRange(result, chainIndex, startIndex, count, isTestNet);
+            return result;
+        }
         public abstract String signTransaction(String rawData);
     }
 }

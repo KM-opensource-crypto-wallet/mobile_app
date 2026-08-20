@@ -83,19 +83,16 @@ public class BitcoinSegwitCoin extends CoinFactory.Coin {
     }
 
     @Override
+    public String accountBasePath() {
+        return "m/49'/0'/0'";
+    }
+
+    @Override
     public ReadableArray getDeriveAddresses(Boolean isTestNet) {
+        // BIP49 standard: 20 external/receive (…/0/i) + 20 internal/change (…/1/i)
         WritableArray result = Arguments.createArray();
-        for (int i = 0; i < 20; i++) {
-            String derivePath = "m/49'/0'/0'/" + i + "/0";
-            PrivateKey tempPrivateKey = wallet.getKey(CoinType.BITCOIN, derivePath);
-            PublicKey publicKey = tempPrivateKey.getPublicKeySecp256k1(true);
-            String address = buildP2SHP2WPKHAddress(publicKey, isTestNet);
-            WritableMap obj = Arguments.createMap();
-            obj.putString("derivePath", derivePath);
-            obj.putString("privateKey", Utils.convertPrivateKeytoWIF(tempPrivateKey.data(), isTestNet, prefix, testnetPrefix));
-            obj.putString("address", address);
-            result.pushMap(obj);
-        }
+        appendDeriveAddressRange(result, 0, 0, 20, isTestNet);
+        appendDeriveAddressRange(result, 1, 0, 20, isTestNet);
         return result;
     }
 }

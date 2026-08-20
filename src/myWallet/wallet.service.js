@@ -49,6 +49,35 @@ export const addDeriveAddresses = async (chain_name, mnenomincs) => {
   }
 };
 
+// Native ranged BIP44 derivation: `count` addresses on one chain
+// (0 = receive, 1 = change) starting at `startIndex`.
+export const getDeriveAddressRange = async (
+  chain_name,
+  mnenomincs,
+  chainIndex,
+  startIndex,
+  count,
+) => {
+  try {
+    return await NativeKeygen.getDeriveAddressRange(
+      chain_name,
+      mnenomincs,
+      IS_SANDBOX,
+      chainIndex,
+      startIndex,
+      count,
+    );
+  } catch (e) {
+    console.error(
+      'Failed to derive address range with chain: ',
+      chain_name,
+      ' ',
+      e,
+    );
+    throw e;
+  }
+};
+
 export const addCustomDeriveAddressToWallet = async (
   chain_name,
   mnenomincs,
