@@ -93,9 +93,6 @@ const SellCrypto = ({navigation}) => {
               coinDetails?.options?.symbol?.toUpperCase() &&
             item?.chain_name === coinDetails?.options?.chain_name,
         );
-        if (tempCoinDetails?.chain_symbol === 'BNB') {
-          tempCoinDetails.chain_symbol = 'BSC';
-        }
         if (tempWallet?.clientId === currentWalletClientId && tempCoinDetails) {
           selectedCoinDetails = tempCoinDetails;
           selectedWalletDetails = tempWallet;

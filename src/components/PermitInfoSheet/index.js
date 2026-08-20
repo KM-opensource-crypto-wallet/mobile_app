@@ -1,21 +1,21 @@
 import React, {
-  useContext,
   forwardRef,
-  useImperativeHandle,
-  useRef,
-  useMemo,
-  useState,
-  useEffect,
   useCallback,
+  useContext,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
 } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Keyboard,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
   TouchableWithoutFeedback,
-  Keyboard,
+  View,
 } from 'react-native';
 import {BottomSheetView} from '@gorhom/bottom-sheet';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -23,32 +23,26 @@ import DokBottomSheet from 'components/BottomSheet';
 import {ThemeContext} from 'theme/ThemeContext';
 import BigNumber from 'bignumber.js';
 import {
-  isEVMChain,
   isBalanceNotAvailable,
+  isEVMChain,
   GAS_CURRENCY,
   delay,
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
 import {useDispatch, useSelector} from 'react-redux';
 import {
-  fetchStakingApproveEstimationFee,
-  updateApproveFees,
-} from 'dok-wallet-blockchain-networks/redux/staking/stakingSlice';
-import {
-  getStakingAllowance,
-  getStakingAllowanceLoading,
-} from 'dok-wallet-blockchain-networks/redux/staking/stakingSelectors';
-import {
-  fetchExchangeApproveEstimationFee,
+  fetchExchangePermitApproveEstimationFee,
   updateExchangeApproveFees,
 } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import {
-  getExchangeAllowance,
-  getExchangeAllowanceLoading,
+  getExchangePermitAllowance,
+  getExchangePermitAllowanceLoading,
 } from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSelectors';
 import {selectUserCoins} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import AdvancedFeesSheet from 'components/AdvancedFeesSheet';
 import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
+
+const FEES_TYPE_TO_INDEX = {recommended: 0, normal: 1};
 
 const selectNativeBalance = (chainName, chainSymbol) => state => {
   const allCoins = selectUserCoins(state);
@@ -61,17 +55,17 @@ const selectNativeBalance = (chainName, chainSymbol) => state => {
   return nativeCoin?.totalAmount || 0;
 };
 
-const AllowanceInfoSheet = forwardRef(
+// Router-level (Permit2) allowance confirmation, shown after the ERC20-level
+// AllowanceInfoSheet approval when the swap quote uses a permit2 spender
+// (swapData.permit_abi is present).
+const PermitInfoSheet = forwardRef(
   (
     {
-      source = 'staking',
       tokenSymbol,
       requiredAmount,
       availableAmount,
       approveLoading,
       onContinue,
-      stakingProviderName,
-      amount,
       chainName,
       chainSymbol,
     },
@@ -81,15 +75,9 @@ const AllowanceInfoSheet = forwardRef(
     const styles = myStyles(theme);
     const bottomSheetRef = useRef(null);
     const dispatch = useDispatch();
-    const isExchange = source === 'exchange';
-    const contractLabel = isExchange ? 'exchange provider' : 'staking contract';
 
-    const allowanceData = useSelector(
-      isExchange ? getExchangeAllowance : getStakingAllowance,
-    );
-    const isLoading = useSelector(
-      isExchange ? getExchangeAllowanceLoading : getStakingAllowanceLoading,
-    );
+    const permitAllowanceData = useSelector(getExchangePermitAllowance);
+    const isLoading = useSelector(getExchangePermitAllowanceLoading);
     const nativeBalance = useSelector(
       selectNativeBalance(chainName, chainSymbol),
     );
@@ -112,57 +100,58 @@ const AllowanceInfoSheet = forwardRef(
     // Refs mirror volatile values so the fetch can read them at call time
     // without being recreated on every change (keeps the interval stable).
     const customNonceRef = useRef('');
-    const customFeesRef = useRef('');
     const selectedTypeRef = useRef('manual');
-    const allowanceDataRef = useRef(null);
+    const permitAllowanceDataRef = useRef(null);
 
     useEffect(() => {
       customNonceRef.current = customNonce;
     }, [customNonce]);
     useEffect(() => {
-      customFeesRef.current = customFees;
-    }, [customFees]);
-    useEffect(() => {
       selectedTypeRef.current = selectedType;
     }, [selectedType]);
     useEffect(() => {
-      allowanceDataRef.current = allowanceData;
-    }, [allowanceData]);
+      permitAllowanceDataRef.current = permitAllowanceData;
+    }, [permitAllowanceData]);
 
-    // Sync nonce input when allowanceData updates
+    // Sync nonce input when permitAllowanceData updates
     useEffect(() => {
-      if (allowanceData?.nonce != null) {
-        setCustomNonce(String(allowanceData.nonce));
+      if (permitAllowanceData?.nonce != null) {
+        setCustomNonce(String(permitAllowanceData.nonce));
       }
-    }, [allowanceData?.nonce]);
+    }, [permitAllowanceData?.nonce]);
 
-    // Sync custom gas price default when feesOptions arrive, but not if user has selected custom
+    // Sync custom gas price when feesOptions arrive/refresh, tracking whichever
+    // non-custom tier is currently selected (not always the first option).
     useEffect(() => {
-      if (
-        allowanceData?.feesOptions?.[0]?.gasPrice &&
-        selectedFeesTypeRef.current !== 'custom'
-      ) {
-        setCustomFees(allowanceData?.feesOptions?.[0]?.gasPrice);
+      const currentType = selectedFeesTypeRef.current;
+      if (currentType === 'custom') {
+        return;
       }
-    }, [allowanceData?.feesOptions]);
-
-    // Each flow keeps its fee on its own slice, so the recompute has to be routed
-    // to the matching one. Dispatching the staking action unconditionally used to
-    // write into state.staking.allowanceData even in exchange mode, which left the
-    // exchange fee on screen unchanged and corrupted staking state.
-    const updateFeesAction = isExchange
-      ? updateExchangeApproveFees
-      : updateApproveFees;
+      const tierIndex = FEES_TYPE_TO_INDEX[currentType] ?? 0;
+      const gasPrice = permitAllowanceData?.feesOptions?.[tierIndex]?.gasPrice;
+      if (gasPrice) {
+        setCustomFees(gasPrice);
+      }
+    }, [permitAllowanceData?.feesOptions]);
 
     const onChangeCustomFees = useCallback(
       text => {
-        const tempValues = validateNumberInInput(text, allowanceData?.decimal);
+        const tempValues = validateNumberInInput(
+          text,
+          permitAllowanceData?.decimal,
+        );
         setCustomFees(tempValues);
+        // Without this the displayed Network Fee ignored a custom gas price
+        // entirely, even though the value was still used to sign the approval.
         dispatch(
-          updateFeesAction({gasPrice: tempValues || '0', convertedChainName}),
+          updateExchangeApproveFees({
+            target: 'permit',
+            gasPrice: tempValues || '0',
+            convertedChainName,
+          }),
         );
       },
-      [allowanceData?.decimal, convertedChainName, dispatch, updateFeesAction],
+      [permitAllowanceData?.decimal, convertedChainName, dispatch],
     );
 
     const onChangeCustomNonce = useCallback(text => {
@@ -171,8 +160,8 @@ const AllowanceInfoSheet = forwardRef(
     }, []);
 
     // Stable across renders: depends only on the props it sends. Volatile values
-    // (nonce, fees type, custom inputs, cached estimateGas) are read from refs at
-    // call time, so completing a fetch never recreates this callback.
+    // (nonce, fees type, custom inputs) are read from refs at call time, so
+    // completing a fetch never recreates this callback.
     const fetchEstimationFee = useCallback(() => {
       if (isFetchingFeesRef.current) {
         return;
@@ -180,28 +169,13 @@ const AllowanceInfoSheet = forwardRef(
       isFetchingFeesRef.current = true;
       setIsFetchingFeesAgain(true);
       setHasError(false);
-      const latestAllowanceData = allowanceDataRef.current;
-      const action = isExchange
-        ? fetchExchangeApproveEstimationFee({
-            feesType: selectedFeesTypeRef.current,
-            nonce: customNonceRef.current || latestAllowanceData?.nonce,
-          })
-        : fetchStakingApproveEstimationFee({
-            isFetchNonce: false,
-            stakingProviderName,
-            amount,
-            // First call has no cached nonce → chain layer fetches it once; later
-            // calls reuse it so we never re-fetch the nonce on every refresh.
-            nonce: customNonceRef.current || latestAllowanceData?.nonce,
-            feesType: selectedFeesTypeRef.current,
-            estimateGas: latestAllowanceData?.estimateGas,
-            customGasPrice:
-              selectedFeesTypeRef.current === 'custom'
-                ? customFeesRef.current
-                : undefined,
-            allowanceType: selectedTypeRef.current,
-          });
-      dispatch(action)
+      const latestPermitAllowanceData = permitAllowanceDataRef.current;
+      dispatch(
+        fetchExchangePermitApproveEstimationFee({
+          feesType: selectedFeesTypeRef.current,
+          nonce: customNonceRef.current || latestPermitAllowanceData?.nonce,
+        }),
+      )
         .unwrap()
         .then(() => {
           setIsFetchingFeesAgain(false);
@@ -213,13 +187,13 @@ const AllowanceInfoSheet = forwardRef(
           isFetchingFeesRef.current = false;
           setHasError(true);
         });
-    }, [dispatch, stakingProviderName, amount, isExchange]);
+    }, [dispatch]);
 
     // Single source of fee refresh: fire once when the sheet opens, then every
     // 10s. The tick is gated by refs (in-flight + pause), so it never piles up
     // and never runs while custom fees are selected or a transaction is pending.
     useEffect(() => {
-      if (!isOpen || (!isExchange && (!stakingProviderName || !amount))) {
+      if (!isOpen) {
         return;
       }
       fetchEstimationFee();
@@ -229,7 +203,7 @@ const AllowanceInfoSheet = forwardRef(
         }
       }, 10000);
       return () => clearInterval(interval);
-    }, [isOpen, stakingProviderName, amount, isExchange, fetchEstimationFee]);
+    }, [isOpen, fetchEstimationFee]);
 
     // customizing the ref
     useImperativeHandle(ref, () => ({
@@ -254,8 +228,7 @@ const AllowanceInfoSheet = forwardRef(
       bottomSheetRef.current?.close();
     }, []);
 
-    const displayRequiredAmount =
-      allowanceData?.stakeAmountFormatted || requiredAmount || '0';
+    const displayRequiredAmount = requiredAmount || '0';
 
     const insufficientBalance = useMemo(() => {
       if (!displayRequiredAmount || !availableAmount) {
@@ -268,16 +241,20 @@ const AllowanceInfoSheet = forwardRef(
 
     const isInsufficientFeeBalance = useMemo(
       () =>
-        !!nativeBalance &&
-        !!allowanceData?.transactionFee &&
-        isBalanceNotAvailable(nativeBalance, allowanceData.transactionFee),
-      [nativeBalance, allowanceData?.transactionFee],
+        nativeBalance != null &&
+        permitAllowanceData?.transactionFee != null &&
+        isBalanceNotAvailable(
+          nativeBalance,
+          permitAllowanceData.transactionFee,
+        ),
+      [nativeBalance, permitAllowanceData?.transactionFee],
     );
 
     const handleContinue = useCallback(() => {
       setShowConfirmModal(true);
       isPauseCalculateFees.current = true;
     }, []);
+
     const onSelectFeesType = useCallback(
       (type, gasPrice) => {
         if (type === 'custom') {
@@ -290,11 +267,17 @@ const AllowanceInfoSheet = forwardRef(
           selectedFeesTypeRef.current = type;
           if (gasPrice) {
             setCustomFees(gasPrice);
-            dispatch(updateFeesAction({gasPrice, convertedChainName}));
+            dispatch(
+              updateExchangeApproveFees({
+                target: 'permit',
+                gasPrice,
+                convertedChainName,
+              }),
+            );
           }
         }
       },
-      [dispatch, convertedChainName, updateFeesAction],
+      [convertedChainName, dispatch],
     );
 
     const isDisabled =
@@ -313,35 +296,28 @@ const AllowanceInfoSheet = forwardRef(
         return;
       }
       const gasFeeWei =
-        selectedFeesType === 'recommended' && allowanceData?.gasFee
-          ? allowanceData?.gasFee
+        selectedFeesType === 'recommended' && permitAllowanceData?.gasFee
+          ? permitAllowanceData?.gasFee
           : new BigNumber(customFees || '0').multipliedBy(1e9).toFixed(0);
       const finalNonce = parseInt(customNonce, 10);
       onContinue({
-        isFetchNonce: false,
         type: selectedType,
         gasFee: gasFeeWei,
-        maxPriorityFeePerGas: allowanceData?.maxPriorityFeePerGas,
-        stakingProviderName,
-        amount,
-        nonce: !isNaN(finalNonce) ? finalNonce : allowanceData?.nonce,
+        maxPriorityFeePerGas: permitAllowanceData?.maxPriorityFeePerGas,
+        nonce: !isNaN(finalNonce) ? finalNonce : permitAllowanceData?.nonce,
         feesType: selectedFeesTypeRef.current,
-        estimateGas: allowanceData?.estimateGas,
-        customGasPrice:
-          selectedFeesTypeRef.current === 'custom' ? customFees : undefined,
+        estimateGas: permitAllowanceData?.estimateGas,
       });
     }, [
-      allowanceData?.estimateGas,
-      allowanceData?.gasFee,
-      allowanceData?.maxPriorityFeePerGas,
-      allowanceData?.nonce,
-      amount,
       customFees,
       customNonce,
       onContinue,
+      permitAllowanceData?.estimateGas,
+      permitAllowanceData?.gasFee,
+      permitAllowanceData?.maxPriorityFeePerGas,
+      permitAllowanceData?.nonce,
       selectedFeesType,
       selectedType,
-      stakingProviderName,
     ]);
 
     const onSuccess = useCallback(async () => {
@@ -349,6 +325,7 @@ const AllowanceInfoSheet = forwardRef(
       await delay(300);
       await submitTransferData();
     }, [submitTransferData]);
+
     return (
       <>
         <DokBottomSheet
@@ -361,11 +338,11 @@ const AllowanceInfoSheet = forwardRef(
               {/* Header */}
               <View style={styles.header}>
                 <MaterialCommunityIcons
-                  name="shield-check-outline"
+                  name="shield-key-outline"
                   size={24}
                   color={theme.background}
                 />
-                <Text style={styles.title}>Token Allowance</Text>
+                <Text style={styles.title}>Router Permission</Text>
               </View>
 
               {approveLoading ? (
@@ -378,14 +355,16 @@ const AllowanceInfoSheet = forwardRef(
               ) : isLoading && !isFetchingFeesAgain ? (
                 <View style={styles.loadingView}>
                   <ActivityIndicator size="small" color={theme.background} />
-                  <Text style={styles.loadingText}>Fetching allowance...</Text>
+                  <Text style={styles.loadingText}>
+                    Fetching permit allowance...
+                  </Text>
                 </View>
               ) : hasError ? (
                 <View style={styles.errorView}>
                   <MaterialCommunityIcons
                     name="alert-circle-outline"
                     size={48}
-                    color="#F44336"
+                    color={theme.error}
                   />
                   <Text style={styles.errorViewTitle}>
                     Something went wrong
@@ -407,44 +386,37 @@ const AllowanceInfoSheet = forwardRef(
                 </View>
               ) : (
                 <>
-                  {allowanceData ? (
+                  {permitAllowanceData ? (
                     <View style={styles.statusRow}>
                       <MaterialCommunityIcons
                         name={
-                          allowanceData.isApproved
+                          permitAllowanceData.isApproved
                             ? 'check-circle'
                             : 'alert-circle'
                         }
                         size={18}
-                        color={allowanceData.isApproved ? '#4CAF50' : '#FF9800'}
+                        color={
+                          permitAllowanceData.isApproved
+                            ? theme.success
+                            : theme.warning
+                        }
                       />
                       <Text
                         style={[
                           styles.statusText,
-                          allowanceData.isApproved
+                          permitAllowanceData.isApproved
                             ? styles.statusApproved
                             : styles.statusPending,
                         ]}>
-                        {allowanceData.isApproved
-                          ? `Current allowance: ${parseFloat(
-                              allowanceData.allowanceFormatted || '0',
+                        {permitAllowanceData.isApproved
+                          ? `Router allowance: ${parseFloat(
+                              permitAllowanceData.permit2AmountFormatted || '0',
                             ).toFixed(6)}`
-                          : `Allowance required: ${parseFloat(
-                              allowanceData.requiredFormatted || '0',
+                          : `Router allowance required: ${parseFloat(
+                              permitAllowanceData.requiredFormatted || '0',
                             ).toFixed(6)} (current: ${parseFloat(
-                              allowanceData.allowanceFormatted || '0',
+                              permitAllowanceData.permit2AmountFormatted || '0',
                             ).toFixed(6)})`}
-                      </Text>
-                    </View>
-                  ) : isFetchingFeesAgain ? (
-                    <View style={styles.statusRow}>
-                      <MaterialCommunityIcons
-                        name="help-circle"
-                        size={18}
-                        color="#FF9800"
-                      />
-                      <Text style={[styles.statusText, styles.statusPending]}>
-                        Current allowance: Refreshing...
                       </Text>
                     </View>
                   ) : null}
@@ -452,11 +424,9 @@ const AllowanceInfoSheet = forwardRef(
                   {/* Approval type cards */}
                   <Text style={styles.sectionLabel}>Select Approval Type</Text>
                   <Text style={styles.whatIsApprove}>
-                    {`Approval is a one-time on-chain permission that lets the ${contractLabel} use your ${
+                    {`This lets the swap router use your ${
                       tokenSymbol || 'tokens'
-                    }. Your tokens stay in your wallet until you ${
-                      isExchange ? 'swap' : 'stake'
-                    }.`}
+                    } through Permit2. Your tokens stay in your wallet until you swap.`}
                   </Text>
                   <View style={styles.cardsRow}>
                     <TouchableOpacity
@@ -572,7 +542,7 @@ const AllowanceInfoSheet = forwardRef(
                           size={16}
                           color={
                             selectedType === 'unlimited'
-                              ? '#FF9800'
+                              ? theme.warning
                               : theme.gray
                           }
                         />
@@ -584,30 +554,21 @@ const AllowanceInfoSheet = forwardRef(
                               : styles.selectionNoteSafe,
                           ]}>
                           {selectedType === 'unlimited'
-                            ? `The ${contractLabel} can move any amount of your ${
+                            ? `The swap router can move any amount of your ${
                                 tokenSymbol || 'tokens'
-                              } until you revoke it. Saves fees and time on future ${
-                                isExchange ? 'swaps' : 'stakes'
-                              } — choose only for protocols you trust.`
-                            : `Safest option. The contract can only ever move this exact amount — you'll need to approve again for future ${
-                                isExchange ? 'swaps' : 'stakes'
-                              }.`}
+                              } via Permit2 until you revoke it. Saves fees and time on future swaps — choose only for protocols you trust.`
+                            : `Safest option. The router can only ever move this exact amount via Permit2 — you'll need to approve again for future swaps.`}
                         </Text>
                       </View>
                       <Text style={styles.hint}>
-                        {`Approval transaction will be submitted before ${
-                          isExchange ? 'swapping' : 'staking'
-                        }.`}
+                        Permit2 approval transaction will be submitted before
+                        swapping.
                       </Text>
                     </>
                   )}
-                  {/* Network Fee Row — tap to open AdvancedFeesSheet. Chains
-                      without fee knobs (e.g. Tron: energy/bandwidth priced by
-                      the network) return no feesOptions, so the row becomes
-                      display-only. */}
+                  {/* Network Fee Row — tap to open AdvancedFeesSheet */}
                   <TouchableOpacity
                     style={styles.feeRow}
-                    disabled={!allowanceData?.feesOptions?.length}
                     onPress={() => advancedFeesSheetRef.current?.present()}>
                     <View style={styles.feeLabelRow}>
                       <MaterialCommunityIcons
@@ -621,17 +582,15 @@ const AllowanceInfoSheet = forwardRef(
                       <Text style={styles.feeSectionValue}>
                         {isFetchingFeesAgain
                           ? 'Refreshing...'
-                          : `${allowanceData?.transactionFee || '0'} ${
+                          : `${permitAllowanceData?.transactionFee || '0'} ${
                               chainSymbol || ''
                             }`}
                       </Text>
-                      {!!allowanceData?.feesOptions?.length && (
-                        <MaterialCommunityIcons
-                          name="chevron-right"
-                          size={18}
-                          color={theme.gray}
-                        />
-                      )}
+                      <MaterialCommunityIcons
+                        name="chevron-right"
+                        size={18}
+                        color={theme.gray}
+                      />
                     </View>
                   </TouchableOpacity>
                   {isInsufficientFeeBalance ? (
@@ -673,7 +632,7 @@ const AllowanceInfoSheet = forwardRef(
           />
           <AdvancedFeesSheet
             ref={advancedFeesSheetRef}
-            feesOptions={allowanceData?.feesOptions}
+            feesOptions={permitAllowanceData?.feesOptions}
             selectedFeesType={selectedFeesType}
             customFees={customFees}
             customNonce={customNonce}
@@ -682,8 +641,8 @@ const AllowanceInfoSheet = forwardRef(
             onSelectFeesType={onSelectFeesType}
             onChangeCustomFees={onChangeCustomFees}
             onChangeCustomNonce={onChangeCustomNonce}
-            // Opens OVER the allowance sheet: layer above it and keep the
-            // allowance sheet mounted (dimmed + non-interactive) underneath.
+            // Opens OVER the permit sheet: layer above it and keep the
+            // permit sheet mounted (dimmed + non-interactive) underneath.
             zIndex={10001}
             stackBehavior="push"
           />
@@ -786,10 +745,10 @@ const myStyles = theme =>
       flexShrink: 1,
     },
     statusApproved: {
-      color: '#4CAF50',
+      color: theme.success,
     },
     statusPending: {
-      color: '#FF9800',
+      color: theme.warning,
     },
     sectionLabel: {
       fontSize: 13,
@@ -821,7 +780,7 @@ const myStyles = theme =>
       color: theme.gray,
     },
     selectionNoteWarning: {
-      color: '#FF9800',
+      color: theme.warning,
     },
     cardsRow: {
       flexDirection: 'row',
@@ -887,7 +846,7 @@ const myStyles = theme =>
     errorText: {
       fontSize: 12,
       fontFamily: 'Roboto-Regular',
-      color: '#F44336',
+      color: theme.error,
       lineHeight: 18,
       marginBottom: 12,
     },
@@ -932,7 +891,7 @@ const myStyles = theme =>
       marginBottom: 16,
     },
     buttonDisabled: {
-      backgroundColor: '#708090',
+      backgroundColor: theme.disabledButton,
     },
     buttonText: {
       fontSize: 16,
@@ -942,4 +901,4 @@ const myStyles = theme =>
     },
   });
 
-export default AllowanceInfoSheet;
+export default PermitInfoSheet;

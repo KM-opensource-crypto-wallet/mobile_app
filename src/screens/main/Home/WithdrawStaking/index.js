@@ -16,7 +16,7 @@ import {IS_ANDROID, useFloatingHeight} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
 import {
   calculateEstimateFee,
-  setCurrentTransferData,
+  updateCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {currencySymbol} from 'data/currency';
@@ -195,7 +195,7 @@ const WithdrawStaking = ({navigation, route}) => {
         ? selectedProvider?.value || selectedStake?.validatorInfo?.name
         : selectedStake?.providerName || selectedStake?.validatorInfo?.name;
       dispatch(
-        setCurrentTransferData({
+        updateCurrentTransferData({
           validatorPubKey: selectedStake?.validator_address,
           stakingAddress: selectedStake?.staking_address,
           validatorName: selectedStake?.validatorInfo?.name,

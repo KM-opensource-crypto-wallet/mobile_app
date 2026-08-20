@@ -30,6 +30,7 @@ import {notificationAlertsSlice} from 'dok-wallet-blockchain-networks/redux/noti
 import {customRpcSlice} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSlice';
 import {coinSyncSlice} from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSlice.js';
 import {sentAddressHistorySlice} from 'dok-wallet-blockchain-networks/redux/sentAddressHistory/sentAddressHistorySlice';
+import {exchangeHistorySlice} from 'dok-wallet-blockchain-networks/redux/exchangeHistory/exchangeHistorySlice';
 
 const storage = createSensitiveStorage({
   keychainService: process.env.REDUX_KEYCHAIN_NAME,
@@ -77,6 +78,7 @@ const config = {
   blacklist: [
     currentTransferSlice.name,
     exchangeSlice.name,
+    exchangeHistorySlice.name,
     currencySlice.name,
     walletConnectSlice.name,
     extraDataSlice.name,
@@ -94,6 +96,7 @@ const rootReducer = persistCombineReducers(config, {
   [currentTransferSlice.name]: currentTransferSlice.reducer,
   [currencySlice.name]: currencySlice.reducer,
   [exchangeSlice.name]: exchangeSlice.reducer,
+  [exchangeHistorySlice.name]: exchangeHistorySlice.reducer,
   [walletConnectSlice.name]: walletConnectSlice.reducer,
   [stakingSlice.name]: stakingSlice.reducer,
   [cryptoProviderSlice.name]: cryptoProviderSlice.reducer,
