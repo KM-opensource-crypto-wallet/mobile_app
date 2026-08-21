@@ -17,13 +17,13 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-# Load environment variables from .env file
-if [ -f "$PROJECT_ROOT/.env" ]; then
-  export "$(grep -E '^GITHUB_PAT=' "$PROJECT_ROOT/.env" | xargs)"
+# Prefer an already-exported GITHUB_PAT, but if not set, try to read it from .env
+if [ -z "${GITHUB_PAT:-}" ] && [ -f "$PROJECT_ROOT/.env" ]; then
+  GITHUB_PAT="$(grep -E '^GITHUB_PAT=' "$PROJECT_ROOT/.env" | head -n 1 | cut -d= -f2-)"
 fi
 
-if [ -z "$GITHUB_PAT" ]; then
-  echo -e "${RED}Error: GITHUB_PAT not found in .env file${NC}"
+if [ -z "${GITHUB_PAT:-}" ]; then
+  echo -e "${RED}Error: GITHUB_PAT is not set (export it, or add it to .env for local dev)${NC}"
   exit 1
 fi
 
@@ -42,7 +42,7 @@ echo "Cloning config repository..."
 if ! git clone --depth 1 --branch "$BRANCH" "$PRIVATE_REPO" "$TEMP_DIR/config" 2>/dev/null; then
   echo -e "${RED}Error: Failed to clone config repository.${NC}"
   echo ""
-  echo "Please ensure your GITHUB_PAT in .env has access to: KM-opensource-crypto-wallet/km_mobile_config"
+  echo "Please ensure your GITHUB_PAT has access to: KM-opensource-crypto-wallet/km_mobile_config"
   echo "Contact the repository admin to request access."
   exit 1
 fi
