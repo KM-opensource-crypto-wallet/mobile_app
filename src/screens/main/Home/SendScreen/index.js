@@ -21,6 +21,7 @@ import {useSelector, useDispatch} from 'react-redux';
 import CopyIcon from 'assets/images/icons/copy.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {isInternalChainAddress} from 'dok-wallet-blockchain-networks/service/bitcoinHdAddress';
 
 import {ThemeContext} from 'theme/ThemeContext';
 import {currencySymbol} from 'data/currency';
@@ -106,14 +107,29 @@ const SendScreen = ({navigation, route}) => {
   const dispatch = useDispatch();
 
   const deriveAddresses = useMemo(() => {
-    return currentCoin?.deriveAddresses?.map(subItem => ({
-      options: subItem,
-      label: `${getCustomizePublicAddress(subItem?.address)} ${
-        isBitcoin ? `(${subItem?.balance || 0} ${currentCoin?.symbol})` : ''
-      }`,
-      value: subItem.address,
-    }));
-  }, [currentCoin?.deriveAddresses, currentCoin?.symbol, isBitcoin]);
+    return currentCoin?.deriveAddresses
+      ?.filter(
+        // Internal/change-chain addresses are not user accounts — hide them
+        // unless they actually hold funds.
+        subItem =>
+          !isInternalChainAddress(
+            currentCoin?.chain_name,
+            subItem?.derivePath,
+          ) || Number(subItem?.balance) > 0,
+      )
+      ?.map(subItem => ({
+        options: subItem,
+        label: `${getCustomizePublicAddress(subItem?.address)} ${
+          isBitcoin ? `(${subItem?.balance || 0} ${currentCoin?.symbol})` : ''
+        }`,
+        value: subItem.address,
+      }));
+  }, [
+    currentCoin?.deriveAddresses,
+    currentCoin?.chain_name,
+    currentCoin?.symbol,
+    isBitcoin,
+  ]);
 
   const coinId = useMemo(() => {
     return currentCoin?._id + currentCoin?.name + currentCoin?.chain_name;

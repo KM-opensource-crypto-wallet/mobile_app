@@ -1,4 +1,5 @@
 import BigNumber from 'bignumber.js';
+import {isInternalChainAddress} from 'dok-wallet-blockchain-networks/service/bitcoinHdAddress';
 import {
   getCustomizePublicAddress,
   validateNumberInInput,
@@ -40,7 +41,14 @@ export const isAmountBelowThreshold = (amount, coin) => {
 export const buildAddressOptions = coin => {
   if (Array.isArray(coin.deriveAddresses) && coin.deriveAddresses.length > 0) {
     return coin.deriveAddresses
-      .filter(d => d?.address)
+      .filter(
+        d =>
+          d?.address &&
+          // Internal/change-chain addresses are not user accounts — hide
+          // them unless they actually hold funds.
+          (!isInternalChainAddress(coin?.chain_name, d?.derivePath) ||
+            Number(d?.balance) > 0),
+      )
       .map(d => ({
         label: getCustomizePublicAddress(d.address),
         value: d.address,

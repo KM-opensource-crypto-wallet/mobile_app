@@ -234,9 +234,12 @@ export const CustomDerivation = ({navigation}) => {
     },
   });
 
+  // Cap counts only user-created custom derivations — automatic gap-limit
+  // discovery can legitimately grow the full list past 100.
   const isAtLimit =
     isBitcoinChain(currentCoin?.chain_name) &&
-    (currentCoin?.deriveAddresses?.length ?? 0) >= 100;
+    (currentCoin?.deriveAddresses?.filter(item => item?.isCustom)?.length ??
+      0) >= 100;
   const isDisabled = !values?.selectedDerivationOptions || isAtLimit;
 
   const exitSelectionMode = useCallback(() => {
