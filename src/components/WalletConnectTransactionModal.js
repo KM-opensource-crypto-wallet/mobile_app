@@ -293,6 +293,7 @@ const WalletConnectTransactionModal = props => {
             batchCalls,
             from: transactionData?.from,
           },
+          expectedSignerAddress: transactionData?.params?.[0]?.from,
         };
       }
       const finaltransactionData = transactionData?.params[0] || {};
