@@ -103,9 +103,10 @@ const SendFunds = ({navigation, route}) => {
       new BigNumber(minBalance),
     );
     const zeroAmount = new BigNumber(0);
+    // toFixed, never toString: a balance under 1e-7 would render as "1.3e-7".
     return localAvailableAmount.gt(zeroAmount)
-      ? localAvailableAmount.toString()
-      : zeroAmount?.toString();
+      ? localAvailableAmount.toFixed()
+      : zeroAmount.toFixed();
   }, [
     isBitcoin,
     currentCoin?.minimumBalance,
