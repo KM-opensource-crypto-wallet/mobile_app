@@ -79,8 +79,8 @@ class BitcoinCoin: CoinFactory.Coin {
       return yourAuxDic;
   }
 
-  override func accountBasePath() -> String {
-    return "m/84'/0'/0'"
+  override func accountBasePath(isTestNet: Bool) -> String {
+    return isTestNet ? "m/84'/1'/0'" : "m/84'/0'/0'"
   }
 
   override func getDeriveAddresses(isTestNet: Bool) -> NSMutableArray {

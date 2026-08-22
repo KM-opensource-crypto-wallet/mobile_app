@@ -75,8 +75,8 @@ public class BitcoinLegacyCoin extends CoinFactory.Coin {
     }
 
     @Override
-    public String accountBasePath() {
-        return "m/44'/0'/0'";
+    public String accountBasePath(Boolean isTestNet) {
+        return Boolean.TRUE.equals(isTestNet) ? "m/44'/1'/0'" : "m/44'/0'/0'";
     }
 
     @Override

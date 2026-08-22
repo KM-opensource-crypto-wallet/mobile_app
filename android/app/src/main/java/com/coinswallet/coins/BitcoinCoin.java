@@ -96,8 +96,8 @@ public class BitcoinCoin extends CoinFactory.Coin {
     }
 
     @Override
-    public String accountBasePath() {
-        return "m/84'/0'/0'";
+    public String accountBasePath(Boolean isTestNet) {
+        return Boolean.TRUE.equals(isTestNet) ? "m/84'/1'/0'" : "m/84'/0'/0'";
     }
 
     @Override

@@ -64,18 +64,40 @@ class CoinFactory {
       var params: NSMutableDictionary = [:]
       return params
     }
-    // BIP44 account base path, e.g. "m/84'/0'/0'". Coins that support ranged
-    // derivation override this; others keep the empty default.
-    func accountBasePath() -> String {
+    // Mirrors RECEIVE_CHAIN / CHANGE_CHAIN / MAX_ADDRESSES_PER_CHAIN in
+    // dok-wallet-blockchain-networks/service/bitcoinHdAddress.js.
+    static let receiveChain = 0
+    static let changeChain = 1
+    static let maxDeriveRangeCount = 500
+
+    // BIP44 account base path, e.g. "m/84'/0'/0'". The coin-type segment
+    // differs per network (0' mainnet, 1' testnet), so overrides receive
+    // isTestNet; this must stay in step with getAccountBasePath in
+    // dok-wallet-blockchain-networks/service/bitcoinHdAddress.js. Coins that
+    // support ranged derivation override this; others keep the empty default.
+    func accountBasePath(isTestNet: Bool) -> String {
       return ""
     }
     // Derives `count` addresses on one BIP44 chain (0 = receive, 1 = change)
     // starting at `startIndex`, reusing each coin's addCustomDerivation so the
     // address type (bech32 / p2sh / legacy) stays coin-specific.
+    //
+    // Every step is a full BIP32 derivation, and this is reachable from JS
+    // through the getDeriveAddressRange bridge method, so the range is
+    // bounded: an unbounded count would block the caller and exhaust memory.
+    // BIP44 defines exactly two chains, and the per-chain cap matches
+    // MAX_ADDRESSES_PER_CHAIN in bitcoinHdAddress.js. The Int.max guard keeps
+    // the range expression below from trapping on overflow. Invalid input
+    // yields no addresses, as before.
     func getDeriveAddressRange(chainIndex: Int, startIndex: Int, count: Int, isTestNet: Bool) -> NSMutableArray {
       let result = NSMutableArray()
-      let basePath = accountBasePath()
-      if basePath.isEmpty || count <= 0 || startIndex < 0 || chainIndex < 0 {
+      let basePath = accountBasePath(isTestNet: isTestNet)
+      if basePath.isEmpty
+        || count <= 0
+        || count > Coin.maxDeriveRangeCount
+        || startIndex < 0
+        || (chainIndex != Coin.receiveChain && chainIndex != Coin.changeChain)
+        || startIndex > Int.max - count {
         return result
       }
       for i in startIndex..<(startIndex + count) {

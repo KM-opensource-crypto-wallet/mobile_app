@@ -50,8 +50,8 @@ class BitcoinSegwitCoin: CoinFactory.Coin {
     return dict
   }
 
-  override func accountBasePath() -> String {
-    return "m/49'/0'/0'"
+  override func accountBasePath(isTestNet: Bool) -> String {
+    return isTestNet ? "m/49'/1'/0'" : "m/49'/0'/0'"
   }
 
   override func getDeriveAddresses(isTestNet: Bool) -> NSMutableArray {

@@ -83,8 +83,8 @@ public class BitcoinSegwitCoin extends CoinFactory.Coin {
     }
 
     @Override
-    public String accountBasePath() {
-        return "m/49'/0'/0'";
+    public String accountBasePath(Boolean isTestNet) {
+        return Boolean.TRUE.equals(isTestNet) ? "m/49'/1'/0'" : "m/49'/0'/0'";
     }
 
     @Override

@@ -132,7 +132,11 @@ const SendFunds = ({navigation, route}) => {
     const invoiceAmount = isLightning
       ? getBolt11InvoiceAmount(localAddress)
       : null;
-    const localAmount = qrAmount || linkAmount || invoiceAmount;
+    // A fixed-amount invoice must be paid exactly and locks the amount field
+    // (see isInvoiceAmountLocked below), so it outranks any amount carried by
+    // the QR/deep link — otherwise "lightning:lnbc..?amount=" would prefill an
+    // uneditable wrong amount. Variable-amount invoices fall through as before.
+    const localAmount = invoiceAmount || qrAmount || linkAmount;
     const localMemo = linkMemo;
     const localCurrencyAmount = localAmount
       ? multiplyBNWithFixed(localAmount, currentCoin?.currencyRate, 2)

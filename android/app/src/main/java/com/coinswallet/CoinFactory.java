@@ -63,17 +63,38 @@ public class CoinFactory {
         public ReadableMap addCustomDerivation(String derivePath, Boolean isTestNet){
             return null;
         };
-        // BIP44 account base path, e.g. "m/84'/0'/0'". Coins that support
-        // ranged derivation override this; others keep the empty default.
-        public String accountBasePath() {
+        // Mirrors RECEIVE_CHAIN / CHANGE_CHAIN / MAX_ADDRESSES_PER_CHAIN in
+        // dok-wallet-blockchain-networks/service/bitcoinHdAddress.js.
+        protected static final int RECEIVE_CHAIN = 0;
+        protected static final int CHANGE_CHAIN = 1;
+        protected static final int MAX_DERIVE_RANGE_COUNT = 500;
+
+        // BIP44 account base path, e.g. "m/84'/0'/0'". The coin-type segment
+        // differs per network (0' mainnet, 1' testnet), so overrides receive
+        // isTestNet; this must stay in step with getAccountBasePath in
+        // dok-wallet-blockchain-networks/service/bitcoinHdAddress.js. Coins that
+        // support ranged derivation override this; others keep the empty default.
+        public String accountBasePath(Boolean isTestNet) {
             return "";
         }
         // Appends `count` addresses of one BIP44 chain (0 = receive,
         // 1 = change) starting at `startIndex`, reusing each coin's
         // addCustomDerivation so the address type stays coin-specific.
+        //
+        // Every step is a full BIP32 derivation, and this is reachable from JS
+        // through the getDeriveAddressRange @ReactMethod, so the range is
+        // bounded: an unbounded count would block the bridge thread and
+        // exhaust memory. BIP44 defines exactly two chains, and the per-chain
+        // cap matches MAX_ADDRESSES_PER_CHAIN in bitcoinHdAddress.js. Invalid
+        // input yields no addresses, as before.
         protected void appendDeriveAddressRange(WritableArray target, int chainIndex, int startIndex, int count, Boolean isTestNet) {
-            String basePath = accountBasePath();
-            if (basePath.isEmpty() || count <= 0 || startIndex < 0 || chainIndex < 0) {
+            String basePath = accountBasePath(isTestNet);
+            if (basePath.isEmpty()
+                    || count <= 0
+                    || count > MAX_DERIVE_RANGE_COUNT
+                    || startIndex < 0
+                    || (chainIndex != RECEIVE_CHAIN && chainIndex != CHANGE_CHAIN)
+                    || startIndex > Integer.MAX_VALUE - count) {
                 return;
             }
             for (int i = startIndex; i < startIndex + count; i++) {
