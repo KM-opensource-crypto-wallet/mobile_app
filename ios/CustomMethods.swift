@@ -172,6 +172,37 @@ extension Data {
     }
   }
   
+  @objc public func getDeriveAddressRange(
+    _ coinName: String,
+    mnemonic: String,
+    isTestNet: Bool,
+    chainIndex: NSNumber,
+    startIndex: NSNumber,
+    count: NSNumber,
+    resolver resolve: RCTPromiseResolveBlock,
+    rejecter reject: RCTPromiseRejectBlock
+  ) -> Void {
+    var coin = coins[mnemonic + ":" + coinName]
+    if coin == nil {
+      coin = CoinFactory.createCoin(coinName: coinName, mnemonic: mnemonic)
+      coins[mnemonic + ":" + coinName] = coin
+    }
+    if let unwrappedCoin = coin {
+      let deriveAddresses = unwrappedCoin.getDeriveAddressRange(
+        chainIndex: chainIndex.intValue,
+        startIndex: startIndex.intValue,
+        count: count.intValue,
+        isTestNet: isTestNet
+      )
+      let result: [String: Any] = [
+        "deriveAddresses": deriveAddresses,
+      ]
+      resolve(result)
+    } else {
+      reject("0","E_INVALID_COIN", NSError(domain: "", code: 0, userInfo: nil))
+    }
+  }
+
   @objc public func addCustomDerivation(
     _ coinName: String,
     mnemonic: String,

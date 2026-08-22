@@ -1,4 +1,5 @@
 import {CheckBox} from '@rneui/themed';
+import AddressTypeBadge from 'components/AddressTypeBadge';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import Loading from 'components/Loading';
 import {getCustomizePublicAddress} from 'dok-wallet-blockchain-networks/helper';
@@ -45,6 +46,18 @@ const SelectUTXOsScreen = ({navigation}) => {
     () => allUTXOs.every(item => !item.isSelected),
     [allUTXOs],
   );
+
+  // UTXO sections are keyed by bare address; map back to the derive entry so
+  // the section header can show the address type.
+  const deriveAddressByAddress = useMemo(() => {
+    const map = new Map();
+    (currentCoin?.deriveAddresses || []).forEach(item => {
+      if (item?.address) {
+        map.set(item.address, item);
+      }
+    });
+    return map;
+  }, [currentCoin?.deriveAddresses]);
 
   useEffect(() => {
     if (!currentCoin?.UTXOs) {
@@ -198,6 +211,10 @@ const SelectUTXOsScreen = ({navigation}) => {
                       )}
                       )
                     </Text>
+                    <AddressTypeBadge
+                      chain_name={currentCoin?.chain_name}
+                      item={deriveAddressByAddress.get(section.label)}
+                    />
                   </TouchableOpacity>
                 )}
                 renderItem={({item, section}) => (

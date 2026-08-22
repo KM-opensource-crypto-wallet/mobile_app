@@ -9041,7 +9041,7 @@ eventemitter3@5.0.1:
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-5.0.1.tgz#53f5ffd0a492ac800721bb42c66b841de96423c4"
   integrity sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==
 
-eventemitter3@^4.0.4:
+eventemitter3@^4.0.4, eventemitter3@^4.0.7:
   version "4.0.7"
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-4.0.7.tgz#2de9b68f6528d5644ef5c59526a1b4a07306169f"
   integrity sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==
@@ -13302,10 +13302,10 @@ react-native-nitro-image@^0.15.1:
   resolved "https://registry.yarnpkg.com/react-native-nitro-image/-/react-native-nitro-image-0.15.1.tgz#afe8aeea82fe763ec5d74467156a4b4a70657042"
   integrity sha512-slrImfUgasAdzylTiNWuTkawE0R4t7LGh+7N2VFa/D9+SxlQbkKYp1J6hA3XkkEnTnUCKaea39ZVg+1xx665MQ==
 
-react-native-nitro-modules@^0.35.6:
-  version "0.35.10"
-  resolved "https://registry.yarnpkg.com/react-native-nitro-modules/-/react-native-nitro-modules-0.35.10.tgz#8f8e659ceed8638ab3ede871762e51893513214a"
-  integrity sha512-KsySOAIkbSTjNiX2GvXiNT9P5DMeZd99yvtE/+Lw7RXV7Ztxh9Z+YyAbYkBqadhN5J/KXXuPjhRYgyLOIZgsbQ==
+react-native-nitro-modules@^0.36.5:
+  version "0.36.5"
+  resolved "https://registry.yarnpkg.com/react-native-nitro-modules/-/react-native-nitro-modules-0.36.5.tgz#438c77e4f1e77bd1d3e901eb5b4953762e68a078"
+  integrity sha512-SJby84+hovD70JmQ1fq+56tw3oapJeChehUqXA4Gqjm+ktJhMAcj8LGwoAjStSOUwRaK7czbzBPB0Widj+EDoQ==
 
 react-native-onesignal@5.4.1:
   version "5.4.1"
@@ -13357,10 +13357,15 @@ react-native-quick-base64@^3.0.0:
   resolved "https://registry.yarnpkg.com/react-native-quick-base64/-/react-native-quick-base64-3.0.0.tgz#7fb60a2e2e579cfc08e2880fc98868b78c32bc3c"
   integrity sha512-gnJhA4a/QIGrptZQJv0hLLne8yyJPkdXtn33LHEzq3nhzsv+jRhrxr07wYwYX+CKCRXmuNkZ3Wo7LapSrFVmQg==
 
-react-native-quick-crypto@^1.1.6:
-  version "1.1.6"
-  resolved "https://registry.yarnpkg.com/react-native-quick-crypto/-/react-native-quick-crypto-1.1.6.tgz#8b1e39a08431afe4ad42c339ab9e86698e00da2a"
-  integrity sha512-FPq628/KjdwUCtKEMzbNDXiw+Z1DM6tBcQnUu/qtLtiGsIFNebrCMTpCjry0T3hhDcGbd9IC4acHxprAteh8rA==
+react-native-quick-base64@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/react-native-quick-base64/-/react-native-quick-base64-3.0.1.tgz#d6eb0e316856aa6f68399729d56aceba38d585cc"
+  integrity sha512-EjUP2U7WqKmlMmoY7XGyHomy8bM0q4+yCDCRg4ZezQ6zedYRwc7yVk4V2O/iSftKaLEzhuW98lpyPMdk1iPHXQ==
+
+react-native-quick-crypto@^1.1.7:
+  version "1.1.7"
+  resolved "https://registry.yarnpkg.com/react-native-quick-crypto/-/react-native-quick-crypto-1.1.7.tgz#8b75e8c04b2fb97a9df94c73c1032be86acb2287"
+  integrity sha512-4On/q3uENJNk6uCyxtigRQzAxPS/h75nDtljX2MBdGwELkz2p0O/eNFSsYIV8l2vYXxyyva6jXQHBCxAcryZ9A==
   dependencies:
     "@craftzdog/react-native-buffer" "^6.1.2"
     events "3.3.0"
@@ -13484,6 +13489,14 @@ react-native-tab-view@^4.2.2:
   integrity sha512-z2x4ZAJfdiy3Rk78/2tIfKu1DezMKHWOfIIw4bpfPlwVqg3i2ViFtvZJTadKWZpZJEnG43cfhJPNDzH5RZTK2Q==
   dependencies:
     use-latest-callback "^0.2.4"
+
+react-native-tcp-socket@^6.4.2:
+  version "6.4.2"
+  resolved "https://registry.yarnpkg.com/react-native-tcp-socket/-/react-native-tcp-socket-6.4.2.tgz#ddbd682910c5c21197b7d9155dd627f1047fb401"
+  integrity sha512-x3piN60BLaVA7or3n6HKhsa15QDpb1hu+X7Mh99ldV+ZXUGDVKymsLLyu7vzEybTzF3sC17ubpCEgjik5aXfcA==
+  dependencies:
+    buffer "^5.4.3"
+    eventemitter3 "^4.0.7"
 
 react-native-test-flight@^1.1.0:
   version "1.1.0"

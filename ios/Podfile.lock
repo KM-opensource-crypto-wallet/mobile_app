@@ -35,6 +35,7 @@ PODS:
     - uniffi-bindgen-react-native (= 0.28.3-5)
     - Yoga
   - BugfenderSDK (2.2.0)
+  - CocoaAsyncSocket (7.6.5)
   - FBLazyVector (0.86.0)
   - GoogleSignIn (9.2.0):
     - AppAuth (~> 2.1)
@@ -129,7 +130,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - NitroModules (0.35.10):
+  - NitroModules (0.36.5):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -198,7 +199,6 @@ PODS:
     - OneSignalXCFramework/OneSignalNotifications
     - OneSignalXCFramework/OneSignalOSCore
     - OneSignalXCFramework/OneSignalOutcomes
-  - OpenSSL-Universal (3.6.2000)
   - pagopa-io-react-native-integrity (0.3.2):
     - hermes-engine
     - RCTRequired
@@ -225,10 +225,9 @@ PODS:
   - PromisesObjC (2.4.1)
   - PromisesSwift (2.4.1):
     - PromisesObjC (= 2.4.1)
-  - QuickCrypto (1.1.6):
+  - QuickCrypto (1.1.7):
     - hermes-engine
     - NitroModules
-    - OpenSSL-Universal (~> 3.6.2000)
     - RCTRequired
     - RCTTypeSafety
     - React-callinvoker
@@ -1861,7 +1860,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-quick-base64 (3.0.0):
+  - react-native-quick-base64 (3.0.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2026,6 +2025,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-tcp-socket (6.4.2):
+    - CocoaAsyncSocket
+    - React-Core
   - react-native-video (6.19.2):
     - hermes-engine
     - RCTRequired
@@ -3201,6 +3203,7 @@ DEPENDENCIES:
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-screenguard (from `../node_modules/react-native-screenguard`)
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
+  - react-native-tcp-socket (from `../node_modules/react-native-tcp-socket`)
   - react-native-video (from `../node_modules/react-native-video`)
   - react-native-view-shot (from `../node_modules/react-native-view-shot`)
   - react-native-webview (from `../node_modules/react-native-webview`)
@@ -3272,6 +3275,7 @@ SPEC REPOS:
     - AppAuth
     - AppCheckCore
     - BugfenderSDK
+    - CocoaAsyncSocket
     - GoogleSignIn
     - GoogleUtilities
     - GTMAppAuth
@@ -3280,7 +3284,6 @@ SPEC REPOS:
     - libdav1d
     - libwebp
     - OneSignalXCFramework
-    - OpenSSL-Universal
     - PromisesObjC
     - PromisesSwift
     - React-Codegen
@@ -3419,6 +3422,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-screenguard"
   react-native-slider:
     :path: "../node_modules/@react-native-community/slider"
+  react-native-tcp-socket:
+    :path: "../node_modules/react-native-tcp-socket"
   react-native-video:
     :path: "../node_modules/react-native-video"
   react-native-view-shot:
@@ -3549,6 +3554,7 @@ SPEC CHECKSUMS:
   AppCheckCore: 214137f5c378d1dec88a68425c467fe65aaff637
   breeztech-breez-sdk-spark-react-native: ce2529a45a9b1fa227b8b5d58260cd77f6e395d2
   BugfenderSDK: 67548568056e992ceb5a520337ef508d80a048d4
+  CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   FBLazyVector: b3e7ad108f0d882e30445c5527d774e3fd432f3d
   GoogleSignIn: e449a40a92e9f2eea56e98b5214d13725dc5a00a
   GoogleUtilities: 4f2618a4a1e762a1ee134a1e2323bba9843e06da
@@ -3559,13 +3565,12 @@ SPEC CHECKSUMS:
   libdav1d: 23581a4d8ec811ff171ed5e2e05cd27bad64c39f
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   NitroImage: 0bbe0fc7032343a8e574e9ebcfafbbd81e1b37c2
-  NitroModules: 65b53212caf01270656501155b718dfd2e0db185
+  NitroModules: 74c5a22692ab6286060a6821d90061f053191289
   OneSignalXCFramework: 943852e7d70d719f73e9669d48620aeec1b93022
-  OpenSSL-Universal: ecee7b138fa75a74ecf00d7ffd248fb584739b9e
   pagopa-io-react-native-integrity: ed0f11de16667e103d587c417f4e5e9a3420c515
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
   PromisesSwift: 217dea0fd5d2ad65222a109c48698add13cc1c5b
-  QuickCrypto: 2aea3d12466ed6f87d8b7c497c41bfa2e3584eef
+  QuickCrypto: 51b09233b43bead1bb9cdf4de52abd845cc9b40b
   RCTDeprecation: 2a74a2c57675e64419bd89078efde81f7c1de90b
   RCTRequired: 30451112e6fef4e6f31b4e7eee0845156e35e4b0
   RCTSwiftUI: 5aaf0b07e747ba749dc6acc94d8bd41eea4b570f
@@ -3614,13 +3619,14 @@ SPEC CHECKSUMS:
   react-native-netinfo: 14c1ff01b3c9d53b061b08840bfa156a6150479f
   react-native-onesignal: 57510583c27f1a70d0f47232162a42267f38b4c5
   react-native-pager-view: 93c1f905246276862627a6be94e496c2b5ac4c0c
-  react-native-quick-base64: f5840b9dd6ea8f5814fee7a11376d709d08cab3a
+  react-native-quick-base64: 3c5c526747acdd10088a2702f17a6a86866d5d0b
   react-native-randombytes: ddf6edfd3fb9091af8c6ed1b35e57c308b5f5f2c
   react-native-render-html: 984dfe2294163d04bf5fe25d7c9f122e60e05ebe
   react-native-restart: 7595693413fe3ca15893702f2c8306c62a708162
   react-native-safe-area-context: c1eb308f4b36372a4de4b3bdaa8ed695ec3dd461
   react-native-screenguard: 8f0164424d543c61a1930bde43e716cf0151a430
   react-native-slider: 8824cf332b11bf5149f6576c8c8b32b4f93f82ac
+  react-native-tcp-socket: dcd04baa1f94a73d833b7251fb9bd197964e8345
   react-native-video: 84f5283aaed3484b5b4914095ab16a9dd3477cca
   react-native-view-shot: 4889858ecc217aee29c22b1e8d119ae531abe768
   react-native-webview: cf1541e140494e4af434a5787a211959fefe9a3e

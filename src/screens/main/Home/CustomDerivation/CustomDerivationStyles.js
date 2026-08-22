@@ -72,11 +72,16 @@ const myStyles = theme =>
       flex: 1,
       justifyContent: 'space-between',
     },
+    derivePathRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
     derivePathStyle: {
       color: theme.font,
       fontSize: 15,
       fontFamily: 'Roboto-Regular',
       marginBottom: 4,
+      flexShrink: 1,
     },
     activeDerivePathStyle: {
       color: theme.background,
