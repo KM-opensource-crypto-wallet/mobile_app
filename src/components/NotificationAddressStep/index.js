@@ -1,10 +1,12 @@
-import React, {memo, useCallback, useContext} from 'react';
+import React, {memo, useCallback, useContext, useRef} from 'react';
 import {View, Text, TouchableOpacity, SectionList} from 'react-native';
 import {ThemeContext} from 'theme/ThemeContext';
 import CoinIcon from 'components/CoinIcon/CoinIcon';
 import ChainItem from 'components/ChainItem';
-import DokDropdown from 'components/DokDropdown';
+import AddressSelectorSheet from 'components/AddressSelectorSheet';
+import AddressSelectorTrigger from 'components/AddressSelectorTrigger';
 import {isBitcoinChain} from 'dok-wallet-blockchain-networks/helper';
+import {getVisibleDeriveAddresses} from 'dok-wallet-blockchain-networks/service/bitcoinHdAddress';
 import myStyles from './NotificationAddressStepStyles';
 import {coinKey, buildAddressOptions} from 'utils/notificationAlertHelpers';
 
@@ -16,6 +18,9 @@ const NotificationAddressStep = ({
 }) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
+  // One sheet serves every row (a sheet per SectionList row would mount a
+  // modal per coin); the pressed row's key comes back via the context param.
+  const addressSheetRef = useRef();
 
   const renderSectionHeader = useCallback(
     ({section: {entry}}) => {
@@ -39,23 +44,53 @@ const NotificationAddressStep = ({
     [styles],
   );
 
+  const onSelectAddress = useCallback(
+    (item, context) => {
+      if (context?.key && item?.address) {
+        onAddressChange(context.key, item.address);
+      }
+    },
+    [onAddressChange],
+  );
+
   const renderItem = useCallback(
     ({item: entry}) => {
       const key = coinKey(entry.walletClientId, entry.coin._id);
       const options = buildAddressOptions(entry.coin);
       const selectedAddr = addressMap[key] || options[0]?.value || '';
+      const items = getVisibleDeriveAddresses(
+        entry.coin.chain_name,
+        entry.coin.deriveAddresses,
+      );
+      const selectedItem = items.find(
+        subItem => subItem?.address === selectedAddr,
+      );
       return (
         <View style={styles.addressDropdownContainer}>
-          <DokDropdown
-            title="Wallet Address"
-            data={options}
-            value={selectedAddr}
-            onChangeValue={item => onAddressChange(key, item.value)}
+          <AddressSelectorTrigger
+            title={'Wallet Address'}
+            chain_name={entry.coin.chain_name}
+            item={selectedItem}
+            symbol={entry.coin.symbol}
+            fallbackAddress={selectedAddr}
+            onPress={() =>
+              addressSheetRef.current?.present({
+                chain_name: entry.coin.chain_name,
+                symbol: entry.coin.symbol,
+                items: items.length
+                  ? items
+                  : [{address: entry.coin.address}].filter(
+                      subItem => subItem.address,
+                    ),
+                selectedAddress: selectedAddr,
+                context: {key},
+              })
+            }
           />
         </View>
       );
     },
-    [addressMap, onAddressChange, styles],
+    [addressMap, styles],
   );
 
   return (
@@ -75,6 +110,7 @@ const NotificationAddressStep = ({
       <TouchableOpacity style={styles.button} onPress={onNext}>
         <Text style={styles.buttonTitle}>Next</Text>
       </TouchableOpacity>
+      <AddressSelectorSheet ref={addressSheetRef} onSelect={onSelectAddress} />
     </View>
   );
 };

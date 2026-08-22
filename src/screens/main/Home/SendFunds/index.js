@@ -522,6 +522,14 @@ const SendFunds = ({navigation, route}) => {
                                           2,
                                         ),
                                       );
+                                    } else if (
+                                      getBolt11InvoiceAmount(values.send)
+                                    ) {
+                                      // The previous recipient was a
+                                      // fixed-amount invoice; its amount no
+                                      // longer applies to this recipient.
+                                      setFieldValue('amount', '');
+                                      setFieldValue('currencyAmount', '');
                                     }
                                   }
                                 }}
@@ -654,9 +662,11 @@ const SendFunds = ({navigation, route}) => {
                                 }
                                 theme={{
                                   colors: {
-                                    onSurfaceVariant: !errors?.currencyAmount
-                                      ? theme.gray
-                                      : 'red',
+                                    // The schema only validates `amount`;
+                                    // both inputs are views of the same value.
+                                    onSurfaceVariant: errors.amount
+                                      ? 'red'
+                                      : theme.gray,
                                   },
                                 }}
                                 outlineColor={

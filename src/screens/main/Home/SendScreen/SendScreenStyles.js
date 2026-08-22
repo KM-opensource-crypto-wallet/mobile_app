@@ -125,6 +125,10 @@ const myStyles = theme =>
       justifyContent: 'space-between',
       marginBottom: 5,
     },
+    addressTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
     addresTitle: {
       color: theme.gray,
       fontSize: 16,
