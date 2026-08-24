@@ -8,14 +8,14 @@ DOK Wallet is a non-custodial cryptocurrency wallet mobile application built wit
 
 ## Tech Stack
 
-- **React Native**: 0.83.1
-- **React**: 19.2.0
+- **React Native**: 0.86
+- **React**: 19.2.3
 - **State Management**: Redux Toolkit + Redux Saga
 - **Persistence**: Redux Persist with sensitive storage
 - **Navigation**: React Navigation (drawer, stack, native-stack)
 - **UI Components**: React Native Paper, RNEUI
 - **Camera**: react-native-vision-camera (QR scanning)
-- **Node Version**: >=20
+- **Node Version**: >=22
 
 ## Project Structure
 
