@@ -6,6 +6,7 @@ import {
   ReceivePaymentMethod,
   SendPaymentMethod,
   SendPaymentMethod_Tags,
+  PaymentRequest,
   InputType_Tags,
   SendPaymentOptions,
   OnchainConfirmationSpeed,
@@ -101,11 +102,16 @@ async function prepareAndSendPayment(phrase, paymentRequest, amount) {
   try {
     const sdk = await connectToSdk(phrase);
     if (!sdk || !paymentRequest) {
-      console.log('Error', 'SDK not connected or no payment request');
-      return;
+      // Must throw, not return: the fee estimate is only reported as failed
+      // when this rejects, and a bare `return` would leave prepareLightning
+      // destructuring undefined.
+      throw new Error('SDK not connected or no payment request');
     }
     const prepareResponse = await sdk.prepareSendPayment({
-      paymentRequest,
+      // 0.23.0 changed `paymentRequest` from a string to the PaymentRequest
+      // tagged union; a bare string has no `.tag`, so lowering it over the FFI
+      // throws "Raw enum value doesn't match any cases" before the native call.
+      paymentRequest: new PaymentRequest.Input({input: paymentRequest}),
       amount: BigInt(convertToSmallAmount(amount, 8)),
     });
     prepareSendResponse = prepareResponse;
@@ -141,10 +147,15 @@ async function prepareAndSendPayment(phrase, paymentRequest, amount) {
         sparkFee: '',
       };
     }
-    return {};
+    // No known payment method matched, so the payment cannot be priced. Never
+    // fall through to an empty object: the estimate would look successful and
+    // the Transfer screen would show a 0 fee instead of its error state.
+    throw new Error(
+      `Unsupported lightning payment method: ${prepareResponse.paymentMethod?.tag}`,
+    );
   } catch (err) {
     console.error('Error preparing payment:', err);
-    return {};
+    throw err;
   }
 }
 
