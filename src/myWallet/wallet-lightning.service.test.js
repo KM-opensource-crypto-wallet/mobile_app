@@ -15,8 +15,23 @@ jest.mock('@breeztech/breez-sdk-spark-react-native', () => ({
     },
   },
   ReceivePaymentMethod: {},
-  SendPaymentMethod: {},
+  SendPaymentMethod: {
+    Bolt11Invoice: class {
+      constructor(inner) {
+        this.inner = inner;
+        this.tag = 'Bolt11Invoice';
+      }
+    },
+  },
   SendPaymentMethod_Tags: {},
+  PaymentRequest: {
+    Input: class {
+      constructor(inner) {
+        this.inner = inner;
+        this.tag = 'Input';
+      }
+    },
+  },
   InputType_Tags: {},
   SendPaymentOptions: {},
   OnchainConfirmationSpeed: {},
@@ -151,5 +166,65 @@ describe('connectToSdk wallet isolation', () => {
       expect(await getBalance(undefined)).toBeUndefined();
       expect(connect).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('prepareLightning', () => {
+  // prepareSendPayment is the only SDK call in the estimate path, so a fake
+  // sdk carrying just that method is enough to drive both outcomes.
+  const loadPrepare = () => {
+    jest.resetModules();
+    const breez = require('@breeztech/breez-sdk-spark-react-native');
+    const helper = require('dok-wallet-blockchain-networks/helper');
+    const {prepareLightning} = require('myWallet/wallet-lightning.service');
+    const sdk = {prepareSendPayment: jest.fn()};
+    breez.connect.mockImplementation(async () => sdk);
+    helper.convertToSmallAmount.mockReturnValue('6608');
+    return {prepareLightning, sdk, breez};
+  };
+
+  const INVOICE = 'lnbc66080n1p4gccf9pp5zn4fkzz39983lvzz4a2yye8pye3zja6hxkkdc9';
+
+  it('rejects when the SDK cannot prepare the payment', async () => {
+    const {prepareLightning, sdk} = loadPrepare();
+    sdk.prepareSendPayment.mockRejectedValue(new Error('prepare blew up'));
+
+    // Before the fix prepareAndSendPayment swallowed this and returned {}, so
+    // prepareLightning resolved to {fee: '0'}: calculateEstimateFee reported
+    // success and Transfer rendered the form with a zero fee instead of its
+    // error view.
+    await expect(
+      prepareLightning('wallet-a', INVOICE, '0.00006608'),
+    ).rejects.toThrow('prepare blew up');
+  });
+
+  it('rejects when the prepared payment method is not one we can price', async () => {
+    const {prepareLightning, sdk} = loadPrepare();
+    sdk.prepareSendPayment.mockResolvedValue({paymentMethod: {tag: 'Unknown'}});
+
+    await expect(
+      prepareLightning('wallet-a', INVOICE, '0.00006608'),
+    ).rejects.toThrow('Unsupported lightning payment method');
+  });
+
+  it('sends the invoice as a PaymentRequest.Input and returns the fee', async () => {
+    const {prepareLightning, sdk, breez} = loadPrepare();
+    sdk.prepareSendPayment.mockResolvedValue({
+      paymentMethod: new breez.SendPaymentMethod.Bolt11Invoice({
+        lightningFeeSats: 12n,
+        sparkTransferFeeSats: undefined,
+      }),
+    });
+
+    const result = await prepareLightning('wallet-a', INVOICE, '0.00006608');
+
+    // SDK 0.23.0 takes the PaymentRequest tagged union, not a bare string; a
+    // string has no `.tag` and dies in the FFI lowering with "Raw enum value
+    // doesn't match any cases".
+    const request = sdk.prepareSendPayment.mock.calls[0][0];
+    expect(request.paymentRequest).toBeInstanceOf(breez.PaymentRequest.Input);
+    expect(request.paymentRequest.inner).toEqual({input: INVOICE});
+    expect(request.amount).toBe(6608n);
+    expect(result.fee).toBe(12n);
   });
 });
