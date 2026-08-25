@@ -61,6 +61,7 @@ import {
 import {getSentAddressHistory} from 'dok-wallet-blockchain-networks/redux/sentAddressHistory/sentAddressHistorySelectors';
 import {getAddressBook} from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSelector';
 import {findLookalikeAddress} from 'dok-wallet-blockchain-networks/helper/addressPoisoning';
+import {getBolt11InvoiceAmount} from 'dok-wallet-blockchain-networks/helper/bolt11';
 import ModalAddressPoisoningWarning from 'components/ModalAddressPoisoningWarning';
 
 const SendFunds = ({navigation, route}) => {
@@ -83,6 +84,7 @@ const SendFunds = ({navigation, route}) => {
   const sentAddressHistory = useSelector(getSentAddressHistory);
   const addressBook = useSelector(getAddressBook);
   const isBitcoin = isBitcoinChain(currentCoin?.chain_name);
+  const isLightning = currentCoin?.chain_name === 'bitcoin_lightning';
   const uuid = useMemo(() => {
     return v4();
   }, []);
@@ -101,9 +103,10 @@ const SendFunds = ({navigation, route}) => {
       new BigNumber(minBalance),
     );
     const zeroAmount = new BigNumber(0);
+    // toFixed, never toString: a balance under 1e-7 would render as "1.3e-7".
     return localAvailableAmount.gt(zeroAmount)
-      ? localAvailableAmount.toString()
-      : zeroAmount?.toString();
+      ? localAvailableAmount.toFixed()
+      : zeroAmount.toFixed();
   }, [
     isBitcoin,
     currentCoin?.minimumBalance,
@@ -127,7 +130,14 @@ const SendFunds = ({navigation, route}) => {
 
   useEffect(() => {
     const localAddress = qrAddress || linkAddress;
-    const localAmount = qrAmount || linkAmount;
+    const invoiceAmount = isLightning
+      ? getBolt11InvoiceAmount(localAddress)
+      : null;
+    // A fixed-amount invoice must be paid exactly and locks the amount field
+    // (see isInvoiceAmountLocked below), so it outranks any amount carried by
+    // the QR/deep link — otherwise "lightning:lnbc..?amount=" would prefill an
+    // uneditable wrong amount. Variable-amount invoices fall through as before.
+    const localAmount = invoiceAmount || qrAmount || linkAmount;
     const localMemo = linkMemo;
     const localCurrencyAmount = localAmount
       ? multiplyBNWithFixed(localAmount, currentCoin?.currencyRate, 2)
@@ -154,6 +164,7 @@ const SendFunds = ({navigation, route}) => {
     }
   }, [
     currentCoin?.currencyRate,
+    isLightning,
     linkAddress,
     linkAmount,
     linkMemo,
@@ -436,357 +447,420 @@ const SendFunds = ({navigation, route}) => {
               errors,
               isValid,
               setFieldValue,
-            }) => (
-              <TouchableWithoutFeedback
-                onPress={() => {
-                  Keyboard.dismiss();
-                }}>
-                <View style={{flex: 1}}>
-                  <View
-                    style={{
-                      ...styles.container,
-                      paddingVertical: floatingHeight > 400 ? 40 : 10,
-                    }}>
-                    <View style={styles.formInput}>
-                      <Text style={styles.title}>
-                        Amount available for send
-                      </Text>
-                      <View style={styles.box}>
-                        <Text style={styles.boxTitle}>{availableAmount}</Text>
-                        <Text style={styles.boxTitle}>
-                          {' ' + currentCoin?.symbol}
+            }) => {
+              // Fixed-amount BOLT11 invoices must be paid exactly, so the
+              // amount fields stay locked while such an invoice is entered
+              const isInvoiceAmountLocked =
+                isLightning && !!getBolt11InvoiceAmount(values.send);
+              return (
+                <TouchableWithoutFeedback
+                  onPress={() => {
+                    Keyboard.dismiss();
+                  }}>
+                  <View style={{flex: 1}}>
+                    <View
+                      style={{
+                        ...styles.container,
+                        paddingVertical: floatingHeight > 400 ? 40 : 10,
+                      }}>
+                      <View style={styles.formInput}>
+                        <Text style={styles.title}>
+                          Amount available for send
                         </Text>
-                      </View>
-                      <View style={styles.box}>
-                        <Text style={styles.boxBalance}>
-                          {currencySymbol[localCurrency] || ''}
-                          {availableAmountCurrency}
-                        </Text>
-                      </View>
-                      <View
-                        style={{
-                          flex: 1,
-                        }}>
-                        <View style={styles.boxInput}>
-                          <Text style={styles.listTitle}>Send to</Text>
-                          <View style={styles.rowView}>
-                            <TextInput
-                              style={[
-                                styles.addressInput,
-                                fieldDisable && {width: '100%'},
-                              ]}
-                              editable={!fieldDisable}
-                              label="Enter wallet adress or scan QR"
-                              textColor={fieldDisable ? theme.gray : theme.font}
-                              theme={{
-                                colors: {
-                                  onSurfaceVariant: errors ? theme.gray : 'red',
-                                },
-                              }}
-                              outlineColor={errors.send ? 'red' : theme.gray}
-                              activeOutlineColor={
-                                errors.send ? 'red' : theme.font
-                              }
-                              autoCapitalize="none"
-                              returnKeyType="done"
-                              mode="outlined"
-                              blurOnSubmit={false}
-                              name="send"
-                              onChangeText={text => {
-                                setFieldValue('send', text);
-                              }}
-                              onBlur={handleBlur('send')}
-                              value={values.send}
-                              onSubmitEditing={() => {
-                                Keyboard.dismiss();
-                              }}
-                              right={
-                                !fieldDisable && (
-                                  <TextInput.Icon
-                                    style={styles.scan}
-                                    icon="qrcode-scan"
-                                    iconColor={theme.backgroundColor}
-                                    size={15}
-                                    onPress={() => {
-                                      navigation.navigate('Scanner', {
-                                        page: 'SendFunds',
-                                      });
-                                    }}
-                                  />
-                                )
-                              }
-                            />
-                            {!fieldDisable && (
-                              <AddressBookPicker
-                                chain_name={currentCoin?.chain_name}
-                                walletId={currentWallet?.clientId}
-                                onSelectAddress={onSelectAddress}
-                              />
-                            )}
-                          </View>
-                          {errors.send && (
-                            <Text style={styles.textConfirm}>
-                              {errors.send}
-                            </Text>
-                          )}
+                        <View style={styles.box}>
+                          <Text style={styles.boxTitle}>{availableAmount}</Text>
+                          <Text style={styles.boxTitle}>
+                            {' ' + currentCoin?.symbol}
+                          </Text>
                         </View>
-                        <View style={styles.boxInput}>
-                          <Text style={styles.listTitle}>Amount</Text>
-                          <View style={styles.inputView}>
-                            <TextInput
-                              style={styles.input}
-                              editable={!fieldDisable}
-                              label="Enter amount of Crypto to send"
-                              textColor={fieldDisable ? theme.gray : theme.font}
-                              theme={{
-                                colors: {
-                                  onSurfaceVariant: errors ? theme.gray : 'red',
-                                },
-                              }}
-                              outlineColor={errors.amount ? 'red' : theme.gray}
-                              activeOutlineColor={
-                                errors.amount ? 'red' : theme.font
-                              }
-                              autoCapitalize="none"
-                              mode="outlined"
-                              blurOnSubmit={false}
-                              name="amount"
-                              onChangeText={text => {
-                                const tempValues = validateNumberInInput(
-                                  text,
-                                  currentCoin?.decimal,
-                                );
-                                const tempAmount = multiplyBNWithFixed(
-                                  tempValues,
-                                  currentCoin?.currencyRate,
-                                  2,
-                                );
-                                setFieldValue('currencyAmount', tempAmount);
-                                setFieldValue('amount', tempValues);
-                              }}
-                              onBlur={handleBlur('amount')}
-                              value={values.amount}
-                              onSubmitEditing={handleSubmit}
-                              keyboardType="decimal-pad"
-                              type="number"
-                            />
-                            {!fieldDisable && (
-                              <TouchableOpacity
-                                style={styles.btnMax}
-                                hitSlop={{
-                                  top: 12,
-                                  left: 12,
-                                  right: 12,
-                                  bottom: 12,
-                                }}
-                                onPress={() => {
-                                  setFieldValue(
-                                    'currencyAmount',
-                                    availableAmountCurrency,
-                                  );
-                                  setFieldValue('amount', maxAmount + '');
-                                }}>
-                                <Text style={styles.btnText}>Max</Text>
-                              </TouchableOpacity>
-                            )}
-                          </View>
-                          {errors.amount && (
-                            <Text style={styles.textConfirm}>
-                              {errors.amount}
-                            </Text>
-                          )}
+                        <View style={styles.box}>
+                          <Text style={styles.boxBalance}>
+                            {currencySymbol[localCurrency] || ''}
+                            {availableAmountCurrency}
+                          </Text>
                         </View>
-                        <View style={styles.boxInput}>
-                          <Text style={styles.listTitle}>Currency Amount</Text>
-                          <View style={styles.inputView}>
-                            <TextInput
-                              style={styles.input}
-                              editable={!fieldDisable}
-                              label={`Enter ${localCurrency} amount of Crypto to send`}
-                              textColor={fieldDisable ? theme.gray : theme.font}
-                              theme={{
-                                colors: {
-                                  onSurfaceVariant: !errors?.currencyAmount
-                                    ? theme.gray
-                                    : 'red',
-                                },
-                              }}
-                              outlineColor={errors.amount ? 'red' : theme.gray}
-                              activeOutlineColor={
-                                errors.amount ? 'red' : theme.font
-                              }
-                              autoCapitalize="none"
-                              mode="outlined"
-                              blurOnSubmit={false}
-                              name="currencyAmount"
-                              onChangeText={text => {
-                                const tempValues = validateNumberInInput(
-                                  text,
-                                  2,
-                                );
-                                const tempAmount = new BigNumber(tempValues)
-                                  .dividedBy(
-                                    new BigNumber(currentCoin?.currencyRate),
-                                  )
-                                  .toFixed(Number(currentCoin?.decimal));
-                                setFieldValue('currencyAmount', tempValues);
-                                setFieldValue('amount', tempAmount);
-                              }}
-                              onBlur={handleBlur('currencyAmount')}
-                              value={values.currencyAmount}
-                              onSubmitEditing={handleSubmit}
-                              keyboardType="decimal-pad"
-                              type="number"
-                            />
-                            {!fieldDisable && (
-                              <TouchableOpacity
-                                style={styles.btnMax}
-                                hitSlop={{
-                                  top: 12,
-                                  left: 12,
-                                  right: 12,
-                                  bottom: 12,
-                                }}
-                                onPress={() => {
-                                  setFieldValue(
-                                    'currencyAmount',
-                                    availableAmountCurrency,
-                                  );
-                                  setFieldValue('amount', maxAmount + '');
-                                }}>
-                                <Text style={styles.btnText}>Max</Text>
-                              </TouchableOpacity>
-                            )}
-                          </View>
-                          {errors.amount && (
-                            <Text style={styles.textConfirm}>
-                              {errors.amount}
-                            </Text>
-                          )}
-                        </View>
-                        {isMemoSupported && (
+                        <View
+                          style={{
+                            flex: 1,
+                          }}>
                           <View style={styles.boxInput}>
-                            <Text style={styles.listTitle}>Memo:</Text>
-                            <TextInput
-                              style={styles.input}
-                              editable={!fieldDisable}
-                              label="Enter Memo or Scan QR"
-                              textColor={fieldDisable ? theme.gray : theme.font}
-                              theme={{
-                                colors: {
-                                  onSurfaceVariant: errors ? theme.gray : 'red',
-                                },
-                              }}
-                              outlineColor={errors.memo ? 'red' : theme.gray}
-                              activeOutlineColor={
-                                errors.memo ? 'red' : theme.font
-                              }
-                              autoCapitalize="none"
-                              mode="outlined"
-                              blurOnSubmit={false}
-                              name="memo"
-                              onChangeText={text => {
-                                setFieldValue('memo', text);
-                              }}
-                              onBlur={handleBlur('memo')}
-                              value={values.memo}
-                              onSubmitEditing={handleSubmit}
-                              right={
-                                !fieldDisable && (
-                                  <TextInput.Icon
-                                    style={styles.scan}
-                                    icon="qrcode-scan"
-                                    iconColor={theme.backgroundColor}
-                                    size={15}
-                                    onPress={() => {
-                                      navigation.navigate('Scanner', {
-                                        page: 'SendFundsMemo',
-                                      });
-                                    }}
-                                  />
-                                )
-                              }
-                            />
-                            <Text style={styles.infoText}>
-                              {
-                                'Memo or Tag is optional, It is only required when recipient needed.'
-                              }
-                            </Text>
-                            {errors.memo && (
+                            <Text style={styles.listTitle}>Send to</Text>
+                            <View style={styles.rowView}>
+                              <TextInput
+                                style={[
+                                  styles.addressInput,
+                                  fieldDisable && {width: '100%'},
+                                ]}
+                                editable={!fieldDisable}
+                                label="Enter wallet adress or scan QR"
+                                textColor={
+                                  fieldDisable ? theme.gray : theme.font
+                                }
+                                theme={{
+                                  colors: {
+                                    onSurfaceVariant: errors
+                                      ? theme.gray
+                                      : 'red',
+                                  },
+                                }}
+                                outlineColor={errors.send ? 'red' : theme.gray}
+                                activeOutlineColor={
+                                  errors.send ? 'red' : theme.font
+                                }
+                                autoCapitalize="none"
+                                returnKeyType="done"
+                                mode="outlined"
+                                blurOnSubmit={false}
+                                name="send"
+                                onChangeText={text => {
+                                  setFieldValue('send', text);
+                                  if (isLightning) {
+                                    const invoiceAmount =
+                                      getBolt11InvoiceAmount(text);
+                                    if (invoiceAmount) {
+                                      setFieldValue('amount', invoiceAmount);
+                                      setFieldValue(
+                                        'currencyAmount',
+                                        multiplyBNWithFixed(
+                                          invoiceAmount,
+                                          currentCoin?.currencyRate,
+                                          2,
+                                        ),
+                                      );
+                                    } else if (
+                                      getBolt11InvoiceAmount(values.send)
+                                    ) {
+                                      // The previous recipient was a
+                                      // fixed-amount invoice; its amount no
+                                      // longer applies to this recipient.
+                                      setFieldValue('amount', '');
+                                      setFieldValue('currencyAmount', '');
+                                    }
+                                  }
+                                }}
+                                onBlur={handleBlur('send')}
+                                value={values.send}
+                                onSubmitEditing={() => {
+                                  Keyboard.dismiss();
+                                }}
+                                right={
+                                  !fieldDisable && (
+                                    <TextInput.Icon
+                                      style={styles.scan}
+                                      icon="qrcode-scan"
+                                      iconColor={theme.backgroundColor}
+                                      size={15}
+                                      onPress={() => {
+                                        navigation.navigate('Scanner', {
+                                          page: 'SendFunds',
+                                        });
+                                      }}
+                                    />
+                                  )
+                                }
+                              />
+                              {!fieldDisable && (
+                                <AddressBookPicker
+                                  chain_name={currentCoin?.chain_name}
+                                  walletId={currentWallet?.clientId}
+                                  onSelectAddress={onSelectAddress}
+                                />
+                              )}
+                            </View>
+                            {errors.send && (
                               <Text style={styles.textConfirm}>
-                                {errors.memo}
+                                {errors.send}
                               </Text>
                             )}
                           </View>
-                        )}
+                          <View style={styles.boxInput}>
+                            <Text style={styles.listTitle}>Amount</Text>
+                            <View style={styles.inputView}>
+                              <TextInput
+                                style={styles.input}
+                                editable={
+                                  !fieldDisable && !isInvoiceAmountLocked
+                                }
+                                label="Enter amount of Crypto to send"
+                                textColor={
+                                  fieldDisable || isInvoiceAmountLocked
+                                    ? theme.gray
+                                    : theme.font
+                                }
+                                theme={{
+                                  colors: {
+                                    onSurfaceVariant: errors
+                                      ? theme.gray
+                                      : 'red',
+                                  },
+                                }}
+                                outlineColor={
+                                  errors.amount ? 'red' : theme.gray
+                                }
+                                activeOutlineColor={
+                                  errors.amount ? 'red' : theme.font
+                                }
+                                autoCapitalize="none"
+                                mode="outlined"
+                                blurOnSubmit={false}
+                                name="amount"
+                                onChangeText={text => {
+                                  const tempValues = validateNumberInInput(
+                                    text,
+                                    currentCoin?.decimal,
+                                  );
+                                  const tempAmount = multiplyBNWithFixed(
+                                    tempValues,
+                                    currentCoin?.currencyRate,
+                                    2,
+                                  );
+                                  setFieldValue('currencyAmount', tempAmount);
+                                  setFieldValue('amount', tempValues);
+                                }}
+                                onBlur={handleBlur('amount')}
+                                value={values.amount}
+                                onSubmitEditing={handleSubmit}
+                                keyboardType="decimal-pad"
+                                type="number"
+                              />
+                              {!fieldDisable && !isInvoiceAmountLocked && (
+                                <TouchableOpacity
+                                  style={styles.btnMax}
+                                  hitSlop={{
+                                    top: 12,
+                                    left: 12,
+                                    right: 12,
+                                    bottom: 12,
+                                  }}
+                                  onPress={() => {
+                                    setFieldValue(
+                                      'currencyAmount',
+                                      availableAmountCurrency,
+                                    );
+                                    setFieldValue('amount', maxAmount + '');
+                                  }}>
+                                  <Text style={styles.btnText}>Max</Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                            {errors.amount && (
+                              <Text style={styles.textConfirm}>
+                                {errors.amount}
+                              </Text>
+                            )}
+                          </View>
+                          <View style={styles.boxInput}>
+                            <Text style={styles.listTitle}>
+                              Currency Amount
+                            </Text>
+                            <View style={styles.inputView}>
+                              <TextInput
+                                style={styles.input}
+                                editable={
+                                  !fieldDisable && !isInvoiceAmountLocked
+                                }
+                                label={`Enter ${localCurrency} amount of Crypto to send`}
+                                textColor={
+                                  fieldDisable || isInvoiceAmountLocked
+                                    ? theme.gray
+                                    : theme.font
+                                }
+                                theme={{
+                                  colors: {
+                                    // The schema only validates `amount`;
+                                    // both inputs are views of the same value.
+                                    onSurfaceVariant: errors.amount
+                                      ? 'red'
+                                      : theme.gray,
+                                  },
+                                }}
+                                outlineColor={
+                                  errors.amount ? 'red' : theme.gray
+                                }
+                                activeOutlineColor={
+                                  errors.amount ? 'red' : theme.font
+                                }
+                                autoCapitalize="none"
+                                mode="outlined"
+                                blurOnSubmit={false}
+                                name="currencyAmount"
+                                onChangeText={text => {
+                                  const tempValues = validateNumberInInput(
+                                    text,
+                                    2,
+                                  );
+                                  const tempAmount = new BigNumber(tempValues)
+                                    .dividedBy(
+                                      new BigNumber(currentCoin?.currencyRate),
+                                    )
+                                    .toFixed(Number(currentCoin?.decimal));
+                                  setFieldValue('currencyAmount', tempValues);
+                                  setFieldValue('amount', tempAmount);
+                                }}
+                                onBlur={handleBlur('currencyAmount')}
+                                value={values.currencyAmount}
+                                onSubmitEditing={handleSubmit}
+                                keyboardType="decimal-pad"
+                                type="number"
+                              />
+                              {!fieldDisable && !isInvoiceAmountLocked && (
+                                <TouchableOpacity
+                                  style={styles.btnMax}
+                                  hitSlop={{
+                                    top: 12,
+                                    left: 12,
+                                    right: 12,
+                                    bottom: 12,
+                                  }}
+                                  onPress={() => {
+                                    setFieldValue(
+                                      'currencyAmount',
+                                      availableAmountCurrency,
+                                    );
+                                    setFieldValue('amount', maxAmount + '');
+                                  }}>
+                                  <Text style={styles.btnText}>Max</Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                            {errors.amount && (
+                              <Text style={styles.textConfirm}>
+                                {errors.amount}
+                              </Text>
+                            )}
+                          </View>
+                          {isMemoSupported && (
+                            <View style={styles.boxInput}>
+                              <Text style={styles.listTitle}>Memo:</Text>
+                              <TextInput
+                                style={styles.input}
+                                editable={!fieldDisable}
+                                label="Enter Memo or Scan QR"
+                                textColor={
+                                  fieldDisable ? theme.gray : theme.font
+                                }
+                                theme={{
+                                  colors: {
+                                    onSurfaceVariant: errors
+                                      ? theme.gray
+                                      : 'red',
+                                  },
+                                }}
+                                outlineColor={errors.memo ? 'red' : theme.gray}
+                                activeOutlineColor={
+                                  errors.memo ? 'red' : theme.font
+                                }
+                                autoCapitalize="none"
+                                mode="outlined"
+                                blurOnSubmit={false}
+                                name="memo"
+                                onChangeText={text => {
+                                  setFieldValue('memo', text);
+                                }}
+                                onBlur={handleBlur('memo')}
+                                value={values.memo}
+                                onSubmitEditing={handleSubmit}
+                                right={
+                                  !fieldDisable && (
+                                    <TextInput.Icon
+                                      style={styles.scan}
+                                      icon="qrcode-scan"
+                                      iconColor={theme.backgroundColor}
+                                      size={15}
+                                      onPress={() => {
+                                        navigation.navigate('Scanner', {
+                                          page: 'SendFundsMemo',
+                                        });
+                                      }}
+                                    />
+                                  )
+                                }
+                              />
+                              <Text style={styles.infoText}>
+                                {
+                                  'Memo or Tag is optional, It is only required when recipient needed.'
+                                }
+                              </Text>
+                              {errors.memo && (
+                                <Text style={styles.textConfirm}>
+                                  {errors.memo}
+                                </Text>
+                              )}
+                            </View>
+                          )}
 
-                        {/*<View style={styles.blockList}>*/}
-                        {/*  <Text style={styles.blockTitle}>Blockchain fee</Text>*/}
-                        {/*  <View style={{direction: 'rtl'}}>*/}
-                        {/*    <View style={styles.box}>*/}
-                        {/*      <Text style={styles.boxText}>*/}
-                        {/*        {currentCoin.totalAmount}*/}
-                        {/*      </Text>*/}
-                        {/*      <Text style={{...styles.boxText, marginLeft: 5}}>*/}
-                        {/*        {currentCoin.title}*/}
-                        {/*      </Text>*/}
-                        {/*    </View>*/}
-                        {/*    <View style={{...styles.box, alignSelf: 'flex-end'}}>*/}
-                        {/*      <Text style={styles.boxText}>*/}
-                        {/*        {currencySymbol}*/}
-                        {/*        {currentCoin.totalCourse}*/}
-                        {/*      </Text>*/}
-                        {/*    </View>*/}
-                        {/*  </View>*/}
-                        {/*</View>*/}
-                        {/*<View style={styles.switchList}>*/}
-                        {/*  <Switch*/}
-                        {/*    value={isSwitchOn}*/}
-                        {/*    onValueChange={onToggleSwitch}*/}
-                        {/*    trackColor={{false: 'gray', true: '#E8E8E8'}}*/}
-                        {/*    thumbColor={isSwitchOn ? '#F44D03' : 'white'}*/}
-                        {/*    ios_backgroundColor="#E8E8E8"*/}
-                        {/*  />*/}
-                        {/*  <Text style={styles.switchText}>*/}
-                        {/*    Fast Transaction*/}
-                        {/*  </Text>*/}
-                        {/*</View>*/}
+                          {/*<View style={styles.blockList}>*/}
+                          {/*  <Text style={styles.blockTitle}>Blockchain fee</Text>*/}
+                          {/*  <View style={{direction: 'rtl'}}>*/}
+                          {/*    <View style={styles.box}>*/}
+                          {/*      <Text style={styles.boxText}>*/}
+                          {/*        {currentCoin.totalAmount}*/}
+                          {/*      </Text>*/}
+                          {/*      <Text style={{...styles.boxText, marginLeft: 5}}>*/}
+                          {/*        {currentCoin.title}*/}
+                          {/*      </Text>*/}
+                          {/*    </View>*/}
+                          {/*    <View style={{...styles.box, alignSelf: 'flex-end'}}>*/}
+                          {/*      <Text style={styles.boxText}>*/}
+                          {/*        {currencySymbol}*/}
+                          {/*        {currentCoin.totalCourse}*/}
+                          {/*      </Text>*/}
+                          {/*    </View>*/}
+                          {/*  </View>*/}
+                          {/*</View>*/}
+                          {/*<View style={styles.switchList}>*/}
+                          {/*  <Switch*/}
+                          {/*    value={isSwitchOn}*/}
+                          {/*    onValueChange={onToggleSwitch}*/}
+                          {/*    trackColor={{false: 'gray', true: '#E8E8E8'}}*/}
+                          {/*    thumbColor={isSwitchOn ? '#F44D03' : 'white'}*/}
+                          {/*    ios_backgroundColor="#E8E8E8"*/}
+                          {/*  />*/}
+                          {/*  <Text style={styles.switchText}>*/}
+                          {/*    Fast Transaction*/}
+                          {/*  </Text>*/}
+                          {/*</View>*/}
+                        </View>
                       </View>
-                    </View>
-                    {isEip7702SupportedChain(currentCoin?.chain_name) && (
+                      {isEip7702SupportedChain(currentCoin?.chain_name) && (
+                        <TouchableOpacity
+                          disabled={!isValid}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: isValid
+                              ? 'transparent'
+                              : theme.gray,
+                            borderColor: isValid
+                              ? theme.background
+                              : theme.gray,
+                            borderWidth: 1,
+                          }}
+                          onPress={addToBatch}>
+                          <Text
+                            style={[
+                              styles.buttonTitle,
+                              isValid && {color: theme.background},
+                            ]}>
+                            Add to batch
+                          </Text>
+                        </TouchableOpacity>
+                      )}
                       <TouchableOpacity
                         disabled={!isValid}
                         style={{
                           ...styles.button,
-                          backgroundColor: isValid ? 'transparent' : theme.gray,
-                          borderColor: isValid ? theme.background : theme.gray,
-                          borderWidth: 1,
+                          backgroundColor: isValid
+                            ? theme.background
+                            : theme.gray,
                         }}
-                        onPress={addToBatch}>
-                        <Text
-                          style={[
-                            styles.buttonTitle,
-                            isValid && {color: theme.background},
-                          ]}>
-                          Add to batch
-                        </Text>
+                        onPress={handleSubmit}>
+                        <Text style={styles.buttonTitle}>Next</Text>
                       </TouchableOpacity>
-                    )}
-                    <TouchableOpacity
-                      disabled={!isValid}
-                      style={{
-                        ...styles.button,
-                        backgroundColor: isValid
-                          ? theme.background
-                          : theme.gray,
-                      }}
-                      onPress={handleSubmit}>
-                      <Text style={styles.buttonTitle}>Next</Text>
-                    </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              </TouchableWithoutFeedback>
-            )}
+                </TouchableWithoutFeedback>
+              );
+            }}
           </Formik>
         </KeyboardAwareScrollView>
 

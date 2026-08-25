@@ -42,6 +42,7 @@ import {
   deleteMultipleDeriveAddressesInCurrentCoin,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import FastImage from '@d11/react-native-fast-image';
+import AddressTypeBadge from 'components/AddressTypeBadge';
 import DeriveAddressSheet from 'components/DeriveAddressSheet';
 import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -213,9 +214,12 @@ export const CustomDerivation = ({navigation}) => {
     },
   });
 
+  // Cap counts only user-created custom derivations — automatic gap-limit
+  // discovery can legitimately grow the full list past 100.
   const isAtLimit =
     isBitcoinChain(currentCoin?.chain_name) &&
-    (currentCoin?.deriveAddresses?.length ?? 0) >= 100;
+    (currentCoin?.deriveAddresses?.filter(item => item?.isCustom)?.length ??
+      0) >= 100;
   const isDisabled = !values?.selectedDerivationOptions || isAtLimit;
 
   const exitSelectionMode = useCallback(() => {
@@ -448,12 +452,20 @@ export const CustomDerivation = ({navigation}) => {
             resizeMode={'contain'}
           />
           <View style={styles.textContainer}>
-            <Text style={styles.derivePathStyle} numberOfLines={1}>
-              {item?.derivePath || 'Default'}
-              {isActive && (
-                <Text style={styles.activeDerivePathStyle}>{' (ACTIVE)'}</Text>
-              )}
-            </Text>
+            <View style={styles.derivePathRow}>
+              <Text style={styles.derivePathStyle} numberOfLines={1}>
+                {item?.derivePath || 'Default'}
+                {isActive && (
+                  <Text style={styles.activeDerivePathStyle}>
+                    {' (ACTIVE)'}
+                  </Text>
+                )}
+              </Text>
+              <AddressTypeBadge
+                chain_name={currentCoin?.chain_name}
+                item={item}
+              />
+            </View>
             <Text style={styles.addressStyle} numberOfLines={1}>
               {getCustomizePublicAddress(item?.address)}
             </Text>
@@ -499,6 +511,7 @@ export const CustomDerivation = ({navigation}) => {
     [
       currentCoin?.address,
       currentCoin?.icon,
+      currentCoin?.chain_name,
       isSelectionMode,
       selectedAddresses,
     ],
