@@ -55,6 +55,10 @@ const myStyles = (theme, bottom) =>
       fontFamily: 'Roboto-Regular',
       marginLeft: 8,
     },
+    iconButton: {
+      padding: 6,
+      marginLeft: 4,
+    },
     checkIcon: {
       marginLeft: 8,
     },

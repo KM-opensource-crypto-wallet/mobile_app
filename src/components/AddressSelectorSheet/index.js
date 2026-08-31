@@ -10,9 +10,14 @@ import {ActivityIndicator, View, Text} from 'react-native';
 import {BottomSheetFlatList, TouchableOpacity} from '@gorhom/bottom-sheet';
 import IoniconIcon from 'react-native-vector-icons/Ionicons';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import Clipboard from '@react-native-clipboard/clipboard';
+import Toast from 'react-native-toast-message';
 import DokBottomSheet from 'components/BottomSheet';
 import AddressTypeBadge from 'components/AddressTypeBadge';
+import AddressQRSheet from 'components/AddressQRSheet';
+import Toasts from 'components/Toasts';
 import {ThemeContext} from 'theme/ThemeContext';
+import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
 import {
   getCustomizePublicAddress,
   isBitcoinChain,
@@ -29,6 +34,7 @@ const AddressSelectorSheet = forwardRef(({onSelect}, ref) => {
   const {bottom} = useSafeAreaInsets();
   const styles = myStyles(theme, bottom);
   const sheetRef = useRef(null);
+  const qrSheetRef = useRef(null);
   const contextRef = useRef(null);
   const [payload, setPayload] = useState(null);
   // Address whose selection is currently being applied. While set, the sheet
@@ -66,6 +72,30 @@ const AddressSelectorSheet = forwardRef(({onSelect}, ref) => {
       }
     },
     [onSelect, applyingAddress],
+  );
+
+  const onPressCopy = useCallback(item => {
+    if (!item?.address) {
+      return;
+    }
+    Clipboard.setString(item.address);
+    triggerHapticFeedbackLight();
+    Toast.show({
+      type: 'successToast',
+      text1: 'Address copied',
+    });
+  }, []);
+
+  const onPressQR = useCallback(
+    item => {
+      qrSheetRef.current?.present({
+        address: item?.address,
+        symbol: payload?.symbol,
+        chain_name: payload?.chain_name,
+        derivePath: item?.derivePath,
+      });
+    },
+    [payload?.symbol, payload?.chain_name],
   );
 
   const keyExtractor = useCallback(
@@ -106,6 +136,24 @@ const AddressSelectorSheet = forwardRef(({onSelect}, ref) => {
               {`${item?.balance || 0} ${payload?.symbol || ''}`}
             </Text>
           )}
+          <TouchableOpacity
+            style={styles.iconButton}
+            disabled={!!applyingAddress}
+            hitSlop={{top: 10, bottom: 10, left: 4, right: 4}}
+            onPress={() => onPressCopy(item)}>
+            <IoniconIcon name={'copy-outline'} size={20} color={theme.gray} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconButton}
+            disabled={!!applyingAddress}
+            hitSlop={{top: 10, bottom: 10, left: 4, right: 4}}
+            onPress={() => onPressQR(item)}>
+            <IoniconIcon
+              name={'qr-code-outline'}
+              size={20}
+              color={theme.gray}
+            />
+          </TouchableOpacity>
           {isApplying ? (
             <ActivityIndicator
               size={'small'}
@@ -125,7 +173,16 @@ const AddressSelectorSheet = forwardRef(({onSelect}, ref) => {
         </TouchableOpacity>
       );
     },
-    [payload, applyingAddress, onPressItem, styles, theme.background],
+    [
+      payload,
+      applyingAddress,
+      onPressItem,
+      onPressCopy,
+      onPressQR,
+      styles,
+      theme.background,
+      theme.gray,
+    ],
   );
 
   return (
@@ -149,6 +206,12 @@ const AddressSelectorSheet = forwardRef(({onSelect}, ref) => {
           contentContainerStyle={styles.contentContainerStyle}
         />
       </View>
+      {/* Opens OVER this sheet: higher layer + push keeps this sheet mounted
+          (dimmed + non-interactive) underneath. */}
+      <AddressQRSheet ref={qrSheetRef} zIndex={10001} stackBehavior="push" />
+      {/* Toast host inside the sheet so 'Address copied' renders above it
+          (the root Toasts sits below the modal host). */}
+      <Toasts bottomOffset={bottom + 60} />
     </DokBottomSheet>
   );
 });
