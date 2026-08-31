@@ -240,52 +240,63 @@ const SendScreen = ({navigation, route}) => {
   }, [dispatch]);
 
   useLayoutEffect(() => {
-    if (isBitcoin || (isDeriveAddressChain && !isImportWithPrivateKey)) {
-      navigation.setOptions({
-        headerRight: () => (
-          <View style={{marginRight: 8}}>
-            <Menu>
-              <MenuTrigger>
-                <EntypoIcon
-                  size={24}
-                  name={'dots-three-vertical'}
-                  color={theme.font}
-                />
-              </MenuTrigger>
-              <MenuOptions optionsContainerStyle={styles.optionsContainer}>
-                {isBitcoin && (
-                  <MenuOption
-                    onSelect={() => {
-                      navigation.navigate('SelectUTXOsScreen', {
-                        item: currentCoin,
-                      });
-                    }}>
-                    <View style={styles.optionMenu}>
-                      <Text style={styles.optionText}>{'Select UTXOs'}</Text>
-                    </View>
-                  </MenuOption>
-                )}
-                {isDeriveAddressChain && !isImportWithPrivateKey && (
-                  <MenuOption onSelect={handleCustomDerivation}>
-                    <View style={styles.optionMenu}>
-                      <Text style={styles.optionText}>
-                        {'Custom Derivation'}
-                      </Text>
-                    </View>
-                  </MenuOption>
-                )}
-              </MenuOptions>
-            </Menu>
-          </View>
-        ),
-      });
-    } else {
-      navigation.setOptions({
-        headerRight: null,
-      });
-    }
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={{marginRight: 8}}>
+          <Menu>
+            <MenuTrigger>
+              <EntypoIcon
+                size={24}
+                name={'dots-three-vertical'}
+                color={theme.font}
+              />
+            </MenuTrigger>
+            <MenuOptions optionsContainerStyle={styles.optionsContainer}>
+              {isBitcoin && (
+                <MenuOption
+                  onSelect={() => {
+                    navigation.navigate('SelectUTXOsScreen', {
+                      item: currentCoin,
+                    });
+                  }}>
+                  <View style={styles.optionMenu}>
+                    <Text style={styles.optionText}>{'Select UTXOs'}</Text>
+                  </View>
+                </MenuOption>
+              )}
+              {isDeriveAddressChain && !isImportWithPrivateKey && (
+                <MenuOption onSelect={handleCustomDerivation}>
+                  <View style={styles.optionMenu}>
+                    <Text style={styles.optionText}>{'Custom Derivation'}</Text>
+                  </View>
+                </MenuOption>
+              )}
+              <MenuOption
+                onSelect={() => {
+                  navigation.navigate('SchedulePayment');
+                }}>
+                <View style={styles.optionMenu}>
+                  <Text style={styles.optionText}>{'Schedule Payment'}</Text>
+                </View>
+              </MenuOption>
+              <MenuOption
+                onSelect={() => {
+                  navigation.navigate('ViewSchedulePayment');
+                }}>
+                <View style={styles.optionMenu}>
+                  <Text style={styles.optionText}>
+                    {'View Scheduled Payments'}
+                  </Text>
+                </View>
+              </MenuOption>
+            </MenuOptions>
+          </Menu>
+        </View>
+      ),
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    isBitcoin,
     isDeriveAddressChain,
     isImportWithPrivateKey,
     navigation,

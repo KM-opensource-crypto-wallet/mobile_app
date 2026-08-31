@@ -48,7 +48,7 @@ import {
 import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {showToast} from 'utils/toast';
 import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
-import AddressBookPicker from 'components/AddressBookPicker';
+import RecipientAddressInput from 'components/RecipientAddressInput';
 import {getTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSelector';
 import {isBitcoinChain} from 'dok-wallet-blockchain-networks/helper';
 import {parseBoolean} from 'utils/common';
@@ -485,93 +485,50 @@ const SendFunds = ({navigation, route}) => {
                           }}>
                           <View style={styles.boxInput}>
                             <Text style={styles.listTitle}>Send to</Text>
-                            <View style={styles.rowView}>
-                              <TextInput
-                                style={[
-                                  styles.addressInput,
-                                  fieldDisable && {width: '100%'},
-                                ]}
-                                editable={!fieldDisable}
-                                label="Enter wallet adress or scan QR"
-                                textColor={
-                                  fieldDisable ? theme.gray : theme.font
-                                }
-                                theme={{
-                                  colors: {
-                                    onSurfaceVariant: errors
-                                      ? theme.gray
-                                      : 'red',
-                                  },
-                                }}
-                                outlineColor={errors.send ? 'red' : theme.gray}
-                                activeOutlineColor={
-                                  errors.send ? 'red' : theme.font
-                                }
-                                autoCapitalize="none"
-                                returnKeyType="done"
-                                mode="outlined"
-                                blurOnSubmit={false}
-                                name="send"
-                                onChangeText={text => {
-                                  setFieldValue('send', text);
-                                  if (isLightning) {
-                                    const invoiceAmount =
-                                      getBolt11InvoiceAmount(text);
-                                    if (invoiceAmount) {
-                                      setFieldValue('amount', invoiceAmount);
-                                      setFieldValue(
-                                        'currencyAmount',
-                                        multiplyBNWithFixed(
-                                          invoiceAmount,
-                                          currentCoin?.currencyRate,
-                                          2,
-                                        ),
-                                      );
-                                    } else if (
-                                      getBolt11InvoiceAmount(values.send)
-                                    ) {
-                                      // The previous recipient was a
-                                      // fixed-amount invoice; its amount no
-                                      // longer applies to this recipient.
-                                      setFieldValue('amount', '');
-                                      setFieldValue('currencyAmount', '');
-                                    }
+                            <RecipientAddressInput
+                              containerStyle={styles.rowView}
+                              disabled={fieldDisable}
+                              chain_name={currentCoin?.chain_name}
+                              walletId={currentWallet?.clientId}
+                              onSelectAddress={onSelectAddress}
+                              error={errors.send}
+                              onChangeText={text => {
+                                setFieldValue('send', text);
+                                if (isLightning) {
+                                  const invoiceAmount =
+                                    getBolt11InvoiceAmount(text);
+                                  if (invoiceAmount) {
+                                    setFieldValue('amount', invoiceAmount);
+                                    setFieldValue(
+                                      'currencyAmount',
+                                      multiplyBNWithFixed(
+                                        invoiceAmount,
+                                        currentCoin?.currencyRate,
+                                        2,
+                                      ),
+                                    );
+                                  } else if (
+                                    getBolt11InvoiceAmount(values.send)
+                                  ) {
+                                    // The previous recipient was a
+                                    // fixed-amount invoice; its amount no
+                                    // longer applies to this recipient.
+                                    setFieldValue('amount', '');
+                                    setFieldValue('currencyAmount', '');
                                   }
-                                }}
-                                onBlur={handleBlur('send')}
-                                value={values.send}
-                                onSubmitEditing={() => {
-                                  Keyboard.dismiss();
-                                }}
-                                right={
-                                  !fieldDisable && (
-                                    <TextInput.Icon
-                                      style={styles.scan}
-                                      icon="qrcode-scan"
-                                      iconColor={theme.backgroundColor}
-                                      size={15}
-                                      onPress={() => {
-                                        navigation.navigate('Scanner', {
-                                          page: 'SendFunds',
-                                        });
-                                      }}
-                                    />
-                                  )
                                 }
-                              />
-                              {!fieldDisable && (
-                                <AddressBookPicker
-                                  chain_name={currentCoin?.chain_name}
-                                  walletId={currentWallet?.clientId}
-                                  onSelectAddress={onSelectAddress}
-                                />
-                              )}
-                            </View>
-                            {errors.send && (
-                              <Text style={styles.textConfirm}>
-                                {errors.send}
-                              </Text>
-                            )}
+                              }}
+                              onBlur={handleBlur('send')}
+                              value={values.send}
+                              onSubmitEditing={() => {
+                                Keyboard.dismiss();
+                              }}
+                              onPressScan={() => {
+                                navigation.navigate('Scanner', {
+                                  page: 'SendFunds',
+                                });
+                              }}
+                            />
                           </View>
                           <View style={styles.boxInput}>
                             <Text style={styles.listTitle}>Amount</Text>

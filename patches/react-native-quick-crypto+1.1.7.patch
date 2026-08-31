@@ -1,0 +1,40 @@
+diff --git a/node_modules/react-native-quick-crypto/QuickCrypto.podspec b/node_modules/react-native-quick-crypto/QuickCrypto.podspec
+index 72abe7e..144cd54 100644
+--- a/node_modules/react-native-quick-crypto/QuickCrypto.podspec
++++ b/node_modules/react-native-quick-crypto/QuickCrypto.podspec
+@@ -94,20 +94,28 @@ Pod::Spec.new do |s|
+       File.delete(archive)
+       Pod::UI.puts "[QuickCrypto] ✅ libsodium source ready"
+     end
++
++    # Build libsodium from source for XSalsa20 cipher support (CocoaPods
++    # packages are outdated (1.0.12) and SPM causes module conflicts). Run
++    # during podspec evaluation, not prepare_command: prepare_command is
++    # skipped for :path pods, which is how RN autolinking includes this pod.
++    sodium_version_header = File.join(sodium_dir, "src", "libsodium", "include", "sodium", "version.h")
++    unless File.exist?(sodium_version_header)
++      Pod::UI.puts "[QuickCrypto] 🔧 Building libsodium..."
++      Dir.chdir(sodium_dir) do
++        system("./configure --disable-shared --enable-static") || raise("[QuickCrypto] Failed to configure libsodium")
++        system("make -j#{`sysctl -n hw.ncpu`.strip}") || raise("[QuickCrypto] Failed to build libsodium")
++      end
++      Pod::UI.puts "[QuickCrypto] ✅ libsodium built"
++    end
+   end
+ 
+   if sodium_enabled
+-    # Build libsodium from source for XSalsa20 cipher support
+-    # CocoaPods packages are outdated (1.0.12) and SPM causes module conflicts
++    # Clean up vendored OpenSSL.xcframework from pre-1.0.20 installs
+     s.prepare_command = <<-CMD
+       set -e
+-      # Clean up vendored OpenSSL.xcframework from pre-1.0.20 installs
+       rm -rf OpenSSL.xcframework
+       rm -f OpenSSL.xcframework.zip
+-      # Build the libsodium source the podspec already downloaded and verified.
+-      cd ios/libsodium-stable
+-      ./configure --disable-shared --enable-static
+-      make -j$(sysctl -n hw.ncpu)
+     CMD
+   else
+     s.prepare_command = <<-CMD

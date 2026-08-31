@@ -38,14 +38,8 @@ import {
   reassignCurrentWalletIfHidden,
   resetCoinsToDefaultAddressForPrivacyMode,
   resetNfts,
-  setCurrentCoin,
-  setCurrentWalletClientId,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {
-  isWalletHiddenAndLocked,
-  selectCurrentWalletClientId,
-  selectAllWallets,
-} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectCurrentWalletClientId} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {store} from 'redux/store';
 import {
   setupOneSignal,
@@ -82,7 +76,6 @@ import {
   setIsUpdateAvailable,
   setIsWalletConnectInitialized,
   setPaymentData,
-  setRouteStateData,
   setWcUri,
 } from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
 import {checkNotifications, RESULTS} from 'react-native-permissions';
@@ -104,6 +97,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 import ModalApkDownload from 'components/ModalApkDownload';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import CoinSyncWidget from 'components/CoinSyncWidget';
+import {useLocalNotification} from 'providers/hooks/useLocalNotification';
 
 // Only truly pre-auth screens belong here. Screens whose buttons redirect
 // outside the app (in-app browser, Linking, permission dialogs) are handled
@@ -150,7 +144,14 @@ const Main = () => {
   const compareRpcUrlsIntervalRef = useRef(null);
   const disableMessage = useSelector(getDisableMessage);
   const lastUpdateCheckTimestamp = useSelector(getLastUpdateCheckTimestamp);
-  const [pendingNotificationData, setPendingNotificationData] = useState(null);
+  const {
+    pendingScheduledPaymentData,
+    setPendingScheduledPaymentData,
+    handleScheduledPaymentNotificationData,
+    pendingNotificationData,
+    setPendingNotificationData,
+    handleNotificationData,
+  } = useLocalNotification();
 
   const fetchAndCompareRpcUrls = useCallback(() => {
     fetchRPCUrl();
@@ -404,57 +405,18 @@ const Main = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const handleNotificationData = useCallback(
-    data => {
+  const onNotificationClick = useCallback(
+    event => {
+      const data = event?.notification?.additionalData;
       if (!data?.chainName || !data?.coin) {
         return;
       }
-      const wallets = selectAllWallets(store.getState());
-      const wallet = data.walletId
-        ? wallets.find(w => w.clientId === data.walletId)
-        : wallets.find(w =>
-            w.coins?.some(
-              c =>
-                c.chain_name === data.chainName &&
-                c.symbol === data.coin &&
-                c.isInWallet,
-            ),
-          );
-      if (!wallet) {
-        return;
-      }
-      if (isWalletHiddenAndLocked(wallet)) {
-        return;
-      }
-      const coin = wallet.coins?.find(
-        c =>
-          c.chain_name === data.chainName &&
-          c.symbol === data.coin &&
-          c.isInWallet,
-      );
-      if (!coin) {
-        return;
-      }
-      dispatch(setCurrentWalletClientId(wallet.clientId));
-      dispatch(setCurrentCoin(coin._id));
-      dispatch(setRouteStateData({navigateToTransactionList: true}));
-      MainNavigation.reset({
-        index: 0,
-        routes: [{name: 'Sidebar'}],
-      });
+      // Store notification data and show login modal
+      setPendingNotificationData(data);
+      setLoginModalVisible(true);
     },
-    [dispatch],
+    [setPendingNotificationData],
   );
-
-  const onNotificationClick = useCallback(event => {
-    const data = event?.notification?.additionalData;
-    if (!data?.chainName || !data?.coin) {
-      return;
-    }
-    // Store notification data and show login modal
-    setPendingNotificationData(data);
-    setLoginModalVisible(true);
-  }, []);
 
   const handleNotificationLoginSuccess = useCallback(() => {
     if (pendingNotificationData) {
@@ -462,7 +424,29 @@ const Main = () => {
       setPendingNotificationData(null);
     }
     setLoginModalVisible(false);
-  }, [pendingNotificationData, handleNotificationData]);
+  }, [
+    pendingNotificationData,
+    handleNotificationData,
+    setPendingNotificationData,
+  ]);
+
+  const handleScheduledPaymentLoginSuccess = useCallback(() => {
+    if (pendingScheduledPaymentData) {
+      handleScheduledPaymentNotificationData(pendingScheduledPaymentData);
+      setPendingScheduledPaymentData(null);
+    }
+    setLoginModalVisible(false);
+  }, [
+    pendingScheduledPaymentData,
+    handleScheduledPaymentNotificationData,
+    setPendingScheduledPaymentData,
+  ]);
+
+  useEffect(() => {
+    if (pendingScheduledPaymentData) {
+      setLoginModalVisible(true);
+    }
+  }, [pendingScheduledPaymentData]);
 
   useEffect(() => {
     setupOneSignal();
@@ -479,6 +463,20 @@ const Main = () => {
   }, []);
 
   const {theme} = useContext(ThemeContext);
+  const handleClose = useCallback(() => {
+    if (pendingNotificationData) {
+      handleNotificationLoginSuccess();
+    } else if (pendingScheduledPaymentData) {
+      handleScheduledPaymentLoginSuccess();
+    } else {
+      setLoginModalVisible(false);
+    }
+  }, [
+    handleNotificationLoginSuccess,
+    handleScheduledPaymentLoginSuccess,
+    pendingNotificationData,
+    pendingScheduledPaymentData,
+  ]);
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
@@ -505,16 +503,7 @@ const Main = () => {
               <ModalApkDownload visible={showUpdateModal} />
             )}
           </MenuProvider>
-          <LoginModal
-            visible={loginModalVisible}
-            onClose={() => {
-              if (pendingNotificationData) {
-                handleNotificationLoginSuccess();
-              } else {
-                setLoginModalVisible(false);
-              }
-            }}
-          />
+          <LoginModal visible={loginModalVisible} onClose={handleClose} />
         </NavigationContainer>
       )}
       {/*<Delete />*/}

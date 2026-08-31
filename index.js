@@ -13,6 +13,15 @@ import {AppRegistry, Platform} from 'react-native';
 import App from './App';
 import {name as coinswallet} from './app.json';
 import {Bugfender} from '@bugfender/rn-bugfender';
+import notifee from '@notifee/react-native';
+
+// Required registration point for notifee so Android can deliver
+// press/dismiss events for trigger notifications fired while the app is
+// backgrounded or killed. Navigation for a press is instead handled once JS
+// resumes, via notifee.getInitialNotification()/onForegroundEvent in
+// components/main.js — there is no safe navigation target from this headless
+// context.
+notifee.onBackgroundEvent(async () => {});
 
 import structuredClone from '@ungap/structured-clone';
 
