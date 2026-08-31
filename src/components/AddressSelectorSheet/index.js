@@ -116,9 +116,20 @@ const AddressSelectorSheet = forwardRef(({onSelect}, ref) => {
       return (
         <TouchableOpacity
           style={styles.itemView}
+          accessible={false}
           disabled={!!applyingAddress}
           onPress={() => onPressItem(item)}>
-          <View style={styles.textContainer}>
+          <View
+            style={styles.textContainer}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel={`Select address ${getCustomizePublicAddress(
+              item?.address,
+            )}`}
+            accessibilityState={{
+              disabled: !!applyingAddress,
+              selected: isSelected,
+            }}>
             <View style={styles.addressRow}>
               <Text style={styles.addressText} numberOfLines={1}>
                 {getCustomizePublicAddress(item?.address)}
@@ -138,6 +149,8 @@ const AddressSelectorSheet = forwardRef(({onSelect}, ref) => {
           )}
           <TouchableOpacity
             style={styles.iconButton}
+            accessibilityRole="button"
+            accessibilityLabel="Copy address"
             disabled={!!applyingAddress}
             hitSlop={{top: 10, bottom: 10, left: 4, right: 4}}
             onPress={() => onPressCopy(item)}>
@@ -145,6 +158,8 @@ const AddressSelectorSheet = forwardRef(({onSelect}, ref) => {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconButton}
+            accessibilityRole="button"
+            accessibilityLabel="Show address QR code"
             disabled={!!applyingAddress}
             hitSlop={{top: 10, bottom: 10, left: 4, right: 4}}
             onPress={() => onPressQR(item)}>

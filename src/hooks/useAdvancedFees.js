@@ -49,7 +49,12 @@ const useAdvancedFees = ({
   const isEip1559 = isEip1559Chain(chainName);
   const gasCurrency = GAS_CURRENCY[convertedChainName] || 'Gwei';
 
+  // Like the tip below, seed the gas price only while a preset is active so
+  // the user's typed custom value survives polling updates.
   useEffect(() => {
+    if (selectedFeesTypeRef.current === 'custom') {
+      return;
+    }
     if (feesOptions?.[0]?.gasPrice) {
       setCustomFees(feesOptions?.[0]?.gasPrice);
     }
