@@ -32,6 +32,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {
   selectCurrentCoin,
+  selectCurrentWallet,
   selectCurrentWalletClientId,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
@@ -40,9 +41,15 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {
+  isNameSupportChain,
   multiplyBNWithFixed,
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
+import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
+import {
+  getCustomRPCWithData,
+  selectAllCustomRpc,
+} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSelectors';
 import {useLocalNotification} from 'providers/hooks/useLocalNotification';
 import RecipientAddressInput from 'components/RecipientAddressInput';
 import {currencySymbol} from 'data/currency';
@@ -136,6 +143,8 @@ const SchedulePayment = ({navigation, route}) => {
   const styles = myStyles(theme);
   const dispatch = useDispatch();
   const currentCoin = useSelector(selectCurrentCoin);
+  const currentWallet = useSelector(selectCurrentWallet);
+  const allCustomRPC = useSelector(selectAllCustomRpc);
   const walletClientId = useSelector(selectCurrentWalletClientId);
   const localCurrency = useSelector(getLocalCurrency);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -178,6 +187,7 @@ const SchedulePayment = ({navigation, route}) => {
     handleSubmit,
     setFieldValue,
     setFieldTouched,
+    setFieldError,
   } = useFormik({
     initialValues: getInitialValues(editingPayment, currentCoin?.currencyRate),
     validationSchema: Yup.object().shape({
@@ -218,7 +228,46 @@ const SchedulePayment = ({navigation, route}) => {
         SCHEDULED_DATE_FORMAT,
         true,
       ).valueOf();
-      const recipientAddress = submittedValue.toAddress?.trim();
+      let recipientAddress = submittedValue.toAddress?.trim();
+      const chainName = isEditMode
+        ? editingPayment.chain
+        : currentCoin?.chain_name;
+
+      // SendFunds blocks an invalid recipient before it ever reaches the
+      // chain layer; a scheduled payment only gets validated here, since it
+      // is built and broadcast later with no user in the loop. An address
+      // that's malformed for this chain (e.g. wrong-length/format) can
+      // otherwise still get SCALE/RLP-encoded into a transaction and blow up
+      // fee estimation with a cryptic decode error when the reminder fires.
+      const customRPC = getCustomRPCWithData(
+        allCustomRPC,
+        chainName,
+        currentWallet?.clientId,
+      );
+      const currentChain = getChain(
+        chainName,
+        currentWallet?.phrase,
+        customRPC,
+      );
+      const isValid = await currentChain.isValidAddress({
+        address: recipientAddress,
+      });
+      if (!isValid) {
+        let validAddress = null;
+        if (isNameSupportChain(chainName)) {
+          validAddress = await currentChain?.isValidName({
+            name: recipientAddress,
+          });
+        }
+        if (!validAddress) {
+          setIsSubmitting(false);
+          setFieldTouched('toAddress', true);
+          setFieldError('toAddress', 'Enter a valid recipient address');
+          return;
+        }
+        recipientAddress = validAddress;
+      }
+
       const recurrence = buildRecurrence(submittedValue);
       const occurrences = computeOccurrences({scheduledAt, recurrence});
       const id = isEditMode ? editingPayment.id : v4();
@@ -403,6 +452,31 @@ const SchedulePayment = ({navigation, route}) => {
       ? parsed.format('YYYY-MM-DD hh:mm A')
       : values.scheduledDate;
   }, [values.scheduledDate]);
+
+  const recurrenceEndInfo = useMemo(() => {
+    if (!isRepeating) {
+      return null;
+    }
+    const parsed = dayjs(values.scheduledDate, SCHEDULED_DATE_FORMAT, true);
+    if (!parsed.isValid()) {
+      return null;
+    }
+    const occurrences = computeOccurrences({
+      scheduledAt: parsed.valueOf(),
+      recurrence: buildRecurrence(values),
+    });
+    if (occurrences.length < 2) {
+      return null;
+    }
+    const format = ts => dayjs(ts).format('YYYY-MM-DD hh:mm A');
+    return {
+      // occurrences[0] is the start date already shown above, so preview
+      // the next couple after it.
+      upcoming: occurrences.slice(1, 3).map(format),
+      endDate: format(occurrences[occurrences.length - 1]),
+      count: occurrences.length,
+    };
+  }, [isRepeating, values]);
 
   return (
     <DokSafeAreaView style={styles.container}>
@@ -701,6 +775,25 @@ const SchedulePayment = ({navigation, route}) => {
                     {errors.repeatInterval}
                   </Text>
                 )}
+              </>
+            )}
+
+            {recurrenceEndInfo && (
+              <>
+                {recurrenceEndInfo.upcoming.length > 0 && (
+                  <>
+                    <Text style={styles.sublabel}>{'Next occurrences'}</Text>
+                    {recurrenceEndInfo.upcoming.map(date => (
+                      <Text key={date} style={styles.boxBalance}>
+                        {date}
+                      </Text>
+                    ))}
+                  </>
+                )}
+                <Text style={styles.sublabel}>{'Ends'}</Text>
+                <Text style={styles.boxBalance}>
+                  {`${recurrenceEndInfo.endDate} (after ${recurrenceEndInfo.count} occurrences)`}
+                </Text>
               </>
             )}
 

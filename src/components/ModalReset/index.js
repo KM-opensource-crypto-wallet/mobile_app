@@ -15,13 +15,15 @@ import {
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './ModalResetStyles';
 import {resetWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {useDispatch} from 'react-redux';
+import {selectAllScheduledPayments} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {useDispatch, useSelector} from 'react-redux';
 import {resetCurrentTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {resetBatchTransactions} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
 import {deleteAlertsForUserThunk} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
 import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
 import googleDrive from '../../utils/googleDriveBackup';
 import {logoutOneSignal} from 'utils/onesignal';
+import {useLocalNotification} from 'providers/hooks/useLocalNotification';
 
 const WIDTH = Dimensions.get('window').width + 80;
 
@@ -42,6 +44,8 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
   const dispatch = useDispatch();
   const [list, setList] = useState('');
   const keyboardHeight = useKeyboardHeight();
+  const allScheduledPayments = useSelector(selectAllScheduledPayments);
+  const {cancelScheduledPaymentNotifications} = useLocalNotification();
 
   useEffect(() => {
     setList(page);
@@ -65,6 +69,11 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
       // state synchronously (before resetWallet clears it), and account
       // deletion must not be blocked by a network failure.
       dispatch(deleteAlertsForUserThunk());
+      // Cancel every pending scheduled-payment reminder before resetWallet
+      // wipes the data (recipient/amount/wallet) those notifications point to.
+      await cancelScheduledPaymentNotifications(
+        allScheduledPayments.map(payment => payment?.id),
+      );
       dispatch(resetWallet());
       dispatch(resetCurrentTransferData());
       dispatch(resetBatchTransactions());

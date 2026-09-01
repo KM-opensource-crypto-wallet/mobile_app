@@ -13,6 +13,34 @@ const myStyles = theme =>
       paddingBottom: 24,
       flexGrow: 1,
     },
+    filterRow: {
+      flexDirection: 'row',
+      gap: 8,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+    },
+    filterPill: {
+      paddingVertical: 8,
+      paddingHorizontal: 14,
+      borderWidth: 1.5,
+      borderColor: theme.headerBorder,
+      borderRadius: 20,
+      backgroundColor: 'transparent',
+    },
+    filterPillSelected: {
+      borderColor: theme.background,
+      borderWidth: 2,
+      backgroundColor: theme.background + '15',
+    },
+    filterPillText: {
+      fontFamily: 'Roboto-Regular',
+      fontSize: 13,
+      color: theme.font,
+      fontWeight: '600',
+    },
+    filterPillTextSelected: {
+      color: theme.background,
+    },
     summaryText: {
       color: theme.gray,
       fontSize: 13,
@@ -56,9 +84,6 @@ const myStyles = theme =>
           elevation: 2,
         },
       }),
-    },
-    cardPastDue: {
-      opacity: 0.5,
     },
     cardTopRow: {
       flexDirection: 'row',

@@ -1,4 +1,4 @@
-import {createContext, useCallback, useEffect, useState} from 'react';
+import {createContext, useCallback, useEffect, useMemo, useState} from 'react';
 import notifee, {
   AndroidImportance,
   AndroidVisibility,
@@ -10,7 +10,10 @@ import BigNumber from 'bignumber.js';
 import {store} from 'redux/store';
 import {MainNavigation} from 'utils/navigation';
 import {showToast} from 'utils/toast';
-import {getCustomizePublicAddress} from 'dok-wallet-blockchain-networks/helper';
+import {
+  getCustomizePublicAddress,
+  validateBigNumberStr,
+} from 'dok-wallet-blockchain-networks/helper';
 import {
   isWalletHiddenAndLocked,
   selectAllWallets,
@@ -134,7 +137,7 @@ export const LocalNotificationProvider = ({children}) => {
         isFetchNonce: true,
         fromAddress: freshCoin?.address,
         toAddress: payment.recipientAddress,
-        amount: payment.amount,
+        amount: validateBigNumberStr(payment.amount),
         contractAddress: freshCoin?.contractAddress,
         balance: getAvailableAmount(freshCoin),
       }),
@@ -226,8 +229,8 @@ export const LocalNotificationProvider = ({children}) => {
       try {
         await ensureAndroidChannel();
         await Promise.all(
-          occurrences.map((timestamp, index) =>
-            notifee.createTriggerNotification(
+          occurrences.map((timestamp, index) => {
+            return notifee.createTriggerNotification(
               {
                 id: `${payment.id}::${index}`,
                 title: 'Scheduled payment ready',
@@ -257,8 +260,8 @@ export const LocalNotificationProvider = ({children}) => {
                 type: TriggerType.TIMESTAMP,
                 timestamp,
               },
-            ),
-          ),
+            );
+          }),
         );
         return {scheduled: true, blocked: false};
       } catch (e) {
@@ -285,6 +288,19 @@ export const LocalNotificationProvider = ({children}) => {
     }
   }, []);
 
+  const cancelScheduledPaymentNotifications = useCallback(
+    async ids => {
+      const uniqueIds = [...new Set((ids || []).filter(Boolean))];
+      if (!uniqueIds.length) {
+        return;
+      }
+      await Promise.all(
+        uniqueIds.map(id => cancelScheduledPaymentNotification(id)),
+      );
+    },
+    [cancelScheduledPaymentNotification],
+  );
+
   useEffect(() => {
     const handleScheduledPaymentPress = notification => {
       const data = notification?.data;
@@ -309,19 +325,33 @@ export const LocalNotificationProvider = ({children}) => {
     };
   }, []);
 
+  const contextValue = useMemo(
+    () => ({
+      pendingScheduledPaymentData,
+      setPendingScheduledPaymentData,
+      handleScheduledPaymentNotificationData,
+      pendingNotificationData,
+      setPendingNotificationData,
+      handleNotificationData,
+      requestLocalNotificationPermission,
+      createScheduledPaymentNotification,
+      cancelScheduledPaymentNotification,
+      cancelScheduledPaymentNotifications,
+    }),
+    [
+      pendingScheduledPaymentData,
+      handleScheduledPaymentNotificationData,
+      pendingNotificationData,
+      handleNotificationData,
+      requestLocalNotificationPermission,
+      createScheduledPaymentNotification,
+      cancelScheduledPaymentNotification,
+      cancelScheduledPaymentNotifications,
+    ],
+  );
+
   return (
-    <locaoNotificationContext.Provider
-      value={{
-        pendingScheduledPaymentData,
-        setPendingScheduledPaymentData,
-        handleScheduledPaymentNotificationData,
-        pendingNotificationData,
-        setPendingNotificationData,
-        handleNotificationData,
-        requestLocalNotificationPermission,
-        createScheduledPaymentNotification,
-        cancelScheduledPaymentNotification,
-      }}>
+    <locaoNotificationContext.Provider value={contextValue}>
       {children}
     </locaoNotificationContext.Provider>
   );

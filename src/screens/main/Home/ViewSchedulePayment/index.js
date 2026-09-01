@@ -1,4 +1,10 @@
-import React, {useCallback, useContext, useLayoutEffect, useMemo} from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {FlatList, Text, TouchableOpacity, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import Toast from 'react-native-toast-message';
@@ -8,13 +14,27 @@ import IoniconIcon from 'react-native-vector-icons/Ionicons';
 import myStyles from './ViewSchedulePaymentStyles';
 import {ThemeContext} from 'theme/ThemeContext';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
-import {selectScheduledPaymentsForCurrentWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  selectCurrentCoin,
+  selectScheduledPaymentsForCurrentWallet,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {removeScheduledPayment} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {useLocalNotification} from 'providers/hooks/useLocalNotification';
 import {describeRecurrence} from 'utils/scheduleRecurrence';
 import {truncateAddress} from 'utils/common';
 
 dayjs.extend(relativeTime);
+
+const PAYMENT_FILTER = {
+  CURRENT_TOKEN: 'currentToken',
+  ALL: 'all',
+};
+
+const isPaymentForCoin = (payment, coin) =>
+  !!coin &&
+  payment?.chain === coin.chain_name &&
+  payment?.asset?.symbol === coin.symbol &&
+  (payment?.asset?.contractAddress || '') === (coin.contractAddress || '');
 
 const STATUS_META = {
   scheduled: {label: 'Scheduled', color: '#4F8DD8', icon: 'time-outline'},
@@ -45,20 +65,39 @@ const ViewSchedulePayment = ({navigation}) => {
   const scheduledPayments = useSelector(
     selectScheduledPaymentsForCurrentWallet,
   );
+  const currentCoin = useSelector(selectCurrentCoin);
+  const [paymentFilter, setPaymentFilter] = useState(
+    PAYMENT_FILTER.CURRENT_TOKEN,
+  );
+
+  const filteredPayments = useMemo(() => {
+    const list = Array.isArray(scheduledPayments) ? scheduledPayments : [];
+    return paymentFilter === PAYMENT_FILTER.CURRENT_TOKEN
+      ? list.filter(item => isPaymentForCoin(item, currentCoin))
+      : list;
+  }, [scheduledPayments, paymentFilter, currentCoin]);
 
   // Soonest upcoming payment first; anything whose time has already passed
-  // sinks below the upcoming ones, most recently missed first.
+  // sinks below the upcoming ones, most recently missed first. A 'scheduled'
+  // item whose time has passed was never actually sent — it just went
+  // unprocessed — so it's dropped from the list rather than shown as
+  // "Processed".
   const sortedPayments = useMemo(() => {
-    const list = Array.isArray(scheduledPayments) ? scheduledPayments : [];
+    const list = filteredPayments;
     const now = Date.now();
     const upcoming = list
       .filter(item => !item?.scheduledAt || item.scheduledAt >= now)
       .sort((a, b) => (a?.scheduledAt || 0) - (b?.scheduledAt || 0));
     const past = list
-      .filter(item => item?.scheduledAt && item.scheduledAt < now)
+      .filter(
+        item =>
+          item?.scheduledAt &&
+          item.scheduledAt < now &&
+          item?.status !== 'scheduled',
+      )
       .sort((a, b) => (b?.scheduledAt || 0) - (a?.scheduledAt || 0));
     return [...upcoming, ...past];
-  }, [scheduledPayments]);
+  }, [filteredPayments]);
 
   useLayoutEffect(() => {
     navigation?.setOptions({
@@ -100,17 +139,11 @@ const ViewSchedulePayment = ({navigation}) => {
 
   const renderItem = useCallback(
     ({item}) => {
-      const isPastDue =
-        item?.status === 'scheduled' &&
-        item?.scheduledAt &&
-        item.scheduledAt < Date.now();
-      const statusMeta = isPastDue
-        ? {label: 'Processed', color: '#8A8886', icon: 'time-outline'}
-        : getStatusMeta(item?.status);
+      const statusMeta = getStatusMeta(item?.status);
       const scheduledDate = item?.scheduledAt ? dayjs(item.scheduledAt) : null;
       const recurrenceLabel = describeRecurrence(item?.recurrence);
       return (
-        <View style={[styles.card, isPastDue && styles.cardPastDue]}>
+        <View style={styles.card}>
           <View style={styles.cardTopRow}>
             <View style={styles.avatarAndAmount}>
               <View style={styles.avatar}>
@@ -209,8 +242,44 @@ const ViewSchedulePayment = ({navigation}) => {
     [handleDelete, handleEdit, styles, theme.background, theme.gray],
   );
 
+  const isCurrentTokenFilter = paymentFilter === PAYMENT_FILTER.CURRENT_TOKEN;
+
   return (
     <DokSafeAreaView style={styles.container}>
+      <View style={styles.filterRow}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={[
+            styles.filterPill,
+            isCurrentTokenFilter && styles.filterPillSelected,
+          ]}
+          onPress={() => setPaymentFilter(PAYMENT_FILTER.CURRENT_TOKEN)}>
+          <Text
+            style={[
+              styles.filterPillText,
+              isCurrentTokenFilter && styles.filterPillTextSelected,
+            ]}>
+            {currentCoin?.symbol
+              ? `Current Token (${currentCoin.symbol})`
+              : 'Current Token'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={[
+            styles.filterPill,
+            !isCurrentTokenFilter && styles.filterPillSelected,
+          ]}
+          onPress={() => setPaymentFilter(PAYMENT_FILTER.ALL)}>
+          <Text
+            style={[
+              styles.filterPillText,
+              !isCurrentTokenFilter && styles.filterPillTextSelected,
+            ]}>
+            {'All Scheduled'}
+          </Text>
+        </TouchableOpacity>
+      </View>
       <FlatList
         data={sortedPayments}
         keyExtractor={item => item?.id}
@@ -234,11 +303,17 @@ const ViewSchedulePayment = ({navigation}) => {
                 color={theme.gray}
               />
             </View>
-            <Text style={styles.emptyTitle}>{'No scheduled payments yet'}</Text>
+            <Text style={styles.emptyTitle}>
+              {isCurrentTokenFilter
+                ? `No scheduled payments for ${
+                    currentCoin?.symbol || 'this token'
+                  }`
+                : 'No scheduled payments yet'}
+            </Text>
             <Text style={styles.emptyText}>
-              {
-                'Tap "Add" to schedule a payment and we\'ll remind you when it\'s time to send it.'
-              }
+              {isCurrentTokenFilter
+                ? 'Tap "Add" to schedule a payment for this token, or switch to "All Scheduled" to see payments for other tokens.'
+                : 'Tap "Add" to schedule a payment and we\'ll remind you when it\'s time to send it.'}
             </Text>
           </View>
         }
