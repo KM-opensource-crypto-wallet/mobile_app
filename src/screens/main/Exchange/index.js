@@ -723,7 +723,7 @@ const Exchange = ({navigation}) => {
                   }`}
                 </Text>
               )}
-              {!!possibleFromCoin?.length && (
+              {possibleFromCoin?.length > 1 && (
                 <View style={styles.addressView}>
                   <DokDropdown
                     placeholder={'Pay from address'}

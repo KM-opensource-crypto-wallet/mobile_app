@@ -491,7 +491,7 @@ const CreateStaking = ({navigation}) => {
                             />
                           </View>
                         )}
-                        {isResourceSupport && resourceData?.length && (
+                        {isResourceSupport && !!resourceData?.length && (
                           <View style={styles.boxInput}>
                             <Text style={styles.listTitle}>
                               {'Resource Type'}
