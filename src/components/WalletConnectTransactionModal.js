@@ -46,6 +46,7 @@ import {
   NON_EVM_METHOD_HANDLERS,
 } from 'dok-wallet-blockchain-networks/config/config';
 import {walletConnect} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {getSolanaFeePayer} from 'dok-wallet-blockchain-networks/helper/solanaTransaction';
 
 export const ETH_SEND_TRANSACTION = 'eth_sendTransaction';
 export const ETH_SIGN_TRANSACTION = 'eth_signTransaction';
@@ -60,11 +61,17 @@ function parseSolanaSignTransaction(txData) {
     if (!txData || typeof txData !== 'object') {
       throw new Error('Invalid transaction data provided');
     }
-    sender = txData.feePayer || txData.pubkey || sender;
+    // Modern Solana requests carry no feePayer/pubkey (signAllTransactions
+    // sends only `transactions`), so read the fee payer from the tx itself.
+    const firstTx = txData.transaction ?? txData.transactions?.[0];
+    sender =
+      txData.feePayer || txData.pubkey || getSolanaFeePayer(firstTx) || sender;
     data = txData?.transaction
       ? txData?.transaction
       : Array.isArray(txData?.transactions)
-      ? JSON.stringify(txData?.transactions)
+      ? `${txData.transactions.length} transaction(s): ${JSON.stringify(
+          txData.transactions,
+        )}`
       : data;
   } catch (error) {
     console.error('Error parsing transaction:', error);
@@ -83,6 +90,7 @@ const getMessageData = (method, message) => {
       return {type: 'text', value: decodeSolMessage(message)};
     case 'solana_signTransaction':
     case 'solana_signAndSendTransaction':
+    case 'solana_signAllTransactions':
       return {type: 'json', value: parseSolanaSignTransaction(message)};
     case 'xrpl_signMessage':
     case 'polkadot_signMessage':
@@ -275,10 +283,13 @@ const WalletConnectTransactionModal = props => {
 
   const getTransactionRequestData = useMemo(() => {
     if (isNonEVMChain(transactionData?.chainId)) {
+      // Unmapped methods fall through with raw params so the request renders
+      // and the thunk rejects it as unsupported instead of crashing here.
+      const handler =
+        NON_EVM_METHOD_HANDLERS[transactionData?.method] ||
+        (params => ({finaltransactionData: params, signTypeData: params}));
       const {finaltransactionData, signTypeData, expectedSignerAddress} =
-        NON_EVM_METHOD_HANDLERS[transactionData?.method](
-          transactionData?.params,
-        );
+        handler(transactionData?.params);
       return {finaltransactionData, signTypeData, expectedSignerAddress};
     } else {
       if (transactionData?.method?.includes('wallet_sendCalls')) {

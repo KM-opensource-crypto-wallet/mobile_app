@@ -2062,11 +2062,6 @@
     "@ethersproject/properties" "^5.8.0"
     "@ethersproject/strings" "^5.8.0"
 
-"@exodus/patch-broken-hermes-typed-arrays@^1.0.0-alpha.1":
-  version "1.0.0-alpha.1"
-  resolved "https://registry.yarnpkg.com/@exodus/patch-broken-hermes-typed-arrays/-/patch-broken-hermes-typed-arrays-1.0.0-alpha.1.tgz#c686f982fc801d9ad4a60e33e6a9f5a40eb5e132"
-  integrity sha512-oYv+2IJxaNVTnF7lJqS+wrW0JisE9kcKlgQnkrdhtlsfRmFlcYPdPSO8eaIXKHKkzKndy3I+ZzTELg+BVi3vSg==
-
 "@expo/config-plugins@*":
   version "56.0.9"
   resolved "https://registry.yarnpkg.com/@expo/config-plugins/-/config-plugins-56.0.9.tgz#bfe5f0e4c557451524e8521fedb387e879305651"
@@ -13211,7 +13206,7 @@ react-native-quick-base64@^3.0.1:
   resolved "https://registry.yarnpkg.com/react-native-quick-base64/-/react-native-quick-base64-3.0.1.tgz#d6eb0e316856aa6f68399729d56aceba38d585cc"
   integrity sha512-EjUP2U7WqKmlMmoY7XGyHomy8bM0q4+yCDCRg4ZezQ6zedYRwc7yVk4V2O/iSftKaLEzhuW98lpyPMdk1iPHXQ==
 
-react-native-quick-crypto@^1.1.7:
+react-native-quick-crypto@1.1.7:
   version "1.1.7"
   resolved "https://registry.yarnpkg.com/react-native-quick-crypto/-/react-native-quick-crypto-1.1.7.tgz#8b75e8c04b2fb97a9df94c73c1032be86acb2287"
   integrity sha512-4On/q3uENJNk6uCyxtigRQzAxPS/h75nDtljX2MBdGwELkz2p0O/eNFSsYIV8l2vYXxyyva6jXQHBCxAcryZ9A==
