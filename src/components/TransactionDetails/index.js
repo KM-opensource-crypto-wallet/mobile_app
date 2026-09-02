@@ -103,7 +103,7 @@ const TransactionDetails = ({route, navigation}) => {
           : initialTransaction.date,
         status: recentTx.status,
         link: recentTx.link,
-        url: recentTx.url ?? initialTransaction.url,
+        url: recentTx.url || initialTransaction.url,
         totalCourse: recentTx.totalCourse,
         blockNumber: recentTx.blockNumber,
         confirmations: recentTx.confirmations,
