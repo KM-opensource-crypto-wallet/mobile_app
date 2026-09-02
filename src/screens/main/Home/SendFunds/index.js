@@ -44,7 +44,9 @@ import {
   validateNumberInInput,
   validateNumber,
   isEip7702SupportedChain,
+  getSponsoredGasTokenSymbol,
 } from 'dok-wallet-blockchain-networks/helper';
+import SponsoredGasToggle from 'components/SponsoredGasToggle';
 import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {showToast} from 'utils/toast';
 import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
@@ -93,6 +95,35 @@ const SendFunds = ({navigation, route}) => {
   const [maxAmount, setMaxAmount] = useState('0.00000');
   const [modalVisible, setmodalVisible] = useState(false);
   const [poisonWarning, setPoisonWarning] = useState(null);
+
+  const sponsoredGasToken = useMemo(() => {
+    if (!currentCoin?.contractAddress) {
+      return null;
+    }
+    const held = (currentWallet?.coins ?? []).find(
+      item =>
+        item?.chain_name === currentCoin?.chain_name &&
+        Number(item?.totalAmount) > 0 &&
+        getSponsoredGasTokenSymbol(
+          currentCoin?.chain_name,
+          item?.contractAddress,
+        ),
+    );
+    if (!held) {
+      return null;
+    }
+    return {
+      symbol: getSponsoredGasTokenSymbol(
+        currentCoin?.chain_name,
+        held?.contractAddress,
+      ),
+      contractAddress: held?.contractAddress,
+    };
+  }, [
+    currentCoin?.chain_name,
+    currentCoin?.contractAddress,
+    currentWallet?.coins,
+  ]);
   const availableAmount = useMemo(() => {
     const amount =
       (isBitcoin && transferData?.selectedUTXOsValue) ||
@@ -380,6 +411,9 @@ const SendFunds = ({navigation, route}) => {
         memo: values?.memo?.trim(),
         selectedUTXOs: transferData?.selectedUTXOs,
         selectedUTXOsValue: transferData?.selectedUTXOsValue,
+        payGasWithToken: !!sponsoredGasToken && !!values?.payGasWithToken,
+        gasTokenSymbol: sponsoredGasToken?.symbol ?? null,
+        gasTokenContractAddress: sponsoredGasToken?.contractAddress ?? null,
       }),
     );
     dispatch(
@@ -434,6 +468,7 @@ const SendFunds = ({navigation, route}) => {
                     )
                   : '',
               memo: linkMemo || '',
+              payGasWithToken: false,
             }}
             validationSchema={validationSchemaSendFunds(
               availableAmount,
@@ -820,6 +855,18 @@ const SendFunds = ({navigation, route}) => {
                           {/*    Fast Transaction*/}
                           {/*  </Text>*/}
                           {/*</View>*/}
+                          {!!sponsoredGasToken && (
+                            <SponsoredGasToggle
+                              tokenSymbol={sponsoredGasToken.symbol}
+                              checked={!!values?.payGasWithToken}
+                              onToggle={() =>
+                                setFieldValue(
+                                  'payGasWithToken',
+                                  !values?.payGasWithToken,
+                                )
+                              }
+                            />
+                          )}
                         </View>
                       </View>
                       {isEip7702SupportedChain(currentCoin?.chain_name) && (

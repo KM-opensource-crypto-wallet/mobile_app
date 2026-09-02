@@ -65,6 +65,10 @@ const AdvancedFeesSheet = forwardRef(
       chainName,
       zIndex,
       stackBehavior,
+      payGasWithToken,
+      gasTokenCandidates,
+      selectedGasTokenSymbol,
+      onSelectGasToken,
       // EIP-1559 extras. All optional: legacy chains and the Permit/Allowance
       // sheets omit them and get the single "Gas Price" input as before.
       isEip1559 = false,
@@ -120,8 +124,40 @@ const AdvancedFeesSheet = forwardRef(
             />
             <Text style={styles.title}>Advanced Options</Text>
           </View>
+          {/* Token Gas Price Section */}
+          {!!payGasWithToken && gasTokenCandidates?.length > 1 && (
+            <View style={styles.section}>
+              <View style={styles.labelRow}>
+                <MaterialCommunityIcons
+                  name="cash"
+                  size={18}
+                  color={theme.background}
+                />
+                <Text style={styles.label}>Pay Gas With</Text>
+              </View>
+              <View style={styles.feesContainer}>
+                {gasTokenCandidates.map(item => (
+                  <TouchableOpacity
+                    key={`gas_token_${item.symbol}`}
+                    style={[
+                      styles.feesItem,
+                      selectedGasTokenSymbol === item.symbol &&
+                        styles.feesItemSelected,
+                    ]}
+                    onPress={() => onSelectGasToken(item.symbol)}>
+                    <Text style={styles.feesTitle}>{item.symbol}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text style={styles.hint}>
+                {
+                  'The network fee is taken from this token as part of your transaction.'
+                }
+              </Text>
+            </View>
+          )}
           {/* Gas Price / Max Fee Section */}
-          {!!feesOptions?.length && (
+          {!!feesOptions?.length && !payGasWithToken && (
             <View style={styles.section}>
               <View style={styles.labelRow}>
                 <MaterialCommunityIcons
@@ -205,7 +241,7 @@ const AdvancedFeesSheet = forwardRef(
             </View>
           )}
           {/* Nonce Section */}
-          {isEVM && (
+          {isEVM && !payGasWithToken && (
             <View style={styles.section}>
               <View style={styles.labelRow}>
                 <MaterialCommunityIcons
