@@ -8,6 +8,7 @@ import React, {
   useMemo,
 } from 'react';
 import myStyles from './TransferStyles';
+import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {
   TouchableOpacity,
   View,
@@ -382,6 +383,38 @@ const Transfer = ({navigation, route}) => {
   const customError = useSelector(getTransferDataCustomError);
   const balance = useSelector(getBalanceForNativeCoin);
   const phrase = useSelector(getCurrentWalletPhrase);
+  // Hedera: the recipient's ledger account id; null means the transfer will
+  // auto-create it (sender pays), undefined means still resolving.
+  const [hederaRecipient, setHederaRecipient] = useState(undefined);
+  const hederaToAddress =
+    transferData?.currentCoin?.chain_name === 'hedera'
+      ? transferData?.toAddress
+      : null;
+  useEffect(() => {
+    if (!hederaToAddress) {
+      setHederaRecipient(undefined);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await getChain(
+          'hedera',
+          phrase,
+        ).lookupAddressIdentifiers({address: hederaToAddress});
+        if (!cancelled) {
+          setHederaRecipient(result);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setHederaRecipient(null);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [hederaToAddress, phrase]);
   const failedTransaction = useSelector(getFailedTransaction);
   const sellCryptoRequestDetails = useSelector(getSellCryptoRequestDetails);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -769,8 +802,28 @@ const Transfer = ({navigation, route}) => {
         <TransferDetailsBox
           styles={styles}
           transferData={transferData}
-          chainName={chainName}
-        />
+          chainName={chainName}>
+          {chainName === 'hedera' && (
+            <>
+              {!!transferData?.currentCoin?.accountId && (
+                <InfoRow
+                  styles={styles}
+                  label={'Account ID'}
+                  value={transferData.currentCoin.accountId}
+                />
+              )}
+              <InfoRow
+                styles={styles}
+                label={'To account ID'}
+                value={
+                  hederaRecipient === undefined
+                    ? 'Resolving…'
+                    : hederaRecipient?.accountId || 'New account'
+                }
+              />
+            </>
+          )}
+        </TransferDetailsBox>
         <FeeSummaryBox
           {...feeSummaryProps}
           maxTotalDisplay={`${currencySymbol[localCurrency]}${totalValue || 0}`}

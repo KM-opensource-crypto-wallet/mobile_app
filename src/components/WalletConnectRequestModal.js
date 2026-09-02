@@ -32,6 +32,11 @@ import WalletConnect from 'assets/images/WalletConnect.png';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {chainLogoMap} from 'assets/chain_logo';
+import {
+  isHederaUnactivated,
+  HEDERA_UNACTIVATED_MESSAGE,
+} from 'dok-wallet-blockchain-networks/helper';
+import {showToast} from 'utils/toast';
 
 const getTonSessionProperties = privateKey => {
   const {
@@ -173,6 +178,35 @@ const WalletConnectRequestModal = props => {
       navigation.pop();
       const connector = getWalletConnect();
       if (connector) {
+        // Hedera dApps address accounts as `hedera:<net>:0.0.N`; a wallet
+        // that has never been funded has no account id yet.
+        const unactivatedHedera = chainData.find(isHederaUnactivated);
+        if (unactivatedHedera) {
+          showToast({
+            type: 'errorToast',
+            title: 'Hedera account not active',
+            message: HEDERA_UNACTIVATED_MESSAGE,
+          });
+          const hederaRequired = Object.values(requiredNamespaces).some(
+            namespace => namespace?.chains?.includes(unactivatedHedera.key),
+          );
+          if (hederaRequired) {
+            await connector.rejectSession({
+              id,
+              reason: getSdkError('UNSUPPORTED_ACCOUNTS'),
+            });
+            return;
+          }
+        }
+        // Sessions (and the per-session walletData the signer check reads)
+        // carry the Hedera account id in place of the EVM address.
+        const sessionChainData = chainData
+          .filter(item => !isHederaUnactivated(item))
+          .map(item =>
+            item.chain_name === 'hedera'
+              ? {...item, address: item.accountId}
+              : item,
+          );
         let namespaces = {};
         const requiredNamespacesKeys = Object.keys(requiredNamespaces);
         const optionalNamespacesKeys = Object.keys(optionalNamespaces);
@@ -182,13 +216,13 @@ const WalletConnectRequestModal = props => {
         allKeys.forEach(key => {
           let accounts = [];
           requiredNamespaces[key]?.chains?.map(chain => {
-            const foundCoin = chainData?.find(item => item.key === chain);
+            const foundCoin = sessionChainData.find(item => item.key === chain);
             if (foundCoin?.address) {
               accounts.push(`${chain}:${foundCoin?.address}`);
             }
           });
           optionalNamespaces[key]?.chains?.map(chain => {
-            const foundCoin = chainData?.find(item => item.key === chain);
+            const foundCoin = sessionChainData.find(item => item.key === chain);
             if (foundCoin?.address) {
               accounts.push(`${chain}:${foundCoin?.address}`);
             }
@@ -248,7 +282,7 @@ const WalletConnectRequestModal = props => {
         dispatch(setWalletConnectConnection(true));
 
         sessionId &&
-          dispatch(setWalletConnectWalletData({[sessionId]: chainData}));
+          dispatch(setWalletConnectWalletData({[sessionId]: sessionChainData}));
       }
     } catch (e) {
       console.error('Error in approve request', e);

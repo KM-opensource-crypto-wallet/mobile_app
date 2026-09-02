@@ -64,6 +64,60 @@ import {findLookalikeAddress} from 'dok-wallet-blockchain-networks/helper/addres
 import {getBolt11InvoiceAmount} from 'dok-wallet-blockchain-networks/helper/bolt11';
 import ModalAddressPoisoningWarning from 'components/ModalAddressPoisoningWarning';
 
+const HEDERA_LOOKUP_DEBOUNCE_MS = 400;
+
+// Hedera recipients can be typed as an EVM address or a `0.0.N` account id;
+// show the other identifier, or warn that a brand-new address will be
+// auto-created at the sender's expense.
+const HederaRecipientHint = ({address, getHederaChain, styles}) => {
+  const [info, setInfo] = useState(null);
+  const value = address?.trim() || '';
+  useEffect(() => {
+    if (!value) {
+      setInfo(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const result = await getHederaChain().lookupAddressIdentifiers({
+          address: value,
+        });
+        if (!cancelled) {
+          setInfo({value, ...result});
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setInfo(null);
+        }
+      }
+    }, HEDERA_LOOKUP_DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [value, getHederaChain]);
+  if (!info || info.value !== value) {
+    return null;
+  }
+  let text = null;
+  if (info.inputType === 'accountId') {
+    text = !info.exists
+      ? 'Account not found'
+      : info.evmAddress
+      ? `EVM address: ${info.evmAddress}`
+      : null;
+  } else if (info.inputType === 'evmAddress') {
+    text = info.exists
+      ? `Account ID: ${info.accountId}`
+      : 'New account. A one-time account creation fee is added to the network fee.';
+  }
+  if (!text) {
+    return null;
+  }
+  return <Text style={styles.infoText}>{text}</Text>;
+};
+
 const SendFunds = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
@@ -85,6 +139,7 @@ const SendFunds = ({navigation, route}) => {
   const addressBook = useSelector(getAddressBook);
   const isBitcoin = isBitcoinChain(currentCoin?.chain_name);
   const isLightning = currentCoin?.chain_name === 'bitcoin_lightning';
+  const isHedera = currentCoin?.chain_name === 'hedera';
   const uuid = useMemo(() => {
     return v4();
   }, []);
@@ -225,6 +280,25 @@ const SendFunds = ({navigation, route}) => {
       }
       return {isValid, validAddress};
     },
+    [
+      allCustomRPC,
+      currentCoin?.chain_name,
+      currentWallet?.clientId,
+      currentWallet?.phrase,
+    ],
+  );
+
+  const getHederaChain = useCallback(
+    () =>
+      getChain(
+        currentCoin?.chain_name,
+        currentWallet?.phrase,
+        getCustomRPCWithData(
+          allCustomRPC,
+          currentCoin?.chain_name,
+          currentWallet?.clientId,
+        ),
+      ),
     [
       allCustomRPC,
       currentCoin?.chain_name,
@@ -567,6 +641,18 @@ const SendFunds = ({navigation, route}) => {
                                 />
                               )}
                             </View>
+                            {isHedera && !errors.send && (
+                              <HederaRecipientHint
+                                address={values.send}
+                                getHederaChain={getHederaChain}
+                                styles={styles}
+                              />
+                            )}
+                            {isHedera && !!currentCoin?.accountId && (
+                              <Text style={styles.infoText}>
+                                {`Your account ID: ${currentCoin.accountId}`}
+                              </Text>
+                            )}
                             {errors.send && (
                               <Text style={styles.textConfirm}>
                                 {errors.send}

@@ -188,6 +188,7 @@ The app integrates with multiple blockchain networks via `dok-wallet-blockchain-
   - Android uses Play Integrity standard requests
   - iOS uses App Attest registration + assertion generation
   - Secure storage is used only for persisting the iOS App Attest key registration state
+- **Hedera accounts**: No operator/admin key. The wallet's ECDSA key (Ethereum path) gives the EVM address, which is the coin's `address` everywhere and never changes. The first deposit auto-creates the ledger account (HIP-583, sender pays); its `0.0.N` is stored in a separate `accountId` field and shown only on the Receive screen and in the Send flow. `isHederaUnactivated` / `getHederaLedgerAddress` in `helper/index.js` gate and feed exchange, on-ramp and WalletConnect, which need `0.0.N`. SDK is `@hiero-ledger/sdk`.
 - **Node Polyfills**: Uses `rn-nodeify` for crypto, stream, etc.
 - **CI/CD**: Codemagic configuration in `codemagic.yaml`
 - **Theming**: Context-based theming via `ThemeContext`

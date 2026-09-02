@@ -1871,7 +1871,7 @@
     ethereum-cryptography "^2.0.0"
     micro-ftch "^0.3.1"
 
-"@ethersproject/abi@5.8.0", "@ethersproject/abi@^5.6.3", "@ethersproject/abi@^5.7.0":
+"@ethersproject/abi@^5.6.3", "@ethersproject/abi@^5.7.0":
   version "5.8.0"
   resolved "https://registry.yarnpkg.com/@ethersproject/abi/-/abi-5.8.0.tgz#e79bb51940ac35fe6f3262d7fe2cdb25ad5f07d9"
   integrity sha512-b9YS/43ObplgyV6SlyQsG53/vkSal0MNA1fskSC4mbnCMi8R+NkcH8K9FPYNESf6jUefBUniE4SOKms0E/KK1Q==
@@ -1928,7 +1928,7 @@
   dependencies:
     "@ethersproject/bytes" "^5.8.0"
 
-"@ethersproject/bignumber@5.8.0", "@ethersproject/bignumber@^5.7.0", "@ethersproject/bignumber@^5.8.0":
+"@ethersproject/bignumber@^5.7.0", "@ethersproject/bignumber@^5.8.0":
   version "5.8.0"
   resolved "https://registry.yarnpkg.com/@ethersproject/bignumber/-/bignumber-5.8.0.tgz#c381d178f9eeb370923d389284efa19f69efa5d7"
   integrity sha512-ZyaT24bHaSeJon2tGPKIiHszWjD/54Sz8t57Toch475lCLljC6MgPmxk7Gtzz+ddNN5LuHea9qhAe0x3D+uYPA==
@@ -1937,7 +1937,7 @@
     "@ethersproject/logger" "^5.8.0"
     bn.js "^5.2.1"
 
-"@ethersproject/bytes@5.8.0", "@ethersproject/bytes@^5.7.0", "@ethersproject/bytes@^5.8.0":
+"@ethersproject/bytes@^5.7.0", "@ethersproject/bytes@^5.8.0":
   version "5.8.0"
   resolved "https://registry.yarnpkg.com/@ethersproject/bytes/-/bytes-5.8.0.tgz#9074820e1cac7507a34372cadeb035461463be34"
   integrity sha512-vTkeohgJVCPVHu5c25XWaWQOZ4v+DkGoC42/TS2ond+PARCxTJvgTFUNDZovyQ/uAQ4EcpqqowKydcdmRKjg7A==
@@ -1993,7 +1993,7 @@
   dependencies:
     "@ethersproject/logger" "^5.8.0"
 
-"@ethersproject/rlp@5.8.0", "@ethersproject/rlp@^5.8.0":
+"@ethersproject/rlp@^5.8.0":
   version "5.8.0"
   resolved "https://registry.yarnpkg.com/@ethersproject/rlp/-/rlp-5.8.0.tgz#5a0d49f61bc53e051532a5179472779141451de5"
   integrity sha512-LqZgAznqDbiEunaUvykH2JAoXTT9NV0Atqk8rQN9nx9SEgThA/WMx5DnW8a9FOufo//6FZOCHZ+XiClzgbqV9Q==
@@ -2161,10 +2161,10 @@
   dependencies:
     nanoid "^3.3.1"
 
-"@grpc/grpc-js@1.12.6":
-  version "1.12.6"
-  resolved "https://registry.yarnpkg.com/@grpc/grpc-js/-/grpc-js-1.12.6.tgz#a3586ffdfb6a1f5cd5b4866dec9074c4a1e65472"
-  integrity sha512-JXUj6PI0oqqzTGvKtzOkxtpsyPRNsrmhh41TtIz/zEB6J+AUiZZ0dxWzcMwO9Ns5rmSPuMdghlTbUuqIM48d3Q==
+"@grpc/grpc-js@1.12.7":
+  version "1.12.7"
+  resolved "https://registry.yarnpkg.com/@grpc/grpc-js/-/grpc-js-1.12.7.tgz#4eb83f7b322ea7eee21382e01f34fb77f4c5fdda"
+  integrity sha512-Tugep4V4GCsN9dSAVkXoBWqJXDoH+NSXd50kFGsm7ZG1tBXFEAnLoxzkGUIksTrDjiaMwlpsbC24oWbESGHpIQ==
   dependencies:
     "@grpc/proto-loader" "^0.7.13"
     "@js-sdsl/ordered-map" "^4.4.2"
@@ -2266,61 +2266,55 @@
     "@harmoniclabs/bigint-utils" "^1.0.0"
     "@harmoniclabs/uint8array-utils" "^1.0.3"
 
-"@hashgraph/sdk@^2.47.0":
-  version "2.81.0"
-  resolved "https://registry.yarnpkg.com/@hashgraph/sdk/-/sdk-2.81.0.tgz#469485633abe5f2e008a6bd6b15877410c199da9"
-  integrity sha512-AaNcQsdi1pLJcxkt9vQyah54+e9aZZla12LIOjMIYdf2v8UvIv37J7TMApfDapXAUwYI7lTV06tv3Z8V5abrCg==
+"@hiero-ledger/cryptography@1.21.0":
+  version "1.21.0"
+  resolved "https://registry.yarnpkg.com/@hiero-ledger/cryptography/-/cryptography-1.21.0.tgz#01b5d578077243e88326897d6cb8a8dfda62b5dc"
+  integrity sha512-q3LR+OgJMDNRund2CTsvFRHab5EKypm81v+0yM/rGWRq0igPRbd/SGzs2X7Q6n/UvZYT+bKI8gnrXzafbN2TCA==
   dependencies:
-    "@ethersproject/abi" "5.8.0"
-    "@ethersproject/bignumber" "5.8.0"
-    "@ethersproject/bytes" "5.8.0"
-    "@ethersproject/rlp" "5.8.0"
-    "@grpc/grpc-js" "1.12.6"
-    "@hiero-ledger/cryptography" "npm:@hashgraph/cryptography@1.17.0"
-    "@hiero-ledger/proto" "npm:@hashgraph/proto@2.26.0-beta.3"
+    "@noble/ciphers" "2.2.0"
+    "@noble/curves" "2.2.0"
+    "@noble/hashes" "2.2.0"
+    "@scure/base" "2.2.0"
+    "@scure/bip32" "2.2.0"
     ansi-regex "6.2.2"
-    ansi-styles "6.2.3"
-    bignumber.js "9.1.1"
+    ansi-styles "7.0.0"
+    asn1js "3.0.6"
+    bignumber.js "11.1.2"
+    bn.js "5.2.3"
+    debug "4.4.1"
+    forge-light "1.1.4"
+    strip-ansi "7.1.2"
+
+"@hiero-ledger/proto@2.31.0":
+  version "2.31.0"
+  resolved "https://registry.yarnpkg.com/@hiero-ledger/proto/-/proto-2.31.0.tgz#a485fe3b78c522f61d820e6b3a72dc1aa1f90c93"
+  integrity sha512-6Uq9cSK1lqhMsP/Zwz3liKIzn5QtN2dvt/7EET00/LdubYxYqVxREs8SCtYbgOlzMy34n1Hl6eNeEDDFpkQhMg==
+  dependencies:
+    long "5.3.1"
+
+"@hiero-ledger/sdk@2.87.0":
+  version "2.87.0"
+  resolved "https://registry.yarnpkg.com/@hiero-ledger/sdk/-/sdk-2.87.0.tgz#1cbef86992aa0be82563fc7888f1bce0bf628a01"
+  integrity sha512-toP0oh7ZI+Yr2ijXkqOrT9zA90WTAK9ygB6Fz9R+kc3nR4xha4DGhuGPpH/UcaZcOHL6Zneq1E+Xe7TRJUJV0w==
+  dependencies:
+    "@grpc/grpc-js" "1.12.7"
+    "@hiero-ledger/cryptography" "1.21.0"
+    "@hiero-ledger/proto" "2.31.0"
+    ansi-regex "6.2.2"
+    ansi-styles "7.0.0"
+    bignumber.js "11.1.2"
     bn.js "5.2.3"
     crypto-js "4.2.0"
     debug "4.4.1"
+    ethers "6.16.0"
     js-base64 "3.7.4"
     long "5.3.1"
     pino "10.1.0"
     pino-pretty "13.0.0"
-    protobufjs "8.0.0"
+    protobufjs "8.6.6"
     rfc4648 "1.5.3"
     strip-ansi "7.1.2"
     utf8 "3.0.0"
-
-"@hiero-ledger/cryptography@npm:@hashgraph/cryptography@1.17.0":
-  version "1.17.0"
-  resolved "https://registry.yarnpkg.com/@hashgraph/cryptography/-/cryptography-1.17.0.tgz#2f392f6481c5364114ae5ab78b41abd1bf9e985f"
-  integrity sha512-AFJncwcZxpeNUoaAbNjkXxUESO+WB8Wdi3IODD1iE6e7kFjk/T1rmFDTtoJRcE50Y3/h24y7GfMOkxiDlhRpxg==
-  dependencies:
-    "@noble/curves" "1.8.1"
-    ansi-regex "6.2.2"
-    ansi-styles "6.2.3"
-    asn1js "3.0.6"
-    bignumber.js "9.1.1"
-    bn.js "5.2.3"
-    buffer "6.0.3"
-    crypto-js "4.2.0"
-    debug "4.4.1"
-    forge-light "1.1.4"
-    js-base64 "3.7.7"
-    react-native-get-random-values "2.0.0"
-    spark-md5 "3.0.2"
-    strip-ansi "7.1.2"
-    tweetnacl "1.0.3"
-    utf8 "3.0.0"
-
-"@hiero-ledger/proto@npm:@hashgraph/proto@2.26.0-beta.3":
-  version "2.26.0-beta.3"
-  resolved "https://registry.yarnpkg.com/@hashgraph/proto/-/proto-2.26.0-beta.3.tgz#688fe0649a3dc5d5209b11eb0a01c67b3357bced"
-  integrity sha512-i89RMYEjpG5uVOa7VzDMVQq8gNs4feeXvEJFyZzwp6i1NSmMHn9DfmIWePylh67LOFBNnX5ZyXNcgUJaAC8Fmw==
-  dependencies:
-    long "5.3.1"
 
 "@humanwhocodes/config-array@^0.13.0":
   version "0.13.0"
@@ -3263,6 +3257,11 @@
   resolved "https://registry.yarnpkg.com/@noble/ciphers/-/ciphers-1.3.0.tgz#f64b8ff886c240e644e5573c097f86e5b43676dc"
   integrity sha512-2I0gnIVPtfnMw9ee9h1dJG7tp81+8Ob3OJb3Mv37rx5L40/b0i7djjCVvGOVqc9AEIQyvyu1i6ypKdFw8R8gQw==
 
+"@noble/ciphers@2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@noble/ciphers/-/ciphers-2.2.0.tgz#84fb45ac9332925d643b80f89ceb0ea2f21dba95"
+  integrity sha512-Z6pjIZ/8IJcCGzb2S/0Px5J81yij85xASuk1teLNeg75bfT07MV3a/O2Mtn1I2se43k3lkVEcFaR10N4cgQcZA==
+
 "@noble/curves@1.2.0":
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/@noble/curves/-/curves-1.2.0.tgz#92d7e12e4e49b23105a2555c6984d41733d65c35"
@@ -3284,13 +3283,6 @@
   dependencies:
     "@noble/hashes" "1.7.0"
 
-"@noble/curves@1.8.1":
-  version "1.8.1"
-  resolved "https://registry.yarnpkg.com/@noble/curves/-/curves-1.8.1.tgz#19bc3970e205c99e4bdb1c64a4785706bce497ff"
-  integrity sha512-warwspo+UYUPep0Q+vtdVB4Ugn8GGQj8iyB3gnRWsztmUHTI3S1nhdiWNsPUGL0vud7JlRRk1XEu7Lq1KGTnMQ==
-  dependencies:
-    "@noble/hashes" "1.7.1"
-
 "@noble/curves@1.9.1":
   version "1.9.1"
   resolved "https://registry.yarnpkg.com/@noble/curves/-/curves-1.9.1.tgz#9654a0bc6c13420ae252ddcf975eaf0f58f0a35c"
@@ -3304,6 +3296,13 @@
   integrity sha512-gbKGcRUYIjA3/zCCNaWDciTMFI0dCkvou3TL8Zmy5Nc7sJ47a0jtOeZoTaMxkuqRo9cRhjOdZJXegxYE5FN/xw==
   dependencies:
     "@noble/hashes" "1.8.0"
+
+"@noble/curves@2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@noble/curves/-/curves-2.2.0.tgz#981be3aadc3bbfbcdb245e78cc97aa6f759246c2"
+  integrity sha512-T/BoHgFXirb0ENSPBquzX0rcjXeM6Lo892a2jlYJkqk83LqZx0l1Of7DzlKJ6jkpvMrkHSnAcgb5JegL8SeIkQ==
+  dependencies:
+    "@noble/hashes" "2.2.0"
 
 "@noble/hashes@1.3.2":
   version "1.3.2"
@@ -3320,25 +3319,20 @@
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.7.0.tgz#5d9e33af2c7d04fee35de1519b80c958b2e35e39"
   integrity sha512-HXydb0DgzTpDPwbVeDGCG1gIu7X6+AuU6Zl6av/E/KG8LMsvPntvq+w17CHRpKBmN6Ybdrt1eP3k4cj8DJa78w==
 
-"@noble/hashes@1.7.1":
-  version "1.7.1"
-  resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.7.1.tgz#5738f6d765710921e7a751e00c20ae091ed8db0f"
-  integrity sha512-B8XBPsn4vT/KJAGqDzbwztd+6Yte3P4V7iafm24bxgDe/mlRuK6xmWPuCNrKt2vDafZ8MfJLlchDG/vYafQEjQ==
-
 "@noble/hashes@1.8.0", "@noble/hashes@^1", "@noble/hashes@^1.2.0", "@noble/hashes@^1.3.1", "@noble/hashes@^1.3.3", "@noble/hashes@^1.4.0", "@noble/hashes@^1.5.0", "@noble/hashes@^1.7.1", "@noble/hashes@^1.8.0", "@noble/hashes@~1.8.0":
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.8.0.tgz#cee43d801fcef9644b11b8194857695acd5f815a"
   integrity sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==
 
+"@noble/hashes@2.2.0", "@noble/hashes@^2.0.1":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-2.2.0.tgz#22da1d16a469954fce877055d559900a6c73b63b"
+  integrity sha512-IYqDGiTXab6FniAgnSdZwgWbomxpy9FtYvLKs7wCUs2a8RkITG+DFGO1DM9cr+E3/RgADRpFjrKVaJ1z6sjtEg==
+
 "@noble/hashes@2.3.0", "@noble/hashes@^2.2.0":
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-2.3.0.tgz#505fd39c3134a37e67c8c4e6c6049a496154879c"
   integrity sha512-oN+QwyX7VSHotibwubG3kpzbwKrfnyR6OOO+3Nk/53ADL7FmgHHz4TgrbaYKvvOw09u6QTx0oiH1cNCIOuN0CQ==
-
-"@noble/hashes@^2.0.1":
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-2.2.0.tgz#22da1d16a469954fce877055d559900a6c73b63b"
-  integrity sha512-IYqDGiTXab6FniAgnSdZwgWbomxpy9FtYvLKs7wCUs2a8RkITG+DFGO1DM9cr+E3/RgADRpFjrKVaJ1z6sjtEg==
 
 "@nodable/entities@^2.2.0":
   version "2.2.0"
@@ -4413,7 +4407,7 @@
   resolved "https://registry.yarnpkg.com/@scure/base/-/base-1.2.6.tgz#ca917184b8231394dd8847509c67a0be522e59f6"
   integrity sha512-g/nm5FgUa//MCj1gV09zTJTaM6KBAHqLN907YVQqf7zC49+DcO4B1so4ZX07Ef10Twr6nuqYEH9GEggFXA4Fmg==
 
-"@scure/base@^2.0.0":
+"@scure/base@2.2.0", "@scure/base@^2.0.0":
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/@scure/base/-/base-2.2.0.tgz#1311378ed247df6d58f8eb8941921965e97e5747"
   integrity sha512-b8XEupJibegiXV+tDUseI8oLQc8ei3d/4Jkb2RpbHh3MfE054ov3uIz2dhFkB3FI8iwYkEh0gGCApkrYggkPNg==
@@ -4431,6 +4425,15 @@
     "@noble/curves" "~1.4.0"
     "@noble/hashes" "~1.4.0"
     "@scure/base" "~1.1.6"
+
+"@scure/bip32@2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@scure/bip32/-/bip32-2.2.0.tgz#8b1b470f4079843df36a472f5e103c3bd9c11f7c"
+  integrity sha512-zFr7t2F+a9+5tB7QbarF2HQNYrgjCNaoLAupZdKkrFMYMozJf5zqH2WJCQibMzm1qQ0QogrxVGO3qXfQDYMaQg==
+  dependencies:
+    "@noble/curves" "2.2.0"
+    "@noble/hashes" "2.2.0"
+    "@scure/base" "2.2.0"
 
 "@scure/bip32@^1.3.1", "@scure/bip32@^1.4.0", "@scure/bip32@^1.7.0":
   version "1.7.0"
@@ -6148,10 +6151,10 @@ ansi-regex@^5.0.0, ansi-regex@^5.0.1:
   resolved "https://registry.yarnpkg.com/ansi-regex/-/ansi-regex-5.0.1.tgz#082cb2c89c9fe8659a311a53bd6a4dc5301db304"
   integrity sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ==
 
-ansi-styles@6.2.3:
-  version "6.2.3"
-  resolved "https://registry.yarnpkg.com/ansi-styles/-/ansi-styles-6.2.3.tgz#c044d5dcc521a076413472597a1acb1f103c4041"
-  integrity sha512-4Dj6M28JB+oAH8kFkTLUo+a2jwOFkuqb3yucU0CANcRRUbxS0cP0nZYCGjcc3BNXwRIsUVmDGgzawme7zvJHvg==
+ansi-styles@7.0.0:
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/ansi-styles/-/ansi-styles-7.0.0.tgz#859089a725560e235a41fecde8999196df6c78c0"
+  integrity sha512-kKvt3m4uwzqL0wlkPd09CmljPJGOZZ4D0fP65sqFSvPkMRKhNi+74MgIJ5QxE6SxqB4t4KyUFGg8+n5zjo6hew==
 
 ansi-styles@^3.2.0:
   version "3.2.1"
@@ -6699,10 +6702,10 @@ bigint-buffer@^1.1.5:
   dependencies:
     bindings "^1.3.0"
 
-bignumber.js@9.1.1:
-  version "9.1.1"
-  resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-9.1.1.tgz#c4df7dc496bd849d4c9464344c1aa74228b4dac6"
-  integrity sha512-pHm4LsMJ6lzgNGVfZHjMoO8sdoRhOzOH4MLmY65Jg70bpxCKu5iOHNJyfF6OyvYw7t8Fpf35RuzUyqnQsj8Vig==
+bignumber.js@11.1.2:
+  version "11.1.2"
+  resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-11.1.2.tgz#25da4978f03e49b935e2c4b5733884bb724dd3f2"
+  integrity sha512-9idDyC15Vpk+53w4OfxEu2PqHSKFQUffrH1oTvnkJ9fduTJ032tpuI2sxS04oCzocklokWUZmWVEkTEQdLmUOQ==
 
 bignumber.js@9.1.2:
   version "9.1.2"
@@ -8884,6 +8887,19 @@ ethers@6.13.5:
     tslib "2.7.0"
     ws "8.17.1"
 
+ethers@6.16.0:
+  version "6.16.0"
+  resolved "https://registry.yarnpkg.com/ethers/-/ethers-6.16.0.tgz#fff9b4f05d7a359c774ad6e91085a800f7fccf65"
+  integrity sha512-U1wulmetNymijEhpSEQ7Ct/P/Jw9/e7R1j5XIbPRydgV2DjLVMsULDlNksq3RQnFgKoLlZf88ijYtWEXcPa07A==
+  dependencies:
+    "@adraffy/ens-normalize" "1.10.1"
+    "@noble/curves" "1.2.0"
+    "@noble/hashes" "1.3.2"
+    "@types/node" "22.7.5"
+    aes-js "4.0.0-beta.5"
+    tslib "2.7.0"
+    ws "8.17.1"
+
 ethers@^6.15.0:
   version "6.17.0"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-6.17.0.tgz#ad85ee1fc45fe2d95cb1e21c4e3ff9f7f1b093cc"
@@ -10797,11 +10813,6 @@ js-base64@3.7.4:
   resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-3.7.4.tgz#af95b20f23efc8034afd2d1cc5b9d0adf7419037"
   integrity sha512-wpM/wi20Tl+3ifTyi0RdDckS4YTD4Lf953mBRrpG8547T7hInHNPEj8+ck4gB8VDcGyeAWFK++Wb/fU1BeavKQ==
 
-js-base64@3.7.7:
-  version "3.7.7"
-  resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-3.7.7.tgz#e51b84bf78fbf5702b9541e2cb7bfcb893b43e79"
-  integrity sha512-7rCnleh0z2CkXhH67J8K1Ytz0b2Y+yxTPL+/KOJoa20hfnVQ/3/T6W/KflYI4bRHRagNeXeU2bkNGI3v1oS/lw==
-
 js-base64@^3.7.7:
   version "3.8.0"
   resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-3.8.0.tgz#cfc7b3d0f15dc6f69403c50df8ff2decca1a23ad"
@@ -12683,7 +12694,7 @@ property-expr@^2.0.5:
   resolved "https://registry.yarnpkg.com/property-expr/-/property-expr-2.0.6.tgz#f77bc00d5928a6c748414ad12882e83f24aec1e8"
   integrity sha512-SVtmxhRE/CGkn3eZY1T6pC8Nln6Fr/lu1mKSgRud0eC73whjGfoAogbn78LkD8aFL0zz3bAFerKSnOl7NlErBA==
 
-protobufjs@7.5.5, protobufjs@7.6.4, protobufjs@8.0.0, protobufjs@^6.11.3, protobufjs@^7.2.5:
+protobufjs@7.5.5, protobufjs@7.6.4, protobufjs@8.6.6, protobufjs@^6.11.3, protobufjs@^7.2.5:
   version "7.5.5"
   resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-7.5.5.tgz#b7089ca4410374c75150baf277353ef76db69f96"
   integrity sha512-3wY1AxV+VBNW8Yypfd1yQY9pXnqTAN+KwQxL8iYm3/BjKYMNg4i0owhEe26PWDOMaIrzeeF98Lqd5NGz4omiIg==
@@ -13067,7 +13078,7 @@ react-native-gesture-handler@^3.0.2:
     "@types/react-test-renderer" "^19.1.0"
     invariant "^2.2.4"
 
-react-native-get-random-values@2.0.0, react-native-get-random-values@^2.0.0:
+react-native-get-random-values@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/react-native-get-random-values/-/react-native-get-random-values-2.0.0.tgz#21b6e40601d297a342378792a8cb9c8f853bff66"
   integrity sha512-wx7/aPqsUIiWsG35D+MsUJd8ij96e3JKddklSdrdZUrheTx89gPtz3Q2yl9knBArj5u26Cl23T88ai+Q0vypdQ==
@@ -14360,11 +14371,6 @@ source-map@^0.6.0, source-map@^0.6.1:
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.6.1.tgz#74722af32e9614e9c287a8d0bbde48b5e2f1a263"
   integrity sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==
-
-spark-md5@3.0.2:
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/spark-md5/-/spark-md5-3.0.2.tgz#7952c4a30784347abcee73268e473b9c0167e3fc"
-  integrity sha512-wcFzz9cDfbuqe0FZzfi2or1sgyIrsDwmPwfZC4hiNidPdPINjeUwNfv5kldczoEAcjl9Y1L3SM7Uz2PUEQzxQw==
 
 split-on-first@^1.0.0:
   version "1.1.0"
