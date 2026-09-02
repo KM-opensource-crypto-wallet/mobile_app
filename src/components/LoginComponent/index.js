@@ -42,11 +42,13 @@ import {
 import {getLastAttempt} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useLocalNotification} from 'providers/hooks/useLocalNotification';
 
 const LoginComponent = ({onClose, visible}) => {
   const navigation = useNavigation();
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
+  const {consumePendingLoginRedirect} = useLocalNotification();
 
   const dispatch = useDispatch();
   const [hide, setHide] = useState(true);
@@ -62,16 +64,20 @@ const LoginComponent = ({onClose, visible}) => {
   const lastAttempt = useSelector(getLastAttempt);
 
   const redirectSuccess = useCallback(() => {
+    // Cold start with a pending notification mounts two of these at once
+    // (this base Login screen instance and LoginModal on top of it) - only
+    // whichever one calls this first actually redirects for it.
+    const handledPendingNotification = consumePendingLoginRedirect();
     if (onClose) {
       onClose();
-    } else {
+    } else if (!handledPendingNotification) {
       navigation.reset({
         index: 0,
         routes: [{name: 'Sidebar'}],
       });
       dispatch(loadingOff());
     }
-  }, [dispatch, navigation, onClose]);
+  }, [consumePendingLoginRedirect, dispatch, navigation, onClose]);
 
   const hasWallet = useCallback(() => {
     return allWallets?.length !== 0;

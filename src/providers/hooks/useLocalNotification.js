@@ -1,8 +1,8 @@
 import {useContext} from 'react';
-import {locaoNotificationContext} from '../Provider';
+import {LocaoNotificationContext} from '../Provider';
 
 export const useLocalNotification = () => {
-  const context = useContext(locaoNotificationContext);
+  const context = useContext(LocaoNotificationContext);
   if (!context) {
     throw new Error(
       'useLocalNotification must be used within LocalNotificationProvider',

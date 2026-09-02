@@ -171,6 +171,13 @@ const HomeScreen = ({navigation, route}) => {
       navigation.navigate('TransactionList');
     }
   }, [routeStateData?.navigateToTransactionList, navigation, dispatch]);
+
+  useEffect(() => {
+    if (routeStateData?.navigateToWallets) {
+      dispatch(setRouteStateData({navigateToWallets: false}));
+      navigation.navigate('Wallets');
+    }
+  }, [routeStateData?.navigateToWallets, navigation, dispatch]);
   const [routes] = React.useState(
     IS_IOS && IS_KIML_WALLET
       ? [{key: 'coins', title: 'Coins'}]

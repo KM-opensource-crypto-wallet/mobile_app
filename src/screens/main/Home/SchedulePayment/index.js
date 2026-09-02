@@ -354,7 +354,7 @@ const SchedulePayment = ({navigation, route}) => {
           ? "We'll remind you at the scheduled time"
           : 'Reminder could not be scheduled',
       });
-      navigation.goBack();
+      navigation.navigate('ViewSchedulePayment');
     },
   });
 
@@ -470,9 +470,9 @@ const SchedulePayment = ({navigation, route}) => {
     }
     const format = ts => dayjs(ts).format('YYYY-MM-DD hh:mm A');
     return {
-      // occurrences[0] is the start date already shown above, so preview
-      // the next couple after it.
-      upcoming: occurrences.slice(1, 3).map(format),
+      // Includes occurrences[0], the start date currently in the
+      // scheduledDate field above, so the preview stays in sync with it.
+      upcoming: occurrences.slice(0, 5).map(format),
       endDate: format(occurrences[occurrences.length - 1]),
       count: occurrences.length,
     };

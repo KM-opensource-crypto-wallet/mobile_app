@@ -48,6 +48,19 @@ const getAvailableAmount = coin => {
   return availableBN.gt(0) ? availableBN.toFixed() : '0';
 };
 
+// Generic fallback for a notification handler that can't resolve a specific
+// screen (missing/stale data) - always land somewhere real instead of
+// silently doing nothing. consumePendingLoginRedirect only knows whether a
+// handler ran, not whether it navigated, so the base Login screen (no
+// onClose) skips its own Sidebar fallback once any handler has been invoked -
+// every path through these handlers needs to end in a real navigation.
+const landOnHome = () => {
+  MainNavigation.reset({
+    index: 0,
+    routes: [{name: 'Sidebar'}],
+  });
+};
+
 export const SCHEDULED_PAYMENT_NOTIFICATION_TYPE = 'scheduledPayment';
 const SCHEDULED_PAYMENT_CHANNEL_ID = 'scheduled-payments';
 
@@ -66,12 +79,29 @@ const ensureAndroidChannel = async () => {
   androidChannelCreated = true;
 };
 
-export const locaoNotificationContext = createContext();
+export const LocaoNotificationContext = createContext();
 
 export const LocalNotificationProvider = ({children}) => {
-  const [pendingScheduledPaymentData, setPendingScheduledPaymentData] =
+  const [pendingScheduledPaymentData, setPendingScheduledPaymentDataState] =
     useState(null);
-  const [pendingNotificationData, setPendingNotificationData] = useState(null);
+  const [pendingNotificationData, setPendingNotificationDataState] =
+    useState(null);
+  // Mirrors of the two states above, so consumePendingLoginRedirect can
+  // atomically read-and-clear them. Cold start with a pending notification
+  // mounts two LoginComponent instances at once (the base Login route and
+  // LoginModal on top) - both can call this within the same tick, and state
+  // setters alone aren't enough to make "only the first one handles it" safe
+  // (the second's closure would still see the pre-update value).
+  const pendingScheduledPaymentDataRef = useRef(null);
+  const pendingNotificationDataRef = useRef(null);
+  const setPendingScheduledPaymentData = useCallback(data => {
+    pendingScheduledPaymentDataRef.current = data;
+    setPendingScheduledPaymentDataState(data);
+  }, []);
+  const setPendingNotificationData = useCallback(data => {
+    pendingNotificationDataRef.current = data;
+    setPendingNotificationDataState(data);
+  }, []);
   // Not component state - reveal happens via a plain tap handler on the
   // Wallets screen and needs to read/clear this synchronously in the same
   // handler, not on a later render.
@@ -79,11 +109,16 @@ export const LocalNotificationProvider = ({children}) => {
 
   const handleScheduledPaymentNotificationData = useCallback(async data => {
     if (!data?.walletClientId) {
+      landOnHome();
       return;
     }
     const wallets = selectAllWallets(store.getState());
     const wallet = wallets.find(w => w.clientId === data.walletClientId);
     if (!wallet) {
+      // Wallet no longer exists (e.g. deleted after this notification was
+      // already delivered) - land on Home instead of leaving whoever
+      // triggered this (e.g. the base Login screen) with nowhere to go.
+      landOnHome();
       return;
     }
     if (isWalletHiddenAndLocked(wallet)) {
@@ -98,7 +133,16 @@ export const LocalNotificationProvider = ({children}) => {
         message:
           'This wallet is hidden. Enter its secret code on the Wallets screen to view this payment.',
       });
-      MainNavigation.navigate('Wallets');
+      // 'Wallets' is a Drawer.Screen nested inside 'Sidebar', not a
+      // top-level route - navigate('Wallets') is a no-op when the current
+      // route (e.g. 'Login' on a cold start) doesn't have Sidebar's Drawer
+      // mounted yet. Land on Sidebar/Home first and let it do the nested
+      // navigate once it's actually mounted, same as navigateToTransactionList.
+      store.dispatch(setRouteStateData({navigateToWallets: true}));
+      MainNavigation.reset({
+        index: 0,
+        routes: [{name: 'Sidebar'}],
+      });
       return;
     }
     store.dispatch(setCurrentWalletClientId(wallet.clientId));
@@ -193,6 +237,7 @@ export const LocalNotificationProvider = ({children}) => {
 
   const handleNotificationData = useCallback(data => {
     if (!data?.chainName || !data?.coin) {
+      landOnHome();
       return;
     }
     const wallets = selectAllWallets(store.getState());
@@ -207,6 +252,7 @@ export const LocalNotificationProvider = ({children}) => {
           ),
         );
     if (!wallet || isWalletHiddenAndLocked(wallet)) {
+      landOnHome();
       return;
     }
     const coin = wallet.coins?.find(
@@ -216,6 +262,7 @@ export const LocalNotificationProvider = ({children}) => {
         c.isInWallet,
     );
     if (!coin) {
+      landOnHome();
       return;
     }
     store.dispatch(setCurrentWalletClientId(wallet.clientId));
@@ -226,6 +273,30 @@ export const LocalNotificationProvider = ({children}) => {
       routes: [{name: 'Sidebar'}],
     });
   }, []);
+
+  // Single place that decides whether a just-completed login should resolve
+  // a pending notification instead of the caller's default redirect. Reads
+  // and clears the refs atomically so that whichever of the two concurrently
+  // mounted LoginComponent instances (base Login route vs. LoginModal) calls
+  // this first is the only one that actually runs the handler - the other
+  // sees nothing pending and falls back to its own default behavior.
+  const consumePendingLoginRedirect = useCallback(() => {
+    const scheduledPaymentData = pendingScheduledPaymentDataRef.current;
+    if (scheduledPaymentData) {
+      pendingScheduledPaymentDataRef.current = null;
+      setPendingScheduledPaymentDataState(null);
+      handleScheduledPaymentNotificationData(scheduledPaymentData);
+      return true;
+    }
+    const notificationData = pendingNotificationDataRef.current;
+    if (notificationData) {
+      pendingNotificationDataRef.current = null;
+      setPendingNotificationDataState(null);
+      handleNotificationData(notificationData);
+      return true;
+    }
+    return false;
+  }, [handleScheduledPaymentNotificationData, handleNotificationData]);
 
   const requestLocalNotificationPermission = useCallback(async () => {
     try {
@@ -403,7 +474,7 @@ export const LocalNotificationProvider = ({children}) => {
     return () => {
       unsubscribeNotifeeForeground();
     };
-  }, []);
+  }, [setPendingScheduledPaymentData]);
 
   const contextValue = useMemo(
     () => ({
@@ -411,6 +482,7 @@ export const LocalNotificationProvider = ({children}) => {
       setPendingScheduledPaymentData,
       handleScheduledPaymentNotificationData,
       consumePendingHiddenScheduledPayment,
+      consumePendingLoginRedirect,
       pendingNotificationData,
       setPendingNotificationData,
       handleNotificationData,
@@ -422,9 +494,12 @@ export const LocalNotificationProvider = ({children}) => {
     }),
     [
       pendingScheduledPaymentData,
+      setPendingScheduledPaymentData,
       handleScheduledPaymentNotificationData,
       consumePendingHiddenScheduledPayment,
+      consumePendingLoginRedirect,
       pendingNotificationData,
+      setPendingNotificationData,
       handleNotificationData,
       requestLocalNotificationPermission,
       createScheduledPaymentNotification,
@@ -435,8 +510,8 @@ export const LocalNotificationProvider = ({children}) => {
   );
 
   return (
-    <locaoNotificationContext.Provider value={contextValue}>
+    <LocaoNotificationContext.Provider value={contextValue}>
       {children}
-    </locaoNotificationContext.Provider>
+    </LocaoNotificationContext.Provider>
   );
 };

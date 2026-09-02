@@ -5,7 +5,7 @@ PODS:
   - AppAuth/Core (2.1.0)
   - AppAuth/ExternalUserAgent (2.1.0):
     - AppAuth/Core
-  - AppCheckCore (11.3.0):
+  - AppCheckCore (11.3.1):
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/UserDefaults (~> 8.0)
     - PromisesObjC (~> 2.4)
@@ -3166,7 +3166,6 @@ PODS:
   - YttriumWrapper (0.10.54)
 
 DEPENDENCIES:
-  - AppCheckCore
   - "BreezSdkSparkReactNative (from `../node_modules/@breeztech/breez-sdk-spark-react-native`)"
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - GoogleUtilities
@@ -3585,7 +3584,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   AppAuth: ef4da5a3fc2e10b90c09a0a94a9baeaedc0341d5
-  AppCheckCore: 214137f5c378d1dec88a68425c467fe65aaff637
+  AppCheckCore: e215d35177a9cf469927863e69c13e220df32a8b
   BreezSdkSparkReactNative: 359c9717b48dfa251614489a68fc4c6dc49e6423
   BugfenderSDK: 67548568056e992ceb5a520337ef508d80a048d4
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
@@ -3736,6 +3735,6 @@ SPEC CHECKSUMS:
   Yoga: fe50ab299e578f397fef753cf309c6703a4db29b
   YttriumWrapper: 850d3c5bfa7815ad9962591ff3c1b289039266f2
 
-PODFILE CHECKSUM: 469c93304ebce5f88dcbb5627f3b3c3d541d0828
+PODFILE CHECKSUM: e0fa92581be7f5039f5e38ce0c34f57af7d746c5
 
 COCOAPODS: 1.16.2

@@ -33,7 +33,6 @@ abstract_target 'coinswalletCommonPod' do
   # can be imported when linking statically.
   pod 'GoogleUtilities', :modular_headers => true
   pod 'RecaptchaInterop', :modular_headers => true
-  pod 'AppCheckCore', :modular_headers => true
   # permissions_path = '../node_modules/react-native-permissions/ios'
   # pod 'Permission-Camera', :path => "#{permissions_path}/Camera"
   # OpenSSL-Universal removed - QuickCrypto provides its own OpenSSL.xcframework

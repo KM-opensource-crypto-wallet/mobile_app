@@ -38,7 +38,7 @@ const NOTIFICATION_INFO_BULLETS = [
 
 const SCHEDULE_NOTIFICATION_INFO_BULLETS = [
   "This controls whether this wallet's scheduled payment reminders are cancelled when the wallet is hidden.",
-  'Enabled (default): reminders for all of this wallet’s scheduled payments are cancelled, so nothing on your lock screen or notification tray reveals its activity.',
+  'Enabled (default): reminders for all of this wallet’s scheduled payments are deleted, so nothing on your lock screen or notification tray reveals its activity.',
   'Turning this off restores the reminders for any payments still scheduled in the future.',
   "Disabled: this wallet's scheduled payment reminders are kept and will still fire while it's hidden.",
 ];

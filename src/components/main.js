@@ -145,11 +145,8 @@ const Main = () => {
   const lastUpdateCheckTimestamp = useSelector(getLastUpdateCheckTimestamp);
   const {
     pendingScheduledPaymentData,
-    setPendingScheduledPaymentData,
-    handleScheduledPaymentNotificationData,
-    pendingNotificationData,
     setPendingNotificationData,
-    handleNotificationData,
+    consumePendingLoginRedirect,
     syncHiddenWalletsScheduledPaymentNotifications,
   } = useLocalNotification();
 
@@ -415,37 +412,22 @@ const Main = () => {
       }
       // Store notification data and show login modal
       setPendingNotificationData(data);
-      setLoginModalVisible(true);
+      // On a cold start the base Login screen is still the active route and
+      // will consume this itself (via consumePendingLoginRedirect) once the
+      // user signs in there - showing the modal on top of it would mount a
+      // second LoginComponent and double the biometric prompt.
+      if (MainNavigation.getCurrentRouteName() !== 'Login') {
+        setLoginModalVisible(true);
+      }
     },
     [setPendingNotificationData],
   );
 
-  const handleNotificationLoginSuccess = useCallback(() => {
-    if (pendingNotificationData) {
-      handleNotificationData(pendingNotificationData);
-      setPendingNotificationData(null);
-    }
-    setLoginModalVisible(false);
-  }, [
-    pendingNotificationData,
-    handleNotificationData,
-    setPendingNotificationData,
-  ]);
-
-  const handleScheduledPaymentLoginSuccess = useCallback(() => {
-    if (pendingScheduledPaymentData) {
-      handleScheduledPaymentNotificationData(pendingScheduledPaymentData);
-      setPendingScheduledPaymentData(null);
-    }
-    setLoginModalVisible(false);
-  }, [
-    pendingScheduledPaymentData,
-    handleScheduledPaymentNotificationData,
-    setPendingScheduledPaymentData,
-  ]);
-
   useEffect(() => {
-    if (pendingScheduledPaymentData) {
+    if (
+      pendingScheduledPaymentData &&
+      MainNavigation.getCurrentRouteName() !== 'Login'
+    ) {
       setLoginModalVisible(true);
     }
   }, [pendingScheduledPaymentData]);
@@ -466,19 +448,11 @@ const Main = () => {
 
   const {theme} = useContext(ThemeContext);
   const handleClose = useCallback(() => {
-    if (pendingNotificationData) {
-      handleNotificationLoginSuccess();
-    } else if (pendingScheduledPaymentData) {
-      handleScheduledPaymentLoginSuccess();
-    } else {
-      setLoginModalVisible(false);
-    }
-  }, [
-    handleNotificationLoginSuccess,
-    handleScheduledPaymentLoginSuccess,
-    pendingNotificationData,
-    pendingScheduledPaymentData,
-  ]);
+    // No-op if the base Login screen (mounted underneath this modal at cold
+    // start) already claimed and handled the pending notification itself.
+    consumePendingLoginRedirect();
+    setLoginModalVisible(false);
+  }, [consumePendingLoginRedirect]);
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
