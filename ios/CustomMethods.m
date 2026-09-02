@@ -37,6 +37,16 @@ RCT_EXTERN_METHOD(getDeriveAddresses:
                   resolver: (RCTPromiseResolveBlock) resolve
                   rejecter: (RCTPromiseRejectBlock) reject
                   )
+RCT_EXTERN_METHOD(getDeriveAddressRange:
+                  (NSString *) coinName
+                  mnemonic: (NSString *)mnemonic
+                  isTestNet: (BOOL) isTestnet
+                  chainIndex: (nonnull NSNumber *) chainIndex
+                  startIndex: (nonnull NSNumber *) startIndex
+                  count: (nonnull NSNumber *) count
+                  resolver: (RCTPromiseResolveBlock) resolve
+                  rejecter: (RCTPromiseRejectBlock) reject
+                  )
 RCT_EXTERN_METHOD(addCustomDerivation:
                   (NSString *) coinName
                   mnemonic: (NSString *)mnemonic

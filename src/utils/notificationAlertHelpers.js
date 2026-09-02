@@ -1,4 +1,5 @@
 import BigNumber from 'bignumber.js';
+import {getVisibleDeriveAddresses} from 'dok-wallet-blockchain-networks/service/bitcoinHdAddress';
 import {
   getCustomizePublicAddress,
   validateNumberInInput,
@@ -38,13 +39,15 @@ export const isAmountBelowThreshold = (amount, coin) => {
 };
 
 export const buildAddressOptions = coin => {
-  if (Array.isArray(coin.deriveAddresses) && coin.deriveAddresses.length > 0) {
-    return coin.deriveAddresses
-      .filter(d => d?.address)
-      .map(d => ({
-        label: getCustomizePublicAddress(d.address),
-        value: d.address,
-      }));
+  const visibleItems = getVisibleDeriveAddresses(
+    coin?.chain_name,
+    coin?.deriveAddresses,
+  );
+  if (visibleItems.length > 0) {
+    return visibleItems.map(d => ({
+      label: getCustomizePublicAddress(d.address),
+      value: d.address,
+    }));
   }
   if (!coin.address) {
     return [];

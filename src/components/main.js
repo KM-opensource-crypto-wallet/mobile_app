@@ -98,7 +98,6 @@ import {
 import DisableComponent from 'components/DisableComponent';
 import {getLastUpdateCheckTimestamp} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 import {setLastUpdateCheckTimestamp} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
-import {getFeesInfo} from 'dok-wallet-blockchain-networks/feesInfo/feesInfo';
 import {IS_KIML_WALLET, WALLET_CONNECT_DATA} from 'utils/wlData';
 import {ThemeContext} from 'theme/ThemeContext';
 import ModalApkDownload from 'components/ModalApkDownload';
@@ -157,10 +156,6 @@ const Main = () => {
     compareRpcUrlsIntervalRef.current = setInterval(() => {
       fetchRPCUrl();
     }, 1000 * 60 * 10);
-  }, []);
-
-  const fetchFeesInfo = useCallback(() => {
-    getFeesInfo().then(_ => {});
   }, []);
 
   const initializeWalletConnect = useCallback(async () => {
@@ -328,7 +323,6 @@ const Main = () => {
     dispatch(setCountry(country));
     dispatch(fetchSupportedBuyCryptoCurrency({fromDevice, country}));
     fetchAndCompareRpcUrls();
-    fetchFeesInfo();
     dispatch(fetchCurrencies({checkNewCoins: true, ignoreLimit: true}));
     setTimeout(() => {
       dispatch(resetNfts({}));
@@ -364,7 +358,6 @@ const Main = () => {
           lastBackgroundSelfInitiated.current = false;
           checkInAppUpdates();
           fetchRPCUrl();
-          fetchFeesInfo();
         } else if (nextAppState === 'background') {
           // consumeExpectedBackground() must run unconditionally so a
           // one-shot mark (Linking flows) is always cleared here.

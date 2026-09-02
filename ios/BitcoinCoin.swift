@@ -79,24 +79,15 @@ class BitcoinCoin: CoinFactory.Coin {
       return yourAuxDic;
   }
 
+  override func accountBasePath(isTestNet: Bool) -> String {
+    return isTestNet ? "m/84'/1'/0'" : "m/84'/0'/0'"
+  }
+
   override func getDeriveAddresses(isTestNet: Bool) -> NSMutableArray {
+    // BIP84 standard: 20 external/receive (…/0/i) + 20 internal/change (…/1/i)
     let result = NSMutableArray()
-    for i in 0..<20 {
-      let derivePath = "m/84'/0'/0'/\(i)/0"
-      let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: derivePath)
-      let publicKey = privateKey.getPublicKeySecp256k1(compressed: true)
-      let address: String
-      if isTestNet {
-        address = AnyAddress(publicKey: publicKey, coin: .bitcoin, derivation: .bitcoinTestnet).description
-      } else {
-        address = CoinType.bitcoin.deriveAddress(privateKey: privateKey)
-      }
-      let dict: NSMutableDictionary = [:]
-      dict["derivePath"] = derivePath
-      dict["privateKey"] = Utils.convertToWif(data: privateKey.data, isTestNet: isTestNet, prefix: [0x80], testNetPrefix: [0xef])
-      dict["address"] = address
-      result.add(dict)
-    }
+    result.addObjects(from: getDeriveAddressRange(chainIndex: 0, startIndex: 0, count: 20, isTestNet: isTestNet) as! [Any])
+    result.addObjects(from: getDeriveAddressRange(chainIndex: 1, startIndex: 0, count: 20, isTestNet: isTestNet) as! [Any])
     return result
   }
 }

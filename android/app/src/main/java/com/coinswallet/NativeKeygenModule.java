@@ -133,6 +133,23 @@ public class NativeKeygenModule extends ReactContextBaseJavaModule {
     }
   }
   @ReactMethod
+  public void getDeriveAddressRange(String coinName, String mnemonic, Boolean isTestNet, int chainIndex, int startIndex, int count, Promise promise) {
+    try {
+      CoinFactory.Coin coin;
+      coin = coins.get(mnemonic + ":" + coinName); // Check if we already have an instance of this coin
+      if (coin == null) {
+        coin = CoinFactory.createCoin(coinName, mnemonic);
+        coins.put(mnemonic + ":" + coinName, coin); // Store the coin instance
+      }
+      WritableMap result = Arguments.createMap();
+      result.putArray("deriveAddresses", coin.getDeriveAddressRange(chainIndex, startIndex, count, isTestNet));
+      promise.resolve(result);
+    } catch (Exception e) {
+      promise.reject("E_INVALID_MNEMONIC", e);
+    }
+  }
+
+  @ReactMethod
   public void addCustomDerivation(String coinName, String mnemonic,String derivePath,Boolean isTestNet, Promise promise) {
     try {
       CoinFactory.Coin coin;

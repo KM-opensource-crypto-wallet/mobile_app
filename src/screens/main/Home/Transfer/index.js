@@ -27,7 +27,6 @@ import {ThemeContext} from 'theme/ThemeContext';
 import {
   getTransferData,
   getTransferDataCustomError,
-  getTransferDataFeesOptions,
   getTransferDataFeeSuccess,
   getTransferDataLoading,
   getTransferDataSubmitting,
@@ -37,11 +36,10 @@ import {
   delay,
   getCustomizePublicAddress,
   isCustomAddressNotSupportedChain,
-  validateNumberInInput,
   isEVMChain,
   isFeesOptionChain,
-  GAS_CURRENCY,
 } from 'dok-wallet-blockchain-networks/helper';
+import useAdvancedFees from 'hooks/useAdvancedFees';
 import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
 import Spinner from 'components/Spinner';
 import {currencySymbol} from 'data/currency';
@@ -53,10 +51,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import Loading from 'components/Loading';
 import BigNumber from 'bignumber.js';
-import {
-  calculateEstimateFee,
-  updateFees,
-} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
+import {calculateEstimateFee} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import ScurvedIcon from 'assets/images/icons/S-curved.svg';
 import {
   selectExchangeAmountFrom,
@@ -298,26 +293,43 @@ const InfoRow = ({styles, label, value, valueStyle, numberOfLines}) => (
   </View>
 );
 
+// On EIP-1559 chains `fee` is the reserved maximum (gasLimit * maxFeePerGas);
+// what the sender actually pays is `estimatedFee` (gasLimit * (baseFee + tip)).
+// Non-1559 chains pay `fee` in full, so only that single row is shown. The
+// per-gas parameters (max fee, priority fee) are edited in AdvancedFeesSheet.
 const FeeSummaryBox = ({
   styles,
   isRefreshing,
   fee,
   feeSymbol,
   maxTotalDisplay,
+  isEip1559,
+  estimatedFee,
   children,
-}) => (
-  <View style={styles.box}>
-    {children}
-    <InfoRow
-      styles={styles}
-      label={'Network Fee'}
-      value={isRefreshing ? 'Refreshing' : `${fee || '0'} ${feeSymbol}`}
-    />
-    {maxTotalDisplay != null && (
-      <InfoRow styles={styles} label={'Max Total'} value={maxTotalDisplay} />
-    )}
-  </View>
-);
+}) => {
+  const formatFee = value =>
+    isRefreshing ? 'Refreshing' : `${value || '0'} ${feeSymbol}`;
+  return (
+    <View style={styles.box}>
+      {children}
+      {isEip1559 ? (
+        <>
+          <InfoRow
+            styles={styles}
+            label={'Estimated Fee'}
+            value={formatFee(estimatedFee ?? fee)}
+          />
+          <InfoRow styles={styles} label={'Max Fee'} value={formatFee(fee)} />
+        </>
+      ) : (
+        <InfoRow styles={styles} label={'Network Fee'} value={formatFee(fee)} />
+      )}
+      {maxTotalDisplay != null && (
+        <InfoRow styles={styles} label={'Max Total'} value={maxTotalDisplay} />
+      )}
+    </View>
+  );
+};
 
 const TransferDetailsBox = ({styles, transferData, chainName, children}) => (
   <View style={styles.box}>
@@ -375,9 +387,6 @@ const Transfer = ({navigation, route}) => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isFetchingFeesAgain, setIsFetchingFeesAgain] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
-  const [selectedFeesType, setSelectedFeesType] = useState('recommended');
-  const [customFees, setCustomFees] = useState('');
-  const selectedFeesTypeRef = useRef('recommended');
   const isFetchingRef = useRef(false);
   const isPauseCalculateFees = useRef(false);
   const [estimateStatus, setEstimateStatus] = useState('pending'); // 'pending' | 'success' | 'failed'
@@ -515,8 +524,16 @@ const Transfer = ({navigation, route}) => {
 
   const convertedChainName = isEVMChain(chainName) ? 'ethereum' : chainName;
 
-  const feesOptions = useSelector(getTransferDataFeesOptions);
-  const [customNonce, setCustomNonce] = useState('');
+  const {
+    sheetProps: advancedFeesSheetProps,
+    feesOptions,
+    isEip1559,
+    selectedFeesTypeRef,
+    selectedFeesLabel,
+    customNonce,
+    finalNonce,
+    isCustomFeesValid,
+  } = useAdvancedFees({chainName, convertedChainName, isPauseCalculateFees});
   const advancedOptionsSheetRef = useRef(null);
 
   const nativeBalanceForBatchTransactions = useMemo(() => {
@@ -532,69 +549,9 @@ const Transfer = ({navigation, route}) => {
     return null;
   }, [isBatchTransaction, transferData?.transactionsData]);
 
-  useEffect(() => {
-    if (feesOptions?.[0]?.gasPrice) {
-      setCustomFees(feesOptions?.[0]?.gasPrice);
-    }
-  }, [feesOptions]);
-
-  useEffect(() => {
-    if (transferData?.nonce !== undefined && transferData?.nonce !== null) {
-      setCustomNonce(String(transferData.nonce));
-    }
-  }, [transferData?.nonce]);
-
   const openAdvancedOptionsSheet = useCallback(() => {
     advancedOptionsSheetRef.current?.present();
   }, []);
-
-  const onChangeCustomNonce = text => {
-    const numericValue = text.replace(/[^0-9]/g, '');
-    setCustomNonce(numericValue);
-  };
-
-  // customNonce is a string and is '' until the estimated nonce arrives, which
-  // would defeat the `?? transferData.nonce` fallbacks in the send thunks.
-  // Normalise once here so every branch receives a number or undefined.
-  const finalNonce = useMemo(() => {
-    const parsed = Number(customNonce);
-    return customNonce === '' || isNaN(parsed) ? undefined : parsed;
-  }, [customNonce]);
-
-  const onSelectFeesType = useCallback(
-    (type, gasPrice) => {
-      if (type === 'custom') {
-        isPauseCalculateFees.current = true;
-        setSelectedFeesType('custom');
-        selectedFeesTypeRef.current = 'custom';
-      } else {
-        isPauseCalculateFees.current = false;
-        setSelectedFeesType(type);
-        selectedFeesTypeRef.current = type;
-        if (gasPrice) {
-          dispatch(updateFees({gasPrice, convertedChainName}));
-        }
-      }
-    },
-    [dispatch, convertedChainName],
-  );
-
-  const getSelectedFeesLabel = useMemo(() => {
-    if (selectedFeesType === 'custom') {
-      return `Custom: ${customFees} ${
-        GAS_CURRENCY[convertedChainName] || 'Gwei'
-      }`;
-    }
-    const selectedOption = feesOptions?.find(
-      opt => opt?.title?.toLowerCase() === selectedFeesType?.toLowerCase(),
-    );
-    if (selectedOption) {
-      return `${selectedOption.title}: ${selectedOption.gasPrice} ${
-        GAS_CURRENCY[convertedChainName] || 'Gwei'
-      }`;
-    }
-    return 'Recommended';
-  }, [selectedFeesType, customFees, feesOptions, convertedChainName]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -759,6 +716,10 @@ const Transfer = ({navigation, route}) => {
   }, [meta, redirect_url, submitTransferData, quoteExpiresAt]);
 
   const handleSubmitForm = () => {
+    // The sheet can be swipe-dismissed with an invalid tip, so re-check here.
+    if (!isCustomFeesValid) {
+      return;
+    }
     if (quoteExpiresAt && Date.now() >= quoteExpiresAt) {
       isQuoteExpiredRef.current = true;
       setIsQuoteExpired(true);
@@ -777,13 +738,13 @@ const Transfer = ({navigation, route}) => {
       : null,
   );
 
-  const onChangeCustomFees = text => {
-    const tempValues = validateNumberInInput(
-      text,
-      transferData?.currentCoin?.decimal,
-    );
-    setCustomFees(tempValues || '0');
-    dispatch(updateFees({gasPrice: tempValues || '0', convertedChainName}));
+  const feeSummaryProps = {
+    styles,
+    isRefreshing: isFetchingFeesAgain,
+    fee: transferData?.transactionFee,
+    feeSymbol: transferData?.currentCoin?.chain_symbol,
+    isEip1559,
+    estimatedFee: transferData?.estimatedFee,
   };
 
   const currencyRate = transferContext.currencyRateForFiat;
@@ -811,10 +772,7 @@ const Transfer = ({navigation, route}) => {
           chainName={chainName}
         />
         <FeeSummaryBox
-          styles={styles}
-          isRefreshing={isFetchingFeesAgain}
-          fee={transferData?.transactionFee}
-          feeSymbol={transferData?.currentCoin?.chain_symbol}
+          {...feeSummaryProps}
           maxTotalDisplay={`${currencySymbol[localCurrency]}${totalValue || 0}`}
         />
       </View>
@@ -838,10 +796,7 @@ const Transfer = ({navigation, route}) => {
           />
         </TransferDetailsBox>
         <FeeSummaryBox
-          styles={styles}
-          isRefreshing={isFetchingFeesAgain}
-          fee={transferData?.transactionFee}
-          feeSymbol={transferData?.currentCoin?.chain_symbol}
+          {...feeSummaryProps}
           maxTotalDisplay={`${currencySymbol[localCurrency]}${totalValue || 0}`}
         />
       </View>
@@ -902,9 +857,7 @@ const Transfer = ({navigation, route}) => {
           />
         </View>
         <FeeSummaryBox
-          styles={styles}
-          isRefreshing={isFetchingFeesAgain}
-          fee={transferData?.transactionFee}
+          {...feeSummaryProps}
           feeSymbol={selectedFromAsset?.chain_symbol}
           maxTotalDisplay={`${currencySymbol[localCurrency]}${
             totalValue || 0
@@ -977,12 +930,7 @@ const Transfer = ({navigation, route}) => {
             />
           )}
         </View>
-        <FeeSummaryBox
-          styles={styles}
-          isRefreshing={isFetchingFeesAgain}
-          fee={transferData?.transactionFee}
-          feeSymbol={transferData?.currentCoin?.chain_symbol}
-        />
+        <FeeSummaryBox {...feeSummaryProps} />
       </View>
     );
   };
@@ -1041,10 +989,7 @@ const Transfer = ({navigation, route}) => {
           )}
         </View>
         <FeeSummaryBox
-          styles={styles}
-          isRefreshing={isFetchingFeesAgain}
-          fee={transferData?.transactionFee}
-          feeSymbol={transferData?.currentCoin?.chain_symbol}
+          {...feeSummaryProps}
           maxTotalDisplay={`${currencySymbol[localCurrency]}${totalValue || 0}`}
         />
       </View>
@@ -1066,12 +1011,7 @@ const Transfer = ({navigation, route}) => {
             containerStyle={{marginHorizontal: 0, width: SCREEN_WIDTH - 40}}
           />
         ))}
-        <FeeSummaryBox
-          styles={styles}
-          isRefreshing={isFetchingFeesAgain}
-          fee={transferData?.transactionFee}
-          feeSymbol={transferData?.currentCoin?.chain_symbol}
-        />
+        <FeeSummaryBox {...feeSummaryProps} />
       </View>
     );
   };
@@ -1092,12 +1032,7 @@ const Transfer = ({navigation, route}) => {
             localCurrency={localCurrency}
           />
         ))}
-        <FeeSummaryBox
-          styles={styles}
-          isRefreshing={isFetchingFeesAgain}
-          fee={transferData?.transactionFee}
-          feeSymbol={transferData?.currentCoin?.chain_symbol}
-        />
+        <FeeSummaryBox {...feeSummaryProps} />
       </View>
     );
   };
@@ -1162,7 +1097,7 @@ const Transfer = ({navigation, route}) => {
                                 color={theme.gray}
                               />
                               <Text style={styles.advancedOptionsCardValue}>
-                                {getSelectedFeesLabel}
+                                {selectedFeesLabel}
                               </Text>
                             </View>
                           )}
@@ -1196,12 +1131,27 @@ const Transfer = ({navigation, route}) => {
                   {'Quote expired — go back and refresh the quote.'}
                 </Text>
               )}
+              {!isCustomFeesValid && (
+                <Text style={styles.errorText}>
+                  {
+                    'Priority fee cannot be higher than max fee — fix it in Advanced Options.'
+                  }
+                </Text>
+              )}
               <TouchableOpacity
-                disabled={isDisabled || isFetchingFeesAgain || isQuoteExpired}
+                disabled={
+                  isDisabled ||
+                  isFetchingFeesAgain ||
+                  isQuoteExpired ||
+                  !isCustomFeesValid
+                }
                 style={{
                   ...styles.button,
                   backgroundColor:
-                    isDisabled || isFetchingFeesAgain || isQuoteExpired
+                    isDisabled ||
+                    isFetchingFeesAgain ||
+                    isQuoteExpired ||
+                    !isCustomFeesValid
                       ? '#708090'
                       : theme.background,
                 }}
@@ -1236,15 +1186,7 @@ const Transfer = ({navigation, route}) => {
       {/* Advanced Options Bottom Sheet */}
       <AdvancedFeesSheet
         ref={advancedOptionsSheetRef}
-        feesOptions={feesOptions}
-        selectedFeesType={selectedFeesType}
-        customFees={customFees}
-        customNonce={customNonce}
-        chainName={convertedChainName}
-        gasCurrency={GAS_CURRENCY[convertedChainName] || 'Gwei'}
-        onSelectFeesType={onSelectFeesType}
-        onChangeCustomFees={onChangeCustomFees}
-        onChangeCustomNonce={onChangeCustomNonce}
+        {...advancedFeesSheetProps}
       />
     </DokSafeAreaView>
   );
