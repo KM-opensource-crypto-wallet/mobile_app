@@ -1288,6 +1288,13 @@ const Transfer = ({navigation, route}) => {
                   }
                 </Text>
               )}
+              {!isCustomFeesValid && (
+                <Text style={styles.errorText}>
+                  {
+                    'Priority fee cannot be higher than max fee — fix it in Advanced Options.'
+                  }
+                </Text>
+              )}
               <TouchableOpacity
                 disabled={
                   isDisabled ||
