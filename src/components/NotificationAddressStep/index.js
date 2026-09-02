@@ -62,6 +62,9 @@ const NotificationAddressStep = ({
         entry.coin.chain_name,
         entry.coin.deriveAddresses,
       );
+      if (items.length <= 1) {
+        return null;
+      }
       const selectedItem = items.find(
         subItem => subItem?.address === selectedAddr,
       );
@@ -77,11 +80,7 @@ const NotificationAddressStep = ({
               addressSheetRef.current?.present({
                 chain_name: entry.coin.chain_name,
                 symbol: entry.coin.symbol,
-                items: items.length
-                  ? items
-                  : [{address: entry.coin.address}].filter(
-                      subItem => subItem.address,
-                    ),
+                items,
                 selectedAddress: selectedAddr,
                 context: {key},
               })

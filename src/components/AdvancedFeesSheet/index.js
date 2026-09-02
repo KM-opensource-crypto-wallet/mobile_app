@@ -10,14 +10,46 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  TouchableWithoutFeedback,
-  Keyboard,
+  useWindowDimensions,
 } from 'react-native';
-import {BottomSheetView, BottomSheetTextInput} from '@gorhom/bottom-sheet';
+import {
+  BottomSheetScrollView,
+  BottomSheetTextInput,
+} from '@gorhom/bottom-sheet';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import DokBottomSheet from 'components/BottomSheet';
 import {ThemeContext} from 'theme/ThemeContext';
-import {isEVMChain} from 'dok-wallet-blockchain-networks/helper';
+import {isEVMChain, weiToGwei} from 'dok-wallet-blockchain-networks/helper';
+
+const FeeInput = ({
+  styles,
+  theme,
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  error = false,
+}) => (
+  <View style={styles.inputContainer}>
+    <Text style={styles.inputLabel}>{label}</Text>
+    <BottomSheetTextInput
+      style={[
+        styles.textInput,
+        {
+          color: theme.font,
+          borderColor: error ? theme.error : theme.headerBorder,
+        },
+      ]}
+      placeholder={placeholder}
+      placeholderTextColor={theme.gray}
+      keyboardType="numeric"
+      autoCapitalize="none"
+      onChangeText={onChangeText}
+      value={value}
+    />
+  </View>
+);
 
 const AdvancedFeesSheet = forwardRef(
   (
@@ -33,11 +65,20 @@ const AdvancedFeesSheet = forwardRef(
       chainName,
       zIndex,
       stackBehavior,
+      // EIP-1559 extras. All optional: legacy chains and the Permit/Allowance
+      // sheets omit them and get the single "Gas Price" input as before.
+      isEip1559 = false,
+      customPriorityFee,
+      onChangeCustomPriorityFee,
+      baseFeePerGas,
+      customFeesError = null,
     },
     ref,
   ) => {
     const {theme} = useContext(ThemeContext);
-    const styles = myStyles(theme);
+    const {height: windowHeight} = useWindowDimensions();
+    const insets = useSafeAreaInsets();
+    const styles = myStyles(theme, insets.bottom);
     const bottomSheetRef = useRef(null);
 
     useImperativeHandle(ref, () => ({
@@ -51,154 +92,161 @@ const AdvancedFeesSheet = forwardRef(
     const isEVM = useMemo(() => {
       return isEVMChain(chainName);
     }, [chainName]);
+    const showPriorityFee = isEip1559 && !!onChangeCustomPriorityFee;
+    const baseFeeGwei = isEip1559 ? weiToGwei(baseFeePerGas) : null;
+    const gasLabel = isEip1559 ? 'Max Fee' : 'Gas Price';
+    const isSelected = type =>
+      selectedFeesType?.toLowerCase() === type.toLowerCase();
 
     return (
       <DokBottomSheet
         bottomSheetRef={sheetRef => (bottomSheetRef.current = sheetRef)}
         enableDynamicSizing={true}
-        maxDynamicContentSize={600}
+        maxDynamicContentSize={Math.round(windowHeight * 0.85)}
         zIndex={zIndex}
         stackBehavior={stackBehavior}
         onDismiss={handleClose}>
-        <TouchableWithoutFeedback
-          onPress={() => {
-            Keyboard.dismiss();
-          }}>
-          <BottomSheetView style={styles.content}>
-            {/* Header */}
-            <View style={styles.header}>
-              <MaterialCommunityIcons
-                name="tune-vertical"
-                size={24}
-                color={theme.background}
-              />
-              <Text style={styles.title}>Advanced Options</Text>
-            </View>
-            {/* Gas Price Section */}
-            {!!feesOptions?.length && (
-              <View style={styles.section}>
-                <View style={styles.labelRow}>
-                  <MaterialCommunityIcons
-                    name="gas-station"
-                    size={18}
-                    color={theme.background}
-                  />
-                  <Text style={styles.label}>Gas Price</Text>
-                </View>
-                <View style={styles.feesContainer}>
-                  <TouchableOpacity
-                    onPress={() =>
-                      onSelectFeesType(
-                        'recommended',
-                        feesOptions?.[0]?.gasPrice,
-                      )
-                    }
-                    style={[
-                      styles.feesItem,
-                      selectedFeesType?.toLowerCase() ===
-                        feesOptions?.[0]?.title?.toLowerCase() &&
-                        styles.feesItemSelected,
-                    ]}>
-                    <Text numberOfLines={1} style={styles.feesTitle}>
-                      {feesOptions?.[0]?.title}
-                    </Text>
-                    <Text style={styles.feesDescription}>
-                      {`${feesOptions?.[0]?.gasPrice} ${gasCurrency}`}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.feesItem,
-                      selectedFeesType?.toLowerCase() ===
-                        feesOptions?.[1]?.title?.toLowerCase() &&
-                        styles.feesItemSelected,
-                    ]}
-                    onPress={() =>
-                      onSelectFeesType('normal', feesOptions?.[1]?.gasPrice)
-                    }>
-                    <Text numberOfLines={1} style={styles.feesTitle}>
-                      {feesOptions?.[1]?.title}
-                    </Text>
-                    <Text style={styles.feesDescription}>
-                      {`${feesOptions?.[1]?.gasPrice} ${gasCurrency}`}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.feesItem,
-                      selectedFeesType?.toLowerCase() === 'custom' &&
-                        styles.feesItemSelected,
-                    ]}
-                    onPress={() => onSelectFeesType('custom')}>
-                    <Text style={styles.feesTitle}>Custom</Text>
-                  </TouchableOpacity>
-                </View>
-                {selectedFeesType === 'custom' && (
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Custom Gas Price</Text>
-                    <BottomSheetTextInput
+        <BottomSheetScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}>
+          {/* Header */}
+          <View style={styles.header}>
+            <MaterialCommunityIcons
+              name="tune-vertical"
+              size={24}
+              color={theme.background}
+            />
+            <Text style={styles.title}>Advanced Options</Text>
+          </View>
+          {/* Gas Price / Max Fee Section */}
+          {!!feesOptions?.length && (
+            <View style={styles.section}>
+              <View style={styles.labelRow}>
+                <MaterialCommunityIcons
+                  name="gas-station"
+                  size={18}
+                  color={theme.background}
+                />
+                <Text style={styles.label}>{gasLabel}</Text>
+              </View>
+              <View style={styles.feesContainer}>
+                {feesOptions?.map(option => {
+                  // The lowercased title is the feesType key the polling
+                  // estimate is re-run with ('recommended' / 'normal').
+                  const type = option?.title?.toLowerCase();
+                  if (!type) {
+                    return null;
+                  }
+                  return (
+                    <TouchableOpacity
+                      key={type}
+                      onPress={() => onSelectFeesType(type, option.gasPrice)}
                       style={[
-                        styles.textInput,
-                        {color: theme.font, borderColor: theme.headerBorder},
-                      ]}
-                      placeholder="Enter Gas price"
-                      placeholderTextColor={theme.gray}
-                      keyboardType="numeric"
-                      autoCapitalize="none"
-                      onChangeText={onChangeCustomFees}
-                      value={customFees}
-                    />
-                  </View>
-                )}
+                        styles.feesItem,
+                        isSelected(option.title) && styles.feesItemSelected,
+                      ]}>
+                      <Text numberOfLines={1} style={styles.feesTitle}>
+                        {option.title}
+                      </Text>
+                      <Text style={styles.feesDescription}>
+                        {`${option.gasPrice} ${gasCurrency}`}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+                <TouchableOpacity
+                  style={[
+                    styles.feesItem,
+                    isSelected('custom') && styles.feesItemSelected,
+                  ]}
+                  onPress={() => onSelectFeesType('custom')}>
+                  <Text style={styles.feesTitle}>Custom</Text>
+                </TouchableOpacity>
               </View>
-            )}
-            {/* Nonce Section */}
-            {isEVM && (
-              <View style={styles.section}>
-                <View style={styles.labelRow}>
-                  <MaterialCommunityIcons
-                    name="counter"
-                    size={18}
-                    color={theme.background}
-                  />
-                  <Text style={styles.label}>Transaction Nonce</Text>
-                </View>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Nonce</Text>
-                  <BottomSheetTextInput
-                    style={[
-                      styles.textInput,
-                      {color: theme.font, borderColor: theme.headerBorder},
-                    ]}
-                    placeholder="Enter nonce value"
-                    placeholderTextColor={theme.gray}
-                    keyboardType="numeric"
-                    autoCapitalize="none"
-                    onChangeText={onChangeCustomNonce}
-                    value={customNonce}
-                  />
-                </View>
+              {baseFeeGwei != null && (
                 <Text style={styles.hint}>
-                  Used for transaction ordering. Only modify if you know what
-                  you're doing.
+                  {`Current base fee: ${baseFeeGwei} ${gasCurrency}. You pay base fee + priority fee, capped at the max fee.`}
                 </Text>
+              )}
+              {selectedFeesType === 'custom' && (
+                <>
+                  <FeeInput
+                    styles={styles}
+                    theme={theme}
+                    label={`Custom ${gasLabel} (${gasCurrency})`}
+                    placeholder={`Enter ${gasLabel.toLowerCase()}`}
+                    onChangeText={onChangeCustomFees}
+                    value={customFees}
+                  />
+                  {showPriorityFee && (
+                    <>
+                      <FeeInput
+                        styles={styles}
+                        theme={theme}
+                        label={`Priority Fee (${gasCurrency})`}
+                        placeholder="Enter priority fee"
+                        onChangeText={onChangeCustomPriorityFee}
+                        value={customPriorityFee}
+                        error={!!customFeesError}
+                      />
+                      {customFeesError ? (
+                        <Text style={styles.errorText}>{customFeesError}</Text>
+                      ) : (
+                        <Text style={styles.hint}>
+                          Tip paid to validators. Must not exceed the max fee.
+                        </Text>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+            </View>
+          )}
+          {/* Nonce Section */}
+          {isEVM && (
+            <View style={styles.section}>
+              <View style={styles.labelRow}>
+                <MaterialCommunityIcons
+                  name="counter"
+                  size={18}
+                  color={theme.background}
+                />
+                <Text style={styles.label}>Transaction Nonce</Text>
               </View>
-            )}
-            {/* Done Button */}
-            <TouchableOpacity style={styles.button} onPress={handleClose}>
-              <Text style={styles.buttonText}>Done</Text>
-            </TouchableOpacity>
-          </BottomSheetView>
-        </TouchableWithoutFeedback>
+              <FeeInput
+                styles={styles}
+                theme={theme}
+                label="Nonce"
+                placeholder="Enter nonce value"
+                onChangeText={onChangeCustomNonce}
+                value={customNonce}
+              />
+              <Text style={styles.hint}>
+                Used for transaction ordering. Only modify if you know what
+                you're doing.
+              </Text>
+            </View>
+          )}
+          {/* Done Button */}
+          <TouchableOpacity
+            style={[styles.button, !!customFeesError && styles.buttonDisabled]}
+            disabled={!!customFeesError}
+            onPress={handleClose}>
+            <Text style={styles.buttonText}>Done</Text>
+          </TouchableOpacity>
+        </BottomSheetScrollView>
       </DokBottomSheet>
     );
   },
 );
 
-const myStyles = theme =>
+const myStyles = (theme, bottomInset = 0) =>
   StyleSheet.create({
     content: {
       padding: 20,
+      paddingBottom: 20 + bottomInset,
       backgroundColor: theme.backgroundColor,
     },
     header: {
@@ -290,6 +338,13 @@ const myStyles = theme =>
       marginTop: 10,
       lineHeight: 18,
     },
+    errorText: {
+      fontSize: 12,
+      fontFamily: 'Roboto-Regular',
+      color: theme.error,
+      marginTop: 10,
+      lineHeight: 18,
+    },
     button: {
       height: 50,
       borderRadius: 12,
@@ -298,6 +353,9 @@ const myStyles = theme =>
       justifyContent: 'center',
       marginTop: 8,
       marginBottom: 16,
+    },
+    buttonDisabled: {
+      backgroundColor: '#708090',
     },
     buttonText: {
       fontSize: 16,

@@ -407,7 +407,7 @@ const SendScreen = ({navigation, route}) => {
               </View>
 
               {(isBitcoin || isDeriveAddressChain) &&
-                Array.isArray(deriveAddresses) && (
+                deriveAddresses?.length > 1 && (
                   <View>
                     <AddressSelectorTrigger
                       title={'Select address'}
