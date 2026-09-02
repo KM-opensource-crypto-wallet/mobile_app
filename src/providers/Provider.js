@@ -1,4 +1,11 @@
-import {createContext, useCallback, useEffect, useMemo, useState} from 'react';
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import notifee, {
   AndroidImportance,
   AndroidVisibility,
@@ -65,6 +72,10 @@ export const LocalNotificationProvider = ({children}) => {
   const [pendingScheduledPaymentData, setPendingScheduledPaymentData] =
     useState(null);
   const [pendingNotificationData, setPendingNotificationData] = useState(null);
+  // Not component state - reveal happens via a plain tap handler on the
+  // Wallets screen and needs to read/clear this synchronously in the same
+  // handler, not on a later render.
+  const pendingHiddenScheduledPaymentDataRef = useRef(null);
 
   const handleScheduledPaymentNotificationData = useCallback(async data => {
     if (!data?.walletClientId) {
@@ -72,7 +83,22 @@ export const LocalNotificationProvider = ({children}) => {
     }
     const wallets = selectAllWallets(store.getState());
     const wallet = wallets.find(w => w.clientId === data.walletClientId);
-    if (!wallet || isWalletHiddenAndLocked(wallet)) {
+    if (!wallet) {
+      return;
+    }
+    if (isWalletHiddenAndLocked(wallet)) {
+      // Don't silently drop it - the user asked to keep this notification
+      // (Delete schedule notifications is off) despite the wallet being
+      // hidden. Revealing it here would defeat Hide Wallet, so instead park
+      // the data until they reveal it themselves via its secret code.
+      pendingHiddenScheduledPaymentDataRef.current = data;
+      showToast({
+        type: 'warningToast',
+        title: 'Scheduled payment',
+        message:
+          'This wallet is hidden. Enter its secret code on the Wallets screen to view this payment.',
+      });
+      MainNavigation.navigate('Wallets');
       return;
     }
     store.dispatch(setCurrentWalletClientId(wallet.clientId));
@@ -149,6 +175,22 @@ export const LocalNotificationProvider = ({children}) => {
     });
   }, []);
 
+  // Called right after a hidden wallet is revealed (by secret code) so a
+  // scheduled-payment notification that arrived while it was still hidden
+  // can resume where it left off, instead of just landing on Home.
+  const consumePendingHiddenScheduledPayment = useCallback(
+    walletClientId => {
+      const data = pendingHiddenScheduledPaymentDataRef.current;
+      if (!data || data.walletClientId !== walletClientId) {
+        return false;
+      }
+      pendingHiddenScheduledPaymentDataRef.current = null;
+      handleScheduledPaymentNotificationData(data);
+      return true;
+    },
+    [handleScheduledPaymentNotificationData],
+  );
+
   const handleNotificationData = useCallback(data => {
     if (!data?.chainName || !data?.coin) {
       return;
@@ -209,6 +251,19 @@ export const LocalNotificationProvider = ({children}) => {
   const createScheduledPaymentNotification = useCallback(
     async payment => {
       if (!payment?.id) {
+        return {scheduled: false, blocked: false};
+      }
+      // A hidden wallet with "Delete schedule notifications" on must never
+      // get a live reminder - guard creation itself rather than relying only
+      // on HideWallet's Save action, since payments can be scheduled/edited
+      // after that Save while the wallet is (or later becomes) hidden.
+      const wallets = selectAllWallets(store.getState());
+      const wallet = wallets.find(w => w.clientId === payment?.walletClientId);
+      if (
+        wallet &&
+        isWalletHiddenAndLocked(wallet) &&
+        wallet?.hideSettings?.deleteScheduleNotification
+      ) {
         return {scheduled: false, blocked: false};
       }
       const occurrences = (
@@ -301,6 +356,31 @@ export const LocalNotificationProvider = ({children}) => {
     [cancelScheduledPaymentNotification],
   );
 
+  // Wallets can go from revealed to hidden+locked outside of HideWallet's own
+  // Save flow - app relaunch (RELAUNCH relock, forced back on by the
+  // persist-rehydrate transform) and backgrounding (BACKGROUND relock, via
+  // rehideWalletsOnBackground). Neither of those cancels notifications on its
+  // own, so call this right after either transition to sweep up any reminder
+  // that should now be suppressed.
+  const syncHiddenWalletsScheduledPaymentNotifications =
+    useCallback(async () => {
+      const state = store.getState();
+      const wallets = selectAllWallets(state) || [];
+      const scheduledPayments = state.wallets?.scheduledPayments || {};
+      const idsToCancel = wallets
+        .filter(
+          wallet =>
+            isWalletHiddenAndLocked(wallet) &&
+            wallet?.hideSettings?.deleteScheduleNotification,
+        )
+        .flatMap(wallet =>
+          (scheduledPayments[wallet.clientId] || [])
+            .filter(item => item?.status === 'scheduled')
+            .map(item => item?.id),
+        );
+      await cancelScheduledPaymentNotifications(idsToCancel);
+    }, [cancelScheduledPaymentNotifications]);
+
   useEffect(() => {
     const handleScheduledPaymentPress = notification => {
       const data = notification?.data;
@@ -330,6 +410,7 @@ export const LocalNotificationProvider = ({children}) => {
       pendingScheduledPaymentData,
       setPendingScheduledPaymentData,
       handleScheduledPaymentNotificationData,
+      consumePendingHiddenScheduledPayment,
       pendingNotificationData,
       setPendingNotificationData,
       handleNotificationData,
@@ -337,16 +418,19 @@ export const LocalNotificationProvider = ({children}) => {
       createScheduledPaymentNotification,
       cancelScheduledPaymentNotification,
       cancelScheduledPaymentNotifications,
+      syncHiddenWalletsScheduledPaymentNotifications,
     }),
     [
       pendingScheduledPaymentData,
       handleScheduledPaymentNotificationData,
+      consumePendingHiddenScheduledPayment,
       pendingNotificationData,
       handleNotificationData,
       requestLocalNotificationPermission,
       createScheduledPaymentNotification,
       cancelScheduledPaymentNotification,
       cancelScheduledPaymentNotifications,
+      syncHiddenWalletsScheduledPaymentNotifications,
     ],
   );
 

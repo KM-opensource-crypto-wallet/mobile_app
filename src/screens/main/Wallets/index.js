@@ -57,6 +57,7 @@ import {
   SECRET_CODE_MIN_LENGTH,
 } from 'utils/hideWallet';
 import {store} from 'redux/store';
+import {useLocalNotification} from 'providers/hooks/useLocalNotification';
 
 const WALLET_SORT_OPTIONS = {
   DEFAULT: 'default',
@@ -79,6 +80,7 @@ const Wallets = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const dispatch = useDispatch();
+  const {consumePendingHiddenScheduledPayment} = useLocalNotification();
   const [searchQuery, setSearchQuery] = useState('');
   const [matchedReveal, setMatchedReveal] = useState(null);
   const isFocus = useIsFocused();
@@ -311,6 +313,7 @@ const Wallets = ({navigation}) => {
                       isSelectedWallet && styles.walletCardSelected,
                     ]}
                     onPress={() => {
+                      let resumedScheduledPayment = false;
                       if (isWalletHiddenAndLocked(item)) {
                         dispatch(
                           setWalletRevealed({
@@ -318,11 +321,18 @@ const Wallets = ({navigation}) => {
                             isHidden: false,
                           }),
                         );
+                        // If a scheduled-payment notification arrived while
+                        // this wallet was hidden, resume straight into its
+                        // Transfer screen instead of just landing on Home.
+                        resumedScheduledPayment =
+                          consumePendingHiddenScheduledPayment(item.clientId);
                       }
                       dispatch(setCurrentWalletClientId(item.clientId));
-                      navigation.popTo('Sidebar', {
-                        screen: 'Home',
-                      });
+                      if (!resumedScheduledPayment) {
+                        navigation.popTo('Sidebar', {
+                          screen: 'Home',
+                        });
+                      }
                     }}>
                     {/* Header Row */}
                     <View style={styles.cardHeader}>

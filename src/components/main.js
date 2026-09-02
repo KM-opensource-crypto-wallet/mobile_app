@@ -151,6 +151,7 @@ const Main = () => {
     pendingNotificationData,
     setPendingNotificationData,
     handleNotificationData,
+    syncHiddenWalletsScheduledPaymentNotifications,
   } = useLocalNotification();
 
   const fetchAndCompareRpcUrls = useCallback(() => {
@@ -287,6 +288,10 @@ const Main = () => {
       dispatch(createClientIdIfNotExist());
       dispatch(resetCoinsToDefaultAddressForPrivacyMode());
       dispatch(reassignCurrentWalletIfHidden());
+      // Cold start's persist-rehydrate transform force-hides every
+      // non-MANUAL-relock wallet again - sweep up any reminder for a wallet
+      // that reveals as hidden+locked with "Delete schedule notifications" on.
+      syncHiddenWalletsScheduledPaymentNotifications();
       const onUrlGet = event => {
         try {
           const url = event.url;
@@ -377,6 +382,10 @@ const Main = () => {
               store.getState(),
             );
             dispatch(rehideWalletsOnBackground());
+            // BACKGROUND-relock wallets just went hidden+locked outside of
+            // HideWallet's own Save flow - sweep up any reminder that should
+            // now be suppressed for them.
+            syncHiddenWalletsScheduledPaymentNotifications();
             const walletClientIdAfterRehide = selectCurrentWalletClientId(
               store.getState(),
             );
