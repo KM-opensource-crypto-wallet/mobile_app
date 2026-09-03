@@ -24,7 +24,7 @@ import {wallet} from 'data/data';
 import myStyles from './CreateWalletStyles';
 import {useSelector, shallowEqual, useDispatch} from 'react-redux';
 import Exclamationcircleo from 'assets/images/icons/exclamationcircle.svg';
-import {isIpad, useFloatingHeight} from 'utils/dimensions';
+import {isIpad} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
 import ThemedIcon from 'components/ThemedIcon';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -34,6 +34,7 @@ import {
   selectAllWalletName,
   selectAllWallets,
   selectCurrentWallet,
+  selectScheduledPaymentsByClientId,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
   createWallet,
@@ -41,6 +42,7 @@ import {
   updateWalletName,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {deleteAlertsForWalletThunk} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
+import {useLocalNotification} from 'providers/hooks/useLocalNotification';
 import {
   selectIsSyncing,
   selectSyncingWalletClientId,
@@ -66,6 +68,11 @@ const CreateWallet = ({navigation, route}) => {
   const currentWalletClientId = useSelector(selectCurrentWalletClientId);
   const allWalletName = useSelector(selectAllWalletName, shallowEqual);
   const allWallets = useSelector(selectAllWallets);
+  // eslint-disable-next-line react-redux/useSelector-prefer-selectors
+  const scheduledPaymentsForWallet = useSelector(state =>
+    selectScheduledPaymentsByClientId(state, walletClientId),
+  );
+  const {cancelScheduledPaymentNotifications} = useLocalNotification();
   const finalAllWallets = useRef(
     allWalletName.filter(subItem => subItem !== walletName),
   );
@@ -187,6 +194,12 @@ const CreateWallet = ({navigation, route}) => {
       );
     }
 
+    // Cancel this wallet's pending scheduled-payment reminders before the
+    // wallet (and the recipient/amount data they reference) is deleted.
+    await cancelScheduledPaymentNotifications(
+      scheduledPaymentsForWallet.map(payment => payment?.id),
+    );
+
     navigation.reset({
       index: 0,
       routes: [{name: 'Sidebar'}],
@@ -197,7 +210,14 @@ const CreateWallet = ({navigation, route}) => {
         dispatch(deleteWallet(walletClientId));
       }
     }, 1000);
-  }, [dispatch, navigation, walletClientId, allWallets]);
+  }, [
+    dispatch,
+    navigation,
+    walletClientId,
+    allWallets,
+    scheduledPaymentsForWallet,
+    cancelScheduledPaymentNotifications,
+  ]);
 
   const onPressNo = useCallback(() => {
     setShowDeleteModal(false);

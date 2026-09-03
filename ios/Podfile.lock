@@ -5,7 +5,6 @@ PODS:
   - AppAuth/Core (2.1.0)
   - AppAuth/ExternalUserAgent (2.1.0):
     - AppAuth/Core
-  - AppCheckCore (11.3.0):
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/UserDefaults (~> 8.0)
     - PromisesObjC (~> 2.4)
@@ -39,7 +38,6 @@ PODS:
   - FBLazyVector (0.86.0)
   - GoogleSignIn (9.2.0):
     - AppAuth (~> 2.1)
-    - AppCheckCore (~> 11.0)
     - GTMAppAuth (~> 5.0)
     - GTMSessionFetcher/Core (~> 3.3)
   - GoogleUtilities (8.1.1):
@@ -2633,6 +2631,28 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNDateTimePicker (9.1.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNDeviceInfo (15.0.2):
     - React-Core
   - RNFastImage (8.13.0):
@@ -2734,6 +2754,11 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNNotifee (9.1.8):
+    - React-Core
+    - RNNotifee/NotifeeCore (= 9.1.8)
+  - RNNotifee/NotifeeCore (9.1.8):
+    - React-Core
   - RNPermissions (5.6.0):
     - hermes-engine
     - RCTRequired
@@ -3248,6 +3273,7 @@ DEPENDENCIES:
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - "RNCMaskedView (from `../node_modules/@react-native-masked-view/masked-view`)"
+  - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - "RNFastImage (from `../node_modules/@d11/react-native-fast-image`)"
   - RNFS (from `../node_modules/react-native-fs`)
@@ -3255,6 +3281,7 @@ DEPENDENCIES:
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNInAppBrowser (from `../node_modules/react-native-inappbrowser-reborn`)
   - RNLocalize (from `../node_modules/react-native-localize`)
+  - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
@@ -3273,7 +3300,6 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - AppAuth
-    - AppCheckCore
     - BugfenderSDK
     - CocoaAsyncSocket
     - GoogleSignIn
@@ -3510,6 +3536,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-clipboard/clipboard"
   RNCMaskedView:
     :path: "../node_modules/@react-native-masked-view/masked-view"
+  RNDateTimePicker:
+    :path: "../node_modules/@react-native-community/datetimepicker"
   RNDeviceInfo:
     :path: "../node_modules/react-native-device-info"
   RNFastImage:
@@ -3524,6 +3552,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-inappbrowser-reborn"
   RNLocalize:
     :path: "../node_modules/react-native-localize"
+  RNNotifee:
+    :path: "../node_modules/@notifee/react-native"
   RNPermissions:
     :path: "../node_modules/react-native-permissions"
   RNReactNativeHapticFeedback:
@@ -3551,7 +3581,6 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   AppAuth: ef4da5a3fc2e10b90c09a0a94a9baeaedc0341d5
-  AppCheckCore: 214137f5c378d1dec88a68425c467fe65aaff637
   BreezSdkSparkReactNative: 359c9717b48dfa251614489a68fc4c6dc49e6423
   BugfenderSDK: 67548568056e992ceb5a520337ef508d80a048d4
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
@@ -3560,7 +3589,7 @@ SPEC CHECKSUMS:
   GoogleUtilities: 4f2618a4a1e762a1ee134a1e2323bba9843e06da
   GTMAppAuth: 217a876b249c3c585a54fd6f73e6b58c4f5c4238
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
-  hermes-engine: e6e91f271879fe7889bc34ffe839f58d015d1418
+  hermes-engine: 624a42226f29fd4ed59a158608775bf604342d0a
   libavif: 84bbb62fb232c3018d6f1bab79beea87e35de7b7
   libdav1d: 23581a4d8ec811ff171ed5e2e05cd27bad64c39f
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
@@ -3570,7 +3599,7 @@ SPEC CHECKSUMS:
   pagopa-io-react-native-integrity: 9c5c9180357a635a3007023bc3199c656f2e97e4
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
   PromisesSwift: 217dea0fd5d2ad65222a109c48698add13cc1c5b
-  QuickCrypto: e4094382bbba0da1357dbedad842afcd1abb48d3
+  QuickCrypto: a83090899ee0517014e627fa09f531642ecbe0a3
   RCTDeprecation: 2a74a2c57675e64419bd89078efde81f7c1de90b
   RCTRequired: 30451112e6fef4e6f31b4e7eee0845156e35e4b0
   RCTSwiftUI: 5aaf0b07e747ba749dc6acc94d8bd41eea4b570f
@@ -3580,7 +3609,7 @@ SPEC CHECKSUMS:
   React-callinvoker: 03cd4b931d1d583d87aae99b8f7b6fe26bf571ee
   React-Codegen: 4b8b4817cea7a54b83851d4c1f91f79aa73de30a
   React-Core: 1c824d9c7dd8aa760b5f1b50d5a54c2a3f598f87
-  React-Core-prebuilt: 7da85c26e5616d52f119b81ce5e3e6fc5c9bda49
+  React-Core-prebuilt: 13924a267683b3d6fa4bde9c80380becf83a9c5c
   React-CoreModules: 2f9ed75bca7f6dea2b70e8a1f4a5ca9b6be52d76
   React-cxxreact: 7103d5ba69848c039e11079e74ceede05efe795e
   React-debug: 8cc8d99ccc664ef9e873027f7fc3fb0a50496012
@@ -3671,6 +3700,7 @@ SPEC CHECKSUMS:
   RNCAsyncStorage: 2ad919e88b8bc2cd80e8697ce66d04d006743283
   RNCClipboard: 715fa7c6c8366f17d00f05a439ee7488f390fa5f
   RNCMaskedView: eb2b2e538afa907f05a5848a1a1ac26092e6fec9
+  RNDateTimePicker: 7b2738f1e595f83c14580a11c476872755c5befc
   RNDeviceInfo: 4c852998208b60dc192ae3529e5867817719ad1e
   RNFastImage: 5fafd2e70056cf7729b1bdcd558a7f0fea2aff0e
   RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
@@ -3678,6 +3708,7 @@ SPEC CHECKSUMS:
   RNGoogleSignin: 0d72ae233fe10522497424748acf00fcc1ed2ee7
   RNInAppBrowser: 904d24dc75e8e6c6c98a3160329192608946f9df
   RNLocalize: f370284ea42c48f29f0d8dd3a7bcc28a04f82155
+  RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
   RNPermissions: 8b3d7baa6a13ef63ce101cc2884637bacbb49c2b
   RNReactNativeHapticFeedback: 576e23c1ad2d800ded4502be3f66b767308b63a1
   RNReanimated: a9bf68fb5f19ce1c363b7d1413dcf8ee323185b8

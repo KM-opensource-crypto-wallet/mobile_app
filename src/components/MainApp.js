@@ -13,6 +13,7 @@ import {
   initializeDokApiIntegrity,
   setupDokApiIntegrity,
 } from 'utils/apiIntegrity';
+import {LocalNotificationProvider} from 'providers/LocalNotificationProvider';
 
 // Register interceptors at module load time so they are guaranteed to be
 // present before any component renders or dispatches an API call.
@@ -39,17 +40,19 @@ export default function MainApp() {
   }, []);
 
   return (
-    <ErrorBoundary onError={onError} FallbackComponent={ErrorComponent}>
-      <Provider store={store}>
-        <PaperProvider>
-          <ThemeProvider>
-            <SafeAreaProvider>
-              {integrityReady && <Main />}
-              <Toasts />
-            </SafeAreaProvider>
-          </ThemeProvider>
-        </PaperProvider>
-      </Provider>
-    </ErrorBoundary>
+    <LocalNotificationProvider>
+      <ErrorBoundary onError={onError} FallbackComponent={ErrorComponent}>
+        <Provider store={store}>
+          <PaperProvider>
+            <ThemeProvider>
+              <SafeAreaProvider>
+                {integrityReady && <Main />}
+                <Toasts />
+              </SafeAreaProvider>
+            </ThemeProvider>
+          </PaperProvider>
+        </Provider>
+      </ErrorBoundary>
+    </LocalNotificationProvider>
   );
 }

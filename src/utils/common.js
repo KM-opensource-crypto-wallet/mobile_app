@@ -14,6 +14,13 @@ export const inAppBrowserOptions = IS_ANDROID
 
 export const parseBoolean = value => value === 'true' || value === true;
 
+export const truncateAddress = (address, startChars = 6, endChars = 6) => {
+  if (!address || address.length <= startChars + endChars) {
+    return address || '';
+  }
+  return `${address.slice(0, startChars)}...${address.slice(-endChars)}`;
+};
+
 export const parseJson = value => {
   try {
     return JSON.parse(value);

@@ -18,6 +18,14 @@ export const getAsyncStorageData = async key => {
   }
 };
 
+export const removeAsyncStorageData = async key => {
+  try {
+    return await AsyncStorage.removeItem(key);
+  } catch (e) {
+    console.error('error in remove data');
+  }
+};
+
 export const clearWalletConnectStorageCache = async key => {
   try {
     const allKeys = await AsyncStorage.getAllKeys(key);

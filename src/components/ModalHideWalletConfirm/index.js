@@ -36,11 +36,22 @@ const NOTIFICATION_INFO_BULLETS = [
   "Disabled: this wallet's alerts are kept and you'll keep receiving notifications even while it's hidden.",
 ];
 
+const SCHEDULE_NOTIFICATION_INFO_BULLETS = [
+  "This controls whether this wallet's scheduled payment reminders are cancelled when the wallet is hidden.",
+  'Enabled (default): reminders for all of this wallet’s scheduled payments are deleted, so nothing on your lock screen or notification tray reveals its activity.',
+  'Turning this off restores the reminders for any payments still scheduled in the future.',
+  "Disabled: this wallet's scheduled payment reminders are kept and will still fire while it's hidden.",
+];
+
 const INFO_CONTENT = {
   info: {title: 'About Hide Wallet', bullets: INFO_BULLETS},
   notificationInfo: {
     title: 'About Delete Notifications',
     bullets: NOTIFICATION_INFO_BULLETS,
+  },
+  scheduleNotificationInfo: {
+    title: 'About Delete Schedule Notifications',
+    bullets: SCHEDULE_NOTIFICATION_INFO_BULLETS,
   },
 };
 
@@ -61,12 +72,32 @@ const getNotificationConfirmBullet = (hideNotification, alertsCount) => {
     : null;
 };
 
+const getScheduleNotificationConfirmBullet = (
+  deleteScheduleNotification,
+  scheduledPaymentsCount,
+) => {
+  if (deleteScheduleNotification) {
+    return scheduledPaymentsCount > 0
+      ? `Reminders for your ${scheduledPaymentsCount} scheduled payment${s(
+          scheduledPaymentsCount,
+        )} will be cancelled, so nothing on your lock screen reveals its activity.`
+      : 'This wallet has no scheduled payments - nothing will be cancelled.';
+  }
+  return scheduledPaymentsCount > 0
+    ? `Reminders for your ${scheduledPaymentsCount} scheduled payment${s(
+        scheduledPaymentsCount,
+      )} will be kept - they'll still fire for this wallet while it's hidden.`
+    : null;
+};
+
 const ModalHideWalletConfirm = ({
   visible,
   mode = 'confirm',
   relockOption,
   hideNotification,
   alertsCount = 0,
+  deleteScheduleNotification,
+  scheduledPaymentsCount = 0,
   onConfirm,
   onCancel,
 }) => {
@@ -81,6 +112,10 @@ const ModalHideWalletConfirm = ({
       RELOCK_DESCRIPTION[relockOption] ||
         RELOCK_DESCRIPTION[RELOCK_OPTIONS.RELAUNCH],
       getNotificationConfirmBullet(hideNotification, alertsCount),
+      getScheduleNotificationConfirmBullet(
+        deleteScheduleNotification,
+        scheduledPaymentsCount,
+      ),
     ].filter(Boolean);
   } else if (mode === 'notificationInfo') {
     bullets = [
@@ -89,6 +124,15 @@ const ModalHideWalletConfirm = ({
             alertsCount,
           )}.`
         : 'This wallet currently has no notification alerts.',
+      ...infoContent.bullets,
+    ];
+  } else if (mode === 'scheduleNotificationInfo') {
+    bullets = [
+      scheduledPaymentsCount > 0
+        ? `This wallet currently has ${scheduledPaymentsCount} scheduled payment${s(
+            scheduledPaymentsCount,
+          )}.`
+        : 'This wallet currently has no scheduled payments.',
       ...infoContent.bullets,
     ];
   } else {

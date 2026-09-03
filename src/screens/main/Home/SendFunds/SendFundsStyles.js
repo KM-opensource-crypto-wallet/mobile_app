@@ -72,11 +72,6 @@ const myStyles = theme =>
       height: 50,
       backgroundColor: theme.backgroundColor,
     },
-    addressInput: {
-      height: 50,
-      backgroundColor: theme.backgroundColor,
-      width: inputWidth - 40,
-    },
     btnMax: {
       position: 'absolute',
       top: 24,

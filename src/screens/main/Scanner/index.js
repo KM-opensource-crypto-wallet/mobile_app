@@ -131,7 +131,11 @@ const Scanner = ({navigation, route}) => {
           },
           pop: true,
         });
-      } else if (page === 'SendFunds' || page === 'AddAddress') {
+      } else if (
+        page === 'SendFunds' ||
+        page === 'AddAddress' ||
+        page === 'SchedulePayment'
+      ) {
         const coinObj = parseCryptoQrCodeString(data);
         navigation.navigate({
           name: route.params.page,
