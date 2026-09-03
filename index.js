@@ -13,15 +13,36 @@ import {AppRegistry, Platform} from 'react-native';
 import App from './App';
 import {name as coinswallet} from './app.json';
 import {Bugfender} from '@bugfender/rn-bugfender';
-import notifee from '@notifee/react-native';
+import notifee, {EventType} from '@notifee/react-native';
+import {
+  SCHEDULED_PAYMENT_NOTIFICATION_TYPE,
+  SCHEDULED_PAYMENT_BACKGROUND_PRESS_STORAGE_KEY,
+} from 'providers/LocalNotificationProvider';
+import {storeAsyncStorageData} from 'utils/asyncStorage';
 
 // Required registration point for notifee so Android can deliver
 // press/dismiss events for trigger notifications fired while the app is
-// backgrounded or killed. Navigation for a press is instead handled once JS
-// resumes, via notifee.getInitialNotification()/onForegroundEvent in
-// components/main.js — there is no safe navigation target from this headless
-// context.
-notifee.onBackgroundEvent(async () => {});
+// backgrounded or killed. There is no safe navigation target from this
+// headless context, so a killed-app press is instead picked up once JS
+// resumes via notifee.getInitialNotification(), and a foreground press via
+// onForegroundEvent — both handled in providers/LocalNotificationProvider.
+// A press while merely backgrounded (JS alive but not foreground) only
+// reaches this handler and neither of those, so persist it here for
+// LocalNotificationProvider to consume once the app becomes active again.
+// Every other event (dismiss, other notification types) is left alone.
+notifee.onBackgroundEvent(async ({type, detail}) => {
+  if (type !== EventType.PRESS) {
+    return;
+  }
+  const data = detail?.notification?.data;
+  if (data?.type !== SCHEDULED_PAYMENT_NOTIFICATION_TYPE) {
+    return;
+  }
+  await storeAsyncStorageData(
+    SCHEDULED_PAYMENT_BACKGROUND_PRESS_STORAGE_KEY,
+    JSON.stringify(data),
+  );
+});
 
 import structuredClone from '@ungap/structured-clone';
 

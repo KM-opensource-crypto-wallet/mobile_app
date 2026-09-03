@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import {AppState} from 'react-native';
 import notifee, {
   AndroidImportance,
   AndroidVisibility,
@@ -38,6 +39,7 @@ import {
 import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import {setRouteStateData} from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
 import {MAX_OCCURRENCES as MAX_SCHEDULED_PAYMENT_OCCURRENCE_NOTIFICATIONS} from 'utils/scheduleRecurrence';
+import {getAsyncStorageData, removeAsyncStorageData} from 'utils/asyncStorage';
 
 // Mirrors the spendable-balance calc SendFunds uses (totalAmount minus the
 // chain's minimum reserve), clamped at zero.
@@ -62,6 +64,12 @@ const landOnHome = () => {
 };
 
 export const SCHEDULED_PAYMENT_NOTIFICATION_TYPE = 'scheduledPayment';
+// Where index.js's headless notifee.onBackgroundEvent parks a scheduled-
+// payment PRESS it received while the app was backgrounded (not killed) —
+// there's no safe navigation target from that headless context, so it just
+// persists the payload here for this provider to pick up once JS is active.
+export const SCHEDULED_PAYMENT_BACKGROUND_PRESS_STORAGE_KEY =
+  'scheduledPaymentBackgroundPress';
 const SCHEDULED_PAYMENT_CHANNEL_ID = 'scheduled-payments';
 
 let androidChannelCreated = false;
@@ -79,7 +87,7 @@ const ensureAndroidChannel = async () => {
   androidChannelCreated = true;
 };
 
-export const LocaoNotificationContext = createContext();
+export const LocalNotificationContext = createContext();
 
 export const LocalNotificationProvider = ({children}) => {
   const [pendingScheduledPaymentData, setPendingScheduledPaymentDataState] =
@@ -476,6 +484,41 @@ export const LocalNotificationProvider = ({children}) => {
     };
   }, [setPendingScheduledPaymentData]);
 
+  // A press that arrived while the app was backgrounded (not killed) goes
+  // through index.js's headless notifee.onBackgroundEvent instead — it has
+  // no safe navigation target, so it just stores the payload. Pick it up as
+  // soon as JS is back in the foreground, same as a cold-start press.
+  useEffect(() => {
+    const consumeBackgroundPress = async () => {
+      const raw = await getAsyncStorageData(
+        SCHEDULED_PAYMENT_BACKGROUND_PRESS_STORAGE_KEY,
+      );
+      if (!raw) {
+        return;
+      }
+      await removeAsyncStorageData(
+        SCHEDULED_PAYMENT_BACKGROUND_PRESS_STORAGE_KEY,
+      );
+      try {
+        const data = JSON.parse(raw);
+        if (data?.type === SCHEDULED_PAYMENT_NOTIFICATION_TYPE) {
+          setPendingScheduledPaymentData(data);
+        }
+      } catch (e) {
+        console.warn('Failed to parse background scheduled payment press', e);
+      }
+    };
+    consumeBackgroundPress();
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        consumeBackgroundPress();
+      }
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, [setPendingScheduledPaymentData]);
+
   const contextValue = useMemo(
     () => ({
       pendingScheduledPaymentData,
@@ -510,8 +553,8 @@ export const LocalNotificationProvider = ({children}) => {
   );
 
   return (
-    <LocaoNotificationContext.Provider value={contextValue}>
+    <LocalNotificationContext.Provider value={contextValue}>
       {children}
-    </LocaoNotificationContext.Provider>
+    </LocalNotificationContext.Provider>
   );
 };

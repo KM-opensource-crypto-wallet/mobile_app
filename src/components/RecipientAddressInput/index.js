@@ -16,7 +16,7 @@ const RecipientAddressInput = ({
   onSelectAddress,
   onPressScan,
   onSubmitEditing,
-  label = 'Enter wallet adress or scan QR',
+  label = 'Enter wallet address or scan QR',
   containerStyle,
   inputStyle,
 }) => {

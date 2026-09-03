@@ -16,7 +16,7 @@ const myStyles = theme =>
       marginTop: 15,
     },
     textConfirm: {
-      color: 'red',
+      color: theme.error,
       marginLeft: 10,
       fontSize: 12,
       fontFamily: 'Roboto-Regular',

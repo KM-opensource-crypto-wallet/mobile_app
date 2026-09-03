@@ -5,7 +5,6 @@ PODS:
   - AppAuth/Core (2.1.0)
   - AppAuth/ExternalUserAgent (2.1.0):
     - AppAuth/Core
-  - AppCheckCore (11.3.1):
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/UserDefaults (~> 8.0)
     - PromisesObjC (~> 2.4)
@@ -39,7 +38,6 @@ PODS:
   - FBLazyVector (0.86.0)
   - GoogleSignIn (9.2.0):
     - AppAuth (~> 2.1)
-    - AppCheckCore (~> 11.0)
     - GTMAppAuth (~> 5.0)
     - GTMSessionFetcher/Core (~> 3.3)
   - GoogleUtilities (8.1.1):
@@ -3302,7 +3300,6 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - AppAuth
-    - AppCheckCore
     - BugfenderSDK
     - CocoaAsyncSocket
     - GoogleSignIn
@@ -3584,7 +3581,6 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   AppAuth: ef4da5a3fc2e10b90c09a0a94a9baeaedc0341d5
-  AppCheckCore: e215d35177a9cf469927863e69c13e220df32a8b
   BreezSdkSparkReactNative: 359c9717b48dfa251614489a68fc4c6dc49e6423
   BugfenderSDK: 67548568056e992ceb5a520337ef508d80a048d4
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
