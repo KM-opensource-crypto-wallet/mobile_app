@@ -7,6 +7,7 @@ import {
   getCustomizePublicAddress,
   isBitcoinChain,
 } from 'dok-wallet-blockchain-networks/helper';
+import {formatDeriveAddressBalance} from 'dok-wallet-blockchain-networks/helper/deriveAddressBalance';
 import myStyles from './AddressSelectorTriggerStyles';
 
 // Closed state of the address picker: a dropdown-sized field showing the
@@ -18,6 +19,7 @@ const AddressSelectorTrigger = ({
   chain_name,
   item,
   symbol,
+  decimal,
   fallbackAddress,
   onPress,
 }) => {
@@ -34,17 +36,25 @@ const AddressSelectorTrigger = ({
           Keyboard.dismiss();
           onPress?.();
         }}>
-        <View style={styles.leftRow}>
-          <Text style={styles.addressText} numberOfLines={1}>
-            {getCustomizePublicAddress(address) || 'Select address'}
-          </Text>
-          <AddressTypeBadge chain_name={chain_name} item={item} />
+        {/* Address + type on line 1, balance on line 2: the shortened
+            address is never clipped by its neighbours. */}
+        <View style={styles.leftColumn}>
+          <View style={styles.leftRow}>
+            <Text style={styles.addressText}>
+              {getCustomizePublicAddress(address) || 'Select address'}
+            </Text>
+            <AddressTypeBadge chain_name={chain_name} item={item} />
+          </View>
+          {showBalance && (
+            <Text style={styles.balanceText} numberOfLines={1}>
+              {formatDeriveAddressBalance({
+                balance: item?.balance,
+                decimal,
+                symbol,
+              })}
+            </Text>
+          )}
         </View>
-        {showBalance && (
-          <Text style={styles.balanceText} numberOfLines={1}>
-            {`${item?.balance || 0} ${symbol || ''}`}
-          </Text>
-        )}
         <ArrowDown height="30" width="30" style={{fill: theme.gray}} />
       </TouchableOpacity>
     </View>

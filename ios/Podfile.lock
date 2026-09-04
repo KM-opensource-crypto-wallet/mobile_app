@@ -3120,13 +3120,12 @@ PODS:
     - ReactNativeDependencies
     - Yoga
   - SwiftCBOR (0.6.0)
-  - SwiftProtobuf (1.38.1)
-  - TrustWalletCore (3.2.9):
-    - TrustWalletCore/Core (= 3.2.9)
-  - TrustWalletCore/Core (3.2.9):
+  - TrustWalletCore (4.3.9):
+    - TrustWalletCore/Core (= 4.3.9)
+  - TrustWalletCore/Core (4.3.9):
     - TrustWalletCore/Types
-  - TrustWalletCore/Types (3.2.9):
-    - SwiftProtobuf
+  - TrustWalletCore/Types (4.3.9):
+    - WalletCoreSwiftProtobuf
   - uniffi-bindgen-react-native (0.29.3-1):
     - React-Core
   - VisionCamera (4.7.3):
@@ -3135,6 +3134,7 @@ PODS:
   - VisionCamera/Core (4.7.3)
   - VisionCamera/React (4.7.3):
     - React-Core
+  - WalletCoreSwiftProtobuf (1.29.0)
   - Yoga (0.0.0)
   - YttriumWrapper (0.10.54)
 
@@ -3266,7 +3266,7 @@ DEPENDENCIES:
   - RNWorklets (from `../node_modules/react-native-worklets`)
   - SDWebImage (= 5.21.0)
   - SensitiveInfo (from `../node_modules/react-native-sensitive-info`)
-  - TrustWalletCore (= 3.2.9)
+  - TrustWalletCore (= 4.3.9)
   - VisionCamera (from `../node_modules/react-native-vision-camera`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -3293,9 +3293,9 @@ SPEC REPOS:
     - SDWebImageSVGCoder
     - SDWebImageWebPCoder
     - SwiftCBOR
-    - SwiftProtobuf
     - TrustWalletCore
     - uniffi-bindgen-react-native
+    - WalletCoreSwiftProtobuf
     - YttriumWrapper
 
 EXTERNAL SOURCES:
@@ -3693,13 +3693,13 @@ SPEC CHECKSUMS:
   SDWebImageWebPCoder: 0e06e365080397465cc73a7a9b472d8a3bd0f377
   SensitiveInfo: 07fd5e27962ed017ae2a71e57b60e2869ea31321
   SwiftCBOR: b873af28a9cc66003852fdc79a41852a7e54009a
-  SwiftProtobuf: 409d3aaec90e51b1705b1dd8065b56893450e77c
-  TrustWalletCore: 33400e9cf939277435b4e2e6c21daaa1afe26c7c
+  TrustWalletCore: f3423fa79df3c4904fbda4be83a0c9c183bb4d5f
   uniffi-bindgen-react-native: 125eae9e3a0cf34bf8f3d4b0ceed517df7cc0733
   VisionCamera: 68d40255fa8866e815cbbb063730102d3da276fd
+  WalletCoreSwiftProtobuf: a4798576a2d309511fc45f81843d348732ec571d
   Yoga: fe50ab299e578f397fef753cf309c6703a4db29b
   YttriumWrapper: 850d3c5bfa7815ad9962591ff3c1b289039266f2
 
-PODFILE CHECKSUM: e0fa92581be7f5039f5e38ce0c34f57af7d746c5
+PODFILE CHECKSUM: be3f75e012e1b7b799d44a9d0986df3cf1f81f31
 
 COCOAPODS: 1.14.3

@@ -47,6 +47,7 @@ import {
 } from 'dok-wallet-blockchain-networks/config/config';
 import {walletConnect} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {getSolanaFeePayer} from 'dok-wallet-blockchain-networks/helper/solanaTransaction';
+import {describeHederaRequest} from 'dok-wallet-blockchain-networks/helper/hederaWalletConnect';
 
 export const ETH_SEND_TRANSACTION = 'eth_sendTransaction';
 export const ETH_SIGN_TRANSACTION = 'eth_signTransaction';
@@ -97,6 +98,14 @@ const getMessageData = (method, message) => {
       return {type: 'text', value: convertHexToUtf8IfPossible(message)};
     case 'stellar_signMessage':
       return {type: 'text', value: message};
+    case 'hedera_signMessage':
+      return {type: 'text', value: message?.message ?? ''};
+    case 'hedera_signTransaction':
+    case 'hedera_signAndExecuteTransaction':
+    case 'hedera_executeTransaction':
+    case 'hedera_signAndExecuteQuery':
+      // Base64 protobuf is opaque; show the decoded transaction instead.
+      return {type: 'json', value: describeHederaRequest(method, message)};
     default:
       return {
         type: 'json',
@@ -359,6 +368,9 @@ const WalletConnectTransactionModal = props => {
           },
           isBatchTransaction: transactionData?.isBatchTransaction,
           chain_name: walletData?.chain_name?.toLowerCase(),
+          // CAIP-2 id of the request; picks the executor for chains that
+          // serve more than one namespace (Hedera native vs eip155).
+          chainId,
           privateKey: walletData?.privateKey,
           walletAddress: walletData?.address,
           expectedSignerAddress:

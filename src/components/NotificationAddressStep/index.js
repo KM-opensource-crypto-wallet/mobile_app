@@ -75,11 +75,13 @@ const NotificationAddressStep = ({
             chain_name={entry.coin.chain_name}
             item={selectedItem}
             symbol={entry.coin.symbol}
+            decimal={entry.coin.decimal}
             fallbackAddress={selectedAddr}
             onPress={() =>
               addressSheetRef.current?.present({
                 chain_name: entry.coin.chain_name,
                 symbol: entry.coin.symbol,
+                decimal: entry.coin.decimal,
                 items,
                 selectedAddress: selectedAddr,
                 context: {key},

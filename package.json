@@ -48,6 +48,7 @@
     "@ethersproject/shims": "^5.8.0",
     "@glif/filecoin-address": "^4.0.0",
     "@gorhom/bottom-sheet": "^5.2.14",
+    "@hiero-ledger/proto": "2.31.0",
     "@hiero-ledger/sdk": "2.87.0",
     "@json-rpc-tools/utils": "^1.7.6",
     "@meshsdk/core": "1.9.1",

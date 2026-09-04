@@ -37,7 +37,7 @@ const getTcpSocket = () => {
 // Own Fulcrum first; the public servers below are automatic fallbacks, used
 // only when it is unreachable. Order is this app's policy, not shared.
 const SERVERS = IS_SANDBOX
-  ? [ELECTRUM_SERVER.testnetBlockstream, ELECTRUM_SERVER.testnetAranguren]
+  ? [ELECTRUM_SERVER.testnetAranguren, ELECTRUM_SERVER.testnetBlockstream]
   : [
       ELECTRUM_SERVER.own,
       ELECTRUM_SERVER.foundation,
