@@ -8,5 +8,3 @@ export const showToast = ({type, title, message, ...options}) => {
     ...options,
   });
 };
-
-export const hideToast = () => Toast.hide();
