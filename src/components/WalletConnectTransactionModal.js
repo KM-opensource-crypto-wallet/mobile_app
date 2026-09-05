@@ -48,6 +48,10 @@ import {
 import {walletConnect} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {getSolanaFeePayer} from 'dok-wallet-blockchain-networks/helper/solanaTransaction';
 import {describeHederaRequest} from 'dok-wallet-blockchain-networks/helper/hederaWalletConnect';
+import {
+  decodeEvmCalldata,
+  UNDECODABLE_CALLDATA_WARNING,
+} from 'dok-wallet-blockchain-networks/helper/evmCalldata';
 
 export const ETH_SEND_TRANSACTION = 'eth_sendTransaction';
 export const ETH_SIGN_TRANSACTION = 'eth_signTransaction';
@@ -94,8 +98,12 @@ const getMessageData = (method, message) => {
     case 'solana_signAllTransactions':
       return {type: 'json', value: parseSolanaSignTransaction(message)};
     case 'xrpl_signMessage':
-    case 'polkadot_signMessage':
       return {type: 'text', value: convertHexToUtf8IfPossible(message)};
+    case 'polkadot_signMessage':
+      return {
+        type: 'text',
+        value: convertHexToUtf8IfPossible(message?.message ?? message),
+      };
     case 'stellar_signMessage':
       return {type: 'text', value: message};
     case 'hedera_signMessage':
@@ -248,6 +256,56 @@ const MessageNode = ({label, value, styles, theme, depth = 0}) => {
   );
 };
 
+const BatchCallDataView = ({call, styles, theme}) => {
+  const decoded = decodeEvmCalldata(call?.data);
+  if (decoded.kind === 'empty') {
+    return null;
+  }
+  if (decoded.kind === 'decoded') {
+    return (
+      <>
+        <View style={styles.transferItemView}>
+          <Text style={styles.transferTitle}>{'Method'}</Text>
+          <Text style={styles.boxBalance} numberOfLines={1}>
+            {`${decoded.method} (${decoded.standard})`}
+          </Text>
+        </View>
+        <MessageNode
+          label={'Arguments'}
+          value={decoded.args}
+          styles={styles}
+          theme={theme}
+          depth={1}
+        />
+      </>
+    );
+  }
+  return (
+    <>
+      <View style={styles.calldataWarning}>
+        <IoniconIcon name="warning-outline" size={16} color={theme.warning} />
+        <Text style={styles.calldataWarningText}>
+          {UNDECODABLE_CALLDATA_WARNING}
+        </Text>
+      </View>
+      {!!decoded.selector && (
+        <MessageValueRow
+          label={'Selector'}
+          value={decoded.selector}
+          styles={styles}
+          theme={theme}
+        />
+      )}
+      <MessageValueRow
+        label={'Calldata'}
+        value={decoded.data}
+        styles={styles}
+        theme={theme}
+      />
+    </>
+  );
+};
+
 const WalletConnectTransactionModal = props => {
   const transactionData = useSelector(selectWalletConnectTransactionData);
   const dispatch = useDispatch();
@@ -316,11 +374,11 @@ const WalletConnectTransactionModal = props => {
           expectedSignerAddress: transactionData?.params?.[0]?.from,
         };
       }
-      const finaltransactionData = transactionData?.params[0] || {};
+      const finaltransactionData = transactionData?.params?.[0] || {};
       const {signTypeData, expectedSignerAddress} = EVM_SIGN_REQUEST_HANDLERS[
         transactionData?.method
       ]?.(transactionData?.params) || {
-        signTypeData: transactionData?.params[1],
+        signTypeData: transactionData?.params?.[1],
         expectedSignerAddress: undefined,
       };
       if (finaltransactionData?.value) {
@@ -440,6 +498,7 @@ const WalletConnectTransactionModal = props => {
                   </Text>
                 </View>
               )}
+              <BatchCallDataView call={call} styles={styles} theme={theme} />
             </View>
           ))}
         </ScrollView>
@@ -868,6 +927,23 @@ const myStyles = theme =>
       paddingHorizontal: 12,
       borderRadius: 10,
       backgroundColor: theme.backgroundColor,
+    },
+    calldataWarning: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 8,
+      marginTop: 8,
+      padding: 10,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.warning,
+    },
+    calldataWarningText: {
+      flex: 1,
+      fontSize: 12,
+      color: theme.warning,
+      fontFamily: 'Roboto-Regular',
+      fontWeight: '500',
     },
     msgRow: {
       flexDirection: 'row',

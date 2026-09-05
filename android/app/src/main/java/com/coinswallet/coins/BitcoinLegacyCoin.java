@@ -4,7 +4,7 @@ package com.coinswallet.coins;
 import com.coinswallet.CoinFactory;
 import com.coinswallet.Utils;
 
-import wallet.core.jni.AnyAddress;
+import wallet.core.jni.BitcoinAddress;
 import wallet.core.jni.Derivation;
 import wallet.core.jni.HDVersion;
 import wallet.core.jni.HDWallet;
@@ -28,27 +28,46 @@ public class BitcoinLegacyCoin extends CoinFactory.Coin {
         this.wallet = super.wallet;
     }
 
+    // P2PKH (BIP-44). wallet-core's BITCOINTESTNET derivation is the BIP-84
+    // segwit testnet preset (m/84'/1'/0', "tb1q..."), so it must not be used
+    // here: on testnet the legacy type needs version byte 0x6f ("m..."/"n...")
+    // on the account path m/44'/1'/0'.
+    private String buildP2PKHAddress(PublicKey publicKey, Boolean isTestNet) {
+        byte prefix = Boolean.TRUE.equals(isTestNet) ? (byte) 0x6f : (byte) 0x00;
+        return new BitcoinAddress(publicKey, prefix).description();
+    }
+
+    private Derivation derivationFor(Boolean isTestNet) {
+        return Boolean.TRUE.equals(isTestNet) ? Derivation.BITCOINTESTNET : Derivation.BITCOINLEGACY;
+    }
+
+    private PrivateKey firstReceiveKey(Boolean isTestNet) {
+        return wallet.getKey(CoinType.BITCOIN, accountBasePath(isTestNet) + "/0/0");
+    }
+
     @Override
     public String getNewAddress(Boolean isTestNet) {
-        Derivation derivation = isTestNet ? Derivation.BITCOINTESTNET : Derivation.BITCOINLEGACY;
-        return wallet.getAddressDerivation(CoinType.BITCOIN, derivation);
+        PublicKey publicKey = firstReceiveKey(isTestNet).getPublicKeySecp256k1(true);
+        return buildP2PKHAddress(publicKey, isTestNet);
     }
 
     @Override
     public String getPrivateKey(Boolean isTestNet) {
-        Derivation derivation = isTestNet ? Derivation.BITCOINTESTNET : Derivation.BITCOINLEGACY;
-        byte[] privateKeyBytes = wallet.getKeyDerivation(CoinType.BITCOIN, derivation).data();
-        return Utils.convertPrivateKeytoWIF(privateKeyBytes, isTestNet, prefix, testnetPrefix);
+        return Utils.convertPrivateKeytoWIF(firstReceiveKey(isTestNet).data(), isTestNet, prefix, testnetPrefix);
     }
 
+    // The derivation only supplies the coin-type segment (0' / 1'), matching
+    // BITCOIN_ADDRESS_TYPES.bitcoin_legacy: xpub on mainnet, tpub on testnet.
     @Override
     public String getExtendedPublicKey(Boolean isTestNet) {
-        return wallet.getExtendedPublicKey(Purpose.BIP44, CoinType.BITCOIN, HDVersion.XPUB);
+        HDVersion version = Boolean.TRUE.equals(isTestNet) ? HDVersion.TPUB : HDVersion.XPUB;
+        return wallet.getExtendedPublicKeyDerivation(Purpose.BIP44, CoinType.BITCOIN, derivationFor(isTestNet), version);
     }
 
     @Override
     public String getExtendedPrivateKey(Boolean isTestNet) {
-        return wallet.getExtendedPrivateKey(Purpose.BIP44, CoinType.BITCOIN, HDVersion.XPRV);
+        HDVersion version = Boolean.TRUE.equals(isTestNet) ? HDVersion.TPRV : HDVersion.XPRV;
+        return wallet.getExtendedPrivateKeyDerivation(Purpose.BIP44, CoinType.BITCOIN, derivationFor(isTestNet), version);
     }
 
     @Override
@@ -61,12 +80,7 @@ public class BitcoinLegacyCoin extends CoinFactory.Coin {
         WritableMap obj = Arguments.createMap();
         PrivateKey tempPrivateKey = wallet.getKey(CoinType.BITCOIN, derivePath);
         PublicKey publicKey = tempPrivateKey.getPublicKeySecp256k1(true);
-        String address;
-        if (isTestNet) {
-            address = new AnyAddress(publicKey, CoinType.BITCOIN, Derivation.BITCOINTESTNET).description();
-        } else {
-            address = new AnyAddress(publicKey, CoinType.BITCOIN, Derivation.BITCOINLEGACY).description();
-        }
+        String address = buildP2PKHAddress(publicKey, isTestNet);
         String privateKeyString = Utils.convertPrivateKeytoWIF(tempPrivateKey.data(), isTestNet, prefix, testnetPrefix);
         obj.putString("address", address);
         obj.putString("derivePath", derivePath);

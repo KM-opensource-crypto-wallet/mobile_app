@@ -14,6 +14,7 @@ import {
   BackHandler,
 } from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
+import IoniconsIcon from 'react-native-vector-icons/Ionicons';
 import {getSdkError} from '@walletconnect/utils';
 import {useDispatch, useSelector} from 'react-redux';
 import {getWalletConnect} from 'dok-wallet-blockchain-networks/service/walletconnect';
@@ -37,7 +38,10 @@ import WalletConnect from 'assets/images/WalletConnect.png';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {chainLogoMap} from 'assets/chain_logo';
-import {isHederaUnactivated} from 'dok-wallet-blockchain-networks/helper';
+import {
+  getCustomizePublicAddress,
+  isHederaUnactivated,
+} from 'dok-wallet-blockchain-networks/helper';
 import {
   BTC_VARIANT_CHAIN_NAMES,
   buildSessionNamespaces,
@@ -62,6 +66,17 @@ const BTC_VARIANT_LABELS = {
   bitcoin_segwit: 'SegWit',
   bitcoin_legacy: 'Legacy',
   bitcoin_taproot: 'Taproot',
+};
+
+// Middle-ellipsis for the per-type address preview: keeps the prefix that
+// identifies the address type (bc1q / bc1p / 3 / 1) and the checksum tail.
+const shortenAddress = (address, head = 8, tail = 6) => {
+  if (typeof address !== 'string') {
+    return '';
+  }
+  return address.length <= head + tail + 1
+    ? address
+    : `${address.slice(0, head)}…${address.slice(-tail)}`;
 };
 
 const WalletConnectRequestModal = props => {
@@ -257,7 +272,8 @@ const WalletConnectRequestModal = props => {
             {`${item?.chain_display_name} (${currentWallet.walletName})`}
           </Text>
           <Text numberOfLines={1} style={styles.url}>
-            {getSessionAccountAddress(item) || 'Account not active yet'}
+            {getCustomizePublicAddress(getSessionAccountAddress(item)) ||
+              'Account not active yet'}
           </Text>
         </View>
       </View>
@@ -281,29 +297,40 @@ const WalletConnectRequestModal = props => {
         {hasBitcoinRequest && btcVariantCoins.length > 1 && (
           <View style={styles.addressTypeView}>
             <Text style={styles.chainTitle}>{'Bitcoin address type'}</Text>
-            <View style={styles.addressTypeRow}>
-              {btcVariantCoins.map(coin => (
-                <TouchableOpacity
-                  key={coin.chain_name}
-                  style={[
-                    styles.addressTypeChip,
-                    bitcoinAddressType === coin.chain_name && {
-                      backgroundColor: theme.background,
-                    },
-                  ]}
-                  onPress={() => setBitcoinAddressType(coin.chain_name)}>
-                  <Text
+            <View style={styles.addressTypeGrid}>
+              {btcVariantCoins.map(coin => {
+                const selected = bitcoinAddressType === coin.chain_name;
+                return (
+                  <TouchableOpacity
+                    key={coin.chain_name}
+                    accessibilityRole="radio"
+                    accessibilityState={{selected}}
+                    activeOpacity={0.7}
                     style={[
-                      styles.addressTypeChipText,
-                      bitcoinAddressType === coin.chain_name && {
-                        color: 'white',
-                        fontWeight: '600',
-                      },
-                    ]}>
-                    {BTC_VARIANT_LABELS[coin.chain_name] || coin.chain_name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                      styles.addressTypeCard,
+                      selected && styles.addressTypeCardSelected,
+                    ]}
+                    onPress={() => setBitcoinAddressType(coin.chain_name)}>
+                    <View style={styles.addressTypeCardHeader}>
+                      <Text numberOfLines={1} style={styles.addressTypeLabel}>
+                        {BTC_VARIANT_LABELS[coin.chain_name] || coin.chain_name}
+                      </Text>
+                      <View style={styles.addressTypeCheckSlot}>
+                        {selected && (
+                          <IoniconsIcon
+                            name={'checkmark-circle'}
+                            size={18}
+                            color={theme.background}
+                          />
+                        )}
+                      </View>
+                    </View>
+                    <Text numberOfLines={1} style={styles.addressTypeAddress}>
+                      {shortenAddress(coin.address)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
         )}
@@ -470,22 +497,47 @@ const myStyles = theme =>
     addressTypeView: {
       width: '90%',
     },
-    addressTypeRow: {
+    addressTypeGrid: {
       flexDirection: 'row',
-      marginLeft: '5%',
-      marginTop: 16,
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      rowGap: 12,
+      marginTop: 12,
     },
-    addressTypeChip: {
+    addressTypeCard: {
+      width: '48%',
       borderWidth: 1,
       borderColor: theme.gray,
-      borderRadius: 20,
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      marginRight: 12,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
     },
-    addressTypeChipText: {
+    addressTypeCardSelected: {
+      borderColor: theme.background,
+      backgroundColor: theme.walletItemColor,
+    },
+    addressTypeCardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    addressTypeLabel: {
+      flex: 1,
       color: theme.font,
       fontSize: 14,
+      fontWeight: '600',
+      fontFamily: 'Roboto-Regular',
+    },
+    // Fixed slot so the label does not shift when the check appears.
+    addressTypeCheckSlot: {
+      width: 18,
+      height: 18,
+      marginLeft: 6,
+    },
+    addressTypeAddress: {
+      marginTop: 4,
+      color: theme.gray,
+      fontSize: 12,
       fontFamily: 'Roboto-Regular',
     },
     button: {
