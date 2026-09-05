@@ -1,7 +1,8 @@
 import {StyleSheet} from 'react-native';
 
 // Field sized like DokDropdown's box so replacing the dropdown does not
-// shift the surrounding layout.
+// shift the surrounding layout: 50pt tall with one line, and it only grows
+// when a bitcoin balance adds a second line.
 const myStyles = theme =>
   StyleSheet.create({
     title: {
@@ -12,7 +13,8 @@ const myStyles = theme =>
       color: theme.font,
     },
     field: {
-      height: 50,
+      minHeight: 50,
+      paddingVertical: 8,
       borderColor: '#989898',
       borderWidth: 1,
       borderRadius: 5,
@@ -20,8 +22,11 @@ const myStyles = theme =>
       flexDirection: 'row',
       alignItems: 'center',
     },
-    leftRow: {
+    leftColumn: {
       flex: 1,
+      justifyContent: 'center',
+    },
+    leftRow: {
       flexDirection: 'row',
       alignItems: 'center',
     },
@@ -29,13 +34,13 @@ const myStyles = theme =>
       color: theme.font,
       fontSize: 16,
       fontWeight: '600',
-      flexShrink: 1,
+      flexShrink: 0,
     },
     balanceText: {
       color: theme.gray,
-      fontSize: 13,
+      fontSize: 12,
       fontFamily: 'Roboto-Regular',
-      marginLeft: 8,
+      marginTop: 2,
     },
   });
 
