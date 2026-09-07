@@ -1,4 +1,10 @@
-import React, {useCallback, useContext, useMemo, useEffect} from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useMemo,
+  useEffect,
+  useState,
+} from 'react';
 import {
   View,
   StyleSheet,
@@ -9,6 +15,8 @@ import {
 } from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
 import {shallowEqual, useDispatch, useSelector} from 'react-redux';
+import Clipboard from '@react-native-clipboard/clipboard';
+import IoniconIcon from 'react-native-vector-icons/Ionicons';
 import {getWalletConnect} from 'dok-wallet-blockchain-networks/service/walletconnect';
 
 import {ThemeContext} from 'theme/ThemeContext';
@@ -17,55 +25,287 @@ import {SCREEN_WIDTH} from 'utils/dimensions';
 import {selectWalletConnectData} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import WalletConnect from 'assets/images/WalletConnect.png';
 import {
-  ETH_SIGN,
-  isWalletConnectTransaction,
-  PERSONAL_SIGN,
-} from 'dok-wallet-blockchain-networks/service/etherWalletConnect';
-import {ethers} from 'ethers';
-import {
   convertHexToUtf8IfPossible,
   decodeSolMessage,
   getCustomizePublicAddress,
   isValidBigInt,
   parseBalance,
+  safelyJsonParse,
   safelyJsonStringify,
 } from 'dok-wallet-blockchain-networks/helper';
-import {createWalletConnectTransaction} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectActions';
 import {currencySymbol} from 'data/currency';
 import BigNumber from 'bignumber.js';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {setWalletConnectTransactionModal} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSlice';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
-import {
-  TRON_SIGN_MESSAGE,
-  TRON_SIGN_TRANSACTION,
-} from 'dok-wallet-blockchain-networks/service/tronWalletConnect';
-import {
-  parseSolanaSignTransaction,
-  SOLANA_SIGN_AND_SEND_TRANSACTION,
-  SOLANA_SIGN_MESSAGE,
-  SOLANA_SIGN_TRANSACTION,
-} from 'dok-wallet-blockchain-networks/service/solanaWalletConnect';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import {showToast} from 'utils/toast';
+import {
+  EVM_SIGN_REQUEST_HANDLERS,
+  isNonEVMChain,
+  NON_EVM_METHOD_HANDLERS,
+} from 'dok-wallet-blockchain-networks/config/config';
+import {walletConnect} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {getSolanaFeePayer} from 'dok-wallet-blockchain-networks/helper/solanaTransaction';
+import {describeHederaRequest} from 'dok-wallet-blockchain-networks/helper/hederaWalletConnect';
+import {
+  decodeEvmCalldata,
+  UNDECODABLE_CALLDATA_WARNING,
+} from 'dok-wallet-blockchain-networks/helper/evmCalldata';
 
-const displayMessage = (method, message) => {
+export const ETH_SEND_TRANSACTION = 'eth_sendTransaction';
+export const ETH_SIGN_TRANSACTION = 'eth_signTransaction';
+const transactionType = [ETH_SEND_TRANSACTION, ETH_SIGN_TRANSACTION];
+const isWalletConnectTransaction = method => transactionType.includes(method);
+function parseSolanaSignTransaction(txData) {
+  // Default values for summary properties
+  let sender = 'N/A';
+  let data = 'N/A';
+
+  try {
+    if (!txData || typeof txData !== 'object') {
+      throw new Error('Invalid transaction data provided');
+    }
+    // Modern Solana requests carry no feePayer/pubkey (signAllTransactions
+    // sends only `transactions`), so read the fee payer from the tx itself.
+    const firstTx = txData.transaction ?? txData.transactions?.[0];
+    sender =
+      txData.feePayer || txData.pubkey || getSolanaFeePayer(firstTx) || sender;
+    data = txData?.transaction
+      ? txData?.transaction
+      : Array.isArray(txData?.transactions)
+      ? `${txData.transactions.length} transaction(s): ${JSON.stringify(
+          txData.transactions,
+        )}`
+      : data;
+  } catch (error) {
+    console.error('Error parsing transaction:', error);
+  }
+  return {
+    sender,
+    data,
+  };
+}
+const getMessageData = (method, message) => {
   switch (method) {
-    case PERSONAL_SIGN:
-    case ETH_SIGN: {
-      return convertHexToUtf8IfPossible(message);
-    }
-    case SOLANA_SIGN_MESSAGE: {
-      return decodeSolMessage(message);
-    }
-    case SOLANA_SIGN_TRANSACTION:
-    case SOLANA_SIGN_AND_SEND_TRANSACTION: {
-      return safelyJsonStringify(parseSolanaSignTransaction(message));
-    }
-    default: {
-      return safelyJsonStringify(message);
-    }
+    case 'personal_sign':
+    case 'eth_sign':
+      return {type: 'text', value: convertHexToUtf8IfPossible(message)};
+    case 'solana_signMessage':
+      return {type: 'text', value: decodeSolMessage(message)};
+    case 'solana_signTransaction':
+    case 'solana_signAndSendTransaction':
+    case 'solana_signAllTransactions':
+      return {type: 'json', value: parseSolanaSignTransaction(message)};
+    case 'xrpl_signMessage':
+      return {type: 'text', value: convertHexToUtf8IfPossible(message)};
+    case 'polkadot_signMessage':
+      return {
+        type: 'text',
+        value: convertHexToUtf8IfPossible(message?.message ?? message),
+      };
+    case 'stellar_signMessage':
+      return {type: 'text', value: message};
+    case 'hedera_signMessage':
+      return {type: 'text', value: message?.message ?? ''};
+    case 'hedera_signTransaction':
+    case 'hedera_signAndExecuteTransaction':
+    case 'hedera_executeTransaction':
+    case 'hedera_signAndExecuteQuery':
+      // Base64 protobuf is opaque; show the decoded transaction instead.
+      return {type: 'json', value: describeHederaRequest(method, message)};
+    default:
+      return {
+        type: 'json',
+        value: typeof message === 'string' ? safelyJsonParse(message) : message,
+      };
   }
 };
+
+const formatKeyLabel = key => {
+  if (typeof key !== 'string') {
+    return String(key);
+  }
+  const spaced = key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ');
+  return spaced.replace(/\b\w/g, char => char.toUpperCase());
+};
+
+const stringifyPrimitive = value => {
+  if (value === null || value === undefined) {
+    return '—';
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false';
+  }
+  return String(value);
+};
+
+const MessageValueRow = ({label, value, styles, theme}) => {
+  const stringValue = stringifyPrimitive(value);
+  const isCopyable = typeof value === 'string' && value.length > 0;
+  const isLong = stringValue.length > 18;
+
+  const onCopy = () => {
+    if (!isCopyable) {
+      return;
+    }
+    Clipboard.setString(stringValue);
+    showToast({type: 'successToast', title: 'Copied to clipboard'});
+  };
+
+  return (
+    <TouchableOpacity
+      style={styles.msgRow}
+      activeOpacity={isCopyable ? 0.6 : 1}
+      disabled={!isCopyable}
+      onPress={onCopy}>
+      {!!label && (
+        <Text style={styles.msgRowLabel} numberOfLines={1}>
+          {label}
+        </Text>
+      )}
+      <View style={styles.msgRowValueWrap}>
+        <Text
+          style={styles.msgRowValue}
+          numberOfLines={isLong ? 1 : undefined}
+          ellipsizeMode="middle">
+          {stringValue}
+        </Text>
+        {isCopyable && (
+          <IoniconIcon
+            name="copy-outline"
+            size={14}
+            color={theme.gray}
+            style={styles.msgCopyIcon}
+          />
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+const MessageNode = ({label, value, styles, theme, depth = 0}) => {
+  const [expanded, setExpanded] = useState(true);
+  const isArray = Array.isArray(value);
+  const isObject = !isArray && value !== null && typeof value === 'object';
+
+  if (!isArray && !isObject) {
+    return (
+      <MessageValueRow
+        label={label}
+        value={value}
+        styles={styles}
+        theme={theme}
+      />
+    );
+  }
+
+  const entries = isArray
+    ? value.map((item, index) => [`#${index + 1}`, item])
+    : Object.entries(value);
+  const count = entries.length;
+  const countLabel = isArray
+    ? `${count} item${count === 1 ? '' : 's'}`
+    : `${count} field${count === 1 ? '' : 's'}`;
+  const isRoot = label == null;
+
+  const children = (
+    <View style={isRoot ? null : styles.msgNestedContainer}>
+      {entries.map(([key, val], index) => (
+        <React.Fragment key={key}>
+          {index > 0 && <View style={styles.msgDivider} />}
+          <MessageNode
+            label={isArray ? key : formatKeyLabel(key)}
+            value={val}
+            styles={styles}
+            theme={theme}
+            depth={depth + 1}
+          />
+        </React.Fragment>
+      ))}
+      {count === 0 && <Text style={styles.msgEmptyText}>{'Empty'}</Text>}
+    </View>
+  );
+
+  if (isRoot) {
+    return children;
+  }
+
+  return (
+    <View style={styles.msgSection}>
+      <TouchableOpacity
+        style={styles.msgSectionHeader}
+        activeOpacity={0.6}
+        onPress={() => setExpanded(prev => !prev)}>
+        <Text style={styles.msgRowLabel} numberOfLines={1}>
+          {label}
+        </Text>
+        <View style={styles.msgRowValueWrap}>
+          <Text style={styles.msgSectionCount}>{countLabel}</Text>
+          <IoniconIcon
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={14}
+            color={theme.gray}
+          />
+        </View>
+      </TouchableOpacity>
+      {expanded && children}
+    </View>
+  );
+};
+
+const BatchCallDataView = ({call, styles, theme}) => {
+  const decoded = decodeEvmCalldata(call?.data);
+  if (decoded.kind === 'empty') {
+    return null;
+  }
+  if (decoded.kind === 'decoded') {
+    return (
+      <>
+        <View style={styles.transferItemView}>
+          <Text style={styles.transferTitle}>{'Method'}</Text>
+          <Text style={styles.boxBalance} numberOfLines={1}>
+            {`${decoded.method} (${decoded.standard})`}
+          </Text>
+        </View>
+        <MessageNode
+          label={'Arguments'}
+          value={decoded.args}
+          styles={styles}
+          theme={theme}
+          depth={1}
+        />
+      </>
+    );
+  }
+  return (
+    <>
+      <View style={styles.calldataWarning}>
+        <IoniconIcon name="warning-outline" size={16} color={theme.warning} />
+        <Text style={styles.calldataWarningText}>
+          {UNDECODABLE_CALLDATA_WARNING}
+        </Text>
+      </View>
+      {!!decoded.selector && (
+        <MessageValueRow
+          label={'Selector'}
+          value={decoded.selector}
+          styles={styles}
+          theme={theme}
+        />
+      )}
+      <MessageValueRow
+        label={'Calldata'}
+        value={decoded.data}
+        styles={styles}
+        theme={theme}
+      />
+    </>
+  );
+};
+
 const WalletConnectTransactionModal = props => {
   const transactionData = useSelector(selectWalletConnectTransactionData);
   const dispatch = useDispatch();
@@ -109,46 +349,38 @@ const WalletConnectTransactionModal = props => {
   }, []);
 
   const getTransactionRequestData = useMemo(() => {
-    if (
-      transactionData?.chainId?.includes('tron') ||
-      transactionData?.chainId?.includes('solana')
-    ) {
-      if (
-        transactionData?.method === TRON_SIGN_MESSAGE ||
-        transactionData?.method === SOLANA_SIGN_MESSAGE
-      ) {
-        return {
-          signTypeData: transactionData?.params?.message,
-        };
-      }
-      if (transactionData?.method === TRON_SIGN_TRANSACTION) {
-        return {
-          finaltransactionData:
-            transactionData?.params?.transaction?.transaction,
-          signTypeData: transactionData?.params?.transaction?.transaction,
-        };
-      }
-      if (
-        transactionData?.method === SOLANA_SIGN_TRANSACTION ||
-        transactionData?.method === SOLANA_SIGN_AND_SEND_TRANSACTION
-      ) {
-        return {
-          finaltransactionData: transactionData?.params?.transaction,
-          signTypeData: transactionData?.params,
-        };
-      }
-      if (transactionData?.method === SOLANA_SIGN_MESSAGE) {
-        return {
-          finaltransactionData: transactionData?.params?.transaction,
-          signTypeData: transactionData?.params,
-        };
-      }
+    if (isNonEVMChain(transactionData?.chainId)) {
+      // Unmapped methods fall through with raw params so the request renders
+      // and the thunk rejects it as unsupported instead of crashing here.
+      const handler =
+        NON_EVM_METHOD_HANDLERS[transactionData?.method] ||
+        (params => ({finaltransactionData: params, signTypeData: params}));
+      const {finaltransactionData, signTypeData, expectedSignerAddress} =
+        handler(transactionData?.params);
+      return {finaltransactionData, signTypeData, expectedSignerAddress};
     } else {
-      const finaltransactionData = transactionData?.params[0] || {};
-      const signTypeData =
-        transactionData?.method === PERSONAL_SIGN
-          ? transactionData?.params[0]
-          : transactionData?.params[1];
+      if (transactionData?.method?.includes('wallet_sendCalls')) {
+        const batchCalls = (transactionData?.params?.[0]?.calls || []).map(
+          call => ({
+            ...call,
+            etherValue: call?.value ? parseBalance(call.value, 18) : '',
+          }),
+        );
+        return {
+          finaltransactionData: {
+            batchCalls,
+            from: transactionData?.from,
+          },
+          expectedSignerAddress: transactionData?.params?.[0]?.from,
+        };
+      }
+      const finaltransactionData = transactionData?.params?.[0] || {};
+      const {signTypeData, expectedSignerAddress} = EVM_SIGN_REQUEST_HANDLERS[
+        transactionData?.method
+      ]?.(transactionData?.params) || {
+        signTypeData: transactionData?.params?.[1],
+        expectedSignerAddress: undefined,
+      };
       if (finaltransactionData?.value) {
         const etherAmount = finaltransactionData?.value
           ? parseBalance(finaltransactionData?.value, 18)
@@ -168,6 +400,7 @@ const WalletConnectTransactionModal = props => {
           finaltransactionData,
           etherAmount,
           signTypeData,
+          expectedSignerAddress,
           transactionFees,
           fiatTransactionFees,
           toAddress,
@@ -176,6 +409,7 @@ const WalletConnectTransactionModal = props => {
       return {
         finaltransactionData,
         signTypeData,
+        expectedSignerAddress,
       };
     }
   }, [transactionData, walletData]);
@@ -184,16 +418,26 @@ const WalletConnectTransactionModal = props => {
     try {
       navigation.pop();
       dispatch(
-        createWalletConnectTransaction({
-          transactionData: getTransactionRequestData?.finaltransactionData,
+        walletConnect({
+          transactionData: {
+            ...getTransactionRequestData?.finaltransactionData,
+            batchCalls: transactionData?.params?.[0]?.calls,
+            from: transactionData?.from,
+          },
+          isBatchTransaction: transactionData?.isBatchTransaction,
           chain_name: walletData?.chain_name?.toLowerCase(),
+          // CAIP-2 id of the request; picks the executor for chains that
+          // serve more than one namespace (Hedera native vs eip155).
+          chainId,
           privateKey: walletData?.privateKey,
-          requestId: transactionData?.id,
-          sessionId,
+          walletAddress: walletData?.address,
+          expectedSignerAddress:
+            getTransactionRequestData?.expectedSignerAddress,
           id,
           topic,
           method,
           signTypeData: getTransactionRequestData?.signTypeData,
+          domain: transactionData?.peerMeta?.url,
         }),
       );
     } catch (e) {
@@ -221,16 +465,94 @@ const WalletConnectTransactionModal = props => {
 
   const styles = myStyles(theme);
 
-  const MessageView = () => {
-    const signTypeData = getTransactionRequestData?.signTypeData;
-    const message = displayMessage(method, signTypeData);
+  const BatchCallsView = () => {
+    const calls =
+      getTransactionRequestData?.finaltransactionData?.batchCalls || [];
     return (
-      <View style={{flex: 1}}>
-        <Text style={[styles.chainTitle, {marginLeft: 0}]}>{'Message'}</Text>
+      <View style={{flex: 1, width: '100%', paddingHorizontal: '5%'}}>
+        <Text style={[styles.chainTitle, {marginLeft: 0}]}>
+          {`Batch Calls (${calls.length})`}
+        </Text>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.contentContainerStyle}>
-          <Text style={styles.messageStyle}>{message}</Text>
+          {calls.map((call, index) => (
+            <View
+              key={index}
+              style={[styles.box, {width: '100%', marginTop: 12}]}>
+              <View style={styles.transferItemView}>
+                <Text style={styles.transferTitle}>{'Call'}</Text>
+                <Text style={styles.boxBalance}>{`#${index + 1}`}</Text>
+              </View>
+              <View style={styles.transferItemView}>
+                <Text style={styles.transferTitle}>{'To'}</Text>
+                <Text style={styles.boxBalance}>
+                  {getCustomizePublicAddress(call?.to)}
+                </Text>
+              </View>
+              {!!call?.etherValue && (
+                <View style={styles.transferItemView}>
+                  <Text style={styles.transferTitle}>{'Value'}</Text>
+                  <Text style={styles.boxBalance}>
+                    {call.etherValue} {walletData?.symbol}
+                  </Text>
+                </View>
+              )}
+              <BatchCallDataView call={call} styles={styles} theme={theme} />
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  };
+
+  const MessageView = () => {
+    const signTypeData = getTransactionRequestData?.signTypeData;
+    const messageData = getMessageData(method, signTypeData);
+    const isStructured =
+      messageData.type === 'json' &&
+      messageData.value !== null &&
+      typeof messageData.value === 'object';
+
+    const onCopyAll = () => {
+      const text = isStructured
+        ? safelyJsonStringify(messageData.value)
+        : stringifyPrimitive(messageData.value);
+      Clipboard.setString(text || '');
+      showToast({type: 'successToast', title: 'Copied to clipboard'});
+    };
+
+    return (
+      <View style={{flex: 1, width: '100%', paddingHorizontal: '5%'}}>
+        <View style={styles.msgHeaderRow}>
+          <Text style={[styles.chainTitle, {marginLeft: 0, marginTop: 0}]}>
+            {'Message'}
+          </Text>
+          <TouchableOpacity style={styles.msgCopyAllBtn} onPress={onCopyAll}>
+            <IoniconIcon name="copy-outline" size={14} color={theme.gray} />
+            <Text style={styles.msgCopyAllText}>{'Copy'}</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.contentContainerStyle,
+            {alignItems: 'stretch', padding: 12},
+          ]}>
+          {isStructured ? (
+            <MessageNode
+              value={messageData.value}
+              styles={styles}
+              theme={theme}
+              depth={0}
+            />
+          ) : (
+            <Text style={styles.messageStyle}>
+              {messageData.type === 'text'
+                ? messageData.value
+                : stringifyPrimitive(messageData.value)}
+            </Text>
+          )}
         </ScrollView>
       </View>
     );
@@ -262,7 +584,9 @@ const WalletConnectTransactionModal = props => {
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.url}>{url}</Text>
         <View style={[styles.borderView, {marginTop: 12}]} />
-        {isWalletConnectTransaction(method) ? (
+        {method?.includes('wallet_sendCalls') ? (
+          BatchCallsView()
+        ) : isWalletConnectTransaction(method) ? (
           <View style={styles.formInput}>
             <Text style={styles.amountTitle}>{`-${amount || 0} ${
               walletData?.symbol || ''
@@ -514,9 +838,9 @@ const myStyles = theme =>
     },
     scrollView: {
       flex: 1,
-      backgroundColor: '#F6F6F6',
+      backgroundColor: theme.whiteOutline,
       marginTop: 12,
-      borderRadius: 8,
+      borderRadius: 12,
     },
     formInput: {
       width: '100%',
@@ -554,6 +878,113 @@ const myStyles = theme =>
       fontSize: 16,
       textAlign: 'left',
       fontFamily: 'Roboto-Regular',
+    },
+    messageStyle: {
+      color: theme.font,
+      fontSize: 14,
+      lineHeight: 20,
+      textAlign: 'left',
+      fontFamily: 'Roboto-Regular',
+    },
+    msgHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      width: '100%',
+      marginTop: 12,
+    },
+    msgCopyAllBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: 4,
+      paddingHorizontal: 8,
+    },
+    msgCopyAllText: {
+      fontSize: 13,
+      color: theme.gray,
+      fontFamily: 'Roboto-Regular',
+    },
+    msgSection: {
+      width: '100%',
+    },
+    msgSectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 16,
+      gap: 12,
+    },
+    msgSectionCount: {
+      fontSize: 12,
+      color: theme.gray,
+      fontFamily: 'Roboto-Regular',
+    },
+    msgNestedContainer: {
+      width: '100%',
+      marginTop: 4,
+      marginBottom: 8,
+      paddingHorizontal: 12,
+      borderRadius: 10,
+      backgroundColor: theme.backgroundColor,
+    },
+    calldataWarning: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 8,
+      marginTop: 8,
+      padding: 10,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.warning,
+    },
+    calldataWarningText: {
+      flex: 1,
+      fontSize: 12,
+      color: theme.warning,
+      fontFamily: 'Roboto-Regular',
+      fontWeight: '500',
+    },
+    msgRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 16,
+      gap: 12,
+    },
+    msgRowLabel: {
+      fontSize: 14,
+      color: theme.gray,
+      fontFamily: 'Roboto-Regular',
+      flexShrink: 0,
+      maxWidth: '40%',
+    },
+    msgRowValueWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      flexShrink: 1,
+    },
+    msgRowValue: {
+      fontSize: 14,
+      color: theme.font,
+      fontFamily: 'Roboto-Regular',
+      textAlign: 'right',
+      flexShrink: 1,
+    },
+    msgCopyIcon: {
+      flexShrink: 0,
+    },
+    msgDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: theme.backgroundColor,
+    },
+    msgEmptyText: {
+      fontSize: 13,
+      color: theme.gray,
+      fontFamily: 'Roboto-Regular',
+      fontStyle: 'italic',
+      paddingVertical: 8,
     },
   });
 

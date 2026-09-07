@@ -22,6 +22,7 @@ import {
   getCustomizePublicAddress,
   isBitcoinChain,
 } from 'dok-wallet-blockchain-networks/helper';
+import {formatDeriveAddressBalance} from 'dok-wallet-blockchain-networks/helper/deriveAddressBalance';
 import myStyles from './AddressSelectorSheetStyles';
 
 const ROW_HEIGHT = 70; // itemView minHeight 60 + marginBottom 10
@@ -130,61 +131,71 @@ const AddressSelectorSheet = forwardRef(({onSelect}, ref) => {
               disabled: !!applyingAddress,
               selected: isSelected,
             }}>
+            {/* Line 1: the shortened address never shrinks; line 2 carries
+                the path and the balance so nothing competes with it. */}
             <View style={styles.addressRow}>
-              <Text style={styles.addressText} numberOfLines={1}>
+              <Text style={styles.addressText}>
                 {getCustomizePublicAddress(item?.address)}
               </Text>
               <AddressTypeBadge chain_name={payload?.chain_name} item={item} />
             </View>
-            {!!item?.derivePath && (
-              <Text style={styles.derivePathText} numberOfLines={1}>
-                {item?.derivePath}
-              </Text>
+            {(!!item?.derivePath || showBalance) && (
+              <View style={styles.metaRow}>
+                <Text style={styles.derivePathText} numberOfLines={1}>
+                  {item?.derivePath || ''}
+                </Text>
+                {showBalance && (
+                  <Text style={styles.balanceText} numberOfLines={1}>
+                    {formatDeriveAddressBalance({
+                      balance: item?.balance,
+                      decimal: payload?.decimal,
+                      symbol: payload?.symbol,
+                    })}
+                  </Text>
+                )}
+              </View>
             )}
           </View>
-          {showBalance && (
-            <Text style={styles.balanceText}>
-              {`${item?.balance || 0} ${payload?.symbol || ''}`}
-            </Text>
-          )}
-          <TouchableOpacity
-            style={styles.iconButton}
-            accessibilityRole="button"
-            accessibilityLabel="Copy address"
-            disabled={!!applyingAddress}
-            hitSlop={{top: 10, bottom: 10, left: 4, right: 4}}
-            onPress={() => onPressCopy(item)}>
-            <IoniconIcon name={'copy-outline'} size={20} color={theme.gray} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.iconButton}
-            accessibilityRole="button"
-            accessibilityLabel="Show address QR code"
-            disabled={!!applyingAddress}
-            hitSlop={{top: 10, bottom: 10, left: 4, right: 4}}
-            onPress={() => onPressQR(item)}>
-            <IoniconIcon
-              name={'qr-code-outline'}
-              size={20}
-              color={theme.gray}
-            />
-          </TouchableOpacity>
-          {isApplying ? (
-            <ActivityIndicator
-              size={'small'}
-              color={theme.background}
-              style={styles.checkIcon}
-            />
-          ) : (
-            isSelected && (
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              accessibilityRole="button"
+              accessibilityLabel="Copy address"
+              disabled={!!applyingAddress}
+              hitSlop={{top: 10, bottom: 10, left: 4, right: 4}}
+              onPress={() => onPressCopy(item)}>
+              <IoniconIcon name={'copy-outline'} size={20} color={theme.gray} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
+              accessibilityRole="button"
+              accessibilityLabel="Show address QR code"
+              disabled={!!applyingAddress}
+              hitSlop={{top: 10, bottom: 10, left: 4, right: 4}}
+              onPress={() => onPressQR(item)}>
               <IoniconIcon
-                name={'checkmark-circle'}
-                size={22}
+                name={'qr-code-outline'}
+                size={20}
+                color={theme.gray}
+              />
+            </TouchableOpacity>
+            {isApplying ? (
+              <ActivityIndicator
+                size={'small'}
                 color={theme.background}
                 style={styles.checkIcon}
               />
-            )
-          )}
+            ) : (
+              isSelected && (
+                <IoniconIcon
+                  name={'checkmark-circle'}
+                  size={22}
+                  color={theme.background}
+                  style={styles.checkIcon}
+                />
+              )
+            )}
+          </View>
         </TouchableOpacity>
       );
     },
