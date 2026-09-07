@@ -2,6 +2,9 @@
  * @format
  */
 
+// Buffer-only Hermes TypedArray fix; must run before any library touches
+// Uint8Array subclasses (see src/shims/hermesTypedArrays.js).
+import './src/shims/hermesTypedArrays';
 import 'node-libs-react-native/globals';
 import BigNumber from 'bignumber.js';
 import 'text-encoding-polyfill';

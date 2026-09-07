@@ -57,6 +57,13 @@ const myStyles = theme =>
       color: theme.gray,
       width: inputWidth * 0.9,
     },
+    hederaNote: {
+      marginTop: 12,
+      fontFamily: 'Roboto-Regular',
+      fontSize: 13,
+      lineHeight: 18,
+      color: theme.gray,
+    },
     inputContainer: {
       display: 'flex',
       flexDirection: 'row',

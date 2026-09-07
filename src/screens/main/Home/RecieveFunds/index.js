@@ -48,6 +48,12 @@ const RecieveFunds = ({navigation}) => {
   const allCustomRPC = useSelector(selectAllCustomRpc);
   address.current = currentCoin?.address ?? '';
   const isLightning = currentCoin?.chain_name === 'bitcoin_lightning';
+  const isHedera = currentCoin?.chain_name === 'hedera';
+  // The Hedera address is always the EVM address; the ledger account id
+  // (`0.0.N`) is assigned by the first deposit and stored on the coin. A live
+  // lookup covers a wallet funded since the last coin refresh.
+  const [hederaIds, setHederaIds] = useState(null);
+  const hederaAccountId = currentCoin?.accountId ?? hederaIds?.accountId;
   const [addressState, setAddressState] = useState('');
   const [showBtcMainnetBanner, setShowBtcMainnetBanner] = useState(false);
   const [productQRref, setProductQRref] = useState(
@@ -58,6 +64,38 @@ const RecieveFunds = ({navigation}) => {
   useEffect(() => {
     setProductQRref(`${currentCoin?.symbol}:${currentCoin.address}`);
   }, [currentCoin.address, currentCoin?.symbol]);
+
+  useEffect(() => {
+    if (!isHedera || currentCoin?.accountId) {
+      setHederaIds(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const chain = getChain(currentCoin?.chain_name, currentWallet?.phrase);
+        const ids = await chain.getAccountIdentifiers({
+          address: currentCoin?.address,
+          privateKey: currentCoin?.privateKey,
+        });
+        if (!cancelled) {
+          setHederaIds(ids);
+        }
+      } catch (error) {
+        console.error('Error resolving hedera account identifiers', error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isHedera,
+    currentCoin?.accountId,
+    currentCoin?.chain_name,
+    currentCoin?.address,
+    currentCoin?.privateKey,
+    currentWallet?.phrase,
+  ]);
 
   const keyboardHeight = useKeyboardHeight();
 
@@ -185,6 +223,28 @@ const RecieveFunds = ({navigation}) => {
             <CopyIcon fill={theme.background} width={20} height={30} />
           </TouchableOpacity>
         </View>
+        {isHedera && (
+          <>
+            <Text style={styles.addressTitle}>ACCOUNT ID</Text>
+            {hederaAccountId ? (
+              <View style={styles.addressContainer}>
+                <Text style={styles.address}>{hederaAccountId}</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    Clipboard.setString(hederaAccountId);
+                  }}>
+                  <CopyIcon fill={theme.background} width={20} height={30} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <Text style={styles.hederaNote}>
+                Assigned automatically after your first HBAR deposit. Anyone can
+                send HBAR to the address above; the sender covers the one-time
+                account creation fee.
+              </Text>
+            )}
+          </>
+        )}
       </ScrollView>
     </View>
   );

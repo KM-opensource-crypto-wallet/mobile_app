@@ -76,6 +76,9 @@ extension Data {
     CoinFactory.registerCoin(name: "bitcoin_segwit") { mnemonic in
       return BitcoinSegwitCoin(mnemonic: mnemonic)
     }
+    CoinFactory.registerCoin(name: "bitcoin_taproot") { mnemonic in
+      return BitcoinTaprootCoin(mnemonic: mnemonic)
+    }
   }
 
   @objc static func requiresMainQueueSetup() -> Bool { return true }
@@ -139,7 +142,9 @@ extension Data {
         "extendedPublicKey": extendedPublicKey,
         "extendedPrivateKey": extendedPrivateKey
       ]
-      if coinName == "bitcoin" || coinName == "bitcoin_legacy" || coinName == "bitcoin_segwit" {
+      // Coins with a BIP44 account base path (the bitcoin address types)
+      // ship their receive/change address window with the wallet.
+      if !unwrappedCoin.accountBasePath(isTestNet: isTestNet).isEmpty {
         result["deriveAddresses"] = unwrappedCoin.getDeriveAddresses(isTestNet: isTestNet)
       }
       resolve(result)

@@ -21,8 +21,12 @@ const myStyles = (theme, bottom) =>
       paddingHorizontal: 20,
       paddingBottom: 16 + bottom,
     },
+    // Two text lines on the left, a fixed action column on the right. The
+    // shortened address owns line 1; the path and balance share line 2, so no
+    // element ever has to ellipsize.
     itemView: {
       paddingHorizontal: 12,
+      paddingVertical: 10,
       flexDirection: 'row',
       backgroundColor: theme.walletItemColor,
       borderRadius: 8,
@@ -41,18 +45,31 @@ const myStyles = (theme, bottom) =>
       color: theme.font,
       fontSize: 15,
       fontFamily: 'Roboto-Regular',
-      flexShrink: 1,
+      flexShrink: 0,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 3,
     },
     derivePathText: {
       color: theme.gray,
       fontSize: 12,
       fontFamily: 'Roboto-Regular',
-      marginTop: 2,
+      flexShrink: 1,
     },
     balanceText: {
+      flex: 1,
+      textAlign: 'right',
       color: theme.gray,
-      fontSize: 13,
+      fontSize: 12,
       fontFamily: 'Roboto-Regular',
+      marginLeft: 8,
+    },
+    actions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexShrink: 0,
       marginLeft: 8,
     },
     iconButton: {

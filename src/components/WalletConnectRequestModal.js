@@ -1,4 +1,10 @@
-import React, {useCallback, useContext, useEffect, useState} from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   View,
   StyleSheet,
@@ -8,6 +14,7 @@ import {
   BackHandler,
 } from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
+import IoniconsIcon from 'react-native-vector-icons/Ionicons';
 import {getSdkError} from '@walletconnect/utils';
 import {useDispatch, useSelector} from 'react-redux';
 import {getWalletConnect} from 'dok-wallet-blockchain-networks/service/walletconnect';
@@ -23,7 +30,6 @@ import {
   setWalletConnectWalletData,
   setWalletConnect,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {config} from 'dok-wallet-blockchain-networks/config/config';
 import {
   selectAllCoins,
   selectCurrentWallet,
@@ -31,21 +37,63 @@ import {
 import WalletConnect from 'assets/images/WalletConnect.png';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import {chainLogoMap} from 'assets/chain_logo';
+import {
+  getCustomizePublicAddress,
+  isHederaUnactivated,
+} from 'dok-wallet-blockchain-networks/helper';
+import {
+  BTC_VARIANT_CHAIN_NAMES,
+  buildSessionNamespaces,
+  collectProposalChains,
+  getSessionAccountAddress,
+  getUnsupportedRequiredChains,
+  resolveSessionChainData,
+  toSessionAccountsData,
+} from 'dok-wallet-blockchain-networks/helper/walletConnectSession';
+import {showToast} from 'utils/toast';
+
+const getTonSessionProperties = privateKey => {
+  const {
+    TonChain,
+  } = require('dok-wallet-blockchain-networks/cryptoChain/chains/TonChain');
+  return TonChain().getSessionProperties({privateKey});
+};
+const HEDERA_UNACTIVATED_SESSION_MESSAGE =
+  'Hedera native requests need a funded account (deposit HBAR to your address first). EVM requests on Hedera still work.';
+const BTC_VARIANT_LABELS = {
+  bitcoin: 'Native SegWit',
+  bitcoin_segwit: 'SegWit',
+  bitcoin_legacy: 'Legacy',
+  bitcoin_taproot: 'Taproot',
+};
+
+// Middle-ellipsis for the per-type address preview: keeps the prefix that
+// identifies the address type (bc1q / bc1p / 3 / 1) and the checksum tail.
+const shortenAddress = (address, head = 8, tail = 6) => {
+  if (typeof address !== 'string') {
+    return '';
+  }
+  return address.length <= head + tail + 1
+    ? address
+    : `${address.slice(0, head)}…${address.slice(-tail)}`;
+};
 
 const WalletConnectRequestModal = props => {
   const requestData = useSelector(selectWalletConnectRequestData);
   const allCoins = useSelector(selectAllCoins);
   const currentWallet = useSelector(selectCurrentWallet);
   const [chainData, setChainData] = useState([]);
-  const [isValidChain, setIsValidChain] = useState(false);
+  const [unsupportedRequiredChains, setUnsupportedRequiredChains] = useState(
+    [],
+  );
+  const [bitcoinAddressType, setBitcoinAddressType] = useState('bitcoin');
   const dispatch = useDispatch();
-  const image = requestData?.icons[0] || null;
+  const image = requestData?.icons?.[0] || null;
   const title = requestData?.name || '';
   const url = requestData?.url || '';
   const id = requestData?.id || '';
   const sessionId = requestData?.sessionId || '';
-  const requiredNamespaces = requestData?.requiredNamespaces || {};
-  const optionalNamespaces = requestData?.optionalNamespaces || {};
   const relays = requestData?.relays || {};
   const navigation = useNavigation();
   const isFocused = useIsFocused();
@@ -68,138 +116,127 @@ const WalletConnectRequestModal = props => {
     return () => backHandler.remove();
   }, []);
 
+  // One entry per proposed CAIP-2 chain id we can serve. A coin may answer for
+  // several ids (Hedera: `hedera:<net>` and `eip155:<chain_id>`).
   useEffect(() => {
     if (requestData?.requiredNamespaces && allCoins.length) {
-      const requireNamespace = requestData?.requiredNamespaces;
-      const optionalNamespacesLocal = requestData?.optionalNamespaces;
-      // const appImage = requestData?.icons[0] || null;
-      // const appTitle = requestData?.name || '';
-      // const appUrl = requestData?.url || '';
-      const requiredNamespaceValue = Object.values(requireNamespace);
-      const optionalNamespacesValue = Object.values(optionalNamespacesLocal);
-      let allChain = [];
-      requiredNamespaceValue.forEach(
-        item => (allChain = allChain.concat(item.chains)),
+      const {requiredChains, optionalChains} =
+        collectProposalChains(requestData);
+      setChainData(
+        resolveSessionChainData({
+          requiredChains,
+          optionalChains,
+          allCoins,
+          bitcoinAddressType,
+        }),
       );
-      let chainDetails = [];
-      let isValidChainLocal = true;
-      allChain.forEach(item => {
-        if (config.WALLET_CONNECT_SUPPORTED_CHAIN[item]) {
-          chainDetails.push({
-            key: item,
-            ...config.WALLET_CONNECT_SUPPORTED_CHAIN[item],
-          });
-        } else {
-          isValidChainLocal = false;
-        }
-      });
-      let optionalChain = [];
-      optionalNamespacesValue.forEach(
-        item => (optionalChain = optionalChain.concat(item.chains)),
+      setUnsupportedRequiredChains(
+        getUnsupportedRequiredChains(requiredChains),
       );
-      optionalChain.forEach(item => {
-        if (config.WALLET_CONNECT_SUPPORTED_CHAIN[item]) {
-          chainDetails.push({
-            key: item,
-            ...config.WALLET_CONNECT_SUPPORTED_CHAIN[item],
-          });
-        }
-      });
-      let finalData = [];
-      chainDetails.forEach(chain => {
-        if (
-          !finalData.find(
-            item =>
-              item.symbol === chain.symbol &&
-              item.chain_name === chain.chain_name,
-          )
-        ) {
-          const foundCoin = allCoins.find(
-            item =>
-              item.symbol === chain.symbol &&
-              item.chain_name === chain.chain_name,
-          );
-          if (foundCoin) {
-            finalData.push({...chain, ...foundCoin});
-          }
-        }
-      });
-      setChainData(finalData);
-      setIsValidChain(isValidChainLocal);
     }
-  }, [requestData, allCoins]);
+  }, [requestData, allCoins, bitcoinAddressType]);
+
+  // What the session will actually carry: the namespace's account form
+  // (Hedera `0.0.N` on `hedera:*`, the address elsewhere), minus native Hedera
+  // entries whose ledger account does not exist yet.
+  const sessionChainData = useMemo(
+    () => toSessionAccountsData(chainData),
+    [chainData],
+  );
+  const {namespaces, missingRequired} = useMemo(
+    () =>
+      buildSessionNamespaces({
+        requiredNamespaces: requestData?.requiredNamespaces,
+        optionalNamespaces: requestData?.optionalNamespaces,
+        sessionChainData,
+      }),
+    [requestData, sessionChainData],
+  );
+  const unactivatedHederaKey = chainData.find(
+    item => item.namespace === 'hedera' && isHederaUnactivated(item),
+  )?.key;
+  const canApprove =
+    unsupportedRequiredChains.length === 0 &&
+    missingRequired.length === 0 &&
+    Object.keys(namespaces).length > 0;
+  let errorText = '';
+  if (unsupportedRequiredChains.length) {
+    errorText = `The dApp requires ${unsupportedRequiredChains.join(
+      ', ',
+    )}, which this wallet does not support.`;
+  } else if (missingRequired.length) {
+    errorText = `The dApp requires ${missingRequired.join(
+      ', ',
+    )}, but this wallet has no account for it yet.`;
+  }
+
+  useEffect(() => {
+    if (unactivatedHederaKey) {
+      showToast({
+        type: 'warningToast',
+        title: 'Hedera account not active',
+        message: HEDERA_UNACTIVATED_SESSION_MESSAGE,
+      });
+    }
+  }, [unactivatedHederaKey]);
+
+  const btcVariantCoins = allCoins.filter(
+    item =>
+      item.symbol === 'BTC' &&
+      BTC_VARIANT_CHAIN_NAMES.includes(item.chain_name),
+  );
+  const hasBitcoinRequest = chainData.some(item =>
+    BTC_VARIANT_CHAIN_NAMES.includes(item.chain_name),
+  );
 
   const onPressApprove = async () => {
     try {
       navigation.pop();
       const connector = getWalletConnect();
-      if (connector) {
-        let namespaces = {};
-        const requiredNamespacesKeys = Object.keys(requiredNamespaces);
-        const optionalNamespacesKeys = Object.keys(optionalNamespaces);
-        const allKeys = [
-          ...new Set([...requiredNamespacesKeys, ...optionalNamespacesKeys]),
-        ];
-        allKeys.forEach(key => {
-          let accounts = [];
-          requiredNamespaces[key]?.chains?.map(chain => {
-            const foundCoin = chainData?.find(item => item.key === chain);
-            if (foundCoin?.address) {
-              accounts.push(`${chain}:${foundCoin?.address}`);
-            }
-          });
-          optionalNamespaces[key]?.chains?.map(chain => {
-            const foundCoin = chainData?.find(item => item.key === chain);
-            if (foundCoin?.address) {
-              accounts.push(`${chain}:${foundCoin?.address}`);
-            }
-          });
-
-          accounts = [...new Set(accounts)];
-          const requiredMethods = Array.isArray(
-            requiredNamespaces[key]?.methods,
-          )
-            ? requiredNamespaces[key]?.methods
-            : [];
-          const optionalMethods = Array.isArray(
-            optionalNamespaces[key]?.methods,
-          )
-            ? optionalNamespaces[key]?.methods
-            : [];
-          const allMethods = [
-            ...new Set([...requiredMethods, ...optionalMethods]),
-          ];
-          const requiredEvents = Array.isArray(requiredNamespaces[key]?.events)
-            ? requiredNamespaces[key]?.events
-            : [];
-          const optionalEvents = Array.isArray(optionalNamespaces[key]?.events)
-            ? optionalNamespaces[key]?.events
-            : [];
-          const allEvents = [
-            ...new Set([...requiredEvents, ...optionalEvents]),
-          ];
-          namespaces[key] = {
-            accounts,
-            methods: allMethods,
-            events: allEvents,
-          };
-        });
-        const session = await connector.approveSession({
-          id,
-          namespaces,
-          relayProtocol: relays[0].protocol,
-        });
-
-        dispatch(
-          setWalletConnect({
-            [sessionId]: session,
-          }),
-        );
-        dispatch(setWalletConnectConnection(true));
-
-        sessionId &&
-          dispatch(setWalletConnectWalletData({[sessionId]: chainData}));
+      if (!connector) {
+        return;
       }
+      if (!canApprove) {
+        await connector.rejectSession({
+          id,
+          reason: getSdkError(
+            missingRequired.length
+              ? 'UNSUPPORTED_ACCOUNTS'
+              : 'UNSUPPORTED_CHAINS',
+          ),
+        });
+        return;
+      }
+      const hasTon = Boolean(namespaces.ton);
+      let tonSessionProperties = {};
+      if (hasTon) {
+        const tonCoinData = sessionChainData.find(
+          item => item.chain_name === 'ton',
+        );
+        if (tonCoinData?.privateKey) {
+          tonSessionProperties = getTonSessionProperties(
+            tonCoinData.privateKey,
+          );
+        }
+      }
+      const session = await connector.approveSession({
+        id,
+        namespaces,
+        relayProtocol: relays[0].protocol,
+        ...(hasTon && {sessionProperties: tonSessionProperties}),
+      });
+
+      dispatch(
+        setWalletConnect({
+          [sessionId]: session,
+        }),
+      );
+      dispatch(setWalletConnectConnection(true));
+
+      // The per-session walletData is what the transaction modal and the
+      // signer check read back, keyed by CAIP-2 id.
+      sessionId &&
+        dispatch(setWalletConnectWalletData({[sessionId]: sessionChainData}));
     } catch (e) {
       console.error('Error in approve request', e);
     }
@@ -216,20 +253,6 @@ const WalletConnectRequestModal = props => {
     }
   }, [id, navigation]);
 
-  // const onChangeChain = useCallback(
-  //     (item: any) => {
-  //         setSelectedChain(item);
-  //         //@ts-ignore
-  //         setWalletAddresses(getData[item.name.toLowerCase()]);
-  //         //@ts-ignore
-  //         setSelectedWalletAddess(getData[item.name.toLowerCase()][0]);
-  //     },
-  //     [getData],
-  // );
-  //
-  // const onChangeAddress = useCallback((item: any) => {
-  //     setSelectedWalletAddess(item);
-  // }, []);
   const {theme} = useContext(ThemeContext);
 
   const styles = myStyles(theme);
@@ -237,13 +260,20 @@ const WalletConnectRequestModal = props => {
   const renderItem = (item, index) => {
     return (
       <View style={styles.itemView} key={item.key + index}>
-        <FastImage source={{uri: item?.icon}} style={styles.rowImageStyle} />
+        <FastImage
+          source={
+            chainLogoMap[item?.chain_name?.toLowerCase()] ||
+            (item?.icon ? {uri: item.icon} : undefined)
+          }
+          style={styles.rowImageStyle}
+        />
         <View style={styles.centerItemView}>
           <Text style={styles.itemTitle}>
             {`${item?.chain_display_name} (${currentWallet.walletName})`}
           </Text>
           <Text numberOfLines={1} style={styles.url}>
-            {item?.address}
+            {getCustomizePublicAddress(getSessionAccountAddress(item)) ||
+              'Account not active yet'}
           </Text>
         </View>
       </View>
@@ -264,26 +294,58 @@ const WalletConnectRequestModal = props => {
         <View style={[styles.borderView, {marginTop: 12}]} />
         <Text style={styles.chainTitle}>{'Chains'}</Text>
         {chainData.map((item, index) => renderItem(item, index))}
+        {hasBitcoinRequest && btcVariantCoins.length > 1 && (
+          <View style={styles.addressTypeView}>
+            <Text style={styles.chainTitle}>{'Bitcoin address type'}</Text>
+            <View style={styles.addressTypeGrid}>
+              {btcVariantCoins.map(coin => {
+                const selected = bitcoinAddressType === coin.chain_name;
+                return (
+                  <TouchableOpacity
+                    key={coin.chain_name}
+                    accessibilityRole="radio"
+                    accessibilityState={{selected}}
+                    activeOpacity={0.7}
+                    style={[
+                      styles.addressTypeCard,
+                      selected && styles.addressTypeCardSelected,
+                    ]}
+                    onPress={() => setBitcoinAddressType(coin.chain_name)}>
+                    <View style={styles.addressTypeCardHeader}>
+                      <Text numberOfLines={1} style={styles.addressTypeLabel}>
+                        {BTC_VARIANT_LABELS[coin.chain_name] || coin.chain_name}
+                      </Text>
+                      <View style={styles.addressTypeCheckSlot}>
+                        {selected && (
+                          <IoniconsIcon
+                            name={'checkmark-circle'}
+                            size={18}
+                            color={theme.background}
+                          />
+                        )}
+                      </View>
+                    </View>
+                    <Text numberOfLines={1} style={styles.addressTypeAddress}>
+                      {shortenAddress(coin.address)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
         <View style={styles.bottomView}>
-          {!isValidChain && (
-            <Text style={styles.errorText}>
-              {
-                'You can only accept requests originating from ETH, BNB, SOL, MATIC and/or TRX.'
-              }
-            </Text>
-          )}
+          {!!errorText && <Text style={styles.errorText}>{errorText}</Text>}
           <View style={styles.rowView}>
             <TouchableOpacity style={[styles.button]} onPress={onPressReject}>
               <Text style={styles.buttonTitle}>{'Reject'}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              disabled={!isValidChain}
+              disabled={!canApprove}
               style={[
                 styles.button,
                 {
-                  backgroundColor: !isValidChain
-                    ? theme.gray
-                    : theme.background,
+                  backgroundColor: !canApprove ? theme.gray : theme.background,
                 },
               ]}
               onPress={onPressApprove}>
@@ -431,6 +493,52 @@ const myStyles = theme =>
       justifyContent: 'space-between',
       flex: 1,
       height: '100%',
+    },
+    addressTypeView: {
+      width: '90%',
+    },
+    addressTypeGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      rowGap: 12,
+      marginTop: 12,
+    },
+    addressTypeCard: {
+      width: '48%',
+      borderWidth: 1,
+      borderColor: theme.gray,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+    },
+    addressTypeCardSelected: {
+      borderColor: theme.background,
+      backgroundColor: theme.walletItemColor,
+    },
+    addressTypeCardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    addressTypeLabel: {
+      flex: 1,
+      color: theme.font,
+      fontSize: 14,
+      fontWeight: '600',
+      fontFamily: 'Roboto-Regular',
+    },
+    // Fixed slot so the label does not shift when the check appears.
+    addressTypeCheckSlot: {
+      width: 18,
+      height: 18,
+      marginLeft: 6,
+    },
+    addressTypeAddress: {
+      marginTop: 4,
+      color: theme.gray,
+      fontSize: 12,
+      fontFamily: 'Roboto-Regular',
     },
     button: {
       backgroundColor: theme.background,

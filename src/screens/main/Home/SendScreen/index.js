@@ -426,11 +426,13 @@ const SendScreen = ({navigation, route}) => {
                       chain_name={currentCoin?.chain_name}
                       item={selectedDeriveAddressItem}
                       symbol={currentCoin?.symbol}
+                      decimal={currentCoin?.decimal}
                       fallbackAddress={address}
                       onPress={() =>
                         addressSheetRef.current?.present({
                           chain_name: currentCoin?.chain_name,
                           symbol: currentCoin?.symbol,
+                          decimal: currentCoin?.decimal,
                           items: deriveAddresses,
                           selectedAddress: address,
                         })
