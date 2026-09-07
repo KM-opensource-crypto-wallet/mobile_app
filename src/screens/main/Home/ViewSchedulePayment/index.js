@@ -16,9 +16,10 @@ import {ThemeContext} from 'theme/ThemeContext';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {
   selectCurrentCoin,
-  selectScheduledPaymentsForCurrentWallet,
+  selectCurrentWalletClientId,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {removeScheduledPayment} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {selectScheduledPaymentsForCurrentWallet} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSelectors';
+import {removeScheduledPayment} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
 import {useLocalNotification} from 'providers/hooks/useLocalNotification';
 import {describeRecurrence} from 'utils/scheduleRecurrence';
 import {truncateAddress} from 'utils/common';
@@ -66,6 +67,7 @@ const ViewSchedulePayment = ({navigation}) => {
     selectScheduledPaymentsForCurrentWallet,
   );
   const currentCoin = useSelector(selectCurrentCoin);
+  const walletClientId = useSelector(selectCurrentWalletClientId);
   const [paymentFilter, setPaymentFilter] = useState(
     PAYMENT_FILTER.CURRENT_TOKEN,
   );
@@ -120,14 +122,14 @@ const ViewSchedulePayment = ({navigation}) => {
 
   const handleDelete = useCallback(
     id => {
-      dispatch(removeScheduledPayment({id}));
+      dispatch(removeScheduledPayment({id, walletClientId}));
       cancelScheduledPaymentNotification(id);
       Toast.show({
         type: 'successToast',
         text1: 'Scheduled payment removed',
       });
     },
-    [dispatch, cancelScheduledPaymentNotification],
+    [dispatch, walletClientId, cancelScheduledPaymentNotification],
   );
 
   const handleEdit = useCallback(

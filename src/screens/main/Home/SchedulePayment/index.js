@@ -22,8 +22,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import {useFormik} from 'formik';
 import * as Yup from 'yup';
 import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
-import {v4} from 'uuid';
 import {useDispatch, useSelector} from 'react-redux';
 import Toast from 'react-native-toast-message';
 import BigNumber from 'bignumber.js';
@@ -32,38 +30,26 @@ import {ThemeContext} from 'theme/ThemeContext';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {
   selectCurrentCoin,
-  selectCurrentWallet,
   selectCurrentWalletClientId,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {
-  addScheduledPayment,
-  updateScheduledPayment,
-} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {
-  isNameSupportChain,
   multiplyBNWithFixed,
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
-import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
-import {
-  getCustomRPCWithData,
-  selectAllCustomRpc,
-} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSelectors';
-import {useLocalNotification} from 'providers/hooks/useLocalNotification';
+import {submitScheduledPayment} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
+import {selectIsSubmittingSchedulePayment} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSelectors';
 import RecipientAddressInput from 'components/RecipientAddressInput';
 import {currencySymbol} from 'data/currency';
 import {
   CUSTOM_UNIT,
   MAX_OCCURRENCES,
   REPEAT_TYPE,
+  SCHEDULED_DATE_FORMAT,
   WEEKDAYS,
+  buildRecurrence,
   computeOccurrences,
 } from 'utils/scheduleRecurrence';
-
-dayjs.extend(customParseFormat);
-
-const SCHEDULED_DATE_FORMAT = 'YYYY-MM-DD HH:mm';
 
 const REPEAT_OPTIONS = [
   {value: REPEAT_TYPE.NONE, label: 'Does not repeat'},
@@ -116,43 +102,14 @@ const getInitialValues = (editingPayment, currencyRate) => {
   };
 };
 
-const buildRecurrence = values => {
-  if (values.repeatType === REPEAT_TYPE.NONE) {
-    return {type: REPEAT_TYPE.NONE};
-  }
-  const recurrence = {
-    type: values.repeatType,
-    interval:
-      values.repeatType === REPEAT_TYPE.CUSTOM
-        ? Math.max(1, parseInt(values.repeatInterval, 10) || 1)
-        : 1,
-  };
-  if (values.repeatType === REPEAT_TYPE.CUSTOM) {
-    recurrence.unit = values.repeatUnit;
-  }
-  if (values.repeatType === REPEAT_TYPE.WEEKLY) {
-    recurrence.weeklyDays = values.weeklyDays.length
-      ? values.weeklyDays
-      : [dayjs(values.scheduledDate, SCHEDULED_DATE_FORMAT, true).day()];
-  }
-  return recurrence;
-};
-
 const SchedulePayment = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const dispatch = useDispatch();
   const currentCoin = useSelector(selectCurrentCoin);
-  const currentWallet = useSelector(selectCurrentWallet);
-  const allCustomRPC = useSelector(selectAllCustomRpc);
   const walletClientId = useSelector(selectCurrentWalletClientId);
   const localCurrency = useSelector(getLocalCurrency);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const {
-    requestLocalNotificationPermission,
-    createScheduledPaymentNotification,
-    cancelScheduledPaymentNotification,
-  } = useLocalNotification();
+  const isSubmitting = useSelector(selectIsSubmittingSchedulePayment);
   const qrAddress = route?.params?.qrAddress;
   const editingPayment = route?.params?.scheduledPayment;
   const isEditMode = !!editingPayment?.id;
@@ -222,139 +179,57 @@ const SchedulePayment = ({navigation, route}) => {
         }),
     }),
     onSubmit: async submittedValue => {
-      setIsSubmitting(true);
-      const scheduledAt = dayjs(
-        submittedValue.scheduledDate,
-        SCHEDULED_DATE_FORMAT,
-        true,
-      ).valueOf();
-      let recipientAddress = submittedValue.toAddress?.trim();
-      const chainName = isEditMode
-        ? editingPayment.chain
-        : currentCoin?.chain_name;
-
-      // SendFunds blocks an invalid recipient before it ever reaches the
-      // chain layer; a scheduled payment only gets validated here, since it
-      // is built and broadcast later with no user in the loop. An address
-      // that's malformed for this chain (e.g. wrong-length/format) can
-      // otherwise still get SCALE/RLP-encoded into a transaction and blow up
-      // fee estimation with a cryptic decode error when the reminder fires.
-      const customRPC = getCustomRPCWithData(
-        allCustomRPC,
-        chainName,
-        currentWallet?.clientId,
-      );
-      const currentChain = getChain(
-        chainName,
-        currentWallet?.phrase,
-        customRPC,
-      );
-      const isValid = await currentChain.isValidAddress({
-        address: recipientAddress,
-      });
-      if (!isValid) {
-        let validAddress = null;
-        if (isNameSupportChain(chainName)) {
-          validAddress = await currentChain?.isValidName({
-            name: recipientAddress,
-          });
-        }
-        if (!validAddress) {
-          setIsSubmitting(false);
+      try {
+        const {occurrences} = await dispatch(
+          submitScheduledPayment({
+            values: submittedValue,
+            editingPayment,
+          }),
+        ).unwrap();
+        const actionLabel = isEditMode ? 'updated' : 'scheduled';
+        Toast.show({
+          type: 'successToast',
+          text1:
+            occurrences.length > 1
+              ? `Payment ${actionLabel} (${occurrences.length} reminders)`
+              : `Payment ${actionLabel}`,
+          text2: "We'll remind you at the scheduled time",
+        });
+        navigation.navigate('ViewSchedulePayment');
+      } catch (rejection) {
+        if (rejection?.type === 'invalidAddress') {
           setFieldTouched('toAddress', true);
           setFieldError('toAddress', 'Enter a valid recipient address');
           return;
         }
-        recipientAddress = validAddress;
+        if (rejection?.type === 'notificationBlocked') {
+          Alert.alert(
+            'Notifications disabled',
+            rejection?.blocked
+              ? 'Notifications must be enabled to schedule a payment reminder. Enable them in your device settings, then try again.'
+              : 'Notifications must be enabled to schedule a payment reminder.',
+            rejection?.blocked
+              ? [
+                  {text: 'Cancel', style: 'cancel'},
+                  {
+                    text: 'Open Settings',
+                    onPress: () => Linking.openSettings(),
+                  },
+                ]
+              : [{text: 'OK'}],
+          );
+          return;
+        }
+        if (rejection?.type === 'reminderFailed') {
+          Alert.alert(
+            'Reminder could not be scheduled',
+            isEditMode
+              ? 'Your changes were not saved because the reminder could not be scheduled. Please try again.'
+              : 'This payment was not scheduled because the reminder could not be created. Please try again.',
+          );
+          return;
+        }
       }
-
-      const recurrence = buildRecurrence(submittedValue);
-      const occurrences = computeOccurrences({scheduledAt, recurrence});
-      const id = isEditMode ? editingPayment.id : v4();
-      const asset = isEditMode
-        ? editingPayment.asset
-        : {
-            symbol: currentCoin?.symbol,
-            contractAddress: currentCoin?.contractAddress,
-            decimals: currentCoin?.decimal,
-          };
-
-      // Reminders are the only way a scheduled payment gets acted on — don't
-      // create/update the schedule at all if we can't notify the user.
-      const {granted, blocked} = await requestLocalNotificationPermission();
-      if (!granted) {
-        setIsSubmitting(false);
-        Alert.alert(
-          'Notifications disabled',
-          blocked
-            ? 'Notifications must be enabled to schedule a payment reminder. Enable them in your device settings, then try again.'
-            : 'Notifications must be enabled to schedule a payment reminder.',
-          blocked
-            ? [
-                {text: 'Cancel', style: 'cancel'},
-                {
-                  text: 'Open Settings',
-                  onPress: () => Linking.openSettings(),
-                },
-              ]
-            : [{text: 'OK'}],
-        );
-        return;
-      }
-
-      if (isEditMode) {
-        dispatch(
-          updateScheduledPayment({
-            id,
-            changes: {
-              recipientAddress,
-              amount: submittedValue.amount,
-              scheduledAt,
-              recurrence,
-              status: 'scheduled',
-              failureReason: null,
-            },
-          }),
-        );
-        await cancelScheduledPaymentNotification(id);
-      } else {
-        dispatch(
-          addScheduledPayment({
-            id,
-            chain: currentCoin?.chain_name,
-            asset,
-            senderAddress: currentCoin?.address,
-            recipientAddress,
-            amount: submittedValue.amount,
-            scheduledAt,
-            recurrence,
-          }),
-        );
-      }
-
-      const {scheduled: notificationScheduled} =
-        await createScheduledPaymentNotification({
-          id,
-          asset,
-          recipientAddress,
-          amount: submittedValue.amount,
-          scheduledAt,
-          occurrences,
-          walletClientId,
-        });
-      setIsSubmitting(false);
-      const actionLabel = isEditMode ? 'updated' : 'scheduled';
-      Toast.show({
-        type: 'successToast',
-        text1:
-          occurrences.length > 1
-            ? `Payment ${actionLabel} (${occurrences.length} reminders)`
-            : `Payment ${actionLabel}`,
-        text2: notificationScheduled
-          ? "We'll remind you at the scheduled time"
-          : 'Reminder could not be scheduled',
-      });
-      navigation.navigate('ViewSchedulePayment');
     },
   });
 

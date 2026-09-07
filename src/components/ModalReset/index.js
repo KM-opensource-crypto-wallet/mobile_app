@@ -15,7 +15,7 @@ import {
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './ModalResetStyles';
 import {resetWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {selectAllScheduledPayments} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectAllScheduledPayments} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSelectors';
 import {useDispatch, useSelector} from 'react-redux';
 import {resetCurrentTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {resetBatchTransactions} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';

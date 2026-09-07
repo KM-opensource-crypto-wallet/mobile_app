@@ -34,8 +34,8 @@ import {
   selectAllWalletName,
   selectAllWallets,
   selectCurrentWallet,
-  selectScheduledPaymentsByClientId,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectScheduledPaymentsByClientId} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSelectors';
 import {
   createWallet,
   deleteWallet,

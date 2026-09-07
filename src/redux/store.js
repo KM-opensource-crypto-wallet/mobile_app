@@ -31,6 +31,7 @@ import {customRpcSlice} from 'dok-wallet-blockchain-networks/redux/customRpc/cus
 import {coinSyncSlice} from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSlice.js';
 import {sentAddressHistorySlice} from 'dok-wallet-blockchain-networks/redux/sentAddressHistory/sentAddressHistorySlice';
 import {exchangeHistorySlice} from 'dok-wallet-blockchain-networks/redux/exchangeHistory/exchangeHistorySlice';
+import {schedulePaymentSlice} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
 
 const storage = createSensitiveStorage({
   keychainService: process.env.REDUX_KEYCHAIN_NAME,
@@ -70,11 +71,21 @@ const walletsPersistTransform = createTransform(
   },
   {whitelist: [walletsSlice.name]},
 );
+// isSubmitting is in-flight UI state, not data — a rehydrated `true` (e.g.
+// the app was killed mid-submit) would leave the submit button permanently
+// disabled with no pending thunk left to ever flip it back. scheduledPayments
+// itself must still persist (it's the actual schedule data), so only reset
+// this one field on load rather than blacklisting the whole slice.
+const schedulePaymentPersistTransform = createTransform(
+  inboundState => inboundState,
+  outboundState => ({...outboundState, isSubmitting: false}),
+  {whitelist: [schedulePaymentSlice.name]},
+);
 
 const config = {
   key: process.env.REDUX_KEY,
   storage,
-  transforms: [walletsPersistTransform],
+  transforms: [walletsPersistTransform, schedulePaymentPersistTransform],
   blacklist: [
     currentTransferSlice.name,
     exchangeSlice.name,
@@ -109,6 +120,7 @@ const rootReducer = persistCombineReducers(config, {
   [customRpcSlice.name]: customRpcSlice.reducer,
   [coinSyncSlice.name]: coinSyncSlice.reducer,
   [sentAddressHistorySlice.name]: sentAddressHistorySlice.reducer,
+  [schedulePaymentSlice.name]: schedulePaymentSlice.reducer,
 });
 
 // Logging middleware

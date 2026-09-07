@@ -27,8 +27,8 @@ import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {
   selectAllWalletName,
   selectAllWallets,
-  selectScheduledPaymentsByClientId,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectScheduledPaymentsByClientId} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSelectors';
 import {
   clearWalletHideSettings,
   isSecretCodeInUseByOtherWallet,

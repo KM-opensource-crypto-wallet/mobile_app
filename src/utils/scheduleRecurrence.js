@@ -1,4 +1,9 @@
 import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+
+dayjs.extend(customParseFormat);
+
+export const SCHEDULED_DATE_FORMAT = 'YYYY-MM-DD HH:mm';
 
 export const REPEAT_TYPE = {
   NONE: 'none',
@@ -105,6 +110,28 @@ export const computeOccurrences = ({scheduledAt, recurrence}) => {
     candidate = dayjs(candidate).add(interval, unit).valueOf();
   }
   return occurrences;
+};
+
+export const buildRecurrence = values => {
+  if (values.repeatType === REPEAT_TYPE.NONE) {
+    return {type: REPEAT_TYPE.NONE};
+  }
+  const recurrence = {
+    type: values.repeatType,
+    interval:
+      values.repeatType === REPEAT_TYPE.CUSTOM
+        ? Math.max(1, parseInt(values.repeatInterval, 10) || 1)
+        : 1,
+  };
+  if (values.repeatType === REPEAT_TYPE.CUSTOM) {
+    recurrence.unit = values.repeatUnit;
+  }
+  if (values.repeatType === REPEAT_TYPE.WEEKLY) {
+    recurrence.weeklyDays = values.weeklyDays.length
+      ? values.weeklyDays
+      : [dayjs(values.scheduledDate, SCHEDULED_DATE_FORMAT, true).day()];
+  }
+  return recurrence;
 };
 
 export const describeRecurrence = recurrence => {

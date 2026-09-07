@@ -7,21 +7,12 @@ import {
   useState,
 } from 'react';
 import {AppState} from 'react-native';
-import notifee, {
-  AndroidImportance,
-  AndroidVisibility,
-  AuthorizationStatus,
-  EventType,
-  TriggerType,
-} from '@notifee/react-native';
+import notifee, {EventType} from '@notifee/react-native';
 import BigNumber from 'bignumber.js';
 import {store} from 'redux/store';
 import {MainNavigation} from 'utils/navigation';
 import {showToast} from 'utils/toast';
-import {
-  getCustomizePublicAddress,
-  validateBigNumberStr,
-} from 'dok-wallet-blockchain-networks/helper';
+import {validateBigNumberStr} from 'dok-wallet-blockchain-networks/helper';
 import {
   isWalletHiddenAndLocked,
   selectAllWallets,
@@ -38,8 +29,15 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import {setRouteStateData} from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
-import {MAX_OCCURRENCES as MAX_SCHEDULED_PAYMENT_OCCURRENCE_NOTIFICATIONS} from 'utils/scheduleRecurrence';
 import {getAsyncStorageData, removeAsyncStorageData} from 'utils/asyncStorage';
+import {
+  SCHEDULED_PAYMENT_NOTIFICATION_TYPE,
+  requestLocalNotificationPermission,
+  createScheduledPaymentNotification as createScheduledPaymentNotificationImpl,
+  cancelScheduledPaymentNotification,
+  cancelScheduledPaymentNotifications,
+  syncHiddenWalletsScheduledPaymentNotifications as syncHiddenWalletsScheduledPaymentNotificationsImpl,
+} from 'utils/scheduledPaymentNotifications';
 
 // Mirrors the spendable-balance calc SendFunds uses (totalAmount minus the
 // chain's minimum reserve), clamped at zero.
@@ -63,29 +61,12 @@ const landOnHome = () => {
   });
 };
 
-export const SCHEDULED_PAYMENT_NOTIFICATION_TYPE = 'scheduledPayment';
 // Where index.js's headless notifee.onBackgroundEvent parks a scheduled-
 // payment PRESS it received while the app was backgrounded (not killed) —
 // there's no safe navigation target from that headless context, so it just
 // persists the payload here for this provider to pick up once JS is active.
 export const SCHEDULED_PAYMENT_BACKGROUND_PRESS_STORAGE_KEY =
   'scheduledPaymentBackgroundPress';
-const SCHEDULED_PAYMENT_CHANNEL_ID = 'scheduled-payments';
-
-let androidChannelCreated = false;
-
-const ensureAndroidChannel = async () => {
-  if (androidChannelCreated) {
-    return;
-  }
-  await notifee.createChannel({
-    id: SCHEDULED_PAYMENT_CHANNEL_ID,
-    name: 'Scheduled Payments',
-    importance: AndroidImportance.HIGH,
-    visibility: AndroidVisibility.PRIVATE,
-  });
-  androidChannelCreated = true;
-};
 
 export const LocalNotificationContext = createContext();
 
@@ -156,7 +137,8 @@ export const LocalNotificationProvider = ({children}) => {
     store.dispatch(setCurrentWalletClientId(wallet.clientId));
 
     const payment = (
-      store.getState().wallets?.scheduledPayments?.[wallet.clientId] || []
+      store.getState().schedulePayment?.scheduledPayments?.[wallet.clientId] ||
+      []
     ).find(item => item?.id === data.scheduledPaymentId);
     // No matching payment, or it was already sent/cancelled/edited away —
     // fall back to the list instead of prefilling a transfer for it.
@@ -306,160 +288,6 @@ export const LocalNotificationProvider = ({children}) => {
     return false;
   }, [handleScheduledPaymentNotificationData, handleNotificationData]);
 
-  const requestLocalNotificationPermission = useCallback(async () => {
-    try {
-      const settings = await notifee.requestPermission();
-      const granted =
-        settings?.authorizationStatus === AuthorizationStatus.AUTHORIZED ||
-        settings?.authorizationStatus === AuthorizationStatus.PROVISIONAL;
-      return {
-        granted,
-        // DENIED after a request call (as opposed to NOT_DETERMINED) means
-        // the OS won't show the permission dialog again — the user has to
-        // flip it on from system settings.
-        blocked:
-          !granted &&
-          settings?.authorizationStatus === AuthorizationStatus.DENIED,
-      };
-    } catch (e) {
-      console.warn('Failed to request local notification permission', e);
-      return {granted: false, blocked: false};
-    }
-  }, []);
-
-  const createScheduledPaymentNotification = useCallback(
-    async payment => {
-      if (!payment?.id) {
-        return {scheduled: false, blocked: false};
-      }
-      // A hidden wallet with "Delete schedule notifications" on must never
-      // get a live reminder - guard creation itself rather than relying only
-      // on HideWallet's Save action, since payments can be scheduled/edited
-      // after that Save while the wallet is (or later becomes) hidden.
-      const wallets = selectAllWallets(store.getState());
-      const wallet = wallets.find(w => w.clientId === payment?.walletClientId);
-      if (
-        wallet &&
-        isWalletHiddenAndLocked(wallet) &&
-        wallet?.hideSettings?.deleteScheduleNotification
-      ) {
-        return {scheduled: false, blocked: false};
-      }
-      const occurrences = (
-        Array.isArray(payment?.occurrences) && payment.occurrences.length
-          ? payment.occurrences
-          : [payment?.scheduledAt]
-      )
-        .map(Number)
-        .filter(timestamp => timestamp && timestamp > Date.now())
-        .slice(0, MAX_SCHEDULED_PAYMENT_OCCURRENCE_NOTIFICATIONS);
-      if (!occurrences.length) {
-        return {scheduled: false, blocked: false};
-      }
-      const {granted, blocked} = await requestLocalNotificationPermission();
-      if (!granted) {
-        return {scheduled: false, blocked};
-      }
-      try {
-        await ensureAndroidChannel();
-        await Promise.all(
-          occurrences.map((timestamp, index) => {
-            return notifee.createTriggerNotification(
-              {
-                id: `${payment.id}::${index}`,
-                title: 'Scheduled payment ready',
-                body: `Send ${payment?.amount ?? ''} ${
-                  payment?.asset?.symbol ?? ''
-                } to ${getCustomizePublicAddress(
-                  payment?.recipientAddress,
-                )} now${
-                  occurrences.length > 1
-                    ? ` (${index + 1} of ${occurrences.length})`
-                    : ''
-                }`,
-                data: {
-                  type: SCHEDULED_PAYMENT_NOTIFICATION_TYPE,
-                  scheduledPaymentId: payment.id,
-                  walletClientId: payment?.walletClientId ?? '',
-                },
-                android: {
-                  channelId: SCHEDULED_PAYMENT_CHANNEL_ID,
-                  pressAction: {id: 'default'},
-                },
-                ios: {
-                  sound: 'default',
-                },
-              },
-              {
-                type: TriggerType.TIMESTAMP,
-                timestamp,
-              },
-            );
-          }),
-        );
-        return {scheduled: true, blocked: false};
-      } catch (e) {
-        console.warn('Failed to schedule local payment notification', e);
-        return {scheduled: false, blocked: false};
-      }
-    },
-    [requestLocalNotificationPermission],
-  );
-
-  const cancelScheduledPaymentNotification = useCallback(async id => {
-    if (!id) {
-      return;
-    }
-    try {
-      await Promise.all(
-        Array.from(
-          {length: MAX_SCHEDULED_PAYMENT_OCCURRENCE_NOTIFICATIONS},
-          (_, index) => notifee.cancelNotification(`${id}::${index}`),
-        ),
-      );
-    } catch (e) {
-      console.warn('Failed to cancel scheduled payment notification', e);
-    }
-  }, []);
-
-  const cancelScheduledPaymentNotifications = useCallback(
-    async ids => {
-      const uniqueIds = [...new Set((ids || []).filter(Boolean))];
-      if (!uniqueIds.length) {
-        return;
-      }
-      await Promise.all(
-        uniqueIds.map(id => cancelScheduledPaymentNotification(id)),
-      );
-    },
-    [cancelScheduledPaymentNotification],
-  );
-
-  // Wallets can go from revealed to hidden+locked outside of HideWallet's own
-  // Save flow - app relaunch (RELAUNCH relock, forced back on by the
-  // persist-rehydrate transform) and backgrounding (BACKGROUND relock, via
-  // rehideWalletsOnBackground). Neither of those cancels notifications on its
-  // own, so call this right after either transition to sweep up any reminder
-  // that should now be suppressed.
-  const syncHiddenWalletsScheduledPaymentNotifications =
-    useCallback(async () => {
-      const state = store.getState();
-      const wallets = selectAllWallets(state) || [];
-      const scheduledPayments = state.wallets?.scheduledPayments || {};
-      const idsToCancel = wallets
-        .filter(
-          wallet =>
-            isWalletHiddenAndLocked(wallet) &&
-            wallet?.hideSettings?.deleteScheduleNotification,
-        )
-        .flatMap(wallet =>
-          (scheduledPayments[wallet.clientId] || [])
-            .filter(item => item?.status === 'scheduled')
-            .map(item => item?.id),
-        );
-      await cancelScheduledPaymentNotifications(idsToCancel);
-    }, [cancelScheduledPaymentNotifications]);
-
   useEffect(() => {
     const handleScheduledPaymentPress = notification => {
       const data = notification?.data;
@@ -519,6 +347,21 @@ export const LocalNotificationProvider = ({children}) => {
     };
   }, [setPendingScheduledPaymentData]);
 
+  // createScheduledPaymentNotification/syncHiddenWalletsScheduledPaymentNotifications
+  // take getState as a parameter (see utils/scheduledPaymentNotifications.js)
+  // so that module doesn't import the store singleton itself - it's imported
+  // by schedulePaymentSlice.js, which redux/store.js itself imports, and
+  // closing that loop back through the store here would recreate the same
+  // require-cycle fragility.
+  const createScheduledPaymentNotification = useCallback(
+    payment => createScheduledPaymentNotificationImpl(payment, store.getState),
+    [],
+  );
+  const syncHiddenWalletsScheduledPaymentNotifications = useCallback(
+    () => syncHiddenWalletsScheduledPaymentNotificationsImpl(store.getState),
+    [],
+  );
+
   const contextValue = useMemo(
     () => ({
       pendingScheduledPaymentData,
@@ -544,10 +387,7 @@ export const LocalNotificationProvider = ({children}) => {
       pendingNotificationData,
       setPendingNotificationData,
       handleNotificationData,
-      requestLocalNotificationPermission,
       createScheduledPaymentNotification,
-      cancelScheduledPaymentNotification,
-      cancelScheduledPaymentNotifications,
       syncHiddenWalletsScheduledPaymentNotifications,
     ],
   );
