@@ -78,7 +78,11 @@ const walletsPersistTransform = createTransform(
 // this one field on load rather than blacklisting the whole slice.
 const schedulePaymentPersistTransform = createTransform(
   inboundState => inboundState,
-  outboundState => ({...outboundState, isSubmitting: false}),
+  outboundState => ({
+    ...outboundState,
+    isSubmitting: false,
+    pendingSubmitCount: 0,
+  }),
   {whitelist: [schedulePaymentSlice.name]},
 );
 
