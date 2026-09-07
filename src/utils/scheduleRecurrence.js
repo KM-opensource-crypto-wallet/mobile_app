@@ -104,10 +104,19 @@ export const computeOccurrences = ({scheduledAt, recurrence}) => {
     return occurrences;
   }
 
-  let candidate = start;
+  // Each occurrence is computed from the original `start`, not by chaining
+  // off the previous one - dayjs clamps end-of-month overflow (Jan 31 + 1
+  // month -> Feb 28), and chaining off that clamped result would permanently
+  // drift the series off the original day-of-month (Feb 28 + 1 month -> Mar
+  // 28, forever).
+  let index = 0;
   while (occurrences.length < MAX_OCCURRENCES) {
-    occurrences.push(candidate);
-    candidate = dayjs(candidate).add(interval, unit).valueOf();
+    occurrences.push(
+      dayjs(start)
+        .add(interval * index, unit)
+        .valueOf(),
+    );
+    index += 1;
   }
   return occurrences;
 };

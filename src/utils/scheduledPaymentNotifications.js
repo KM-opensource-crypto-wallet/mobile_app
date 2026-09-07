@@ -9,7 +9,10 @@ import {
   isWalletHiddenAndLocked,
   selectAllWallets,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {MAX_OCCURRENCES as MAX_SCHEDULED_PAYMENT_OCCURRENCE_NOTIFICATIONS} from 'utils/scheduleRecurrence';
+import {
+  MAX_OCCURRENCES as MAX_SCHEDULED_PAYMENT_OCCURRENCE_NOTIFICATIONS,
+  computeOccurrences,
+} from 'utils/scheduleRecurrence';
 
 export const SCHEDULED_PAYMENT_NOTIFICATION_TYPE = 'scheduledPayment';
 const SCHEDULED_PAYMENT_CHANNEL_ID = 'scheduled-payments';
@@ -72,10 +75,18 @@ export const createScheduledPaymentNotification = async (payment, getState) => {
   ) {
     return {scheduled: false, blocked: false};
   }
+  // The persisted schedule-payment record (e.g. what's re-read here when a
+  // hidden wallet is un-hidden) never stores `occurrences` - only the
+  // in-flight object built by submitScheduledPayment does. Recompute from
+  // `recurrence` so a repeating payment gets its full remaining series back
+  // instead of collapsing to (at most) its original first occurrence.
   const occurrences = (
     Array.isArray(payment?.occurrences) && payment.occurrences.length
       ? payment.occurrences
-      : [payment?.scheduledAt]
+      : computeOccurrences({
+          scheduledAt: payment?.scheduledAt,
+          recurrence: payment?.recurrence,
+        })
   )
     .map(Number)
     .filter(timestamp => timestamp && timestamp > Date.now())
