@@ -19,6 +19,7 @@ const RecipientAddressInput = ({
   label = 'Enter wallet address or scan QR',
   containerStyle,
   inputStyle,
+  children,
 }) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
@@ -62,6 +63,7 @@ const RecipientAddressInput = ({
           />
         )}
       </View>
+      {children}
       {!!error && <Text style={styles.textConfirm}>{error}</Text>}
     </View>
   );

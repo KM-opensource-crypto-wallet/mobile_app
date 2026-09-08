@@ -1,5 +1,7 @@
 import {StyleSheet} from 'react-native';
 
+// Shared form field styles live in components/SendFundsForm/SendFundsFormStyles;
+// only the schedule-specific pieces are styled here.
 const myStyles = theme =>
   StyleSheet.create({
     container: {
@@ -7,77 +9,14 @@ const myStyles = theme =>
       backgroundColor: theme.backgroundColor,
       width: '100%',
     },
-    mainContainer: {
-      flex: 1,
+    contentContainerStyle: {
+      flexGrow: 1,
       backgroundColor: theme.backgroundColor,
-      width: '100%',
       paddingHorizontal: 20,
     },
     formInput: {
       marginTop: 24,
       flex: 1,
-    },
-    title: {
-      color: theme.gray,
-      fontSize: 14,
-      textAlign: 'left',
-      fontFamily: 'Roboto-Regular',
-    },
-    box: {
-      flexDirection: 'row',
-    },
-    boxTitle: {
-      color: theme.font,
-      fontSize: 18,
-      textAlign: 'left',
-      fontFamily: 'Roboto-Regular',
-      fontWeight: 'bold',
-      marginTop: 2,
-    },
-    boxBalance: {
-      color: theme.gray,
-      fontSize: 14,
-      textAlign: 'left',
-      fontFamily: 'Roboto-Regular',
-    },
-    label: {
-      color: theme.font,
-      fontSize: 14,
-      fontFamily: 'Roboto-Regular',
-      marginBottom: 6,
-      marginTop: 16,
-    },
-    input: {
-      backgroundColor: theme.backgroundColor,
-    },
-    inputView: {
-      backgroundColor: theme.backgroundColor,
-      position: 'relative',
-      justifyContent: 'center',
-    },
-    btnMax: {
-      position: 'absolute',
-      top: 12,
-      right: 16,
-      backgroundColor: theme.background,
-      width: 40,
-      height: 20,
-      borderRadius: 5,
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999,
-    },
-    btnText: {
-      color: theme.backgroundColor,
-      fontSize: 12,
-      fontFamily: 'Roboto-Regular',
-    },
-    textConfirm: {
-      marginTop: 4,
-      color: 'red',
-      marginLeft: 10,
-      fontSize: 12,
-      fontFamily: 'Roboto-Regular',
     },
     infoBanner: {
       marginTop: 20,
@@ -107,14 +46,6 @@ const myStyles = theme =>
       color: theme.title,
       fontSize: 16,
       fontFamily: 'Roboto-Regular',
-    },
-    doneButton: {
-      backgroundColor: theme.background,
-      height: 44,
-      borderRadius: 10,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: 8,
     },
     sublabel: {
       color: theme.font,
@@ -182,6 +113,7 @@ const myStyles = theme =>
     },
     customInput: {
       width: 90,
+      height: 50,
       backgroundColor: theme.backgroundColor,
     },
   });

@@ -1,46 +1,40 @@
-import React, {
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, {useContext, useLayoutEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
   Keyboard,
-  Linking,
-  Platform,
-  ScrollView,
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import {useFormik} from 'formik';
-import * as Yup from 'yup';
 import dayjs from 'dayjs';
 import {useDispatch, useSelector} from 'react-redux';
-import Toast from 'react-native-toast-message';
-import BigNumber from 'bignumber.js';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import myStyles from './SchedulePaymentStyles';
+import sendFundsFormStyles from 'components/SendFundsForm/SendFundsFormStyles';
 import {ThemeContext} from 'theme/ThemeContext';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import SendFundsForm from 'components/SendFundsForm';
+import DatePicker from 'components/DatePicker';
+import ModalAddressPoisoningWarning from 'components/ModalAddressPoisoningWarning';
+import useSendFundsForm from 'hooks/useSendFundsForm';
+import useSendFormPrefill from 'hooks/useSendFormPrefill';
 import {
   selectCurrentCoin,
-  selectCurrentWalletClientId,
+  selectCurrentWallet,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import {
-  multiplyBNWithFixed,
-  validateNumberInInput,
-} from 'dok-wallet-blockchain-networks/helper';
+import {multiplyBNWithFixed} from 'dok-wallet-blockchain-networks/helper';
 import {submitScheduledPayment} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
 import {selectIsSubmittingSchedulePayment} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSelectors';
-import RecipientAddressInput from 'components/RecipientAddressInput';
-import {currencySymbol} from 'data/currency';
+import {IS_ANDROID} from 'utils/dimensions';
+import {showToast} from 'utils/toast';
+import {openAppNotificationSettings} from 'utils/openNotificationSettings';
+import {validationSchemaSchedulePayment} from 'utils/validationSchema';
+import {findCoinForScheduledPayment} from 'utils/scheduledPaymentCoin';
 import {
   CUSTOM_UNIT,
   MAX_OCCURRENCES,
@@ -66,12 +60,16 @@ const CUSTOM_UNIT_OPTIONS = [
   {value: CUSTOM_UNIT.MONTH, label: 'Months'},
 ];
 
+const DISPLAY_DATE_FORMAT = 'YYYY-MM-DD hh:mm A';
+const INVALID_ADDRESS_MESSAGE = 'Enter a valid recipient address';
+
 const getInitialValues = (editingPayment, currencyRate) => {
   if (!editingPayment) {
     return {
       toAddress: '',
       amount: '',
       currencyAmount: '',
+      memo: '',
       scheduledDate: '',
       repeatType: REPEAT_TYPE.NONE,
       repeatInterval: '1',
@@ -87,6 +85,7 @@ const getInitialValues = (editingPayment, currencyRate) => {
       editingPayment.amount != null
         ? multiplyBNWithFixed(editingPayment.amount, currencyRate, 2)
         : '',
+    memo: editingPayment.memo || '',
     scheduledDate: editingPayment.scheduledAt
       ? dayjs(editingPayment.scheduledAt).format(SCHEDULED_DATE_FORMAT)
       : '',
@@ -105,29 +104,38 @@ const getInitialValues = (editingPayment, currencyRate) => {
 const SchedulePayment = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
+  const formStyles = sendFundsFormStyles(theme);
   const dispatch = useDispatch();
   const currentCoin = useSelector(selectCurrentCoin);
-  const walletClientId = useSelector(selectCurrentWalletClientId);
+  const currentWallet = useSelector(selectCurrentWallet);
   const localCurrency = useSelector(getLocalCurrency);
   const isSubmitting = useSelector(selectIsSubmittingSchedulePayment);
-  const qrAddress = route?.params?.qrAddress;
-  const editingPayment = route?.params?.scheduledPayment;
+
+  const {
+    qrAddress,
+    qrAmount,
+    memo: scannedMemo,
+    newDateToString,
+    scheduledPayment: editingPayment,
+  } = route?.params || {};
   const isEditMode = !!editingPayment?.id;
 
-  const availableAmount = useMemo(() => {
-    const amount = currentCoin?.totalAmount || '0';
-    const minBalance = currentCoin?.minimumBalance || '0';
-    const localAvailableAmount = new BigNumber(amount).minus(
-      new BigNumber(minBalance),
-    );
-    const zeroAmount = new BigNumber(0);
-    return localAvailableAmount.gt(zeroAmount)
-      ? localAvailableAmount.toFixed()
-      : zeroAmount.toFixed();
-  }, [currentCoin?.minimumBalance, currentCoin?.totalAmount]);
-  const availableAmountCurrency = useMemo(() => {
-    return multiplyBNWithFixed(availableAmount, currentCoin?.currencyRate, 2);
-  }, [availableAmount, currentCoin?.currencyRate]);
+  // A scheduled payment stores chain + asset, not a coin id, and the coin
+  // selected on Home may be a different one while editing.
+  const formCoin = useMemo(
+    () =>
+      (isEditMode &&
+        findCoinForScheduledPayment(currentWallet, editingPayment)) ||
+      currentCoin,
+    [isEditMode, currentWallet, editingPayment, currentCoin],
+  );
+
+  const form = useSendFundsForm({coin: formCoin, wallet: currentWallet});
+  const {availableAmount} = form;
+  const validationSchema = useMemo(
+    () => validationSchemaSchedulePayment({balanceAmount: availableAmount}),
+    [availableAmount],
+  );
 
   useLayoutEffect(() => {
     navigation?.setOptions({
@@ -135,161 +143,100 @@ const SchedulePayment = ({navigation, route}) => {
     });
   }, [navigation, isEditMode]);
 
-  const {
-    values,
-    errors,
-    touched,
-    handleChange,
-    handleBlur,
-    handleSubmit,
-    setFieldValue,
-    setFieldTouched,
-    setFieldError,
-  } = useFormik({
-    initialValues: getInitialValues(editingPayment, currentCoin?.currencyRate),
-    validationSchema: Yup.object().shape({
-      toAddress: Yup.string().required('Recipient address is required'),
-      amount: Yup.number()
-        .typeError('Amount must be a number')
-        .positive('Amount must be greater than 0')
-        .required('Amount is required'),
-      scheduledDate: Yup.string()
-        .required('Scheduled date is required')
-        .test(
-          'is-valid-date',
-          `Use the format ${SCHEDULED_DATE_FORMAT}`,
-          value =>
-            !!value && dayjs(value, SCHEDULED_DATE_FORMAT, true).isValid(),
-        )
-        .test(
-          'is-future-date',
-          'Scheduled date must be in the future',
-          value =>
-            !value ||
-            !dayjs(value, SCHEDULED_DATE_FORMAT, true).isValid() ||
-            dayjs(value, SCHEDULED_DATE_FORMAT, true).valueOf() > Date.now(),
-        ),
-      repeatInterval: Yup.number()
-        .typeError('Enter a number')
-        .integer('Enter a whole number')
-        .min(1, 'Must be at least 1')
-        .when('repeatType', {
-          is: REPEAT_TYPE.CUSTOM,
-          then: schema => schema.required('Interval is required'),
-        }),
-    }),
-    onSubmit: async submittedValue => {
-      try {
-        const {occurrences} = await dispatch(
-          submitScheduledPayment({
-            values: submittedValue,
-            editingPayment,
-          }),
-        ).unwrap();
-        const actionLabel = isEditMode ? 'updated' : 'scheduled';
-        Toast.show({
-          type: 'successToast',
-          text1:
-            occurrences.length > 1
-              ? `Payment ${actionLabel} (${occurrences.length} reminders)`
-              : `Payment ${actionLabel}`,
-          text2: "We'll remind you at the scheduled time",
-        });
-        navigation.navigate('ViewSchedulePayment');
-      } catch (rejection) {
-        if (rejection?.type === 'invalidAddress') {
-          setFieldTouched('toAddress', true);
-          setFieldError('toAddress', 'Enter a valid recipient address');
-          return;
-        }
-        if (rejection?.type === 'notificationBlocked') {
-          Alert.alert(
-            'Notifications disabled',
-            rejection?.blocked
-              ? 'Notifications must be enabled to schedule a payment reminder. Enable them in your device settings, then try again.'
-              : 'Notifications must be enabled to schedule a payment reminder.',
-            rejection?.blocked
-              ? [
-                  {text: 'Cancel', style: 'cancel'},
-                  {
-                    text: 'Open Settings',
-                    onPress: () => Linking.openSettings(),
-                  },
-                ]
-              : [{text: 'OK'}],
-          );
-          return;
-        }
-        if (rejection?.type === 'reminderFailed') {
-          Alert.alert(
-            'Reminder could not be scheduled',
-            isEditMode
-              ? 'Your changes were not saved because the reminder could not be scheduled. Please try again.'
-              : 'This payment was not scheduled because the reminder could not be created. Please try again.',
-          );
-          return;
-        }
+  const submitSchedule = async (values, helpers) => {
+    try {
+      const {occurrences} = await dispatch(
+        submitScheduledPayment({values, editingPayment}),
+      ).unwrap();
+      const actionLabel = isEditMode ? 'updated' : 'scheduled';
+      showToast({
+        type: 'successToast',
+        title:
+          occurrences.length > 1
+            ? `Payment ${actionLabel} (${occurrences.length} reminders)`
+            : `Payment ${actionLabel}`,
+        message: "We'll remind you at the scheduled time",
+      });
+      navigation.navigate('ViewSchedulePayment');
+    } catch (rejection) {
+      if (rejection?.type === 'invalidAddress') {
+        helpers.setFieldTouched('toAddress', true, false);
+        helpers.setFieldError('toAddress', INVALID_ADDRESS_MESSAGE);
+        return;
       }
+      if (rejection?.type === 'notificationBlocked') {
+        Alert.alert(
+          'Notifications disabled',
+          rejection?.blocked
+            ? 'Notifications must be enabled to schedule a payment reminder. Enable them in your device settings, then try again.'
+            : 'Notifications must be enabled to schedule a payment reminder.',
+          rejection?.blocked
+            ? [
+                {text: 'Cancel', style: 'cancel'},
+                {
+                  text: 'Open Settings',
+                  onPress: openAppNotificationSettings,
+                },
+              ]
+            : [{text: 'OK'}],
+        );
+        return;
+      }
+      if (rejection?.type === 'reminderFailed') {
+        Alert.alert(
+          'Reminder could not be scheduled',
+          isEditMode
+            ? 'Your changes were not saved because the reminder could not be scheduled. Please try again.'
+            : 'This payment was not scheduled because the reminder could not be created. Please try again.',
+        );
+      }
+    }
+  };
+
+  const formik = useFormik({
+    initialValues: getInitialValues(editingPayment, formCoin?.currencyRate),
+    validationSchema,
+    onSubmit: async (values, helpers) => {
+      if (form.applyChainRules(values, helpers)) {
+        return;
+      }
+      const {resolvedAddress} = await form.resolveRecipient(values.toAddress);
+      if (!resolvedAddress) {
+        helpers.setFieldError('toAddress', INVALID_ADDRESS_MESSAGE);
+        return;
+      }
+      form.checkPoisoningThenProceed(resolvedAddress, () =>
+        submitSchedule(values, helpers),
+      );
     },
   });
+  const {values, errors, touched, handleChange, handleBlur, setFieldValue} =
+    formik;
 
-  useEffect(() => {
-    if (qrAddress) {
-      setFieldValue('toAddress', qrAddress);
-    }
-  }, [qrAddress, setFieldValue]);
-
-  const onSelectAddress = item => {
-    if (item?.address) {
-      setFieldValue('toAddress', item.address);
-    }
-  };
+  useSendFormPrefill(
+    formik,
+    {
+      address: qrAddress,
+      amount: qrAmount,
+      memo: scannedMemo,
+      refreshKey: newDateToString,
+    },
+    {isLightning: form.isLightning, currencyRate: formCoin?.currencyRate},
+  );
 
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [pendingDate, setPendingDate] = useState(null);
 
-  const applyScheduledDate = date => {
+  const scheduledDateValue = useMemo(() => {
+    const parsed = dayjs(values.scheduledDate, SCHEDULED_DATE_FORMAT, true);
+    return parsed.isValid() ? parsed.toDate() : null;
+  }, [values.scheduledDate]);
+
+  const onConfirmScheduledDate = date => {
+    // Mark touched without validating: setFieldValue already validates with
+    // the new value, and a second validation from setFieldTouched would run
+    // against the previous values and overwrite that result.
+    formik.setFieldTouched('scheduledDate', true, false);
     setFieldValue('scheduledDate', dayjs(date).format(SCHEDULED_DATE_FORMAT));
-    setFieldTouched('scheduledDate', true);
-  };
-
-  const openDateTimePicker = () => {
-    const current = dayjs(values.scheduledDate, SCHEDULED_DATE_FORMAT, true);
-    setPendingDate(current.isValid() ? current.toDate() : new Date());
-    setShowDatePicker(true);
-  };
-
-  const onSelectDate = (event, selectedDate) => {
-    if (!selectedDate) {
-      setShowDatePicker(false);
-      return;
-    }
-    if (Platform.OS === 'ios') {
-      // iOS spinner is inline and fires on every wheel tick, not a one-shot
-      // dialog like Android's — keep it open and stage the value; the user
-      // confirms with the Done button below.
-      setPendingDate(selectedDate);
-    } else {
-      setShowDatePicker(false);
-      setPendingDate(selectedDate);
-      setShowTimePicker(true);
-    }
-  };
-
-  const onSelectTime = (event, selectedTime) => {
-    setShowTimePicker(false);
-    if (!selectedTime || !pendingDate) {
-      return;
-    }
-    const combinedDate = new Date(pendingDate);
-    combinedDate.setHours(selectedTime.getHours());
-    combinedDate.setMinutes(selectedTime.getMinutes());
-    applyScheduledDate(combinedDate);
-  };
-
-  const confirmIOSDate = () => {
-    applyScheduledDate(pendingDate);
     setShowDatePicker(false);
   };
 
@@ -312,19 +259,14 @@ const SchedulePayment = ({navigation, route}) => {
     setFieldValue('weeklyDays', next);
   };
 
-  const getInputTheme = error => ({
-    colors: {
-      onSurfaceVariant: '#989898',
-      primary: error ? 'red' : '#989898',
-    },
-  });
-
   const isRepeating = values.repeatType !== REPEAT_TYPE.NONE;
+  const scheduledDateError = touched.scheduledDate && errors.scheduledDate;
+  const repeatIntervalError = touched.repeatInterval && errors.repeatInterval;
 
   const displayScheduledDate = useMemo(() => {
     const parsed = dayjs(values.scheduledDate, SCHEDULED_DATE_FORMAT, true);
     return parsed.isValid()
-      ? parsed.format('YYYY-MM-DD hh:mm A')
+      ? parsed.format(DISPLAY_DATE_FORMAT)
       : values.scheduledDate;
   }, [values.scheduledDate]);
 
@@ -343,7 +285,7 @@ const SchedulePayment = ({navigation, route}) => {
     if (occurrences.length < 2) {
       return null;
     }
-    const format = ts => dayjs(ts).format('YYYY-MM-DD hh:mm A');
+    const format = ts => dayjs(ts).format(DISPLAY_DATE_FORMAT);
     return {
       // Includes occurrences[0], the start date currently in the
       // scheduledDate field above, so the preview stays in sync with it.
@@ -353,342 +295,183 @@ const SchedulePayment = ({navigation, route}) => {
     };
   }, [isRepeating, values]);
 
+  const renderPills = (options, selectedValue, onSelect) => (
+    <View style={styles.optionsRow}>
+      {options.map(option => {
+        const selected = selectedValue === option.value;
+        return (
+          <TouchableOpacity
+            key={option.value}
+            activeOpacity={0.7}
+            style={[styles.optionPill, selected && styles.optionPillSelected]}
+            onPress={() => onSelect(option.value)}>
+            <Text
+              style={[
+                styles.optionPillText,
+                selected && styles.optionPillTextSelected,
+              ]}>
+              {option.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+
+  const submitDisabled = isSubmitting || !formik.isValid;
+
   return (
     <DokSafeAreaView style={styles.container}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          style={styles.mainContainer}
-          keyboardShouldPersistTaps={'handled'}>
+      <KeyboardAwareScrollView
+        enableOnAndroid={true}
+        enableAutomaticScroll={true}
+        bounces={false}
+        keyboardShouldPersistTaps={'always'}
+        {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
+        keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
+        contentContainerStyle={styles.contentContainerStyle}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.formInput}>
-            <Text style={styles.title}>{'Amount available for send'}</Text>
-            <View style={styles.box}>
-              <Text style={styles.boxTitle}>{availableAmount}</Text>
-              <Text style={styles.boxTitle}>{' ' + currentCoin?.symbol}</Text>
-            </View>
-            <View style={styles.box}>
-              <Text style={styles.boxBalance}>
-                {currencySymbol[localCurrency] || ''}
-                {availableAmountCurrency}
-              </Text>
-            </View>
-
-            <Text style={styles.label}>{`Send ${
-              isEditMode ? editingPayment?.asset?.symbol : currentCoin?.symbol
-            } to`}</Text>
-            <RecipientAddressInput
-              chain_name={
-                isEditMode ? editingPayment?.chain : currentCoin?.chain_name
-              }
-              walletId={walletClientId}
-              onSelectAddress={onSelectAddress}
-              error={touched.toAddress && errors.toAddress}
-              onChangeText={handleChange('toAddress')}
-              onBlur={handleBlur('toAddress')}
-              value={values.toAddress}
-              onPressScan={() => {
-                navigation.navigate('Scanner', {
-                  page: 'SchedulePayment',
-                });
-              }}
-            />
-
-            <Text style={styles.label}>{'Amount'}</Text>
-            <View style={styles.inputView}>
-              <TextInput
-                style={styles.input}
-                mode="outlined"
-                placeholder={'0.00'}
-                keyboardType="decimal-pad"
-                textColor={theme.font}
-                theme={getInputTheme(errors.amount)}
-                outlineColor={
-                  touched.amount && errors.amount ? 'red' : '#989898'
-                }
-                activeOutlineColor={
-                  touched.amount && errors.amount
-                    ? 'red'
-                    : theme.borderActiveColor
-                }
-                onChangeText={text => {
-                  const tempAmount = validateNumberInInput(
-                    text,
-                    currentCoin?.decimal,
-                  );
-                  setFieldValue('amount', tempAmount);
-                  setFieldValue(
-                    'currencyAmount',
-                    multiplyBNWithFixed(
-                      tempAmount,
-                      currentCoin?.currencyRate,
-                      2,
-                    ),
-                  );
-                }}
-                onBlur={handleBlur('amount')}
-                value={values.amount}
-              />
-              <TouchableOpacity
-                style={styles.btnMax}
-                hitSlop={{top: 12, left: 12, right: 12, bottom: 12}}
-                onPress={() => {
-                  setFieldValue('amount', availableAmount);
-                  setFieldValue('currencyAmount', availableAmountCurrency);
-                }}>
-                <Text style={styles.btnText}>{'Max'}</Text>
-              </TouchableOpacity>
-            </View>
-            {touched.amount && errors.amount && (
-              <Text style={styles.textConfirm}>{errors.amount}</Text>
-            )}
-
-            <Text style={styles.label}>{`${localCurrency || ''} Amount`}</Text>
-            <View style={styles.inputView}>
-              <TextInput
-                style={styles.input}
-                mode="outlined"
-                placeholder={'0.00'}
-                keyboardType="decimal-pad"
-                textColor={theme.font}
-                theme={getInputTheme(errors.amount)}
-                outlineColor={
-                  touched.amount && errors.amount ? 'red' : '#989898'
-                }
-                activeOutlineColor={
-                  touched.amount && errors.amount
-                    ? 'red'
-                    : theme.borderActiveColor
-                }
-                onChangeText={text => {
-                  const tempCurrencyAmount = validateNumberInInput(text, 2);
-                  setFieldValue('currencyAmount', tempCurrencyAmount);
-                  setFieldValue(
-                    'amount',
-                    new BigNumber(tempCurrencyAmount || 0)
-                      .dividedBy(new BigNumber(currentCoin?.currencyRate || 1))
-                      .toFixed(Number(currentCoin?.decimal)),
-                  );
-                }}
-                onBlur={handleBlur('currencyAmount')}
-                value={values.currencyAmount}
-              />
-              <TouchableOpacity
-                style={styles.btnMax}
-                hitSlop={{top: 12, left: 12, right: 12, bottom: 12}}
-                onPress={() => {
-                  setFieldValue('amount', availableAmount);
-                  setFieldValue('currencyAmount', availableAmountCurrency);
-                }}>
-                <Text style={styles.btnText}>{'Max'}</Text>
-              </TouchableOpacity>
-            </View>
-            {touched.amount && errors.amount && (
-              <Text style={styles.textConfirm}>{errors.amount}</Text>
-            )}
-
-            <Text style={styles.label}>{'Scheduled date & time'}</Text>
-            <TouchableOpacity activeOpacity={0.7} onPress={openDateTimePicker}>
-              <View pointerEvents="none">
-                <TextInput
-                  style={styles.input}
-                  mode="outlined"
-                  placeholder={'YYYY-MM-DD hh:mm AM/PM'}
-                  textColor={theme.font}
-                  theme={getInputTheme(errors.scheduledDate)}
-                  outlineColor={
-                    touched.scheduledDate && errors.scheduledDate
-                      ? 'red'
-                      : '#989898'
-                  }
-                  activeOutlineColor={
-                    touched.scheduledDate && errors.scheduledDate
-                      ? 'red'
-                      : theme.borderActiveColor
-                  }
-                  editable={false}
-                  value={displayScheduledDate}
-                />
-              </View>
-            </TouchableOpacity>
-            {touched.scheduledDate && errors.scheduledDate && (
-              <Text style={styles.textConfirm}>{errors.scheduledDate}</Text>
-            )}
-            {showDatePicker && (
-              <>
-                <DateTimePicker
-                  value={pendingDate || new Date()}
-                  mode={Platform.OS === 'ios' ? 'datetime' : 'date'}
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  minimumDate={new Date()}
-                  onValueChange={onSelectDate}
-                  onDismiss={() => setShowDatePicker(false)}
-                />
-                {Platform.OS === 'ios' && (
-                  <TouchableOpacity
-                    style={styles.doneButton}
-                    onPress={confirmIOSDate}>
-                    <Text style={styles.buttonTitle}>{'Done'}</Text>
-                  </TouchableOpacity>
+            <SendFundsForm
+              formik={formik}
+              form={form}
+              coin={formCoin}
+              wallet={currentWallet}
+              localCurrency={localCurrency}
+              navigation={navigation}
+              scannerPage="SchedulePayment"
+              recipientLabel={`Send ${formCoin?.symbol || ''} to`}>
+              <View style={formStyles.boxInput}>
+                <Text style={formStyles.listTitle}>Scheduled date & time</Text>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => setShowDatePicker(true)}>
+                  <View pointerEvents="none">
+                    <TextInput
+                      style={formStyles.input}
+                      mode="outlined"
+                      label="YYYY-MM-DD hh:mm AM/PM"
+                      textColor={theme.font}
+                      theme={{colors: {onSurfaceVariant: theme.gray}}}
+                      outlineColor={scheduledDateError ? 'red' : theme.gray}
+                      activeOutlineColor={
+                        scheduledDateError ? 'red' : theme.font
+                      }
+                      editable={false}
+                      value={displayScheduledDate}
+                    />
+                  </View>
+                </TouchableOpacity>
+                {!!scheduledDateError && (
+                  <Text style={formStyles.textConfirm}>
+                    {scheduledDateError}
+                  </Text>
                 )}
-              </>
-            )}
-            {showTimePicker && (
-              <DateTimePicker
-                value={pendingDate || new Date()}
-                mode="time"
-                display="default"
-                onValueChange={onSelectTime}
-                onDismiss={() => setShowTimePicker(false)}
-              />
-            )}
+              </View>
 
-            <Text style={styles.label}>{'Repeat'}</Text>
-            <View style={styles.optionsRow}>
-              {REPEAT_OPTIONS.map(option => {
-                const selected = values.repeatType === option.value;
-                return (
-                  <TouchableOpacity
-                    key={option.value}
-                    activeOpacity={0.7}
-                    style={[
-                      styles.optionPill,
-                      selected && styles.optionPillSelected,
-                    ]}
-                    onPress={() => selectRepeatType(option.value)}>
-                    <Text
-                      style={[
-                        styles.optionPillText,
-                        selected && styles.optionPillTextSelected,
-                      ]}>
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+              <View style={formStyles.boxInput}>
+                <Text style={formStyles.listTitle}>Repeat</Text>
+                {renderPills(
+                  REPEAT_OPTIONS,
+                  values.repeatType,
+                  selectRepeatType,
+                )}
+              </View>
 
-            {values.repeatType === REPEAT_TYPE.WEEKLY && (
-              <>
-                <Text style={styles.sublabel}>{'On days'}</Text>
-                <View style={styles.optionsRow}>
-                  {WEEKDAYS.map(day => {
-                    const selected = values.weeklyDays.includes(day.value);
-                    return (
-                      <TouchableOpacity
-                        key={day.value}
-                        activeOpacity={0.7}
-                        style={[
-                          styles.dayChip,
-                          selected && styles.dayChipSelected,
-                        ]}
-                        onPress={() => toggleWeeklyDay(day.value)}>
-                        <Text
-                          style={[
-                            styles.dayChipText,
-                            selected && styles.dayChipTextSelected,
-                          ]}>
-                          {day.short}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </>
-            )}
-
-            {values.repeatType === REPEAT_TYPE.CUSTOM && (
-              <>
-                <Text style={styles.sublabel}>{'Every'}</Text>
-                <View style={styles.customRow}>
-                  <TextInput
-                    style={styles.customInput}
-                    mode="outlined"
-                    keyboardType="number-pad"
-                    textColor={theme.font}
-                    theme={getInputTheme(errors.repeatInterval)}
-                    outlineColor={
-                      touched.repeatInterval && errors.repeatInterval
-                        ? 'red'
-                        : '#989898'
-                    }
-                    activeOutlineColor={
-                      touched.repeatInterval && errors.repeatInterval
-                        ? 'red'
-                        : theme.borderActiveColor
-                    }
-                    onChangeText={handleChange('repeatInterval')}
-                    onBlur={handleBlur('repeatInterval')}
-                    value={values.repeatInterval}
-                  />
+              {values.repeatType === REPEAT_TYPE.WEEKLY && (
+                <>
+                  <Text style={styles.sublabel}>On days</Text>
                   <View style={styles.optionsRow}>
-                    {CUSTOM_UNIT_OPTIONS.map(option => {
-                      const selected = values.repeatUnit === option.value;
+                    {WEEKDAYS.map(day => {
+                      const selected = values.weeklyDays.includes(day.value);
                       return (
                         <TouchableOpacity
-                          key={option.value}
+                          key={day.value}
                           activeOpacity={0.7}
                           style={[
-                            styles.optionPill,
-                            selected && styles.optionPillSelected,
+                            styles.dayChip,
+                            selected && styles.dayChipSelected,
                           ]}
-                          onPress={() =>
-                            setFieldValue('repeatUnit', option.value)
-                          }>
+                          onPress={() => toggleWeeklyDay(day.value)}>
                           <Text
                             style={[
-                              styles.optionPillText,
-                              selected && styles.optionPillTextSelected,
+                              styles.dayChipText,
+                              selected && styles.dayChipTextSelected,
                             ]}>
-                            {option.label}
+                            {day.short}
                           </Text>
                         </TouchableOpacity>
                       );
                     })}
                   </View>
-                </View>
-                {touched.repeatInterval && errors.repeatInterval && (
-                  <Text style={styles.textConfirm}>
-                    {errors.repeatInterval}
+                </>
+              )}
+
+              {values.repeatType === REPEAT_TYPE.CUSTOM && (
+                <>
+                  <Text style={styles.sublabel}>Every</Text>
+                  <View style={styles.customRow}>
+                    <TextInput
+                      style={styles.customInput}
+                      mode="outlined"
+                      keyboardType="number-pad"
+                      textColor={theme.font}
+                      theme={{colors: {onSurfaceVariant: theme.gray}}}
+                      outlineColor={repeatIntervalError ? 'red' : theme.gray}
+                      activeOutlineColor={
+                        repeatIntervalError ? 'red' : theme.font
+                      }
+                      onChangeText={handleChange('repeatInterval')}
+                      onBlur={handleBlur('repeatInterval')}
+                      value={values.repeatInterval}
+                    />
+                    {renderPills(CUSTOM_UNIT_OPTIONS, values.repeatUnit, unit =>
+                      setFieldValue('repeatUnit', unit),
+                    )}
+                  </View>
+                  {!!repeatIntervalError && (
+                    <Text style={formStyles.textConfirm}>
+                      {repeatIntervalError}
+                    </Text>
+                  )}
+                </>
+              )}
+
+              {recurrenceEndInfo && (
+                <>
+                  <Text style={styles.sublabel}>Next occurrences</Text>
+                  {recurrenceEndInfo.upcoming.map(date => (
+                    <Text key={date} style={formStyles.boxBalance}>
+                      {date}
+                    </Text>
+                  ))}
+                  <Text style={styles.sublabel}>Ends</Text>
+                  <Text style={formStyles.boxBalance}>
+                    {`${recurrenceEndInfo.endDate} (after ${recurrenceEndInfo.count} occurrences)`}
                   </Text>
-                )}
-              </>
-            )}
+                </>
+              )}
 
-            {recurrenceEndInfo && (
-              <>
-                {recurrenceEndInfo.upcoming.length > 0 && (
-                  <>
-                    <Text style={styles.sublabel}>{'Next occurrences'}</Text>
-                    {recurrenceEndInfo.upcoming.map(date => (
-                      <Text key={date} style={styles.boxBalance}>
-                        {date}
-                      </Text>
-                    ))}
-                  </>
-                )}
-                <Text style={styles.sublabel}>{'Ends'}</Text>
-                <Text style={styles.boxBalance}>
-                  {`${recurrenceEndInfo.endDate} (after ${recurrenceEndInfo.count} occurrences)`}
+              <View style={styles.infoBanner}>
+                <Text style={styles.infoBannerText}>
+                  {isRepeating
+                    ? `We'll send you a reminder notification for each occurrence (up to ${MAX_OCCURRENCES}). Payments are not sent automatically — you'll need to confirm and send each one yourself.`
+                    : "We'll send you a reminder notification at the scheduled time. Payments are not sent automatically yet — you'll need to confirm and send it yourself."}
                 </Text>
-              </>
-            )}
-
-            <View style={styles.infoBanner}>
-              <Text style={styles.infoBannerText}>
-                {isRepeating
-                  ? `We'll send you a reminder notification for each occurrence (up to ${MAX_OCCURRENCES}). Payments are not sent automatically — you'll need to confirm and send each one yourself.`
-                  : "We'll send you a reminder notification at the scheduled time. Payments are not sent automatically yet — you'll need to confirm and send it yourself."}
-              </Text>
-            </View>
+              </View>
+            </SendFundsForm>
 
             <TouchableOpacity
-              disabled={isSubmitting}
+              disabled={submitDisabled}
               style={[
                 styles.button,
                 {
-                  backgroundColor: isSubmitting ? theme.gray : theme.background,
+                  backgroundColor: submitDisabled
+                    ? theme.gray
+                    : theme.background,
                 },
               ]}
-              onPress={handleSubmit}>
+              onPress={formik.handleSubmit}>
               {isSubmitting ? (
                 <ActivityIndicator size="large" color="white" />
               ) : (
@@ -698,8 +481,23 @@ const SchedulePayment = ({navigation, route}) => {
               )}
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
+        </TouchableWithoutFeedback>
+      </KeyboardAwareScrollView>
+      <DatePicker
+        visible={showDatePicker}
+        value={scheduledDateValue}
+        minimumDate={new Date()}
+        title="Scheduled date & time"
+        onConfirm={onConfirmScheduledDate}
+        onCancel={() => setShowDatePicker(false)}
+      />
+      <ModalAddressPoisoningWarning
+        visible={!!form.poisonWarning}
+        suspiciousAddress={form.poisonWarning?.suspiciousAddress}
+        matchedAddress={form.poisonWarning?.matchedAddress}
+        onCancel={form.cancelPoisonWarning}
+        onContinue={form.confirmPoisonWarning}
+      />
     </DokSafeAreaView>
   );
 };

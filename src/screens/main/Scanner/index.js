@@ -147,9 +147,11 @@ const Scanner = ({navigation, route}) => {
           },
           pop: true,
         });
-      } else if (page === 'SendFundsMemo') {
+      } else if (typeof page === 'string' && page.endsWith('Memo')) {
+        // '<Screen>Memo' returns the scanned memo to <Screen>
+        // (SendFundsMemo -> SendFunds, SchedulePaymentMemo -> SchedulePayment).
         navigation.navigate({
-          name: 'SendFunds',
+          name: page.slice(0, -'Memo'.length),
           params: {
             memo: data,
           },

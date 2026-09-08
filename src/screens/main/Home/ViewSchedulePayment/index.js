@@ -185,6 +185,19 @@ const ViewSchedulePayment = ({navigation}) => {
             </Text>
           </View>
 
+          {!!item?.memo && (
+            <View style={styles.detailRow}>
+              <IoniconIcon
+                name="document-text-outline"
+                size={14}
+                color={theme.gray}
+              />
+              <Text style={styles.detailText} numberOfLines={1}>
+                {`Memo: ${item.memo}`}
+              </Text>
+            </View>
+          )}
+
           {!!scheduledDate && (
             <View style={styles.detailRow}>
               <IoniconIcon

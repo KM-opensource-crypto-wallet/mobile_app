@@ -8,7 +8,6 @@ import {
 } from 'react';
 import {AppState} from 'react-native';
 import notifee, {EventType} from '@notifee/react-native';
-import BigNumber from 'bignumber.js';
 import {store} from 'redux/store';
 import {MainNavigation} from 'utils/navigation';
 import {showToast} from 'utils/toast';
@@ -30,6 +29,8 @@ import {
 import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import {setRouteStateData} from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
 import {getAsyncStorageData, removeAsyncStorageData} from 'utils/asyncStorage';
+import {getAvailableAmount} from 'hooks/useAvailableAmount';
+import {findCoinForScheduledPayment} from 'utils/scheduledPaymentCoin';
 import {
   SCHEDULED_PAYMENT_NOTIFICATION_TYPE,
   requestLocalNotificationPermission,
@@ -38,15 +39,6 @@ import {
   cancelScheduledPaymentNotifications,
   syncHiddenWalletsScheduledPaymentNotifications as syncHiddenWalletsScheduledPaymentNotificationsImpl,
 } from 'utils/scheduledPaymentNotifications';
-
-// Mirrors the spendable-balance calc SendFunds uses (totalAmount minus the
-// chain's minimum reserve), clamped at zero.
-const getAvailableAmount = coin => {
-  const availableBN = new BigNumber(coin?.totalAmount || '0').minus(
-    new BigNumber(coin?.minimumBalance || '0'),
-  );
-  return availableBN.gt(0) ? availableBN.toFixed() : '0';
-};
 
 // Generic fallback for a notification handler that can't resolve a specific
 // screen (missing/stale data) - always land somewhere real instead of
@@ -147,13 +139,7 @@ export const LocalNotificationProvider = ({children}) => {
       return;
     }
 
-    const coin = wallet.coins?.find(
-      c =>
-        c.isInWallet &&
-        c.chain_name === payment.chain &&
-        c.symbol === payment.asset?.symbol &&
-        (c.contractAddress || '') === (payment.asset?.contractAddress || ''),
-    );
+    const coin = findCoinForScheduledPayment(wallet, payment);
     if (!coin) {
       showToast({
         type: 'errorToast',
@@ -187,6 +173,7 @@ export const LocalNotificationProvider = ({children}) => {
         amount: payment.amount,
         initialAmount: freshCoin?.type !== 'token' ? payment.amount : 0,
         isSendFunds: true,
+        memo: payment.memo || undefined,
       }),
     );
     // Same fee-estimation thunk SendFunds uses — it also carries the
@@ -200,6 +187,7 @@ export const LocalNotificationProvider = ({children}) => {
         amount: validateBigNumberStr(payment.amount),
         contractAddress: freshCoin?.contractAddress,
         balance: getAvailableAmount(freshCoin),
+        memo: payment.memo || undefined,
       }),
     );
     store.dispatch(setExchangeSuccess(false));
