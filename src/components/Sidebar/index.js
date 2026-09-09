@@ -443,14 +443,18 @@ export default function Sidebar({navigation, route}) {
         <Drawer.Screen
           name="ContactUs"
           component={ContactUs}
-          options={({navigation}) => ({
+          options={({navigation: drawerNavigation}) => ({
             headerLeft: () => (
               <TouchableOpacity
                 style={{
                   padding: 11,
                   paddingLeft: isIpad ? 50 : 11,
                 }}
-                onPress={() => navigation.navigate('Home')}>
+                onPress={() =>
+                  route?.params?.canGoBack || route?.params?.params?.canGoBack
+                    ? drawerNavigation.getParent()?.goBack()
+                    : drawerNavigation.navigate('Home')
+                }>
                 <BackIcon
                   width="22"
                   height="18"

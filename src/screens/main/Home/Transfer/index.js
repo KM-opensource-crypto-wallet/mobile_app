@@ -28,6 +28,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 import {
   getTransferData,
   getTransferDataCustomError,
+  getTransferDataCustomErrorCode,
   getTransferDataFeeSuccess,
   getTransferDataLoading,
   getTransferDataSubmitting,
@@ -39,8 +40,12 @@ import {
   isCustomAddressNotSupportedChain,
   isEVMChain,
   isFeesOptionChain,
+  isSponsoredGasChain,
+  getSponsoredGasTokenSymbol,
+  SPONSOR_EMPTY_CODE,
 } from 'dok-wallet-blockchain-networks/helper';
 import useAdvancedFees from 'hooks/useAdvancedFees';
+import SponsoredGasToggle from 'components/SponsoredGasToggle';
 import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
 import Spinner from 'components/Spinner';
 import {currencySymbol} from 'data/currency';
@@ -52,7 +57,10 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import Loading from 'components/Loading';
 import BigNumber from 'bignumber.js';
-import {calculateEstimateFee} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
+import {
+  calculateEstimateFee,
+  setCurrentTransferData,
+} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import ScurvedIcon from 'assets/images/icons/S-curved.svg';
 import {
   selectExchangeAmountFrom,
@@ -381,6 +389,7 @@ const Transfer = ({navigation, route}) => {
   const isLoading = useSelector(getTransferDataLoading);
   const feeSuccess = useSelector(getTransferDataFeeSuccess);
   const customError = useSelector(getTransferDataCustomError);
+  const customErrorCode = useSelector(getTransferDataCustomErrorCode);
   const balance = useSelector(getBalanceForNativeCoin);
   const phrase = useSelector(getCurrentWalletPhrase);
   // Hedera: the recipient's ledger account id; null means the transfer will
@@ -511,6 +520,9 @@ const Transfer = ({navigation, route}) => {
   transferContextRef.current = transferContext;
 
   const quoteExpiresAt = useMemo(() => {
+    if (transferData?.payGasWithToken) {
+      return transferData?.sponsoredQuote?.expiresAt || null;
+    }
     // Quote TTLs only exist for exchange flows. Gating on the screen flag
     // keeps a leftover quote window from a flow that skipped the entry
     // reset from ever blocking a plain send with "Quote expired".
@@ -522,6 +534,8 @@ const Transfer = ({navigation, route}) => {
     return created && ttl ? created + ttl * 1000 : null;
   }, [
     flags.isExchangeScreen,
+    transferData?.payGasWithToken,
+    transferData?.sponsoredQuote?.expiresAt,
     transferData?.quoteCreatedAt,
     transferData?.quoteTtlSeconds,
   ]);
@@ -568,6 +582,119 @@ const Transfer = ({navigation, route}) => {
     isCustomFeesValid,
   } = useAdvancedFees({chainName, convertedChainName, isPauseCalculateFees});
   const advancedOptionsSheetRef = useRef(null);
+
+  const sponsoredGasCoins = useMemo(() => {
+    if (!isSponsoredGasChain(chainName)) {
+      return [];
+    }
+    const items = isBatchTransaction
+      ? transferData?.transactionsData?.map(item => item?.coinInfo)
+      : [transferData?.currentCoin];
+    if (!items?.length || items.some(item => !item?.contractAddress)) {
+      return [];
+    }
+    return (currentWallet?.coins ?? [])
+      .filter(
+        coin =>
+          coin?.chain_name === chainName &&
+          Number(coin?.totalAmount) > 0 &&
+          getSponsoredGasTokenSymbol(chainName, coin?.contractAddress),
+      )
+      .map(coin => ({
+        symbol: getSponsoredGasTokenSymbol(chainName, coin?.contractAddress),
+        contractAddress: coin?.contractAddress,
+      }));
+  }, [
+    chainName,
+    isBatchTransaction,
+    transferData?.transactionsData,
+    transferData?.currentCoin,
+    currentWallet?.coins,
+  ]);
+
+  const payGasWithToken = !!transferData?.payGasWithToken;
+  const payGasWithTokenRef = useRef(payGasWithToken);
+  payGasWithTokenRef.current = payGasWithToken;
+  const activeGasToken = useMemo(
+    () =>
+      sponsoredGasCoins.find(
+        item => item.symbol === transferData?.gasTokenSymbol,
+      ) || sponsoredGasCoins[0],
+    [sponsoredGasCoins, transferData?.gasTokenSymbol],
+  );
+
+  const requoteSponsoredGas = useCallback(() => {
+    setIsFetchingFeesAgain(true);
+    isFetchingRef.current = true;
+    dispatch(
+      calculateEstimateFee(
+        buildEstimateFeePayload(transferContextRef.current, flags, {
+          feesType: selectedFeesTypeRef.current,
+        }),
+      ),
+    )
+      .unwrap()
+      .then(resp => {
+        setIsFetchingFeesAgain(false);
+        isFetchingRef.current = false;
+        setEstimateStatus(resp ? 'success' : 'failed');
+      })
+      .catch(() => {
+        setIsFetchingFeesAgain(false);
+        isFetchingRef.current = false;
+        setEstimateStatus('failed');
+      });
+  }, [dispatch, flags, selectedFeesTypeRef]);
+
+  const onToggleSponsoredGas = useCallback(() => {
+    const next = !payGasWithToken;
+    if (next) {
+      isPauseCalculateFees.current = false;
+    }
+    dispatch(
+      setCurrentTransferData({
+        payGasWithToken: next,
+        gasTokenSymbol: next ? activeGasToken?.symbol : null,
+        gasTokenContractAddress: next ? activeGasToken?.contractAddress : null,
+        sponsoredQuote: null,
+      }),
+    );
+    requoteSponsoredGas();
+  }, [dispatch, payGasWithToken, activeGasToken, requoteSponsoredGas]);
+
+  const onSelectGasToken = useCallback(
+    symbol => {
+      const picked = sponsoredGasCoins.find(item => item.symbol === symbol);
+      if (!picked) {
+        return;
+      }
+      dispatch(
+        setCurrentTransferData({
+          gasTokenSymbol: picked.symbol,
+          gasTokenContractAddress: picked.contractAddress,
+          sponsoredQuote: null,
+        }),
+      );
+      requoteSponsoredGas();
+    },
+    [dispatch, sponsoredGasCoins, requoteSponsoredGas],
+  );
+
+  const isFetchingSponsoredQuote =
+    payGasWithToken && !transferData?.sponsoredQuote;
+
+  const sponsoredFeeSymbol =
+    payGasWithToken && activeGasToken
+      ? activeGasToken.symbol
+      : transferData?.currentCoin?.chain_symbol;
+
+  const sponsoredGasToggle = activeGasToken ? (
+    <SponsoredGasToggle
+      tokenSymbol={activeGasToken.symbol}
+      checked={payGasWithToken}
+      onToggle={onToggleSponsoredGas}
+    />
+  ) : null;
 
   const nativeBalanceForBatchTransactions = useMemo(() => {
     if (isBatchTransaction && transferData?.transactionsData?.length) {
@@ -631,7 +758,7 @@ const Transfer = ({navigation, route}) => {
         if (
           !isFetchingRef.current &&
           !isPauseCalculateFees.current &&
-          !isQuoteExpiredRef.current
+          (!isQuoteExpiredRef.current || payGasWithTokenRef.current)
         ) {
           setIsFetchingFeesAgain(true);
 
@@ -761,21 +888,27 @@ const Transfer = ({navigation, route}) => {
     setShowConfirmModal(true);
     isPauseCalculateFees.current = true;
   };
-  const isDisabled = isBalanceNotAvailable(
-    transferData?.selectedUTXOsValue || balance,
-    transferData?.transactionFee,
-    isExchangeScreen && selectedFromAsset?.type === 'coin'
-      ? amountFrom
-      : isBatchTransaction
-      ? nativeBalanceForBatchTransactions
-      : null,
-  );
+  const isDisabled = payGasWithToken
+    ? isBalanceNotAvailable(
+        transferData?.currentCoin?.totalAmount,
+        transferData?.transactionFee,
+        isSendFundScreen ? transferData?.amount : null,
+      )
+    : isBalanceNotAvailable(
+        transferData?.selectedUTXOsValue || balance,
+        transferData?.transactionFee,
+        isExchangeScreen && selectedFromAsset?.type === 'coin'
+          ? amountFrom
+          : isBatchTransaction
+          ? nativeBalanceForBatchTransactions
+          : null,
+      );
 
   const feeSummaryProps = {
     styles,
     isRefreshing: isFetchingFeesAgain,
     fee: transferData?.transactionFee,
-    feeSymbol: transferData?.currentCoin?.chain_symbol,
+    feeSymbol: sponsoredFeeSymbol,
     isEip1559,
     estimatedFee: transferData?.estimatedFee,
   };
@@ -827,6 +960,7 @@ const Transfer = ({navigation, route}) => {
         <FeeSummaryBox
           {...feeSummaryProps}
           maxTotalDisplay={`${currencySymbol[localCurrency]}${totalValue || 0}`}
+          children={sponsoredGasToggle}
         />
       </View>
     );
@@ -912,18 +1046,18 @@ const Transfer = ({navigation, route}) => {
         <FeeSummaryBox
           {...feeSummaryProps}
           feeSymbol={selectedFromAsset?.chain_symbol}
-          maxTotalDisplay={`${currencySymbol[localCurrency]}${
-            totalValue || 0
-          }`}>
-          {!!selectedExchangeChain?.providerName && (
-            <InfoRow
-              styles={styles}
-              label={'Exchange Provider'}
-              value={selectedExchangeChain?.providerName}
-              valueStyle={[styles.boxBalance, {textTransform: 'capitalize'}]}
-            />
-          )}
-        </FeeSummaryBox>
+          maxTotalDisplay={`${currencySymbol[localCurrency]}${totalValue || 0}`}
+          children={
+            !!selectedExchangeChain?.providerName && (
+              <InfoRow
+                styles={styles}
+                label={'Exchange Provider'}
+                value={selectedExchangeChain?.providerName}
+                valueStyle={[styles.boxBalance, {textTransform: 'capitalize'}]}
+              />
+            )
+          }
+        />
       </View>
     );
   };
@@ -1085,7 +1219,7 @@ const Transfer = ({navigation, route}) => {
             localCurrency={localCurrency}
           />
         ))}
-        <FeeSummaryBox {...feeSummaryProps} />
+        <FeeSummaryBox {...feeSummaryProps} children={sponsoredGasToggle} />
       </View>
     );
   };
@@ -1125,63 +1259,86 @@ const Transfer = ({navigation, route}) => {
                 ? renderBatchTransactionUI()
                 : renderVotingUI()}
               {/* Advanced Options Card */}
-              {isFeesOptionChain(convertedChainName) &&
-                !!feesOptions?.length && (
-                  <TouchableOpacity
-                    style={styles.advancedOptionsCard}
-                    onPress={openAdvancedOptionsSheet}
-                    activeOpacity={0.7}>
-                    <View style={styles.advancedOptionsCardLeft}>
-                      <MaterialCommunityIcons
-                        name="tune-vertical"
-                        size={22}
-                        color={theme.background}
-                      />
-                      <View style={styles.advancedOptionsCardContent}>
-                        <Text style={styles.advancedOptionsCardTitle}>
-                          Advanced Options
-                        </Text>
-                        <View style={styles.advancedOptionsCardDetails}>
-                          {!!feesOptions?.length && (
-                            <View style={styles.advancedOptionsCardRow}>
-                              <MaterialCommunityIcons
-                                name="gas-station"
-                                size={14}
-                                color={theme.gray}
-                              />
-                              <Text style={styles.advancedOptionsCardValue}>
-                                {selectedFeesLabel}
-                              </Text>
-                            </View>
-                          )}
-                          {isEVMChain(convertedChainName) && (
-                            <View style={styles.advancedOptionsCardRow}>
-                              <MaterialCommunityIcons
-                                name="counter"
-                                size={14}
-                                color={theme.gray}
-                              />
-                              <Text style={styles.advancedOptionsCardValue}>
-                                Nonce:{' '}
-                                {customNonce || transferData?.nonce || '0'}
-                              </Text>
-                            </View>
-                          )}
-                        </View>
+              {((isFeesOptionChain(convertedChainName) &&
+                !!feesOptions?.length &&
+                !payGasWithToken) ||
+                (payGasWithToken && sponsoredGasCoins.length > 1)) && (
+                <TouchableOpacity
+                  style={styles.advancedOptionsCard}
+                  onPress={openAdvancedOptionsSheet}
+                  activeOpacity={0.7}>
+                  <View style={styles.advancedOptionsCardLeft}>
+                    <MaterialCommunityIcons
+                      name="tune-vertical"
+                      size={22}
+                      color={theme.background}
+                    />
+                    <View style={styles.advancedOptionsCardContent}>
+                      <Text style={styles.advancedOptionsCardTitle}>
+                        Advanced Options
+                      </Text>
+                      <View style={styles.advancedOptionsCardDetails}>
+                        {!!feesOptions?.length && !payGasWithToken && (
+                          <View style={styles.advancedOptionsCardRow}>
+                            <MaterialCommunityIcons
+                              name="gas-station"
+                              size={14}
+                              color={theme.gray}
+                            />
+                            <Text style={styles.advancedOptionsCardValue}>
+                              {selectedFeesLabel}
+                            </Text>
+                          </View>
+                        )}
+                        {payGasWithToken && !!activeGasToken && (
+                          <View style={styles.advancedOptionsCardRow}>
+                            <MaterialCommunityIcons
+                              name="cash"
+                              size={14}
+                              color={theme.gray}
+                            />
+                            <Text style={styles.advancedOptionsCardValue}>
+                              {`Gas paid in ${activeGasToken.symbol}`}
+                            </Text>
+                          </View>
+                        )}
+                        {isEVMChain(convertedChainName) && !payGasWithToken && (
+                          <View style={styles.advancedOptionsCardRow}>
+                            <MaterialCommunityIcons
+                              name="counter"
+                              size={14}
+                              color={theme.gray}
+                            />
+                            <Text style={styles.advancedOptionsCardValue}>
+                              Nonce: {customNonce || transferData?.nonce || '0'}
+                            </Text>
+                          </View>
+                        )}
                       </View>
                     </View>
-                    <ChevronIcon width={20} height={20} fill={theme.gray} />
-                  </TouchableOpacity>
-                )}
+                  </View>
+                  <ChevronIcon width={20} height={20} fill={theme.gray} />
+                </TouchableOpacity>
+              )}
               {isDisabled && (
-                <Text
-                  style={
-                    styles.errorText
-                  }>{`You don't have enough balance for make transaction you require ${transferData?.transactionFee} ${transferData?.currentCoin?.chain_symbol} to complete the transaction `}</Text>
+                <Text style={styles.errorText}>
+                  {payGasWithToken
+                    ? `Not enough ${sponsoredFeeSymbol}. This send needs the amount plus a ${transferData?.transactionFee} ${sponsoredFeeSymbol} network fee.`
+                    : `You don't have enough balance for make transaction you require ${transferData?.transactionFee} ${transferData?.currentCoin?.chain_symbol} to complete the transaction `}
+                </Text>
               )}
               {isQuoteExpired && (
                 <Text style={styles.errorText}>
-                  {'Quote expired — go back and refresh the quote.'}
+                  {payGasWithToken
+                    ? 'Gas quote expired — fetching a new one.'
+                    : 'Quote expired — go back and refresh the quote.'}
+                </Text>
+              )}
+              {!isCustomFeesValid && (
+                <Text style={styles.errorText}>
+                  {
+                    'Priority fee cannot be higher than max fee — fix it in Advanced Options.'
+                  }
                 </Text>
               )}
               {!isCustomFeesValid && (
@@ -1196,7 +1353,8 @@ const Transfer = ({navigation, route}) => {
                   isDisabled ||
                   isFetchingFeesAgain ||
                   isQuoteExpired ||
-                  !isCustomFeesValid
+                  !isCustomFeesValid ||
+                  isFetchingSponsoredQuote
                 }
                 style={{
                   ...styles.button,
@@ -1204,7 +1362,8 @@ const Transfer = ({navigation, route}) => {
                     isDisabled ||
                     isFetchingFeesAgain ||
                     isQuoteExpired ||
-                    !isCustomFeesValid
+                    !isCustomFeesValid ||
+                    isFetchingSponsoredQuote
                       ? '#708090'
                       : theme.background,
                 }}
@@ -1221,6 +1380,23 @@ const Transfer = ({navigation, route}) => {
               ? customError?.toString()
               : 'Something went wrong in generating transaction fees'}
           </Text>
+          {customErrorCode === SPONSOR_EMPTY_CODE && (
+            <>
+              <Text style={styles.sponsorEmptyHint}>
+                {`You can still send this by paying the fee yourself — go back and turn off "Pay gas fees with ${sponsoredFeeSymbol}". Or contact us and we will top it up.`}
+              </Text>
+              <TouchableOpacity
+                style={[styles.button, styles.sponsorEmptyButton]}
+                onPress={() =>
+                  navigation.push('Sidebar', {
+                    screen: 'ContactUs',
+                    params: {canGoBack: true},
+                  })
+                }>
+                <Text style={styles.buttonTitle}>Contact Us</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       )}
       <ModalConfirmTransaction
@@ -1240,6 +1416,10 @@ const Transfer = ({navigation, route}) => {
       <AdvancedFeesSheet
         ref={advancedOptionsSheetRef}
         {...advancedFeesSheetProps}
+        payGasWithToken={payGasWithToken}
+        gasTokenCandidates={sponsoredGasCoins}
+        selectedGasTokenSymbol={activeGasToken?.symbol}
+        onSelectGasToken={onSelectGasToken}
       />
     </DokSafeAreaView>
   );

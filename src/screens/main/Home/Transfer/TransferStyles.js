@@ -24,6 +24,18 @@ const myStyles = theme =>
       justifyContent: 'center',
       paddingHorizontal: 20,
     },
+    sponsorEmptyHint: {
+      color: theme.gray,
+      fontSize: 14,
+      lineHeight: 20,
+      fontFamily: 'Roboto-Regular',
+      textAlign: 'center',
+      marginTop: 12,
+    },
+    sponsorEmptyButton: {
+      backgroundColor: theme.background,
+      alignSelf: 'stretch',
+    },
     amountTitle: {
       color: theme.font,
       fontSize: 32,

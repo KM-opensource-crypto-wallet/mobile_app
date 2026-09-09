@@ -95,20 +95,20 @@ const TransactionDetails = ({route, navigation}) => {
   const transaction = recentTx
     ? {
         ...initialTransaction,
-        from: recentTx.from,
-        to: recentTx.to,
-        amount: recentTx.amount,
+        from: recentTx.from || initialTransaction.from,
+        to: recentTx.to || initialTransaction.to,
+        amount: recentTx.amount || initialTransaction.amount,
         date: recentTx.blockTimestamp
           ? new Date(parseInt(recentTx.blockTimestamp, 16) * 1000).toISOString()
           : initialTransaction.date,
         status: recentTx.status,
         link: recentTx.link,
         url: recentTx.url || initialTransaction.url,
-        totalCourse: recentTx.totalCourse,
+        totalCourse: recentTx.totalCourse || initialTransaction.totalCourse,
         blockNumber: recentTx.blockNumber,
         confirmations: recentTx.confirmations,
         contractAddress:
-          recentTx.contractAddress ?? initialTransaction.contractAddress,
+          recentTx.contractAddress || initialTransaction.contractAddress,
         ...(recentTx.transactionType != null &&
           initialTransaction.transactionType != null && {
             transactionType: recentTx.transactionType,
@@ -134,6 +134,7 @@ const TransactionDetails = ({route, navigation}) => {
         fetchTransactionByHash({
           txHash,
           currentCoin: currentCoinRef.current,
+          toAddress: initialTransaction?.to,
         }),
       ).unwrap();
     } catch (e) {
@@ -141,7 +142,7 @@ const TransactionDetails = ({route, navigation}) => {
     } finally {
       setRefreshing(false);
     }
-  }, [dispatch, txHash]);
+  }, [dispatch, txHash, initialTransaction?.to]);
 
   useEffect(() => {
     fetchTransaction();
