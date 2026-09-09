@@ -32,7 +32,7 @@ import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/wal
 import {isNoUpdateAvailable} from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
 import {LOGO, LOGO_DARK, WL_APP_NAME} from 'utils/wlData';
 import ModalInfo from 'components/ModalInfo';
-import {Constants} from 'utils/common';
+import {APP_VERSION, Constants} from 'utils/common';
 import {isWalletReset} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {
   resetAttempts,
@@ -263,6 +263,7 @@ const LoginComponent = ({onClose, visible}) => {
               </View>
             )}
           </View>
+          <Text style={styles.version}>{`Version ${APP_VERSION}`}</Text>
         </View>
       </TouchableWithoutFeedback>
       <ModalInfo

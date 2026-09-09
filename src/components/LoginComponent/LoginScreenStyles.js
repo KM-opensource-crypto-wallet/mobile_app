@@ -93,6 +93,14 @@ const myStyles = theme =>
       width: 230,
       textAlign: 'center',
     },
+    version: {
+      marginTop: 'auto',
+      paddingVertical: 12,
+      color: theme.gray,
+      fontSize: 12,
+      fontFamily: 'Roboto-Regular',
+      textAlign: 'center',
+    },
   });
 
 export default myStyles;
