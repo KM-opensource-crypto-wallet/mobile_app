@@ -10,10 +10,11 @@ const MAX_DEPTH = 5;
 // `console.error('...', JSON.stringify(axiosError))` sites in the submodule.
 const JSON_SENSITIVE_PAIR_RE =
   /"(phrase|mnemonic|seed|seedPhrase|privateKey|private_key|privKey|extendedPrivateKey|xprv|wif|secret|password|passwd|pin|salt|authorization|accessToken|access_token|refreshToken)"\s*:\s*"(?:[^"\\]|\\.)*"/gi;
-// BIP32 extended private keys (mainnet/testnet, all script prefixes).
-const XPRV_RE = /\b[xyzt]prv[1-9A-HJ-NP-Za-km-z]{100,112}\b/g;
-// Bitcoin WIF (compressed and uncompressed).
-const WIF_RE = /\b[5KL][1-9A-HJ-NP-Za-km-z]{50,51}\b/g;
+// BIP32 / SLIP-132 extended private keys: mainnet xprv/yprv/zprv, testnet
+// tprv/uprv/vprv, plus the multisig Yprv/Zprv/Uprv/Vprv variants.
+const XPRV_RE = /\b[xyztuvYZUV]prv[1-9A-HJ-NP-Za-km-z]{100,112}\b/g;
+// Bitcoin WIF, compressed and uncompressed: mainnet 5/K/L, testnet 9/c.
+const WIF_RE = /\b[5KL9c][1-9A-HJ-NP-Za-km-z]{50,51}\b/g;
 // 32-byte hex: EVM/Solana-style private keys. Also matches tx hashes, which is
 // why `tx_hash` is allow-listed as a structured attribute instead.
 const HEX64_RE = /\b(?:0x)?[0-9a-fA-F]{64}\b/g;

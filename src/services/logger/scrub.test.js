@@ -36,6 +36,23 @@ describe('scrubString', () => {
     expect(scrubString(xprv)).toBe('[REDACTED_KEY]');
   });
 
+  it.each(['x', 'y', 'z', 't', 'u', 'v', 'Y', 'Z', 'U', 'V'])(
+    'redacts SLIP-132 %sprv extended private keys',
+    prefix => {
+      const key = `${prefix}prv` + 'A'.repeat(107);
+      expect(scrubString(`key ${key} end`)).toBe('key [REDACTED_KEY] end');
+    },
+  );
+
+  it.each([
+    ['uncompressed testnet', '9' + 'A'.repeat(50)],
+    ['compressed testnet', 'c' + 'A'.repeat(51)],
+    ['uncompressed mainnet', '5' + 'A'.repeat(50)],
+    ['compressed mainnet', 'K' + 'A'.repeat(51)],
+  ])('redacts %s WIF keys', (_label, key) => {
+    expect(scrubString(`wif ${key}`)).toBe('wif [REDACTED_KEY]');
+  });
+
   it('redacts sensitive JSON key/value pairs inside stringified objects', () => {
     const json = JSON.stringify({
       privateKey: 'secret-value',

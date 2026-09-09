@@ -13,7 +13,6 @@ import 'react-native-url-polyfill/auto';
 import '@ethersproject/shims';
 import './shim';
 import {AppRegistry, Platform} from 'react-native';
-import App from './App';
 import {name as coinswallet} from './app.json';
 import * as Sentry from '@sentry/react-native';
 import {initSentry} from 'services/logger';
@@ -36,6 +35,12 @@ if (Platform.OS !== 'web' && !('structuredClone' in global)) {
 // capture and the global error handler cover startup. `enabled` inside
 // initSentry decides whether events actually leave the device.
 initSentry();
+
+// Loaded after initSentry() on purpose: a static `import App` is hoisted and
+// would evaluate the whole app module graph before Sentry is installed, so a
+// startup evaluation failure (bad polyfill, throwing top-level code) would
+// never be reported.
+const App = require('./App').default;
 
 AppRegistry.registerComponent(coinswallet, () => Sentry.wrap(App));
 
