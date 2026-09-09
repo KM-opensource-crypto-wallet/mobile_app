@@ -53,6 +53,31 @@ const ATTEST_WORKER_URL =
 const ANDROID_PROJECT_NUMBER =
   process.env.DOK_ANDROID_PLAY_INTEGRITY_PROJECT_NUMBER ?? '';
 
+// ─── Diagnostics ──────────────────────────────────────────────────────────────
+//
+// Raw console on purpose: `logger.*` only prints when __DEV__, so in a release
+// build it would never reach adb logcat, and its Sentry copy is scrubbed
+// (64-hex strings, keys ending in "hash", header objects). These lines are for
+// internal test builds and deliberately include tokens, hashes and env values.
+const ilog = (...args) => console.log('[integrity]', ...args);
+const safeJson = value => {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
+// Native module rejections carry the real Play Integrity / Keystore error in
+// `userInfo`; `message` alone is just the wrapper code (REQUEST_TOKEN_FAILED).
+const describeError = err => {
+  if (!err) {
+    return String(err);
+  }
+  const head = [err?.code, err?.message].filter(Boolean).join(' ');
+  const info = err?.userInfo ? ` userInfo=${safeJson(err.userInfo)}` : '';
+  return `${head || String(err)}${info}`;
+};
+
 // ─── Module-level state ───────────────────────────────────────────────────────
 
 let requestInterceptorId = null;
@@ -122,10 +147,12 @@ const createRequestHash = requestConfig => {
       ? requestConfig.data
       : JSON.stringify(requestConfig.data)
     : '';
-  return crypto
+  const hash = crypto
     .createHash('sha256')
     .update(`${method}\n${path}\n${body}`)
     .digest('hex');
+  ilog(`requestHash ${method} ${path} bodyLen=${body.length} hash=${hash}`);
+  return hash;
 };
 
 // ─── iOS: hardware key lifecycle ──────────────────────────────────────────────
@@ -358,6 +385,7 @@ const registerAndroidDevice = async () => {
   }
 
   // 1. Request a server-side challenge
+  ilog(`kimlwallet register: GET ${ATTEST_WORKER_URL}/attest/challenge`);
   const challengeResp = await fetch(`${ATTEST_WORKER_URL}/attest/challenge`, {
     method: 'GET',
     headers: {'x-app-name': appName},
@@ -368,6 +396,11 @@ const registerAndroidDevice = async () => {
   }
 
   const challengeJson = await challengeResp.json();
+  ilog(
+    `kimlwallet register: challenge status=${
+      challengeResp.status
+    } body=${safeJson(challengeJson)}`,
+  );
   const challengeId = challengeJson.challengeId;
   const challenge = challengeJson.challenge;
 
@@ -389,9 +422,12 @@ const registerAndroidDevice = async () => {
     ));
   } catch (nativeErr) {
     throw new Error(
-      `AttestationModule.register failed: ${nativeErr?.message ?? nativeErr}`,
+      `AttestationModule.register failed: ${describeError(nativeErr)}`,
     );
   }
+  ilog(
+    `kimlwallet register: keyId=${keyId} apkHash=${apkHash} certChainLen=${certChain?.length} publicKeyLen=${publicKey?.length}`,
+  );
 
   // 3. Sign "challenge:apkHash" with the Keystore-backed private key.
   // Android SHA256withECDSA applies SHA-256 internally — the CF Worker must
@@ -401,10 +437,11 @@ const registerAndroidDevice = async () => {
   try {
     attestation = await AttestationModule.sign(dataToSign);
   } catch (signErr) {
-    throw new Error(
-      `AttestationModule.sign failed: ${signErr?.message ?? signErr}`,
-    );
+    throw new Error(`AttestationModule.sign failed: ${describeError(signErr)}`);
   }
+  ilog(
+    `kimlwallet register: signed "${dataToSign}" sigLen=${attestation?.length}`,
+  );
 
   // 4. Register with CF Worker — Worker verifies ECDSA sig, APK hash, and cert chain
   const registerResp = await fetch(`${ATTEST_WORKER_URL}/attest/register`, {
@@ -424,19 +461,29 @@ const registerAndroidDevice = async () => {
     }),
   });
 
+  const registerText = await registerResp.text();
+  ilog(
+    `kimlwallet register: POST /attest/register status=${registerResp.status} body=${registerText}`,
+  );
+  let registerJson = null;
+  try {
+    registerJson = JSON.parse(registerText);
+  } catch {
+    // non-JSON body; handled below
+  }
+
   if (!registerResp.ok) {
-    let detail = '';
-    try {
-      const err = await registerResp.json();
-      detail = err?.detail ?? err?.error ?? '';
-    } catch {
-      // ignore parse error
-    }
+    const detail = registerJson?.detail ?? registerJson?.error ?? '';
     throw new Error(`Registration failed (${registerResp.status}): ${detail}`);
   }
 
   // 5. Persist server-assigned key ID (fingerprint of publicKey) and registration flag
-  const {keyId: deviceKeyId} = await registerResp.json();
+  const deviceKeyId = registerJson?.keyId;
+  if (typeof deviceKeyId !== 'string' || !deviceKeyId) {
+    throw new Error(
+      `Registration response missing 'keyId' — got: ${registerText}`,
+    );
+  }
   await setStorageValue(INTEGRITY_STORAGE_KEYS.androidKeyId, deviceKeyId);
   await setStorageValue(INTEGRITY_STORAGE_KEYS.androidRegistered, 'true');
 
@@ -488,8 +535,8 @@ const ensureKimlwalletAndroidRegistered = async () => {
     .catch(err => {
       androidRegistrationPermanentlyFailed = true;
       console.error(
-        '[integrity] ensureKimlwalletAndroidRegistered: registration failed:',
-        err?.message,
+        '[integrity] ensureKimlwalletAndroidRegistered: registration failed, marked permanent for this session:',
+        describeError(err),
       );
       throw err;
     })
@@ -510,16 +557,30 @@ const prepareAndroidIntegrity = async () => {
 
   const isAvailable = await isPlayServicesAvailable();
   if (!isAvailable) {
+    console.warn(
+      '[integrity] Play Services unavailable — no Android proof will be attached',
+    );
     return false;
   }
 
   if (!androidPreparePromise) {
-    androidPreparePromise = prepareIntegrityToken(ANDROID_PROJECT_NUMBER).catch(
-      err => {
+    const startedAt = Date.now();
+    ilog(`prepareIntegrityToken start projectNumber=${ANDROID_PROJECT_NUMBER}`);
+    androidPreparePromise = prepareIntegrityToken(ANDROID_PROJECT_NUMBER)
+      .then(result => {
+        ilog(`prepareIntegrityToken ok in ${Date.now() - startedAt}ms`);
+        return result;
+      })
+      .catch(err => {
+        console.warn(
+          `[integrity] prepareIntegrityToken failed after ${
+            Date.now() - startedAt
+          }ms:`,
+          describeError(err),
+        );
         androidPreparePromise = null;
         throw err;
-      },
-    );
+      });
   }
 
   await androidPreparePromise;
@@ -536,8 +597,8 @@ const createKimlwalletAndroidHeaders = async requestConfig => {
     keyId = await ensureKimlwalletAndroidRegistered();
   } catch (err) {
     console.warn(
-      '[integrity] kimlwallet-android registration failed:',
-      err?.message,
+      '[integrity] kimlwallet-android registration failed — request goes out without proof:',
+      describeError(err),
     );
     return {};
   }
@@ -550,9 +611,13 @@ const createKimlwalletAndroidHeaders = async requestConfig => {
   try {
     sig = await AttestationModule.sign(`${requestHash}:${nonce}:${ts}`);
   } catch (err) {
-    console.warn('[integrity] kimlwallet-android sign failed:', err?.message);
+    console.warn(
+      '[integrity] kimlwallet-android sign failed — request goes out without proof:',
+      describeError(err),
+    );
     return {};
   }
+  ilog(`kimlwallet sign ok keyId=${keyId} nonce=${nonce} ts=${ts}`);
 
   return {
     [INTEGRITY_HEADERS.appName]: appName,
@@ -575,27 +640,47 @@ const createAndroidIntegrityHeaders = async requestConfig => {
   try {
     isReady = await prepareAndroidIntegrity();
   } catch (err) {
-    console.warn('[integrity] Android prepare failed:', err?.message);
+    console.warn(
+      '[integrity] Android prepare failed — request goes out without proof:',
+      describeError(err),
+    );
     return {};
   }
   if (!isReady) {
+    console.warn(
+      '[integrity] Android integrity not ready — request goes out without proof',
+    );
     return {};
   }
 
   const requestHash = createRequestHash(requestConfig);
   let integrityToken;
+  const mintStartedAt = Date.now();
   try {
     integrityToken = await requestIntegrityToken(requestHash);
   } catch (err) {
-    console.warn('[integrity] Android token request failed:', err?.message);
+    console.warn(
+      `[integrity] Android token request failed after ${
+        Date.now() - mintStartedAt
+      }ms — request goes out without proof:`,
+      describeError(err),
+    );
     // Reset prepare promise so the next request re-prepares from scratch
     androidPreparePromise = null;
     return {};
   }
 
   if (!integrityToken) {
+    console.warn(
+      '[integrity] Android token request returned an empty token — request goes out without proof',
+    );
     return {};
   }
+  ilog(
+    `Android token minted in ${Date.now() - mintStartedAt}ms len=${
+      integrityToken.length
+    } token=${integrityToken}`,
+  );
 
   return {
     [INTEGRITY_HEADERS.appName]: appName,
@@ -674,15 +759,45 @@ export const setupDokApiIntegrity = dokApi => {
       if (Object.keys(headers).length) {
         Object.assign(requestConfig.headers, headers);
       }
+      ilog(
+        `request ${String(requestConfig.method || 'get').toUpperCase()} ${
+          requestConfig.url
+        } appName=${getAppName()} proof=${!!headers[
+          INTEGRITY_HEADERS.proof
+        ]} keyId=${!!headers[
+          INTEGRITY_HEADERS.keyId
+        ]} retry=${!!requestConfig._integrityRetried} attached=[${Object.keys(
+          headers,
+        ).join(', ')}]`,
+      );
       return requestConfig;
     },
     error => Promise.reject(error),
   );
 
   responseInterceptorId = dokApi.interceptors.response.use(
-    response => response,
+    response => {
+      ilog(
+        `response ${String(response?.config?.method || 'get').toUpperCase()} ${
+          response?.config?.url
+        } status=${response?.status} retry=${!!response?.config
+          ?._integrityRetried}`,
+      );
+      return response;
+    },
     async error => {
-      if (isIntegrityRejection(error) && !error.config?._integrityRetried) {
+      const rejected = isIntegrityRejection(error);
+      console.warn(
+        `[integrity] response error ${String(
+          error?.config?.method || 'get',
+        ).toUpperCase()} ${error?.config?.url} status=${
+          error?.response?.status ?? 'none'
+        } code=${
+          error?.code ?? ''
+        } integrityRejection=${rejected} retried=${!!error?.config
+          ?._integrityRetried} body=${safeJson(error?.response?.data)}`,
+      );
+      if (rejected && !error.config?._integrityRetried) {
         if (Platform.OS === 'ios') {
           const errorCode = error?.response?.data?.code;
 
@@ -745,6 +860,7 @@ export const setupDokApiIntegrity = dokApi => {
         // Retry once. The request interceptor calls ensureIOSRegistered() which
         // joins iosRegistrationPromise (set above) and waits for the new keyId.
         error.config._integrityRetried = true;
+        ilog('retrying request once after integrity rejection');
         return dokApi.request(error.config);
       }
 
@@ -758,25 +874,49 @@ export const setupDokApiIntegrity = dokApi => {
 // iOS: fully completes device registration (challenge → attest → register) before resolving,
 // so the integrityReady gate in MainApp only opens after the handshake is done.
 const _doInitialize = async () => {
+  const startedAt = Date.now();
+  ilog(
+    `init platform=${Platform.OS} appName=${getAppName()} dev=${String(
+      typeof __DEV__ !== 'undefined' && __DEV__,
+    )} projectNumber=${ANDROID_PROJECT_NUMBER || '<missing>'} attestWorkerUrl=${
+      ATTEST_WORKER_URL || '<missing>'
+    } dokApiBaseUrl=${config.DOK_WALLET_BASE_URL || '<missing>'}`,
+  );
+  try {
+    await _doInitializePlatform();
+    ilog(`init done in ${Date.now() - startedAt}ms`);
+  } catch (err) {
+    console.error(
+      `[integrity] init threw after ${Date.now() - startedAt}ms:`,
+      describeError(err),
+    );
+    throw err;
+  }
+};
+
+const _doInitializePlatform = async () => {
   if (Platform.OS === 'android') {
     // kimlwallet-android: sideloaded — run one-time Keystore registration
     if (getAppName() === 'kimlwallet-android') {
+      ilog('init branch: kimlwallet-android Keystore registration');
       try {
         await ensureKimlwalletAndroidRegistered();
       } catch (error) {
         console.error(
-          '[integrity] Failed to register kimlwallet-android device',
-          error,
+          '[integrity] Failed to register kimlwallet-android device:',
+          describeError(error),
         );
       }
       return;
     }
+    ilog('init branch: Play Integrity warm-up');
     try {
-      await prepareAndroidIntegrity();
+      const ready = await prepareAndroidIntegrity();
+      ilog(`init Play Integrity ready=${ready}`);
     } catch (error) {
       console.error(
-        '[integrity] Failed to warm Android integrity token provider',
-        error,
+        '[integrity] Failed to warm Android integrity token provider:',
+        describeError(error),
       );
     }
     return;

@@ -215,7 +215,18 @@ export const setUserContext = masterClientId => {
 };
 
 // One structured log per failed backend call: method, path, status. No body,
-// no headers, no query string.
+// no header values, no query string. Integrity header *presence* is recorded
+// as booleans so a rejected request can be told apart from a missing proof.
+const headerValue = (headers, name) => {
+  if (!headers) {
+    return undefined;
+  }
+  if (typeof headers.get === 'function') {
+    return headers.get(name);
+  }
+  return headers[name];
+};
+
 export const attachDokApiLogging = axiosInstance => {
   axiosInstance.interceptors.response.use(
     response => response,
@@ -227,6 +238,10 @@ export const attachDokApiLogging = axiosInstance => {
         path: stripQuery(config.url),
         status: response?.status,
         code: error?.code,
+        app_name: headerValue(config.headers, 'x-app-name'),
+        has_proof: !!headerValue(config.headers, 'x-integrity-proof'),
+        has_key_id: !!headerValue(config.headers, 'x-integrity-key-id'),
+        retried: !!config._integrityRetried,
         backend_code: response?.data?.code,
         backend_message:
           typeof response?.data?.message === 'string'

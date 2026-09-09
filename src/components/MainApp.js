@@ -19,8 +19,11 @@ import {attachDokApiLogging, captureError} from 'services/logger';
 // present before any component renders or dispatches an API call.
 // (React fires children's useEffect before parents', so doing this inside
 // a useEffect would leave a window where Main's effects fire unprotected.)
-setupDokApiIntegrity(DokApi);
+// Logging is registered first: axios runs response error handlers in
+// registration order, so the pre-retry integrity rejection is recorded as
+// `dokapi.failed` before the integrity interceptor retries and may succeed.
 attachDokApiLogging(DokApi);
+setupDokApiIntegrity(DokApi);
 
 export default function MainApp() {
   const [integrityReady, setIntegrityReady] = useState(false);
@@ -40,9 +43,24 @@ export default function MainApp() {
     // (iOS) before allowing child components to mount and fire API calls.
     // .finally() ensures the gate opens even if initialization fails gracefully.
 
-    initializeDokApiIntegrity().finally(() => {
-      setIntegrityReady(true);
-    });
+    const startedAt = Date.now();
+    initializeDokApiIntegrity()
+      .then(() => {
+        console.log(
+          `[integrity] MainApp: init resolved in ${Date.now() - startedAt}ms`,
+        );
+      })
+      .catch(err => {
+        console.warn(
+          `[integrity] MainApp: init rejected after ${
+            Date.now() - startedAt
+          }ms — opening gate anyway:`,
+          err?.message,
+        );
+      })
+      .finally(() => {
+        setIntegrityReady(true);
+      });
   }, []);
 
   return (
