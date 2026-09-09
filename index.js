@@ -13,9 +13,9 @@ import 'react-native-url-polyfill/auto';
 import '@ethersproject/shims';
 import './shim';
 import {AppRegistry, Platform} from 'react-native';
-import App from './App';
 import {name as coinswallet} from './app.json';
-import {Bugfender} from '@bugfender/rn-bugfender';
+import * as Sentry from '@sentry/react-native';
+import {initSentry} from 'services/logger';
 
 import structuredClone from '@ungap/structured-clone';
 
@@ -31,22 +31,18 @@ if (Platform.OS !== 'web' && !('structuredClone' in global)) {
   global.structuredClone = structuredClone;
 }
 
-if (!__DEV__) {
-  Bugfender.init({
-    appKey: process.env.BUGFENDER_APP_KEY,
-    logUIEvents: false,
-    enableLogcatLogging: false, // Android specific
-    printToConsole: false,
-  })
-    .then(() => {
-      console.log('init bugfender');
-    })
-    .catch(err => {
-      console.error('Error in setup bugfender', err);
-    });
-}
+// Error reporting + logs. Must run before any app module executes so console
+// capture and the global error handler cover startup. `enabled` inside
+// initSentry decides whether events actually leave the device.
+initSentry();
 
-AppRegistry.registerComponent(coinswallet, () => App);
+// Loaded after initSentry() on purpose: a static `import App` is hoisted and
+// would evaluate the whole app module graph before Sentry is installed, so a
+// startup evaluation failure (bad polyfill, throwing top-level code) would
+// never be reported.
+const App = require('./App').default;
+
+AppRegistry.registerComponent(coinswallet, () => Sentry.wrap(App));
 
 if (Platform.OS === 'web') {
   const rootTag =

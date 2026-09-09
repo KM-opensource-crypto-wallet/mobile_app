@@ -42,6 +42,7 @@ import {
 import {getLastAttempt} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {addBreadcrumb} from 'services/logger';
 
 const LoginComponent = ({onClose, visible}) => {
   const navigation = useNavigation();
@@ -62,6 +63,7 @@ const LoginComponent = ({onClose, visible}) => {
   const lastAttempt = useSelector(getLastAttempt);
 
   const redirectSuccess = useCallback(() => {
+    addBreadcrumb('auth', 'unlock', {via: onClose ? 'modal' : 'screen'});
     if (onClose) {
       onClose();
     } else {

@@ -48,6 +48,14 @@ const ONESIGNAL_APP_ID_OBJ = {
 
 export const ONESIGNAL_APP_ID = ONESIGNAL_APP_ID_OBJ[wlName];
 
+// One Sentry project per variant so issues and quotas stay separate.
+const SENTRY_DSN_OBJ = {
+  dokwallet: process.env.DOK_WALLET_SENTRY_DSN,
+  kimlwallet: process.env.KIML_WALLET_SENTRY_DSN,
+};
+
+export const SENTRY_DSN = SENTRY_DSN_OBJ[wlName];
+
 // Use static require paths inside a mapping
 const logoMap = {
   dokwallet: {

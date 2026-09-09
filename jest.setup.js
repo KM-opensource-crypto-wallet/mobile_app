@@ -23,3 +23,30 @@ jest.mock('react-native-quick-crypto', () => {
 jest.mock('react-native-device-info', () =>
   require('react-native-device-info/jest/react-native-device-info-mock'),
 );
+
+// `services/logger` is imported by redux slices and utilities under test; the
+// native Sentry module is not available in Node, so stub the SDK surface.
+jest.mock('@sentry/react-native', () => ({
+  init: jest.fn(),
+  wrap: component => component,
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+  addBreadcrumb: jest.fn(),
+  setUser: jest.fn(),
+  setTag: jest.fn(),
+  setTags: jest.fn(),
+  setAttributes: jest.fn(),
+  setExtras: jest.fn(),
+  withScope: callback =>
+    callback({setLevel() {}, setTags() {}, setExtras() {}}),
+  consoleSandbox: callback => callback(),
+  breadcrumbsIntegration: jest.fn(() => ({name: 'Breadcrumbs'})),
+  logger: {
+    trace: jest.fn(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    fatal: jest.fn(),
+  },
+}));
