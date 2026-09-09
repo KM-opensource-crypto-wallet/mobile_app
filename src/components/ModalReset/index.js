@@ -22,6 +22,7 @@ import {deleteAlertsForUserThunk} from 'dok-wallet-blockchain-networks/redux/not
 import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
 import googleDrive from '../../utils/googleDriveBackup';
 import {logoutOneSignal} from 'utils/onesignal';
+import {addBreadcrumb, setUserContext} from 'services/logger';
 
 const WIDTH = Dimensions.get('window').width + 80;
 
@@ -65,6 +66,9 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
       // state synchronously (before resetWallet clears it), and account
       // deletion must not be blocked by a network failure.
       dispatch(deleteAlertsForUserThunk());
+      addBreadcrumb('wallet', 'reset', {reason: list});
+      // The masterClientId is about to be discarded; stop attributing events.
+      setUserContext(null);
       dispatch(resetWallet());
       dispatch(resetCurrentTransferData());
       dispatch(resetBatchTransactions());

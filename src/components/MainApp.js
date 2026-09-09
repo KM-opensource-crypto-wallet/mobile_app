@@ -13,19 +13,26 @@ import {
   initializeDokApiIntegrity,
   setupDokApiIntegrity,
 } from 'utils/apiIntegrity';
+import {attachDokApiLogging, captureError} from 'services/logger';
 
 // Register interceptors at module load time so they are guaranteed to be
 // present before any component renders or dispatches an API call.
 // (React fires children's useEffect before parents', so doing this inside
 // a useEffect would leave a window where Main's effects fire unprotected.)
 setupDokApiIntegrity(DokApi);
+attachDokApiLogging(DokApi);
 
 export default function MainApp() {
   const [integrityReady, setIntegrityReady] = useState(false);
 
+  // Render errors that reach the root boundary take the whole app down, so
+  // report them as fatal with the component stack for grouping.
   const onError = useCallback((error, stackTrace) => {
-    console.error('Error in app', error.message);
-    console.error('Error in app stacktrace', stackTrace);
+    captureError(error, {
+      level: 'fatal',
+      tags: {boundary: 'app'},
+      extra: {componentStack: stackTrace},
+    });
   }, []);
 
   useEffect(() => {

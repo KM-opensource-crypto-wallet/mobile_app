@@ -15,7 +15,8 @@ import './shim';
 import {AppRegistry, Platform} from 'react-native';
 import App from './App';
 import {name as coinswallet} from './app.json';
-import {Bugfender} from '@bugfender/rn-bugfender';
+import * as Sentry from '@sentry/react-native';
+import {initSentry} from 'services/logger';
 
 import structuredClone from '@ungap/structured-clone';
 
@@ -31,22 +32,12 @@ if (Platform.OS !== 'web' && !('structuredClone' in global)) {
   global.structuredClone = structuredClone;
 }
 
-if (!__DEV__) {
-  Bugfender.init({
-    appKey: process.env.BUGFENDER_APP_KEY,
-    logUIEvents: false,
-    enableLogcatLogging: false, // Android specific
-    printToConsole: false,
-  })
-    .then(() => {
-      console.log('init bugfender');
-    })
-    .catch(err => {
-      console.error('Error in setup bugfender', err);
-    });
-}
+// Error reporting + logs. Must run before any app module executes so console
+// capture and the global error handler cover startup. `enabled` inside
+// initSentry decides whether events actually leave the device.
+initSentry();
 
-AppRegistry.registerComponent(coinswallet, () => App);
+AppRegistry.registerComponent(coinswallet, () => Sentry.wrap(App));
 
 if (Platform.OS === 'web') {
   const rootTag =
