@@ -32,6 +32,7 @@ import {coinSyncSlice} from 'dok-wallet-blockchain-networks/redux/coinSync/coinS
 import {sentAddressHistorySlice} from 'dok-wallet-blockchain-networks/redux/sentAddressHistory/sentAddressHistorySlice';
 import {exchangeHistorySlice} from 'dok-wallet-blockchain-networks/redux/exchangeHistory/exchangeHistorySlice';
 import {schedulePaymentSlice} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
+import {addBreadcrumb} from 'services/logger';
 
 const storage = createSensitiveStorage({
   keychainService: process.env.REDUX_KEYCHAIN_NAME,
@@ -136,13 +137,32 @@ const logger = storeAPI => next => action => {
   return result;
 };
 
+// Every failed thunk (~40 of them: exchange quotes, staking, currency, batch)
+// becomes a breadcrumb on the next error report. Only the error message and a
+// string payload are recorded; object payloads can carry wallet data.
+const rejectedActionBreadcrumb = () => next => action => {
+  if (typeof action?.type === 'string' && action.type.endsWith('/rejected')) {
+    addBreadcrumb(
+      'redux',
+      action.type,
+      {
+        error: action.error?.message,
+        payload:
+          typeof action.payload === 'string' ? action.payload : undefined,
+      },
+      'warning',
+    );
+  }
+  return next(action);
+};
+
 const store = configureStore({
   reducer: rootReducer,
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: false,
       immutableCheck: false,
-    }), // Add the logger to the middleware chain
+    }).concat(rejectedActionBreadcrumb),
 });
 
 let persistor = persistStore(store, null, () => {

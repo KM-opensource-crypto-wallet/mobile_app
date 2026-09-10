@@ -43,6 +43,7 @@ import {getLastAttempt} from 'dok-wallet-blockchain-networks/redux/auth/authSele
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useLocalNotification} from 'providers/hooks/useLocalNotification';
+import {addBreadcrumb} from 'services/logger';
 
 const LoginComponent = ({onClose, visible}) => {
   const navigation = useNavigation();
@@ -64,6 +65,7 @@ const LoginComponent = ({onClose, visible}) => {
   const lastAttempt = useSelector(getLastAttempt);
 
   const redirectSuccess = useCallback(() => {
+    addBreadcrumb('auth', 'unlock', {via: onClose ? 'modal' : 'screen'});
     // Cold start with a pending notification mounts two of these at once
     // (this base Login screen instance and LoginModal on top of it) - only
     // whichever one calls this first actually redirects for it.

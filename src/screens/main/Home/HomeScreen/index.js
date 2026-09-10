@@ -13,6 +13,7 @@ import {useSelector, useDispatch, shallowEqual} from 'react-redux';
 import isJson from 'dok-wallet-blockchain-networks/service/isJson';
 
 import {ErrorBoundary} from 'react-error-boundary';
+import {captureError} from 'services/logger';
 import {ThemeContext} from 'theme/ThemeContext';
 
 import {
@@ -394,6 +395,12 @@ const HomeScreen = ({navigation, route}) => {
   return (
     <>
       <ErrorBoundary
+        onError={(error, info) =>
+          captureError(error, {
+            tags: {boundary: 'home'},
+            extra: {componentStack: info?.componentStack},
+          })
+        }
         fallbackRender={() => (
           <View>
             <Text>Something went wrong in HomeScreen</Text>

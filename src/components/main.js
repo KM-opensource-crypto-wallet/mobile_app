@@ -97,6 +97,13 @@ import ModalApkDownload from 'components/ModalApkDownload';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import CoinSyncWidget from 'components/CoinSyncWidget';
 import {useLocalNotification} from 'providers/hooks/useLocalNotification';
+import {getMasterClientId} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  addBreadcrumb,
+  captureError,
+  logger,
+  setUserContext,
+} from 'services/logger';
 
 // Only truly pre-auth screens belong here. Screens whose buttons redirect
 // outside the app (in-app browser, Linking, permission dialogs) are handled
@@ -149,6 +156,22 @@ const Main = () => {
     consumePendingLoginRedirect,
     syncHiddenWalletsScheduledPaymentNotifications,
   } = useLocalNotification();
+  const masterClientId = useSelector(getMasterClientId);
+  const lastRouteNameRef = useRef(null);
+
+  // Attribute every event/log to this install. The id is created after
+  // rehydrate (createIfNotExistsMasterClientId) and cleared on wallet reset.
+  useEffect(() => {
+    setUserContext(masterClientId);
+  }, [masterClientId]);
+
+  const recordRouteChange = useCallback(() => {
+    const routeName = navigationRef.current?.getCurrentRoute?.()?.name;
+    if (routeName && routeName !== lastRouteNameRef.current) {
+      lastRouteNameRef.current = routeName;
+      addBreadcrumb('navigation', routeName);
+    }
+  }, []);
 
   const fetchAndCompareRpcUrls = useCallback(() => {
     fetchRPCUrl();
@@ -165,7 +188,7 @@ const Main = () => {
       await initWalletConnect(WALLET_CONNECT_DATA);
       dispatch(setIsWalletConnectInitialized(true));
     } catch (e) {
-      console.error('Error in initialize WalletConnect');
+      captureError(e, {tags: {area: 'walletconnect', op: 'init'}});
     }
   }, [dispatch, walletConnectSessions]);
 
@@ -251,7 +274,8 @@ const Main = () => {
           dispatch(setIsUpdateAvailable('no'));
         }
       } catch (e) {
-        console.error('Error in check in app updates', e);
+        // Store scraping is flaky; a warning is enough.
+        logger.warn('app.update_check_failed', {message: e?.message});
       }
     } else {
       dispatch(setIsUpdateAvailable('no'));
@@ -271,7 +295,9 @@ const Main = () => {
       setAdjustPan();
     }
     if (isReduxStoreLoad) {
-      BootSplash.hide({fade: true});
+      BootSplash.hide({fade: true}).catch(e =>
+        captureError(e, {tags: {area: 'bootsplash'}}),
+      );
       if (!IS_KIML_WALLET || !IS_ANDROID) {
         checkInAppUpdates(true);
       }
@@ -349,12 +375,16 @@ const Main = () => {
         console.log('current  state ->', appState.current);
         console.log('current app state ->', currentRouteName, nextAppState);
         if (appState.current.match(/background/) && nextAppState === 'active') {
+          addBreadcrumb('app.lifecycle', 'foreground', {
+            route: currentRouteName,
+          });
           if (
             currentRouteName !== 'Login' &&
             !unsecureRoute.includes(currentRouteName) &&
             !lastBackgroundSelfInitiated.current &&
             isAfterCurrentDate(lockTimeSet.current)
           ) {
+            addBreadcrumb('app.lifecycle', 'lock');
             setLoginModalVisible(true);
           }
           // One-shot: the next background decides again.
@@ -367,6 +397,10 @@ const Main = () => {
           const isSelfInitiatedBackground =
             consumeExpectedBackground() || isInAppBrowserSessionActive();
           lastBackgroundSelfInitiated.current = isSelfInitiatedBackground;
+          addBreadcrumb('app.lifecycle', 'background', {
+            route: currentRouteName,
+            selfInitiated: isSelfInitiatedBackground,
+          });
           if (!isSelfInitiatedBackground) {
             const walletClientIdBeforeRehide = selectCurrentWalletClientId(
               store.getState(),
@@ -469,7 +503,9 @@ const Main = () => {
           ref={navigationRef}
           onReady={() => {
             MainNavigation.setNavigationObject(navigationRef.current);
-          }}>
+            recordRouteChange();
+          }}
+          onStateChange={recordRouteChange}>
           <MenuProvider SafeAreaComponent={SafeAreaView}>
             <BottomSheetModalProvider>{routing}</BottomSheetModalProvider>
             {(!IS_KIML_WALLET || !IS_ANDROID) && (
