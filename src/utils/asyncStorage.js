@@ -18,11 +18,16 @@ export const getAsyncStorageData = async key => {
   }
 };
 
+// Resolves true when the key is gone, false when removal failed (and the key
+// may still be there), so a caller consuming a one-shot payload can tell
+// whether it is safe to act on it.
 export const removeAsyncStorageData = async key => {
   try {
-    return await AsyncStorage.removeItem(key);
+    await AsyncStorage.removeItem(key);
+    return true;
   } catch (e) {
     console.error('error in remove data');
+    return false;
   }
 };
 

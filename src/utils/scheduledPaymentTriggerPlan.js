@@ -28,6 +28,13 @@ const PERIOD_MS = {
 };
 const DAILY_KEY = 'd';
 const ID_SEPARATOR = '::';
+// One-shots armed for a repeatable run that can't be a native repeat yet
+// (its next occurrence is more than one period away). The hand-over to a
+// repeat needs a reconcile, and iOS gives no delivery callback while the app
+// is away, so a single one-shot would leave the run silent after its first
+// firing until the app is next opened. A few one-shots keep reminders
+// coming in the meantime; the reconcile that arms the repeat cancels them.
+export const TRANSITIONAL_ONCE_COUNT = 3;
 const TRIGGER_ID_PATTERN = /^(.+)::(?:r(d|[0-6])|(\d+))$/;
 
 export const buildOnceTriggerId = (paymentId, index) =>
@@ -132,17 +139,20 @@ const planPayment = (payment, now) => {
     // next occurrence and there is more than one occurrence left:
     // - iOS ignores a repeating trigger's start date (daily: time of day
     //   only; weekly: weekday + time), so a run whose next occurrence is
-    //   more than one period away would fire early. Until then only that
-    //   next occurrence is armed, as a one-shot; a later sync (the app is
-    //   opened, or that reminder is delivered) switches the run to a repeat.
+    //   more than one period away would fire early. Until then the run's
+    //   next few occurrences are armed as one-shots (TRANSITIONAL_ONCE_COUNT
+    //   slots); a later sync (the app is opened, an Android reminder is
+    //   delivered) switches the run to a repeat and cancels them.
     // - A repeat never stops on its own, so the final occurrence is a
     //   one-shot; the run's repeat is cancelled by the same sync.
-    // Either way a run costs exactly one pending-notification slot.
+    // A run in repeat costs exactly one pending-notification slot.
     const withinOnePeriod = first.timestamp - now <= PERIOD_MS[repeat];
     if (withinOnePeriod && run.occurrences.length > 1) {
       repeats.push(toRepeatEntry(payment, run, repeat));
     } else {
-      onces.push(toOnceEntry(payment, first));
+      run.occurrences
+        .slice(0, TRANSITIONAL_ONCE_COUNT)
+        .forEach(occurrence => onces.push(toOnceEntry(payment, occurrence)));
     }
   });
   return {repeats, onces};
@@ -182,18 +192,21 @@ export const countTriggersByPayment = (payments, now = Date.now()) => {
 
 // Last-resort guard so a reconcile can never ask the OS for more than it
 // holds (e.g. payments persisted before the limit check existed). Repeats
-// are always kept — each is a whole run — and the latest-firing one-shots go
-// first. Creation is refused up front when a new payment would cross the
-// limit, so in normal operation this is a no-op.
+// go first — each is a whole run — then one-shots fill what is left, so the
+// latest-firing one-shots are dropped first. Creation is refused up front
+// when a new payment would cross the limit, so in normal operation this is
+// a no-op.
 export const applyTriggerLimit = (plan, limit) => {
   if (plan.total <= limit) {
     return plan;
   }
-  const onces = plan.onces.slice(0, Math.max(0, limit - plan.repeats.length));
+  const capacity = Math.max(0, limit);
+  const repeats = plan.repeats.slice(0, capacity);
+  const onces = plan.onces.slice(0, capacity - repeats.length);
   return {
-    repeats: plan.repeats,
+    repeats,
     onces,
-    total: plan.repeats.length + onces.length,
+    total: repeats.length + onces.length,
   };
 };
 

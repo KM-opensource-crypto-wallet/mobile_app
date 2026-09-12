@@ -32,19 +32,61 @@ import {storeAsyncStorageData} from 'utils/asyncStorage';
 // A press while merely backgrounded (JS alive but not foreground) only
 // reaches this handler and neither of those, so persist it here for
 // LocalNotificationProvider to consume once the app becomes active again.
-// Every other event (dismiss, other notification types) is left alone.
-notifee.onBackgroundEvent(async ({type, detail}) => {
-  if (type !== EventType.PRESS) {
+// A scheduled-payment DELIVERED event (Android fires it here while the app
+// is away; iOS has no such callback) runs the same reconcile the foreground
+// handler does, so a far-future run hands over to its native repeat and a
+// finished run's repeat is cancelled without waiting for the app to be
+// opened. Every other event (dismiss, other notification types) is left
+// alone.
+const syncScheduledPaymentRemindersInBackground = async () => {
+  // In a killed-app headless context the persisted state has to be
+  // rehydrated before the plan is computed — reconciling against an empty
+  // store would cancel every reminder. Required here rather than imported so
+  // the slice's thunk only loads when a reminder actually fires.
+  const {store, persistor} = require('./src/redux/store');
+  const {
+    syncScheduledPaymentNotifications,
+  } = require('dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice');
+  await new Promise(resolve => {
+    if (persistor.getState().bootstrapped) {
+      resolve();
+      return;
+    }
+    const unsubscribe = persistor.subscribe(() => {
+      if (persistor.getState().bootstrapped) {
+        unsubscribe();
+        resolve();
+      }
+    });
+  });
+  const scheduledPayments =
+    store.getState().schedulePayment?.scheduledPayments || {};
+  if (!Object.values(scheduledPayments).some(list => list?.length)) {
+    // One of our reminders just fired, so a schedule existed; an empty
+    // slice here means rehydration failed or the app already deleted the
+    // payment and reconciled. Either way, don't touch the OS.
     return;
   }
+  await store.dispatch(syncScheduledPaymentNotifications());
+};
+
+notifee.onBackgroundEvent(async ({type, detail}) => {
   const data = detail?.notification?.data;
   if (data?.type !== SCHEDULED_PAYMENT_NOTIFICATION_TYPE) {
     return;
   }
-  await storeAsyncStorageData(
-    SCHEDULED_PAYMENT_BACKGROUND_PRESS_STORAGE_KEY,
-    JSON.stringify(data),
-  );
+  if (type === EventType.PRESS) {
+    await storeAsyncStorageData(
+      SCHEDULED_PAYMENT_BACKGROUND_PRESS_STORAGE_KEY,
+      JSON.stringify(data),
+    );
+  } else if (type === EventType.DELIVERED) {
+    try {
+      await syncScheduledPaymentRemindersInBackground();
+    } catch (e) {
+      console.warn('Failed to sync scheduled payment reminders', e);
+    }
+  }
 });
 
 import structuredClone from '@ungap/structured-clone';

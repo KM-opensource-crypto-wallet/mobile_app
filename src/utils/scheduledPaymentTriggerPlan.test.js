@@ -3,6 +3,7 @@ import {MAX_OCCURRENCES, REPEAT_TYPE, CUSTOM_UNIT} from './scheduleRecurrence';
 import {
   TRIGGER_KIND,
   TRIGGER_REPEAT,
+  TRANSITIONAL_ONCE_COUNT,
   buildOnceTriggerId,
   buildRepeatTriggerId,
   parseTriggerId,
@@ -96,14 +97,17 @@ describe('planScheduledPaymentTriggers', () => {
     expect(plan.onces).toHaveLength(0);
   });
 
-  it('arms a far-future daily start as a single one-shot, then switches to a repeat', () => {
+  it('arms a far-future daily start as a few one-shots, then switches to a repeat', () => {
     const later = payment('d2', {
       scheduledAt: NOW + 3 * DAY,
       recurrence: {type: REPEAT_TYPE.DAILY, interval: 1},
     });
     const before = planScheduledPaymentTriggers({payments: [later], now: NOW});
     expect(before.repeats).toHaveLength(0);
-    expect(before.onces.map(o => o.id)).toEqual(['d2::0']);
+    expect(before.onces.map(o => o.id)).toEqual(
+      Array.from({length: TRANSITIONAL_ONCE_COUNT}, (_, i) => `d2::${i}`),
+    );
+    expect(before.total).toBe(TRANSITIONAL_ONCE_COUNT);
 
     const after = planScheduledPaymentTriggers({
       payments: [later],
@@ -111,6 +115,29 @@ describe('planScheduledPaymentTriggers', () => {
     });
     expect(after.repeats.map(r => r.id)).toEqual(['d2::rd']);
     expect(after.onces).toHaveLength(0);
+  });
+
+  it('hands a far-future run over from its one-shots to a repeat on the next sync', () => {
+    // The first one-shot fired and the app was never opened, so the OS still
+    // holds the remaining pre-armed one-shots. A sync now (next occurrence
+    // within a day) wants the repeat instead and cancels them.
+    const later = payment('d2', {
+      scheduledAt: NOW + 3 * DAY,
+      recurrence: {type: REPEAT_TYPE.DAILY, interval: 1},
+    });
+    const plan = planScheduledPaymentTriggers({
+      payments: [later],
+      now: NOW + 3.5 * DAY,
+    });
+    expect(plan.repeats.map(r => r.id)).toEqual(['d2::rd']);
+    expect(plan.onces).toHaveLength(0);
+    const stillPending = ['d2::1', 'd2::2'];
+    expect(
+      diffTriggerIds(
+        plan.repeats.map(r => r.id),
+        stillPending,
+      ),
+    ).toEqual({toCreate: ['d2::rd'], toCancel: stillPending});
   });
 
   it('uses a one-shot for the final occurrence of a repeating rule', () => {
@@ -189,6 +216,23 @@ describe('applyTriggerLimit', () => {
     expect(capped.repeats).toHaveLength(1);
     expect(capped.onces).toHaveLength(9);
     expect(capped.onces.map(o => o.index)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+  });
+
+  it('caps repeats too when they alone exceed the limit', () => {
+    const plan = planScheduledPaymentTriggers({
+      payments: [daily, monWedFri, monthly],
+      now: NOW,
+    });
+    expect(plan.repeats).toHaveLength(4);
+    const capped = applyTriggerLimit(plan, 2);
+    expect(capped.repeats).toEqual(plan.repeats.slice(0, 2));
+    expect(capped.onces).toHaveLength(0);
+    expect(capped.total).toBe(2);
+    expect(applyTriggerLimit(plan, 0)).toEqual({
+      repeats: [],
+      onces: [],
+      total: 0,
+    });
   });
 
   it('is a no-op under the limit', () => {

@@ -257,7 +257,14 @@ const SchedulePayment = ({navigation, route}) => {
     // the new value, and a second validation from setFieldTouched would run
     // against the previous values and overwrite that result.
     formik.setFieldTouched('scheduledDate', true, false);
-    setFieldValue('scheduledDate', dayjs(date).format(SCHEDULED_DATE_FORMAT));
+    const scheduled = dayjs(date);
+    setFieldValue('scheduledDate', scheduled.format(SCHEDULED_DATE_FORMAT));
+    // Weekly was picked before any date existed to seed a weekday from
+    // (see selectRepeatType); seed it now so the chips show the day
+    // buildRecurrence would otherwise fall back to silently.
+    if (values.repeatType === REPEAT_TYPE.WEEKLY && !values.weeklyDays.length) {
+      setFieldValue('weeklyDays', [scheduled.day()]);
+    }
     setShowDatePicker(false);
   };
 
@@ -413,6 +420,9 @@ const SchedulePayment = ({navigation, route}) => {
                         <TouchableOpacity
                           key={day.value}
                           activeOpacity={0.7}
+                          accessibilityRole="button"
+                          accessibilityLabel={day.label}
+                          accessibilityState={{selected}}
                           style={[
                             styles.dayChip,
                             selected && styles.dayChipSelected,

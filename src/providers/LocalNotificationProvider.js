@@ -332,9 +332,15 @@ export const LocalNotificationProvider = ({children}) => {
       if (!raw) {
         return;
       }
-      await removeAsyncStorageData(
+      // Only act on the press once it can no longer be read back: if the key
+      // could not be removed, leave it for the next activation to retry
+      // instead of handling the same press again then.
+      const removed = await removeAsyncStorageData(
         SCHEDULED_PAYMENT_BACKGROUND_PRESS_STORAGE_KEY,
       );
+      if (!removed) {
+        return;
+      }
       try {
         const data = JSON.parse(raw);
         if (data?.type === SCHEDULED_PAYMENT_NOTIFICATION_TYPE) {

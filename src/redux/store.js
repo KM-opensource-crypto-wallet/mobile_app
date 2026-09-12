@@ -58,6 +58,8 @@ const walletsPersistTransform = createTransform(
     const refreshReset = {
       isRefreshingAllWallets: false,
       refreshingWalletClientId: null,
+      // Per-wallet requestIds of in-flight refreshCoins: none survive a quit.
+      refreshCoinsRequestIds: {},
     };
     // One-time migration for users persisted currentWalletIndex
     if (outboundState?.currentWalletClientId) {
@@ -135,15 +137,6 @@ const rootReducer = persistCombineReducers(config, {
   [sentAddressHistorySlice.name]: sentAddressHistorySlice.reducer,
   [schedulePaymentSlice.name]: schedulePaymentSlice.reducer,
 });
-
-// Logging middleware
-const logger = storeAPI => next => action => {
-  console.log('Dispatching action:', action);
-  console.log('Source component:', action.meta?.source);
-  let result = next(action);
-  console.log('New state:', JSON.stringify(storeAPI.getState()));
-  return result;
-};
 
 // Every failed thunk (~40 of them: exchange quotes, staking, currency, batch)
 // becomes a breadcrumb on the next error report. Only the error message and a

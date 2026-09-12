@@ -43,8 +43,17 @@ import {addBatchTransaction} from 'dok-wallet-blockchain-networks/redux/batchTra
 
 // Legacy QR payload: a JSON object carrying the address. Anything else that
 // is present but not JSON yields '' (nothing to prefill, ModalQR stays empty).
-const getAddressFromQrData = data =>
-  data ? (isJson(data) ? JSON.parse(data).address : '') : data;
+const getAddressFromQrData = data => {
+  if (!data) {
+    return data;
+  }
+  if (!isJson(data)) {
+    return '';
+  }
+  // isJson accepts the literal `null`, which would throw on `.address`.
+  const parsed = JSON.parse(data);
+  return parsed ? parsed.address : '';
+};
 
 const SendFunds = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);

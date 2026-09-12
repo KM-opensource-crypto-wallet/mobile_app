@@ -92,11 +92,16 @@ const AmountInputGroup = ({
     text => {
       const currencyAmount = validateNumberInInput(text, 2);
       setFieldValue('currencyAmount', currencyAmount);
+      const rate = new BigNumber(currencyRate);
+      const dp = Number(decimal);
+      if (!rate.isFinite() || rate.lte(0) || !Number.isInteger(dp) || dp < 0) {
+        // No usable rate/decimals: skip the conversion instead of guessing a
+        // rate of 1 or feeding NaN into toFixed (which throws).
+        return;
+      }
       setFieldValue(
         'amount',
-        new BigNumber(currencyAmount || 0)
-          .dividedBy(new BigNumber(currencyRate || 1))
-          .toFixed(Number(decimal)),
+        new BigNumber(currencyAmount || 0).dividedBy(rate).toFixed(dp),
       );
     },
     [currencyRate, decimal, setFieldValue],
