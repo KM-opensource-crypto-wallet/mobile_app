@@ -30,9 +30,10 @@ export const WEEKDAYS = [
   {value: 6, short: 'S', label: 'Saturday'},
 ];
 
-// iOS caps pending local notifications at ~64 app-wide, so each scheduled
-// payment must stay well under that even if it repeats "forever".
-export const MAX_OCCURRENCES = 24;
+// Length of a repeating series (product decision): a repeating payment ends
+// after this many occurrences. The OS caps on pending notifications (iOS 64,
+// Android 50) are enforced separately by utils/scheduledPaymentTriggerPlan.
+export const MAX_OCCURRENCES = 30;
 
 const REPEAT_UNIT_BY_TYPE = {
   [REPEAT_TYPE.DAILY]: 'day',
@@ -186,3 +187,30 @@ export const describeRecurrence = recurrence => {
   }
   return base;
 };
+
+// The next occurrence of a payment at or after `now`, as
+// {timestamp, index, total} — index/total let the UI say "3 of 24". A
+// payment stores only its original start; the series is recomputed from
+// `recurrence` (same as the reminder scheduler) so a repeating payment
+// whose first occurrences have fired still resolves to its next one.
+// Returns null when nothing is left: a one-time payment whose time has
+// passed, or a repeating series that has run through MAX_OCCURRENCES.
+export const getNextOccurrence = (payment, now = Date.now()) => {
+  if (!payment) {
+    return null;
+  }
+  const occurrences = computeOccurrences({
+    scheduledAt: payment.scheduledAt,
+    recurrence: payment.recurrence,
+  });
+  const index = occurrences.findIndex(timestamp => timestamp >= now);
+  if (index === -1) {
+    return null;
+  }
+  return {timestamp: occurrences[index], index, total: occurrences.length};
+};
+
+// A scheduled payment with no upcoming occurrence has no live reminder and
+// nothing left to show — callers prune it from redux.
+export const isScheduledPaymentExpired = (payment, now = Date.now()) =>
+  getNextOccurrence(payment, now) === null;

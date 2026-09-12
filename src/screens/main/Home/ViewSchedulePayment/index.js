@@ -7,99 +7,105 @@ import React, {
 } from 'react';
 import {FlatList, Text, TouchableOpacity, View} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
+import {useFocusEffect} from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
 import IoniconIcon from 'react-native-vector-icons/Ionicons';
 import myStyles from './ViewSchedulePaymentStyles';
 import {ThemeContext} from 'theme/ThemeContext';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import ScheduledPaymentItem from 'components/ScheduledPaymentItem';
 import {
+  selectCoinsForCurrentWallet,
   selectCurrentCoin,
   selectCurrentWalletClientId,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {selectScheduledPaymentsForCurrentWallet} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSelectors';
-import {removeScheduledPayment} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
+import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
+import {selectActiveScheduledPaymentsForCurrentWallet} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSelectors';
+import {
+  pruneExpiredScheduledPayments,
+  removeScheduledPayment,
+  syncScheduledPaymentNotifications,
+} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
 import {useLocalNotification} from 'providers/hooks/useLocalNotification';
-import {describeRecurrence} from 'utils/scheduleRecurrence';
-import {truncateAddress} from 'utils/common';
-
-dayjs.extend(relativeTime);
+import {SCHEDULED_PAYMENT_NOTIFICATION_TYPE} from 'utils/scheduledPaymentNotifications';
+import {countTriggersByPayment} from 'utils/scheduledPaymentTriggerPlan';
+import {
+  buildCoinMapForScheduledPayments,
+  getAssetKeyForCoin,
+  getAssetKeyForPayment,
+} from 'utils/scheduledPaymentCoin';
+import {getNextOccurrence} from 'utils/scheduleRecurrence';
 
 const PAYMENT_FILTER = {
   CURRENT_TOKEN: 'currentToken',
   ALL: 'all',
 };
 
-const isPaymentForCoin = (payment, coin) =>
-  !!coin &&
-  payment?.chain === coin.chain_name &&
-  payment?.asset?.symbol === coin.symbol &&
-  (payment?.asset?.contractAddress || '') === (coin.contractAddress || '');
-
-const STATUS_META = {
-  scheduled: {label: 'Scheduled', color: '#4F8DD8', icon: 'time-outline'},
-  sent: {label: 'Sent', color: '#1FA971', icon: 'checkmark-circle-outline'},
-  completed: {
-    label: 'Sent',
-    color: '#1FA971',
-    icon: 'checkmark-circle-outline',
-  },
-  failed: {label: 'Failed', color: '#E5484D', icon: 'alert-circle-outline'},
-  cancelled: {
-    label: 'Cancelled',
-    color: '#8A8886',
-    icon: 'close-circle-outline',
-  },
-};
-
-const getStatusMeta = status => STATUS_META[status] || STATUS_META.scheduled;
-
-const getInitial = symbol =>
-  symbol ? symbol.trim().charAt(0).toUpperCase() : '?';
-
-const ViewSchedulePayment = ({navigation}) => {
+const ViewSchedulePayment = ({navigation, route}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const dispatch = useDispatch();
-  const {cancelScheduledPaymentNotification} = useLocalNotification();
+  const {handleScheduledPaymentNotificationData, pendingScheduledPaymentData} =
+    useLocalNotification();
   const scheduledPayments = useSelector(
-    selectScheduledPaymentsForCurrentWallet,
+    selectActiveScheduledPaymentsForCurrentWallet,
   );
+  const walletCoins = useSelector(selectCoinsForCurrentWallet);
   const currentCoin = useSelector(selectCurrentCoin);
   const walletClientId = useSelector(selectCurrentWalletClientId);
+  const localCurrency = useSelector(getLocalCurrency);
+  // A reminder handler that couldn't resolve the payment's coin lands here
+  // with showAll, since the current-token filter would hide that payment.
   const [paymentFilter, setPaymentFilter] = useState(
-    PAYMENT_FILTER.CURRENT_TOKEN,
+    route?.params?.showAll ? PAYMENT_FILTER.ALL : PAYMENT_FILTER.CURRENT_TOKEN,
   );
 
-  const filteredPayments = useMemo(() => {
-    const list = Array.isArray(scheduledPayments) ? scheduledPayments : [];
-    return paymentFilter === PAYMENT_FILTER.CURRENT_TOKEN
-      ? list.filter(item => isPaymentForCoin(item, currentCoin))
-      : list;
-  }, [scheduledPayments, paymentFilter, currentCoin]);
+  // Expired payments (one-time past due, or a repeating series that ran
+  // out) are deleted for good whenever the list is shown — except one whose
+  // reminder was just tapped and is still waiting to be handled. Then the
+  // OS's pending reminders are brought back in line with redux.
+  const pendingScheduledPaymentId =
+    pendingScheduledPaymentData?.scheduledPaymentId;
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(
+        pruneExpiredScheduledPayments({keepIds: [pendingScheduledPaymentId]}),
+      ).then(() => dispatch(syncScheduledPaymentNotifications()));
+    }, [dispatch, pendingScheduledPaymentId]),
+  );
 
-  // Soonest upcoming payment first; anything whose time has already passed
-  // sinks below the upcoming ones, most recently missed first. A 'scheduled'
-  // item whose time has passed was never actually sent — it just went
-  // unprocessed — so it's dropped from the list rather than shown as
-  // "Processed".
+  const coinMap = useMemo(
+    () => buildCoinMapForScheduledPayments(walletCoins),
+    [walletCoins],
+  );
+
+  // Pending-notification slots: per payment for the cards, and app-wide
+  // (every wallet, same set the create-time limit check counts) for the
+  const slotsByPayment = useMemo(
+    () => countTriggersByPayment(scheduledPayments),
+    [scheduledPayments],
+  );
+
+  const isCurrentTokenFilter = paymentFilter === PAYMENT_FILTER.CURRENT_TOKEN;
+
+  // Soonest upcoming occurrence first.
   const sortedPayments = useMemo(() => {
-    const list = filteredPayments;
-    const now = Date.now();
-    const upcoming = list
-      .filter(item => !item?.scheduledAt || item.scheduledAt >= now)
-      .sort((a, b) => (a?.scheduledAt || 0) - (b?.scheduledAt || 0));
-    const past = list
+    const currentKey = currentCoin ? getAssetKeyForCoin(currentCoin) : null;
+    return scheduledPayments
       .filter(
         item =>
-          item?.scheduledAt &&
-          item.scheduledAt < now &&
-          item?.status !== 'scheduled',
+          !isCurrentTokenFilter ||
+          (!!currentKey && getAssetKeyForPayment(item) === currentKey),
       )
-      .sort((a, b) => (b?.scheduledAt || 0) - (a?.scheduledAt || 0));
-    return [...upcoming, ...past];
-  }, [filteredPayments]);
+      .map(item => ({item, next: getNextOccurrence(item)?.timestamp || 0}))
+      .sort((a, b) => a.next - b.next)
+      .map(entry => entry.item);
+  }, [scheduledPayments, isCurrentTokenFilter, currentCoin]);
+
+  const handleAdd = useCallback(
+    () => navigation.navigate('SchedulePayment'),
+    [navigation],
+  );
 
   useLayoutEffect(() => {
     navigation?.setOptions({
@@ -107,7 +113,7 @@ const ViewSchedulePayment = ({navigation}) => {
         <TouchableOpacity
           style={styles.headerAddBtn}
           activeOpacity={0.7}
-          onPress={() => navigation.navigate('SchedulePayment')}>
+          onPress={handleAdd}>
           <IoniconIcon name="add" size={16} color={theme.background} />
           <Text style={styles.headerAddBtnText}>{'Add'}</Text>
         </TouchableOpacity>
@@ -115,23 +121,27 @@ const ViewSchedulePayment = ({navigation}) => {
     });
   }, [
     navigation,
+    handleAdd,
     styles.headerAddBtn,
     styles.headerAddBtnText,
     theme.background,
   ]);
 
-  const handleDelete = useCallback(
-    id => {
-      dispatch(removeScheduledPayment({id, walletClientId}));
-      cancelScheduledPaymentNotification(id);
+  const handleRemove = useCallback(
+    item => {
+      dispatch(removeScheduledPayment({id: item?.id, walletClientId}));
+      dispatch(syncScheduledPaymentNotifications());
       Toast.show({
         type: 'successToast',
         text1: 'Scheduled payment removed',
       });
     },
-    [dispatch, walletClientId, cancelScheduledPaymentNotification],
+    [dispatch, walletClientId],
   );
 
+  // The edit form gets the payment as stored: its scheduledAt is the
+  // series' original start (possibly past), which the form accepts
+  // unchanged so saving never shifts the series.
   const handleEdit = useCallback(
     item => {
       navigation.navigate('SchedulePayment', {scheduledPayment: item});
@@ -139,125 +149,40 @@ const ViewSchedulePayment = ({navigation}) => {
     [navigation],
   );
 
-  const renderItem = useCallback(
-    ({item}) => {
-      const statusMeta = getStatusMeta(item?.status);
-      const scheduledDate = item?.scheduledAt ? dayjs(item.scheduledAt) : null;
-      const recurrenceLabel = describeRecurrence(item?.recurrence);
-      return (
-        <View style={styles.card}>
-          <View style={styles.cardTopRow}>
-            <View style={styles.avatarAndAmount}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {getInitial(item?.asset?.symbol)}
-                </Text>
-              </View>
-              <View>
-                <Text style={styles.amountText}>
-                  {`${item?.amount || ''} ${item?.asset?.symbol || ''}`}
-                </Text>
-                <Text style={styles.amountSubtitle}>{'Scheduled payment'}</Text>
-              </View>
-            </View>
-            <View
-              style={[
-                styles.statusBadge,
-                {backgroundColor: statusMeta.color + '18'},
-              ]}>
-              <IoniconIcon
-                name={statusMeta.icon}
-                size={12}
-                color={statusMeta.color}
-              />
-              <Text style={[styles.statusBadgeText, {color: statusMeta.color}]}>
-                {statusMeta.label}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.detailRow}>
-            <IoniconIcon name="person-outline" size={14} color={theme.gray} />
-            <Text style={styles.detailText} numberOfLines={1}>
-              {truncateAddress(item?.recipientAddress)}
-            </Text>
-          </View>
-
-          {!!item?.memo && (
-            <View style={styles.detailRow}>
-              <IoniconIcon
-                name="document-text-outline"
-                size={14}
-                color={theme.gray}
-              />
-              <Text style={styles.detailText} numberOfLines={1}>
-                {`Memo: ${item.memo}`}
-              </Text>
-            </View>
-          )}
-
-          {!!scheduledDate && (
-            <View style={styles.detailRow}>
-              <IoniconIcon
-                name="calendar-outline"
-                size={14}
-                color={theme.gray}
-              />
-              <Text style={styles.detailText} numberOfLines={1}>
-                {`${scheduledDate.format(
-                  'MMM D, YYYY · h:mm A',
-                )}  ·  ${scheduledDate.fromNow()}`}
-              </Text>
-            </View>
-          )}
-
-          {!!recurrenceLabel && (
-            <View style={styles.recurrenceChip}>
-              <IoniconIcon
-                name="repeat-outline"
-                size={12}
-                color={theme.background}
-              />
-              <Text style={styles.recurrenceChipText}>{recurrenceLabel}</Text>
-            </View>
-          )}
-
-          {!!item?.failureReason && (
-            <View style={styles.failureBanner}>
-              <IoniconIcon name="warning-outline" size={14} color="#E5484D" />
-              <Text style={styles.failureBannerText}>{item.failureReason}</Text>
-            </View>
-          )}
-
-          <View style={styles.footerRow}>
-            <TouchableOpacity
-              style={styles.editButton}
-              activeOpacity={0.7}
-              onPress={() => handleEdit(item)}>
-              <IoniconIcon
-                name="create-outline"
-                size={14}
-                color={theme.background}
-              />
-              <Text style={styles.editButtonText}>{'Edit'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.deleteButton}
-              activeOpacity={0.7}
-              onPress={() => handleDelete(item?.id)}>
-              <IoniconIcon name="trash-outline" size={14} color="#E5484D" />
-              <Text style={styles.deleteButtonText}>{'Remove'}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      );
+  // Same path a reminder tap takes: switch to the coin, refresh it and land
+  // on Transfer prefilled with this payment.
+  const handleSendNow = useCallback(
+    item => {
+      handleScheduledPaymentNotificationData({
+        type: SCHEDULED_PAYMENT_NOTIFICATION_TYPE,
+        scheduledPaymentId: item?.id,
+        walletClientId,
+      });
     },
-    [handleDelete, handleEdit, styles, theme.background, theme.gray],
+    [handleScheduledPaymentNotificationData, walletClientId],
   );
 
-  const isCurrentTokenFilter = paymentFilter === PAYMENT_FILTER.CURRENT_TOKEN;
+  const renderItem = useCallback(
+    ({item}) => (
+      <ScheduledPaymentItem
+        item={item}
+        coin={coinMap.get(getAssetKeyForPayment(item))}
+        localCurrency={localCurrency}
+        reminderSlots={slotsByPayment.get(item?.id) ?? 0}
+        onEdit={handleEdit}
+        onRemove={handleRemove}
+        onSendNow={handleSendNow}
+      />
+    ),
+    [
+      coinMap,
+      localCurrency,
+      slotsByPayment,
+      handleEdit,
+      handleRemove,
+      handleSendNow,
+    ],
+  );
 
   return (
     <DokSafeAreaView style={styles.container}>
@@ -300,15 +225,6 @@ const ViewSchedulePayment = ({navigation}) => {
         keyExtractor={item => item?.id}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
-        ListHeaderComponent={
-          sortedPayments?.length ? (
-            <Text style={styles.summaryText}>
-              {`${sortedPayments.length} scheduled payment${
-                sortedPayments.length === 1 ? '' : 's'
-              }`}
-            </Text>
-          ) : null
-        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconCircle}>
@@ -327,9 +243,18 @@ const ViewSchedulePayment = ({navigation}) => {
             </Text>
             <Text style={styles.emptyText}>
               {isCurrentTokenFilter
-                ? 'Tap "Add" to schedule a payment for this token, or switch to "All Scheduled" to see payments for other tokens.'
-                : 'Tap "Add" to schedule a payment and we\'ll remind you when it\'s time to send it.'}
+                ? 'Schedule a payment for this token, or switch to "All Scheduled" to see payments for other tokens.'
+                : "Schedule a payment and we'll remind you when it's time to send it."}
             </Text>
+            <TouchableOpacity
+              style={styles.emptyAddButton}
+              activeOpacity={0.7}
+              onPress={handleAdd}>
+              <IoniconIcon name="add" size={18} color={theme.title} />
+              <Text style={styles.emptyAddButtonText}>
+                {'Schedule a payment'}
+              </Text>
+            </TouchableOpacity>
           </View>
         }
       />

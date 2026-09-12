@@ -28,16 +28,17 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import {setRouteStateData} from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
+import {
+  deleteHiddenWalletsScheduledPayments,
+  pruneExpiredScheduledPayments,
+  syncScheduledPaymentNotifications,
+} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
 import {getAsyncStorageData, removeAsyncStorageData} from 'utils/asyncStorage';
 import {getAvailableAmount} from 'hooks/useAvailableAmount';
 import {findCoinForScheduledPayment} from 'utils/scheduledPaymentCoin';
 import {
   SCHEDULED_PAYMENT_NOTIFICATION_TYPE,
   requestLocalNotificationPermission,
-  createScheduledPaymentNotification as createScheduledPaymentNotificationImpl,
-  cancelScheduledPaymentNotification,
-  cancelScheduledPaymentNotifications,
-  syncHiddenWalletsScheduledPaymentNotifications as syncHiddenWalletsScheduledPaymentNotificationsImpl,
 } from 'utils/scheduledPaymentNotifications';
 
 // Generic fallback for a notification handler that can't resolve a specific
@@ -50,6 +51,20 @@ const landOnHome = () => {
   MainNavigation.reset({
     index: 0,
     routes: [{name: 'Sidebar'}],
+  });
+};
+
+// Land on `name` with Home directly underneath it. Used once a handler has
+// switched the current wallet/coin in redux: every screen still mounted in the
+// old stack (Home, SendScreen, the router-level header titles) reads
+// selectCurrentCoin and would render the new wallet's data against the old
+// wallet's route params, so back must never reveal them. A single reset also
+// avoids the flicker of visiting Home first and then pushing, and on a cold
+// start it stops back from landing on the Login screen.
+const landOnHomeThen = (name, params) => {
+  MainNavigation.reset({
+    index: 1,
+    routes: [{name: 'Sidebar'}, params ? {name, params} : {name}],
   });
 };
 
@@ -132,10 +147,10 @@ export const LocalNotificationProvider = ({children}) => {
       store.getState().schedulePayment?.scheduledPayments?.[wallet.clientId] ||
       []
     ).find(item => item?.id === data.scheduledPaymentId);
-    // No matching payment, or it was already sent/cancelled/edited away —
+    // No matching payment (removed, or pruned once its schedule ran out) —
     // fall back to the list instead of prefilling a transfer for it.
-    if (!payment || payment.status !== 'scheduled') {
-      MainNavigation.navigate('ViewSchedulePayment');
+    if (!payment) {
+      landOnHomeThen('ViewSchedulePayment', {showAll: true});
       return;
     }
 
@@ -148,7 +163,9 @@ export const LocalNotificationProvider = ({children}) => {
           payment.asset?.symbol || 'This coin'
         } is no longer in your wallet`,
       });
-      MainNavigation.navigate('ViewSchedulePayment');
+      // The payment's coin isn't in the wallet, so the list's default
+      // current-token filter would hide the very item being looked for.
+      landOnHomeThen('ViewSchedulePayment', {showAll: true});
       return;
     }
 
@@ -191,10 +208,11 @@ export const LocalNotificationProvider = ({children}) => {
       }),
     );
     store.dispatch(setExchangeSuccess(false));
-    MainNavigation.navigate({
-      name: 'Transfer',
-      params: {fromScreen: 'SendFunds'},
-    });
+    landOnHomeThen('Transfer', {fromScreen: 'SendFunds'});
+    // Transfer reads from currentTransfer, so a fired one-time payment can
+    // now be pruned like any other expired one.
+    await store.dispatch(pruneExpiredScheduledPayments());
+    store.dispatch(syncScheduledPaymentNotifications());
   }, []);
 
   // Called right after a hidden wallet is revealed (by secret code) so a
@@ -276,6 +294,19 @@ export const LocalNotificationProvider = ({children}) => {
     return false;
   }, [handleScheduledPaymentNotificationData, handleNotificationData]);
 
+  // A scheduled-payment PRESS reaches JS through three doors: a cold-start
+  // press via getInitialNotification, a foreground press via
+  // onForegroundEvent, and a press while backgrounded-but-alive via
+  // index.js's headless onBackgroundEvent (no safe navigation target there,
+  // so it just persists the payload for us to pick up once JS is active).
+  //
+  // Every door funnels into setPendingScheduledPaymentData; the actual
+  // handling happens later (after unlock). Expired payments are pruned here
+  // too, and a one-time reminder that just fired is by definition past due —
+  // so the prune must run only AFTER every async door has been checked, and
+  // must skip whatever payment those doors turned up. Sequencing the two
+  // async sources in one bootstrap (instead of two independent effects) is
+  // what makes that ordering deterministic.
   useEffect(() => {
     const handleScheduledPaymentPress = notification => {
       const data = notification?.data;
@@ -283,28 +314,17 @@ export const LocalNotificationProvider = ({children}) => {
         setPendingScheduledPaymentData(data);
       }
     };
-    notifee.getInitialNotification().then(initialNotification => {
-      if (initialNotification?.notification) {
-        handleScheduledPaymentPress(initialNotification.notification);
-      }
-    });
-    const unsubscribeNotifeeForeground = notifee.onForegroundEvent(
-      ({type, detail}) => {
-        if (type === EventType.PRESS) {
-          handleScheduledPaymentPress(detail?.notification);
-        }
-      },
-    );
-    return () => {
-      unsubscribeNotifeeForeground();
-    };
-  }, [setPendingScheduledPaymentData]);
 
-  // A press that arrived while the app was backgrounded (not killed) goes
-  // through index.js's headless notifee.onBackgroundEvent instead — it has
-  // no safe navigation target, so it just stores the payload. Pick it up as
-  // soon as JS is back in the foreground, same as a cold-start press.
-  useEffect(() => {
+    const consumeInitialPress = async () => {
+      try {
+        const initialNotification = await notifee.getInitialNotification();
+        if (initialNotification?.notification) {
+          handleScheduledPaymentPress(initialNotification.notification);
+        }
+      } catch (e) {
+        console.warn('Failed to read initial notification', e);
+      }
+    };
     const consumeBackgroundPress = async () => {
       const raw = await getAsyncStorageData(
         SCHEDULED_PAYMENT_BACKGROUND_PRESS_STORAGE_KEY,
@@ -324,29 +344,66 @@ export const LocalNotificationProvider = ({children}) => {
         console.warn('Failed to parse background scheduled payment press', e);
       }
     };
-    consumeBackgroundPress();
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      if (nextAppState === 'active') {
-        consumeBackgroundPress();
+    // Prune, then make notifee match redux: reminders delivered while the
+    // app was away freed slots, a repeating run may need to hand over to
+    // its final one-shot, a far-future run may now be within repeat range.
+    const pruneAroundPendingPress = async () => {
+      await store.dispatch(
+        pruneExpiredScheduledPayments({
+          keepIds: [
+            pendingScheduledPaymentDataRef.current?.scheduledPaymentId,
+            pendingHiddenScheduledPaymentDataRef.current?.scheduledPaymentId,
+          ],
+        }),
+      );
+      store.dispatch(syncScheduledPaymentNotifications());
+    };
+
+    let cancelled = false;
+    const bootstrap = async () => {
+      await consumeInitialPress();
+      await consumeBackgroundPress();
+      if (!cancelled) {
+        pruneAroundPendingPress();
       }
-    });
+    };
+    bootstrap();
+
+    const unsubscribeNotifeeForeground = notifee.onForegroundEvent(
+      ({type, detail}) => {
+        if (type === EventType.PRESS) {
+          handleScheduledPaymentPress(detail?.notification);
+        } else if (
+          type === EventType.DELIVERED &&
+          detail?.notification?.data?.type ===
+            SCHEDULED_PAYMENT_NOTIFICATION_TYPE
+        ) {
+          // A delivered one-shot no longer occupies a pending slot, and a
+          // run's last-but-one firing means its final one-shot is due.
+          store.dispatch(syncScheduledPaymentNotifications());
+        }
+      },
+    );
+    const subscription = AppState.addEventListener(
+      'change',
+      async nextAppState => {
+        if (nextAppState === 'active') {
+          await consumeBackgroundPress();
+          if (!cancelled) {
+            pruneAroundPendingPress();
+          }
+        }
+      },
+    );
     return () => {
+      cancelled = true;
+      unsubscribeNotifeeForeground();
       subscription.remove();
     };
   }, [setPendingScheduledPaymentData]);
 
-  // createScheduledPaymentNotification/syncHiddenWalletsScheduledPaymentNotifications
-  // take getState as a parameter (see utils/scheduledPaymentNotifications.js)
-  // so that module doesn't import the store singleton itself - it's imported
-  // by schedulePaymentSlice.js, which redux/store.js itself imports, and
-  // closing that loop back through the store here would recreate the same
-  // require-cycle fragility.
-  const createScheduledPaymentNotification = useCallback(
-    payment => createScheduledPaymentNotificationImpl(payment, store.getState),
-    [],
-  );
-  const syncHiddenWalletsScheduledPaymentNotifications = useCallback(
-    () => syncHiddenWalletsScheduledPaymentNotificationsImpl(store.getState),
+  const syncHiddenWalletsScheduledPayments = useCallback(
+    () => store.dispatch(deleteHiddenWalletsScheduledPayments()),
     [],
   );
 
@@ -361,10 +418,7 @@ export const LocalNotificationProvider = ({children}) => {
       setPendingNotificationData,
       handleNotificationData,
       requestLocalNotificationPermission,
-      createScheduledPaymentNotification,
-      cancelScheduledPaymentNotification,
-      cancelScheduledPaymentNotifications,
-      syncHiddenWalletsScheduledPaymentNotifications,
+      syncHiddenWalletsScheduledPayments,
     }),
     [
       pendingScheduledPaymentData,
@@ -375,8 +429,7 @@ export const LocalNotificationProvider = ({children}) => {
       pendingNotificationData,
       setPendingNotificationData,
       handleNotificationData,
-      createScheduledPaymentNotification,
-      syncHiddenWalletsScheduledPaymentNotifications,
+      syncHiddenWalletsScheduledPayments,
     ],
   );
 

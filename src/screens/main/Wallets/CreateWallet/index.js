@@ -35,14 +35,13 @@ import {
   selectAllWallets,
   selectCurrentWallet,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {selectScheduledPaymentsByClientId} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSelectors';
+import {syncScheduledPaymentNotifications} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
 import {
   createWallet,
   deleteWallet,
   updateWalletName,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {deleteAlertsForWalletThunk} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
-import {useLocalNotification} from 'providers/hooks/useLocalNotification';
 import {
   selectIsSyncing,
   selectSyncingWalletClientId,
@@ -68,11 +67,6 @@ const CreateWallet = ({navigation, route}) => {
   const currentWalletClientId = useSelector(selectCurrentWalletClientId);
   const allWalletName = useSelector(selectAllWalletName, shallowEqual);
   const allWallets = useSelector(selectAllWallets);
-  // eslint-disable-next-line react-redux/useSelector-prefer-selectors
-  const scheduledPaymentsForWallet = useSelector(state =>
-    selectScheduledPaymentsByClientId(state, walletClientId),
-  );
-  const {cancelScheduledPaymentNotifications} = useLocalNotification();
   const finalAllWallets = useRef(
     allWalletName.filter(subItem => subItem !== walletName),
   );
@@ -194,12 +188,6 @@ const CreateWallet = ({navigation, route}) => {
       );
     }
 
-    // Cancel this wallet's pending scheduled-payment reminders before the
-    // wallet (and the recipient/amount data they reference) is deleted.
-    await cancelScheduledPaymentNotifications(
-      scheduledPaymentsForWallet.map(payment => payment?.id),
-    );
-
     navigation.reset({
       index: 0,
       routes: [{name: 'Sidebar'}],
@@ -208,16 +196,12 @@ const CreateWallet = ({navigation, route}) => {
     setTimeout(() => {
       if (walletClientId) {
         dispatch(deleteWallet(walletClientId));
+        // deleteWallet drops the wallet's scheduled payments from redux;
+        // this cancels their pending reminders to match.
+        dispatch(syncScheduledPaymentNotifications());
       }
     }, 1000);
-  }, [
-    dispatch,
-    navigation,
-    walletClientId,
-    allWallets,
-    scheduledPaymentsForWallet,
-    cancelScheduledPaymentNotifications,
-  ]);
+  }, [dispatch, navigation, walletClientId, allWallets]);
 
   const onPressNo = useCallback(() => {
     setShowDeleteModal(false);

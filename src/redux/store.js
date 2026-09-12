@@ -25,7 +25,7 @@ import {extraDataSlice} from 'dok-wallet-blockchain-networks/redux/extraData/ext
 import {messageSlice} from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
 import {sellCryptoSlice} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
 import {addressBookSlice} from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSlice';
-import {batchTransactionSlice} from '../../dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
+import {batchTransactionSlice} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
 import {notificationAlertsSlice} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
 import {customRpcSlice} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSlice';
 import {coinSyncSlice} from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSlice.js';
@@ -51,10 +51,17 @@ const walletsPersistTransform = createTransform(
         : wallet,
     ),
   }),
-  // One-time migration for users persisted currentWalletIndex
   outboundState => {
+    // In-flight "refresh all wallets" progress is UI state, not data: a
+    // rehydrated `true` (app quit mid-refresh) would leave the button
+    // spinning and disabled with no thunk left to clear it.
+    const refreshReset = {
+      isRefreshingAllWallets: false,
+      refreshingWalletClientId: null,
+    };
+    // One-time migration for users persisted currentWalletIndex
     if (outboundState?.currentWalletClientId) {
-      return outboundState;
+      return {...outboundState, ...refreshReset};
     }
     const allWallets = outboundState?.allWallets?.map(wallet => ({
       ...wallet,
@@ -63,6 +70,7 @@ const walletsPersistTransform = createTransform(
     const {currentWalletIndex, ...restState} = outboundState || {};
     return {
       ...restState,
+      ...refreshReset,
       allWallets,
       currentWalletClientId:
         allWallets?.[currentWalletIndex]?.clientId ||

@@ -137,10 +137,17 @@ const myStyles = theme =>
     balanceLabelSelected: {
       color: theme.gray,
     },
+    balanceValueRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
     balanceValue: {
       fontSize: 22,
       fontWeight: '700',
       color: theme.font,
+    },
+    balanceRefreshIndicator: {
+      marginLeft: 8,
     },
     balanceValueSelected: {
       color: theme.font,
@@ -296,15 +303,33 @@ const myStyles = theme =>
       justifyContent: 'center',
       marginLeft: 8,
     },
-    input: {
+    // Search bar + refresh-all button share one row.
+    searchRow: {
       width: '90%',
       alignSelf: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 16,
+      marginBottom: 8,
+    },
+    // Filled with the brand accent, like the Active badge.
+    refreshButton: {
+      width: 48,
+      height: 48,
+      marginLeft: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.background,
+      borderWidth: 1,
+      borderColor: theme.background,
+      borderRadius: 12,
+    },
+    input: {
+      flex: 1,
       backgroundColor: theme.backgroundColor,
       borderWidth: 1,
       borderColor: theme.gray,
       borderRadius: 12,
-      marginTop: 16,
-      marginBottom: 8,
       fontSize: 16,
       height: 48,
       padding: 0,

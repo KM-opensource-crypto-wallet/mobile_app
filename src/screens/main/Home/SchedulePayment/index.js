@@ -50,7 +50,6 @@ const REPEAT_OPTIONS = [
   {value: REPEAT_TYPE.DAILY, label: 'Daily'},
   {value: REPEAT_TYPE.WEEKLY, label: 'Weekly'},
   {value: REPEAT_TYPE.MONTHLY, label: 'Monthly'},
-  {value: REPEAT_TYPE.YEARLY, label: 'Yearly'},
   {value: REPEAT_TYPE.CUSTOM, label: 'Custom'},
 ];
 
@@ -132,9 +131,17 @@ const SchedulePayment = ({navigation, route}) => {
 
   const form = useSendFundsForm({coin: formCoin, wallet: currentWallet});
   const {availableAmount} = form;
+  const initialValues = useMemo(
+    () => getInitialValues(editingPayment, formCoin?.currencyRate),
+    [editingPayment, formCoin?.currencyRate],
+  );
   const validationSchema = useMemo(
-    () => validationSchemaSchedulePayment({balanceAmount: availableAmount}),
-    [availableAmount],
+    () =>
+      validationSchemaSchedulePayment({
+        balanceAmount: availableAmount,
+        initialScheduledDate: isEditMode ? initialValues.scheduledDate : null,
+      }),
+    [availableAmount, isEditMode, initialValues.scheduledDate],
   );
 
   useLayoutEffect(() => {
@@ -153,11 +160,15 @@ const SchedulePayment = ({navigation, route}) => {
         type: 'successToast',
         title:
           occurrences.length > 1
-            ? `Payment ${actionLabel} (${occurrences.length} reminders)`
+            ? `Payment ${actionLabel} (${occurrences.length} occurrences)`
             : `Payment ${actionLabel}`,
         message: "We'll remind you at the scheduled time",
       });
-      navigation.navigate('ViewSchedulePayment');
+      // Back to the list if it is already in the stack (opened via Add or
+      // Edit), otherwise replace this form with it (opened from Send) — in
+      // React Navigation 7 `navigate` always pushes, so it would stack a
+      // second list on top.
+      navigation.popTo('ViewSchedulePayment');
     } catch (rejection) {
       if (rejection?.type === 'invalidAddress') {
         helpers.setFieldTouched('toAddress', true, false);
@@ -182,6 +193,16 @@ const SchedulePayment = ({navigation, route}) => {
         );
         return;
       }
+      if (rejection?.type === 'reminderLimitExceeded') {
+        const {existing, required, limit} = rejection;
+        Alert.alert(
+          'Reminder limit reached',
+          `This payment needs ${required} reminder slot${
+            required === 1 ? '' : 's'
+          }, but ${existing} of ${limit} are already used on this device. Delete or shorten an existing scheduled payment — each card in the list shows how many slots it uses.`,
+        );
+        return;
+      }
       if (rejection?.type === 'reminderFailed') {
         Alert.alert(
           'Reminder could not be scheduled',
@@ -194,7 +215,7 @@ const SchedulePayment = ({navigation, route}) => {
   };
 
   const formik = useFormik({
-    initialValues: getInitialValues(editingPayment, formCoin?.currencyRate),
+    initialValues,
     validationSchema,
     onSubmit: async (values, helpers) => {
       if (form.applyChainRules(values, helpers)) {
@@ -285,13 +306,17 @@ const SchedulePayment = ({navigation, route}) => {
     if (occurrences.length < 2) {
       return null;
     }
+    // An in-progress series (editing a repeating payment that has begun)
+    // previews only what is still to come, so it matches the reminders
+    // actually pending.
+    const now = Date.now();
+    const remaining = occurrences.filter(ts => ts > now);
     const format = ts => dayjs(ts).format(DISPLAY_DATE_FORMAT);
     return {
-      // Includes occurrences[0], the start date currently in the
-      // scheduledDate field above, so the preview stays in sync with it.
-      upcoming: occurrences.slice(0, 5).map(format),
+      upcoming: remaining.slice(0, 5).map(format),
       endDate: format(occurrences[occurrences.length - 1]),
       count: occurrences.length,
+      remaining: remaining.length,
     };
   }, [isRepeating, values]);
 
@@ -447,7 +472,9 @@ const SchedulePayment = ({navigation, route}) => {
                   ))}
                   <Text style={styles.sublabel}>Ends</Text>
                   <Text style={formStyles.boxBalance}>
-                    {`${recurrenceEndInfo.endDate} (after ${recurrenceEndInfo.count} occurrences)`}
+                    {recurrenceEndInfo.remaining < recurrenceEndInfo.count
+                      ? `${recurrenceEndInfo.endDate} (${recurrenceEndInfo.remaining} of ${recurrenceEndInfo.count} remaining)`
+                      : `${recurrenceEndInfo.endDate} (after ${recurrenceEndInfo.count} occurrences)`}
                   </Text>
                 </>
               )}

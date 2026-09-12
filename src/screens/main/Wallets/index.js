@@ -7,7 +7,13 @@ import React, {
   useState,
   useEffect,
 } from 'react';
-import {Keyboard, Text, TouchableOpacity, View} from 'react-native';
+import {
+  ActivityIndicator,
+  Keyboard,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import myStyles from './WalletsStyles';
 import {useSelector, useDispatch} from 'react-redux';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome6';
@@ -20,10 +26,12 @@ import CreateWalletSheet from 'components/CreateWalletSheet';
 import AddIcon from 'assets/images/sidebarIcons/Add.svg';
 import FilterListIcon from 'assets/images/icons/filter-list.svg';
 import SortMenu from 'components/SortMenu';
+import RefreshWalletsButton from './RefreshWalletsButton';
 import {
   isWalletHiddenAndLocked,
   selectAllWallets,
   selectCurrentWallet,
+  selectRefreshingWalletClientId,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
   findHiddenWalletByCode,
@@ -72,6 +80,7 @@ const Wallets = ({navigation}) => {
   const currentWalletName = currentWallet?.walletName;
   const allWallets = useSelector(selectAllWallets);
   const localCurrency = useSelector(getLocalCurrency);
+  const refreshingWalletClientId = useSelector(selectRefreshingWalletClientId);
   const walletSheetRef = useRef();
   const visibleWallets = useMemo(
     () => allWallets.filter(wallet => !isWalletHiddenAndLocked(wallet)),
@@ -255,19 +264,22 @@ const Wallets = ({navigation}) => {
   return (
     <DokSafeAreaView style={styles.container}>
       <View style={styles.container}>
-        <Searchbar
-          placeholder="Search"
-          value={searchQuery}
-          style={styles.input}
-          onChangeText={handleSearch}
-          autoFocus={false}
-          onSubmitEditing={() => Keyboard.dismiss()}
-          autoCorrect={false}
-          autoComplete="off"
-          autoCapitalize="none"
-          spellCheck={false}
-          inputStyle={{minHeight: 0}}
-        />
+        <View style={styles.searchRow}>
+          <Searchbar
+            placeholder="Search"
+            value={searchQuery}
+            style={styles.input}
+            onChangeText={handleSearch}
+            autoFocus={false}
+            onSubmitEditing={() => Keyboard.dismiss()}
+            autoCorrect={false}
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            inputStyle={{minHeight: 0}}
+          />
+          <RefreshWalletsButton style={styles.refreshButton} />
+        </View>
 
         <SortMenu
           visible={showSortMenu}
@@ -295,6 +307,9 @@ const Wallets = ({navigation}) => {
                 subItem => subItem.walletName === item.walletName,
               );
               const isSelectedWallet = item.walletName === currentWalletName;
+              const isRefreshingWallet =
+                !!refreshingWalletClientId &&
+                item.clientId === refreshingWalletClientId;
               const totalBalance = getWalletTotalBalance(item?.coins);
               const topCoins = getTopTwoCoins(item?.coins);
               const coinsCount = getCoinsCount(item?.coins);
@@ -443,14 +458,23 @@ const Wallets = ({navigation}) => {
                           ]}>
                           Total Balance
                         </Text>
-                        <Text
-                          style={[
-                            styles.balanceValue,
-                            isSelectedWallet && styles.balanceValueSelected,
-                          ]}>
-                          {symbol}
-                          {formatBalance(totalBalance)}
-                        </Text>
+                        <View style={styles.balanceValueRow}>
+                          <Text
+                            style={[
+                              styles.balanceValue,
+                              isSelectedWallet && styles.balanceValueSelected,
+                            ]}>
+                            {symbol}
+                            {formatBalance(totalBalance)}
+                          </Text>
+                          {isRefreshingWallet && (
+                            <ActivityIndicator
+                              size="small"
+                              color={theme.font}
+                              style={styles.balanceRefreshIndicator}
+                            />
+                          )}
+                        </View>
                       </View>
                       <View style={styles.coinsInfo}>
                         <View style={styles.topCoinsContainer}>

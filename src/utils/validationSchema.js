@@ -53,7 +53,14 @@ export const validationSchemaSendFunds = ({balanceAmount = 0} = {}) =>
     memo: Yup.string().trim().max(200).optional(),
   });
 
-export const validationSchemaSchedulePayment = options =>
+// initialScheduledDate: in edit mode, the stored series start. It may
+// already be in the past (a repeating series that has begun) and is still
+// accepted as long as it is left untouched, so saving other fields never
+// shifts the series; any changed date must be in the future.
+export const validationSchemaSchedulePayment = ({
+  initialScheduledDate,
+  ...options
+}) =>
   validationSchemaSendFunds(options).shape({
     scheduledDate: Yup.string()
       .required('Scheduled date is required')
@@ -68,6 +75,7 @@ export const validationSchemaSchedulePayment = options =>
         value =>
           !value ||
           !dayjs(value, SCHEDULED_DATE_FORMAT, true).isValid() ||
+          (!!initialScheduledDate && value === initialScheduledDate) ||
           dayjs(value, SCHEDULED_DATE_FORMAT, true).valueOf() > Date.now(),
       ),
     repeatInterval: Yup.number()

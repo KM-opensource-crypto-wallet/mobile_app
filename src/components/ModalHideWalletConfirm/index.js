@@ -37,10 +37,9 @@ const NOTIFICATION_INFO_BULLETS = [
 ];
 
 const SCHEDULE_NOTIFICATION_INFO_BULLETS = [
-  "This controls whether this wallet's scheduled payment reminders are cancelled when the wallet is hidden.",
-  'Enabled (default): reminders for all of this wallet’s scheduled payments are deleted, so nothing on your lock screen or notification tray reveals its activity.',
-  'Turning this off restores the reminders for any payments still scheduled in the future.',
-  "Disabled: this wallet's scheduled payment reminders are kept and will still fire while it's hidden.",
+  "This controls what happens to this wallet's scheduled payments when the wallet is hidden.",
+  'Enabled (default): all of this wallet’s scheduled payments and their reminders are deleted, so nothing on your lock screen or notification tray reveals its activity. Deleted payments are not restored when the wallet is unhidden.',
+  "Disabled: this wallet's scheduled payments are kept and their reminders will still fire while it's hidden.",
 ];
 
 const INFO_CONTENT = {
@@ -78,15 +77,17 @@ const getScheduleNotificationConfirmBullet = (
 ) => {
   if (deleteScheduleNotification) {
     return scheduledPaymentsCount > 0
-      ? `Reminders for your ${scheduledPaymentsCount} scheduled payment${s(
+      ? `Your ${scheduledPaymentsCount} scheduled payment${s(
           scheduledPaymentsCount,
-        )} will be cancelled, so nothing on your lock screen reveals its activity.`
-      : 'This wallet has no scheduled payments - nothing will be cancelled.';
+        )} and ${
+          scheduledPaymentsCount > 1 ? 'their reminders' : 'its reminder'
+        } will be deleted, so nothing on your lock screen reveals its activity.`
+      : 'This wallet has no scheduled payments - nothing will be deleted.';
   }
   return scheduledPaymentsCount > 0
     ? `Reminders for your ${scheduledPaymentsCount} scheduled payment${s(
         scheduledPaymentsCount,
-      )} will be kept - they'll still fire for this wallet while it's hidden.`
+      )} will be kept - reminders will still fire for this wallet while it's hidden.`
     : null;
 };
 
