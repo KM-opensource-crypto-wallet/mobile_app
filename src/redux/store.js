@@ -25,12 +25,13 @@ import {extraDataSlice} from 'dok-wallet-blockchain-networks/redux/extraData/ext
 import {messageSlice} from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
 import {sellCryptoSlice} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
 import {addressBookSlice} from 'dok-wallet-blockchain-networks/redux/addressBook/addressBookSlice';
-import {batchTransactionSlice} from '../../dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
+import {batchTransactionSlice} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
 import {notificationAlertsSlice} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
 import {customRpcSlice} from 'dok-wallet-blockchain-networks/redux/customRpc/customRpcSlice';
 import {coinSyncSlice} from 'dok-wallet-blockchain-networks/redux/coinSync/coinSyncSlice.js';
 import {sentAddressHistorySlice} from 'dok-wallet-blockchain-networks/redux/sentAddressHistory/sentAddressHistorySlice';
 import {exchangeHistorySlice} from 'dok-wallet-blockchain-networks/redux/exchangeHistory/exchangeHistorySlice';
+import {schedulePaymentSlice} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
 import {addBreadcrumb} from 'services/logger';
 
 const storage = createSensitiveStorage({
@@ -50,10 +51,19 @@ const walletsPersistTransform = createTransform(
         : wallet,
     ),
   }),
-  // One-time migration for users persisted currentWalletIndex
   outboundState => {
+    // In-flight "refresh all wallets" progress is UI state, not data: a
+    // rehydrated `true` (app quit mid-refresh) would leave the button
+    // spinning and disabled with no thunk left to clear it.
+    const refreshReset = {
+      isRefreshingAllWallets: false,
+      refreshingWalletClientId: null,
+      // Per-wallet requestIds of in-flight refreshCoins: none survive a quit.
+      refreshCoinsRequestIds: {},
+    };
+    // One-time migration for users persisted currentWalletIndex
     if (outboundState?.currentWalletClientId) {
-      return outboundState;
+      return {...outboundState, ...refreshReset};
     }
     const allWallets = outboundState?.allWallets?.map(wallet => ({
       ...wallet,
@@ -62,6 +72,7 @@ const walletsPersistTransform = createTransform(
     const {currentWalletIndex, ...restState} = outboundState || {};
     return {
       ...restState,
+      ...refreshReset,
       allWallets,
       currentWalletClientId:
         allWallets?.[currentWalletIndex]?.clientId ||
@@ -71,11 +82,25 @@ const walletsPersistTransform = createTransform(
   },
   {whitelist: [walletsSlice.name]},
 );
+// isSubmitting is in-flight UI state, not data — a rehydrated `true` (e.g.
+// the app was killed mid-submit) would leave the submit button permanently
+// disabled with no pending thunk left to ever flip it back. scheduledPayments
+// itself must still persist (it's the actual schedule data), so only reset
+// this one field on load rather than blacklisting the whole slice.
+const schedulePaymentPersistTransform = createTransform(
+  inboundState => inboundState,
+  outboundState => ({
+    ...outboundState,
+    isSubmitting: false,
+    pendingSubmitCount: 0,
+  }),
+  {whitelist: [schedulePaymentSlice.name]},
+);
 
 const config = {
   key: process.env.REDUX_KEY,
   storage,
-  transforms: [walletsPersistTransform],
+  transforms: [walletsPersistTransform, schedulePaymentPersistTransform],
   blacklist: [
     currentTransferSlice.name,
     exchangeSlice.name,
@@ -110,16 +135,8 @@ const rootReducer = persistCombineReducers(config, {
   [customRpcSlice.name]: customRpcSlice.reducer,
   [coinSyncSlice.name]: coinSyncSlice.reducer,
   [sentAddressHistorySlice.name]: sentAddressHistorySlice.reducer,
+  [schedulePaymentSlice.name]: schedulePaymentSlice.reducer,
 });
-
-// Logging middleware
-const logger = storeAPI => next => action => {
-  console.log('Dispatching action:', action);
-  console.log('Source component:', action.meta?.source);
-  let result = next(action);
-  console.log('New state:', JSON.stringify(storeAPI.getState()));
-  return result;
-};
 
 // Every failed thunk (~40 of them: exchange quotes, staking, currency, batch)
 // becomes a breadcrumb on the next error report. Only the error message and a

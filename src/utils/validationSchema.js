@@ -1,4 +1,6 @@
 import * as Yup from 'yup';
+import dayjs from 'dayjs';
+import {REPEAT_TYPE, SCHEDULED_DATE_FORMAT} from 'utils/scheduleRecurrence';
 
 const addressRegex = /^[a-zA-Z0-9][a-zA-Z0-9 .,-]*$/;
 
@@ -37,12 +39,10 @@ export const validationSchemaCryptoOptions = Yup.object().shape({
   risk: Yup.bool().oneOf([true], 'Accept risk is required'),
 });
 
-export const validationSchemaSendFunds = (
-  balanceAmount = 0,
-  currencyBalanceAmount = 0,
-) =>
+// Shared by SendFunds and SchedulePayment (see validationSchemaSchedulePayment).
+export const validationSchemaSendFunds = ({balanceAmount = 0} = {}) =>
   Yup.object().shape({
-    send: Yup.string().required('Address is not valid!'),
+    toAddress: Yup.string().trim().required('Address is not valid!'),
     amount: Yup.number()
       .typeError('Please enter number value only')
       .positive('Must be a positive number.')
@@ -51,6 +51,41 @@ export const validationSchemaSendFunds = (
       )
       .max(balanceAmount, 'Amount greater than balance'),
     memo: Yup.string().trim().max(200).optional(),
+  });
+
+// initialScheduledDate: in edit mode, the stored series start. It may
+// already be in the past (a repeating series that has begun) and is still
+// accepted as long as it is left untouched, so saving other fields never
+// shifts the series; any changed date must be in the future.
+export const validationSchemaSchedulePayment = ({
+  initialScheduledDate,
+  ...options
+}) =>
+  validationSchemaSendFunds(options).shape({
+    scheduledDate: Yup.string()
+      .required('Scheduled date is required')
+      .test(
+        'is-valid-date',
+        `Use the format ${SCHEDULED_DATE_FORMAT}`,
+        value => !!value && dayjs(value, SCHEDULED_DATE_FORMAT, true).isValid(),
+      )
+      .test(
+        'is-future-date',
+        'Scheduled date must be in the future',
+        value =>
+          !value ||
+          !dayjs(value, SCHEDULED_DATE_FORMAT, true).isValid() ||
+          (!!initialScheduledDate && value === initialScheduledDate) ||
+          dayjs(value, SCHEDULED_DATE_FORMAT, true).valueOf() > Date.now(),
+      ),
+    repeatInterval: Yup.number()
+      .typeError('Enter a number')
+      .integer('Enter a whole number')
+      .min(1, 'Must be at least 1')
+      .when('repeatType', {
+        is: REPEAT_TYPE.CUSTOM,
+        then: schema => schema.required('Interval is required'),
+      }),
   });
 
 export const validationSchemaSendNFT = () =>

@@ -15,6 +15,7 @@ import {
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './ModalResetStyles';
 import {resetWallet} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {syncScheduledPaymentNotifications} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
 import {useDispatch} from 'react-redux';
 import {resetCurrentTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {resetBatchTransactions} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
@@ -70,6 +71,9 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
       // The masterClientId is about to be discarded; stop attributing events.
       setUserContext(null);
       dispatch(resetWallet());
+      // resetWallet wiped every scheduled payment; cancel every pending
+      // reminder that pointed at them.
+      await dispatch(syncScheduledPaymentNotifications());
       dispatch(resetCurrentTransferData());
       dispatch(resetBatchTransactions());
       logoutOneSignal();

@@ -28,6 +28,8 @@ import {
   selectAllWalletName,
   selectAllWallets,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectScheduledPaymentsByClientId} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSelectors';
+import {deleteScheduledPaymentsForWallet} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
 import {
   clearWalletHideSettings,
   isSecretCodeInUseByOtherWallet,
@@ -68,6 +70,10 @@ const HideWallet = ({navigation, route}) => {
   const allWallets = useSelector(selectAllWallets);
   const allWalletName = useSelector(selectAllWalletName, shallowEqual);
   const notificationAlerts = useSelector(getNotificationAlerts);
+  // eslint-disable-next-line react-redux/useSelector-prefer-selectors
+  const walletScheduledPayments = useSelector(state =>
+    selectScheduledPaymentsByClientId(state, walletClientId),
+  );
   const editingWallet = allWallets.find(
     item => item?.clientId === walletClientId,
   );
@@ -86,6 +92,9 @@ const HideWallet = ({navigation, route}) => {
   );
   const [hideNotification, setHideNotification] = useState(
     initialHideSettings?.hideNotification ?? true,
+  );
+  const [deleteScheduleNotification, setDeleteScheduleNotification] = useState(
+    initialHideSettings?.deleteScheduleNotification ?? true,
   );
   // null | 'info' | 'confirm' - a single source of truth so the info and
   // confirm modals can never both be considered visible at once.
@@ -134,6 +143,12 @@ const HideWallet = ({navigation, route}) => {
   useEffect(() => {
     dispatch(fetchSubscriptionsThunk());
   }, [dispatch]);
+
+  // Every stored payment is active (expired ones are pruned).
+  const activeScheduledPayments = useMemo(
+    () => walletScheduledPayments || [],
+    [walletScheduledPayments],
+  );
 
   const walletAlerts = useMemo(
     () =>
@@ -260,8 +275,30 @@ const HideWallet = ({navigation, route}) => {
     [walletAlerts, editingWallet?.clientId, dispatch],
   );
 
+  // "Delete schedule notifications" on: the wallet's scheduled payments are
+  // deleted outright (redux record + notifee triggers). Off: nothing is
+  // touched - the payments stay and their reminders keep firing. Returns
+  // null when there was nothing to do so no toast is shown.
+  const deleteScheduledPayments = useCallback(async () => {
+    if (!walletClientId || activeScheduledPayments.length === 0) {
+      return null;
+    }
+    try {
+      await dispatch(
+        deleteScheduledPaymentsForWallet({walletClientId}),
+      ).unwrap();
+      return {totalCount: activeScheduledPayments.length, failedCount: 0};
+    } catch (e) {
+      return {
+        totalCount: activeScheduledPayments.length,
+        failedCount: activeScheduledPayments.length,
+      };
+    }
+  }, [walletClientId, activeScheduledPayments.length, dispatch]);
+
   const doHideSave = useCallback(async () => {
     let syncResult = null;
+    let scheduleSyncResult = null;
     if (isHideEnabled) {
       if (secretCode) {
         // Code was already validated (name-inclusion + not-in-use-by-
@@ -277,9 +314,13 @@ const HideWallet = ({navigation, route}) => {
             secretCodeIterations: SECRET_CODE_ITERATIONS,
             relockOption,
             hideNotification,
+            deleteScheduleNotification,
           }),
         );
         syncResult = await syncAlertsHideNotification(hideNotification);
+        if (deleteScheduleNotification) {
+          scheduleSyncResult = await deleteScheduledPayments();
+        }
       } else if (initialHideSettings) {
         // Blank code while already hidden = keep the existing code,
         // only the re-lock option/hideNotification may have changed.
@@ -291,14 +332,19 @@ const HideWallet = ({navigation, route}) => {
             secretCodeIterations: initialHideSettings.secretCodeIterations,
             relockOption,
             hideNotification,
+            deleteScheduleNotification,
           }),
         );
         syncResult = await syncAlertsHideNotification(hideNotification);
+        if (deleteScheduleNotification) {
+          scheduleSyncResult = await deleteScheduledPayments();
+        }
       }
     } else if (initialHideSettings) {
       dispatch(clearWalletHideSettings({clientId: walletClientId}));
       // Wallet is no longer hidden - its alerts should behave normally
-      // again rather than staying suppressed on the backend forever.
+      // again rather than staying suppressed forever. Scheduled payments
+      // need nothing: they were either deleted at hide time or left alone.
       syncResult = await syncAlertsHideNotification(false);
     }
     if (syncResult) {
@@ -322,6 +368,27 @@ const HideWallet = ({navigation, route}) => {
       }
       // totalCount === 0: no alerts exist for this wallet - nothing to sync.
     }
+    if (scheduleSyncResult) {
+      const {totalCount, failedCount} = scheduleSyncResult;
+      const s = n => (n > 1 ? 's' : '');
+      if (failedCount > 0) {
+        showToast({
+          type: 'errorToast',
+          title: `${failedCount} scheduled payment${s(
+            failedCount,
+          )} not deleted`,
+          message:
+            'Some scheduled payments could not be deleted. Please try again.',
+        });
+      } else {
+        showToast({
+          type: 'successToast',
+          title: `${totalCount} scheduled payment${s(totalCount)} deleted`,
+          message:
+            'Removed since this wallet has schedule notifications hidden.',
+        });
+      }
+    }
     if (isHideEnabled) {
       // The wallet is now hidden (setWalletHideSettings always re-locks it),
       // so screens below on the stack - the wallet list, or Home if this was
@@ -339,11 +406,13 @@ const HideWallet = ({navigation, route}) => {
     secretCode,
     relockOption,
     hideNotification,
+    deleteScheduleNotification,
     initialHideSettings,
     walletClientId,
     dispatch,
     navigation,
     syncAlertsHideNotification,
+    deleteScheduledPayments,
   ]);
 
   const performHideSave = useCallback(async () => {
@@ -494,6 +563,28 @@ const HideWallet = ({navigation, route}) => {
                     value={hideNotification}
                   />
                 </View>
+
+                <View style={styles.hideWalletHeaderRow}>
+                  <Text style={styles.hideWalletLabel}>
+                    Delete schedule notifications
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.infoButton}
+                    hitSlop={{top: 10, right: 10, bottom: 10, left: 10}}
+                    onPress={() => setHideModal('scheduleNotificationInfo')}>
+                    <MaterialCommunityIcons
+                      name="help-circle-outline"
+                      size={20}
+                      color={theme.font}
+                    />
+                  </TouchableOpacity>
+                  <View style={{flex: 1}} />
+                  <Switch
+                    trackColor={{false: 'gray', true: '#0ecd1764'}}
+                    onValueChange={setDeleteScheduleNotification}
+                    value={deleteScheduleNotification}
+                  />
+                </View>
               </>
             )}
           </ScrollView>
@@ -518,6 +609,8 @@ const HideWallet = ({navigation, route}) => {
         relockOption={relockOption}
         hideNotification={hideNotification}
         alertsCount={walletAlerts.length}
+        deleteScheduleNotification={deleteScheduleNotification}
+        scheduledPaymentsCount={activeScheduledPayments.length}
         onCancel={onCancelHideModal}
         onConfirm={onConfirmHideAndSave}
       />

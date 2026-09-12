@@ -24,7 +24,7 @@ import {wallet} from 'data/data';
 import myStyles from './CreateWalletStyles';
 import {useSelector, shallowEqual, useDispatch} from 'react-redux';
 import Exclamationcircleo from 'assets/images/icons/exclamationcircle.svg';
-import {isIpad, useFloatingHeight} from 'utils/dimensions';
+import {isIpad} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
 import ThemedIcon from 'components/ThemedIcon';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -35,6 +35,7 @@ import {
   selectAllWallets,
   selectCurrentWallet,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {syncScheduledPaymentNotifications} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
 import {
   createWallet,
   deleteWallet,
@@ -195,6 +196,9 @@ const CreateWallet = ({navigation, route}) => {
     setTimeout(() => {
       if (walletClientId) {
         dispatch(deleteWallet(walletClientId));
+        // deleteWallet drops the wallet's scheduled payments from redux;
+        // this cancels their pending reminders to match.
+        dispatch(syncScheduledPaymentNotifications());
       }
     }, 1000);
   }, [dispatch, navigation, walletClientId, allWallets]);
