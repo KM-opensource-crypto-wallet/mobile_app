@@ -34,7 +34,6 @@ PODS:
     - ReactNativeDependencies
     - uniffi-bindgen-react-native (= 0.29.3-1)
     - Yoga
-  - BugfenderSDK (2.2.0)
   - CocoaAsyncSocket (7.6.5)
   - FBLazyVector (0.86.3)
   - GoogleSignIn (9.2.0):
@@ -272,7 +271,6 @@ PODS:
     - React-RCTText (= 0.86.3)
     - React-RCTVibration (= 0.86.3)
   - React-callinvoker (0.86.3)
-  - React-Codegen (0.1.0)
   - React-Core (0.86.3):
     - hermes-engine
     - RCTDeprecation
@@ -2560,13 +2558,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RnBugfender (5.0.1):
-    - BugfenderSDK (>= 2.2.0)
-    - RCTRequired
-    - RCTTypeSafety
-    - React
-    - React-Codegen
-    - React-Core
   - RNCAsyncStorage (2.2.0):
     - hermes-engine
     - RCTRequired
@@ -2612,6 +2603,28 @@ PODS:
     - ReactNativeDependencies
     - Yoga
   - RNCMaskedView (0.3.2):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
+  - RNDateTimePicker (9.1.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2734,6 +2747,11 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNNotifee (9.1.8):
+    - React-Core
+    - RNNotifee/NotifeeCore (= 9.1.8)
+  - RNNotifee/NotifeeCore (9.1.8):
+    - React-Core
   - RNPermissions (5.6.0):
     - hermes-engine
     - RCTRequired
@@ -2916,6 +2934,29 @@ PODS:
     - React-NativeModulesApple
     - React-RCTFabric
     - React-RCTImage
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
+  - RNSentry (8.25.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
     - React-renderercss
     - React-rendererdebug
     - React-utils
@@ -3244,10 +3285,10 @@ DEPENDENCIES:
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - RecaptchaInterop
   - RNBootSplash (from `../node_modules/react-native-bootsplash`)
-  - "RnBugfender (from `../node_modules/@bugfender/rn-bugfender`)"
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - "RNCMaskedView (from `../node_modules/@react-native-masked-view/masked-view`)"
+  - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - "RNFastImage (from `../node_modules/@d11/react-native-fast-image`)"
   - RNFS (from `../node_modules/react-native-fs`)
@@ -3255,10 +3296,12 @@ DEPENDENCIES:
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNInAppBrowser (from `../node_modules/react-native-inappbrowser-reborn`)
   - RNLocalize (from `../node_modules/react-native-localize`)
+  - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - "RNSentry (from `../node_modules/@sentry/react-native`)"
   - RNShare (from `../node_modules/react-native-share`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNTestFlight (from `../node_modules/react-native-test-flight`)
@@ -3274,7 +3317,6 @@ SPEC REPOS:
   trunk:
     - AppAuth
     - AppCheckCore
-    - BugfenderSDK
     - CocoaAsyncSocket
     - GoogleSignIn
     - GoogleUtilities
@@ -3286,7 +3328,6 @@ SPEC REPOS:
     - OneSignalXCFramework
     - PromisesObjC
     - PromisesSwift
-    - React-Codegen
     - RecaptchaInterop
     - SDWebImage
     - SDWebImageAVIFCoder
@@ -3502,14 +3543,14 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
   RNBootSplash:
     :path: "../node_modules/react-native-bootsplash"
-  RnBugfender:
-    :path: "../node_modules/@bugfender/rn-bugfender"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNCClipboard:
     :path: "../node_modules/@react-native-clipboard/clipboard"
   RNCMaskedView:
     :path: "../node_modules/@react-native-masked-view/masked-view"
+  RNDateTimePicker:
+    :path: "../node_modules/@react-native-community/datetimepicker"
   RNDeviceInfo:
     :path: "../node_modules/react-native-device-info"
   RNFastImage:
@@ -3524,6 +3565,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-inappbrowser-reborn"
   RNLocalize:
     :path: "../node_modules/react-native-localize"
+  RNNotifee:
+    :path: "../node_modules/@notifee/react-native"
   RNPermissions:
     :path: "../node_modules/react-native-permissions"
   RNReactNativeHapticFeedback:
@@ -3532,6 +3575,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSentry:
+    :path: "../node_modules/@sentry/react-native"
   RNShare:
     :path: "../node_modules/react-native-share"
   RNSVG:
@@ -3553,7 +3598,6 @@ SPEC CHECKSUMS:
   AppAuth: ef4da5a3fc2e10b90c09a0a94a9baeaedc0341d5
   AppCheckCore: 214137f5c378d1dec88a68425c467fe65aaff637
   BreezSdkSparkReactNative: e3b0a9fa71b0d335eaf5f04be5adca332f18736e
-  BugfenderSDK: 67548568056e992ceb5a520337ef508d80a048d4
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   FBLazyVector: 2138c6c2ab66c31bf5754dc18097fbc498a49c7f
   GoogleSignIn: e449a40a92e9f2eea56e98b5214d13725dc5a00a
@@ -3578,7 +3622,6 @@ SPEC CHECKSUMS:
   RCTTypeSafety: efc19e6b92931abf0b68b064212323a258a5f019
   React: 52dce66f71097ed7a4968673d95eeb8095ded74e
   React-callinvoker: afa0525ab27f4ffbb4c377f855fe9368edb099bc
-  React-Codegen: 4b8b4817cea7a54b83851d4c1f91f79aa73de30a
   React-Core: cf199e1dcc940a9b96d87e05e72e4b9b863a1eb8
   React-Core-prebuilt: 125b040461c34b44babc54cb7f0730b2d97de6d2
   React-CoreModules: ad6bb884411a7687d70350fa49535929e66985f9
@@ -3667,10 +3710,10 @@ SPEC CHECKSUMS:
   ReactNativeDependencies: 6738e602b46fd24aa453cd58267ec3bb8bf29d27
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   RNBootSplash: 31b5c6d3ad199d6f6c3b8c6bfe98be74047b8ce5
-  RnBugfender: 0bd466745e8ea63b99eaf432e0e010702fc47679
   RNCAsyncStorage: 0f84413588571e74ef9cff6e3b669346e3abf9cb
   RNCClipboard: c1cdf3cdd72df606520114f42e61c6898a488dd8
   RNCMaskedView: 48989935d9665d97d87fa7e44f486b4d22cd5b9f
+  RNDateTimePicker: c33c46d089998652b576a58ac08108db8c9af6f1
   RNDeviceInfo: d79872e11c8e9c4de0d65b0ee6e0cee719f37fea
   RNFastImage: 1707c1f88a4cd1d932020250e93679dbb535be64
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
@@ -3678,10 +3721,12 @@ SPEC CHECKSUMS:
   RNGoogleSignin: 7b48b915471868fcc2a160aaaa26ad27a6e6d484
   RNInAppBrowser: b53e6f6072c931115bc22ac9dc9510ac2cbea62d
   RNLocalize: a0dd99f2d709904a07fb826e0b748234f629af34
+  RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
   RNPermissions: 6588908e26c91ae9af3e2055b778d63b5b834ab1
   RNReactNativeHapticFeedback: ee768bc7aca1ccc1f24ae5d625f9667c593ea511
   RNReanimated: 786fbca32bbd50c274f25af01253a6f33fb4989e
   RNScreens: 032083414633a4d94cbcf08f8ab5019d72d1ba36
+  RNSentry: a0968f2a199f70f0f4694eb1ae9f74a571089981
   RNShare: 43cee010ada075019148c7a6bac1ca71b074e1d7
   RNSVG: ffe18ba0e8fbad864bf22d6f0060a4ee88ec9bf3
   RNTestFlight: 3419178faa8527ecfe803607fd338a3803f1fb0d
@@ -3700,6 +3745,6 @@ SPEC CHECKSUMS:
   Yoga: 18b74b3ade30bebc1904004dfaceae1dd02a330a
   YttriumWrapper: 850d3c5bfa7815ad9962591ff3c1b289039266f2
 
-PODFILE CHECKSUM: be3f75e012e1b7b799d44a9d0986df3cf1f81f31
+PODFILE CHECKSUM: f602574ae7f8e7fc2efb33ad22dcc18629fd1a42
 
 COCOAPODS: 1.14.3

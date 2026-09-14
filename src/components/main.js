@@ -38,14 +38,8 @@ import {
   reassignCurrentWalletIfHidden,
   resetCoinsToDefaultAddressForPrivacyMode,
   resetNfts,
-  setCurrentCoin,
-  setCurrentWalletClientId,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {
-  isWalletHiddenAndLocked,
-  selectCurrentWalletClientId,
-  selectAllWallets,
-} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectCurrentWalletClientId} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {store} from 'redux/store';
 import {
   setupOneSignal,
@@ -82,7 +76,6 @@ import {
   setIsUpdateAvailable,
   setIsWalletConnectInitialized,
   setPaymentData,
-  setRouteStateData,
   setWcUri,
 } from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
 import {checkNotifications, RESULTS} from 'react-native-permissions';
@@ -103,6 +96,14 @@ import {ThemeContext} from 'theme/ThemeContext';
 import ModalApkDownload from 'components/ModalApkDownload';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import CoinSyncWidget from 'components/CoinSyncWidget';
+import {useLocalNotification} from 'providers/hooks/useLocalNotification';
+import {getMasterClientId} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  addBreadcrumb,
+  captureError,
+  logger,
+  setUserContext,
+} from 'services/logger';
 
 // Only truly pre-auth screens belong here. Screens whose buttons redirect
 // outside the app (in-app browser, Linking, permission dialogs) are handled
@@ -149,7 +150,28 @@ const Main = () => {
   const compareRpcUrlsIntervalRef = useRef(null);
   const disableMessage = useSelector(getDisableMessage);
   const lastUpdateCheckTimestamp = useSelector(getLastUpdateCheckTimestamp);
-  const [pendingNotificationData, setPendingNotificationData] = useState(null);
+  const {
+    pendingScheduledPaymentData,
+    setPendingNotificationData,
+    consumePendingLoginRedirect,
+    syncHiddenWalletsScheduledPayments,
+  } = useLocalNotification();
+  const masterClientId = useSelector(getMasterClientId);
+  const lastRouteNameRef = useRef(null);
+
+  // Attribute every event/log to this install. The id is created after
+  // rehydrate (createIfNotExistsMasterClientId) and cleared on wallet reset.
+  useEffect(() => {
+    setUserContext(masterClientId);
+  }, [masterClientId]);
+
+  const recordRouteChange = useCallback(() => {
+    const routeName = navigationRef.current?.getCurrentRoute?.()?.name;
+    if (routeName && routeName !== lastRouteNameRef.current) {
+      lastRouteNameRef.current = routeName;
+      addBreadcrumb('navigation', routeName);
+    }
+  }, []);
 
   const fetchAndCompareRpcUrls = useCallback(() => {
     fetchRPCUrl();
@@ -166,7 +188,7 @@ const Main = () => {
       await initWalletConnect(WALLET_CONNECT_DATA);
       dispatch(setIsWalletConnectInitialized(true));
     } catch (e) {
-      console.error('Error in initialize WalletConnect');
+      captureError(e, {tags: {area: 'walletconnect', op: 'init'}});
     }
   }, [dispatch, walletConnectSessions]);
 
@@ -252,7 +274,8 @@ const Main = () => {
           dispatch(setIsUpdateAvailable('no'));
         }
       } catch (e) {
-        console.error('Error in check in app updates', e);
+        // Store scraping is flaky; a warning is enough.
+        logger.warn('app.update_check_failed', {message: e?.message});
       }
     } else {
       dispatch(setIsUpdateAvailable('no'));
@@ -272,7 +295,9 @@ const Main = () => {
       setAdjustPan();
     }
     if (isReduxStoreLoad) {
-      BootSplash.hide({fade: true});
+      BootSplash.hide({fade: true}).catch(e =>
+        captureError(e, {tags: {area: 'bootsplash'}}),
+      );
       if (!IS_KIML_WALLET || !IS_ANDROID) {
         checkInAppUpdates(true);
       }
@@ -281,6 +306,11 @@ const Main = () => {
       dispatch(createClientIdIfNotExist());
       dispatch(resetCoinsToDefaultAddressForPrivacyMode());
       dispatch(reassignCurrentWalletIfHidden());
+      // Cold start's persist-rehydrate transform force-hides every
+      // non-MANUAL-relock wallet again - delete the scheduled payments (and
+      // reminders) of any wallet that reveals as hidden+locked with "Delete
+      // schedule notifications" on.
+      syncHiddenWalletsScheduledPayments();
       const onUrlGet = event => {
         try {
           const url = event.url;
@@ -346,12 +376,16 @@ const Main = () => {
         console.log('current  state ->', appState.current);
         console.log('current app state ->', currentRouteName, nextAppState);
         if (appState.current.match(/background/) && nextAppState === 'active') {
+          addBreadcrumb('app.lifecycle', 'foreground', {
+            route: currentRouteName,
+          });
           if (
             currentRouteName !== 'Login' &&
             !unsecureRoute.includes(currentRouteName) &&
             !lastBackgroundSelfInitiated.current &&
             isAfterCurrentDate(lockTimeSet.current)
           ) {
+            addBreadcrumb('app.lifecycle', 'lock');
             setLoginModalVisible(true);
           }
           // One-shot: the next background decides again.
@@ -364,11 +398,19 @@ const Main = () => {
           const isSelfInitiatedBackground =
             consumeExpectedBackground() || isInAppBrowserSessionActive();
           lastBackgroundSelfInitiated.current = isSelfInitiatedBackground;
+          addBreadcrumb('app.lifecycle', 'background', {
+            route: currentRouteName,
+            selfInitiated: isSelfInitiatedBackground,
+          });
           if (!isSelfInitiatedBackground) {
             const walletClientIdBeforeRehide = selectCurrentWalletClientId(
               store.getState(),
             );
             dispatch(rehideWalletsOnBackground());
+            // BACKGROUND-relock wallets just went hidden+locked outside of
+            // HideWallet's own Save flow - delete the scheduled payments
+            // that their "Delete schedule notifications" setting says to.
+            syncHiddenWalletsScheduledPayments();
             const walletClientIdAfterRehide = selectCurrentWalletClientId(
               store.getState(),
             );
@@ -397,65 +439,33 @@ const Main = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const handleNotificationData = useCallback(
-    data => {
+  const onNotificationClick = useCallback(
+    event => {
+      const data = event?.notification?.additionalData;
       if (!data?.chainName || !data?.coin) {
         return;
       }
-      const wallets = selectAllWallets(store.getState());
-      const wallet = data.walletId
-        ? wallets.find(w => w.clientId === data.walletId)
-        : wallets.find(w =>
-            w.coins?.some(
-              c =>
-                c.chain_name === data.chainName &&
-                c.symbol === data.coin &&
-                c.isInWallet,
-            ),
-          );
-      if (!wallet) {
-        return;
+      // Store notification data and show login modal
+      setPendingNotificationData(data);
+      // On a cold start the base Login screen is still the active route and
+      // will consume this itself (via consumePendingLoginRedirect) once the
+      // user signs in there - showing the modal on top of it would mount a
+      // second LoginComponent and double the biometric prompt.
+      if (MainNavigation.getCurrentRouteName() !== 'Login') {
+        setLoginModalVisible(true);
       }
-      if (isWalletHiddenAndLocked(wallet)) {
-        return;
-      }
-      const coin = wallet.coins?.find(
-        c =>
-          c.chain_name === data.chainName &&
-          c.symbol === data.coin &&
-          c.isInWallet,
-      );
-      if (!coin) {
-        return;
-      }
-      dispatch(setCurrentWalletClientId(wallet.clientId));
-      dispatch(setCurrentCoin(coin._id));
-      dispatch(setRouteStateData({navigateToTransactionList: true}));
-      MainNavigation.reset({
-        index: 0,
-        routes: [{name: 'Sidebar'}],
-      });
     },
-    [dispatch],
+    [setPendingNotificationData],
   );
 
-  const onNotificationClick = useCallback(event => {
-    const data = event?.notification?.additionalData;
-    if (!data?.chainName || !data?.coin) {
-      return;
+  useEffect(() => {
+    if (
+      pendingScheduledPaymentData &&
+      MainNavigation.getCurrentRouteName() !== 'Login'
+    ) {
+      setLoginModalVisible(true);
     }
-    // Store notification data and show login modal
-    setPendingNotificationData(data);
-    setLoginModalVisible(true);
-  }, []);
-
-  const handleNotificationLoginSuccess = useCallback(() => {
-    if (pendingNotificationData) {
-      handleNotificationData(pendingNotificationData);
-      setPendingNotificationData(null);
-    }
-    setLoginModalVisible(false);
-  }, [pendingNotificationData, handleNotificationData]);
+  }, [pendingScheduledPaymentData]);
 
   useEffect(() => {
     setupOneSignal();
@@ -472,6 +482,12 @@ const Main = () => {
   }, []);
 
   const {theme} = useContext(ThemeContext);
+  const handleClose = useCallback(() => {
+    // No-op if the base Login screen (mounted underneath this modal at cold
+    // start) already claimed and handled the pending notification itself.
+    consumePendingLoginRedirect();
+    setLoginModalVisible(false);
+  }, [consumePendingLoginRedirect]);
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
@@ -488,7 +504,9 @@ const Main = () => {
           ref={navigationRef}
           onReady={() => {
             MainNavigation.setNavigationObject(navigationRef.current);
-          }}>
+            recordRouteChange();
+          }}
+          onStateChange={recordRouteChange}>
           <MenuProvider SafeAreaComponent={SafeAreaView}>
             <BottomSheetModalProvider>{routing}</BottomSheetModalProvider>
             {(!IS_KIML_WALLET || !IS_ANDROID) && (
@@ -498,16 +516,7 @@ const Main = () => {
               <ModalApkDownload visible={showUpdateModal} />
             )}
           </MenuProvider>
-          <LoginModal
-            visible={loginModalVisible}
-            onClose={() => {
-              if (pendingNotificationData) {
-                handleNotificationLoginSuccess();
-              } else {
-                setLoginModalVisible(false);
-              }
-            }}
-          />
+          <LoginModal visible={loginModalVisible} onClose={handleClose} />
         </NavigationContainer>
       )}
       {/*<Delete />*/}

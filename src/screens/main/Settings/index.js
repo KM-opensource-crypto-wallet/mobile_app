@@ -44,6 +44,13 @@ import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome6';
 import {inAppBrowserOptions} from 'utils/common';
 import {openInAppBrowser} from 'utils/inAppBrowser';
 import {URLData} from 'utils/wlData';
+import {addBreadcrumb, captureError, logger} from 'services/logger';
+import {showToast} from 'utils/toast';
+
+// Debug-only row for verifying the Sentry pipeline end to end (event, log,
+// breadcrumb, scrubbing). Hidden in release unless SENTRY_DEV_TOOLS is set.
+const SHOW_SENTRY_DEV_TOOLS =
+  __DEV__ || process.env.SENTRY_DEV_TOOLS === 'true';
 
 const Settings = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -89,6 +96,32 @@ const Settings = ({navigation}) => {
   const onChangeApplyRateLimit = value => {
     dispatch(setResetWallet(value));
   };
+
+  const onPressSentryTest = useCallback(() => {
+    // Everything below must show up redacted in Sentry: the breadcrumb
+    // mnemonic, the privateKey attribute, and the phrase/body extras.
+    addBreadcrumb(
+      'test',
+      'abandon ability able about above absent absorb abstract absurd abuse access accident',
+    );
+    logger.info('sentry.test_log', {
+      tx_hash: 'a'.repeat(64),
+      privateKey: 'b'.repeat(64),
+    });
+    captureError(new Error('Sentry test event'), {
+      tags: {test: 'true'},
+      extra: {
+        phrase: 'zoo '.repeat(11) + 'wrong',
+        body: {secret: 'should-not-appear'},
+        note: 'sent from Settings > Send Sentry test event',
+      },
+    });
+    showToast({
+      type: 'successToast',
+      title: 'Sentry test sent',
+      message: 'Check the dashboard for the event and log',
+    });
+  }, []);
 
   const onPressRateApp = useCallback(async () => {
     try {
@@ -273,6 +306,27 @@ const Settings = ({navigation}) => {
               <Text style={styles.btnText}>Rate & Review us</Text>
             </View>
           </TouchableOpacity>
+          {SHOW_SENTRY_DEV_TOOLS && (
+            <TouchableOpacity
+              onPress={onPressSentryTest}
+              style={{
+                ...styles.btn,
+                borderBottomWidth: 0.5,
+                borderBottomColor: theme.gray,
+              }}>
+              <MaterialCommunityIcons
+                name={'bug-outline'}
+                size={25}
+                color={theme.font}
+              />
+              <View style={styles.box}>
+                <Text style={styles.btnTitle}>Send Sentry test event</Text>
+                <Text style={styles.btnText}>
+                  Debug only: verifies error, log and redaction
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
           {tutorialVideos?.length > 0 && (
             <TouchableOpacity
               onPress={() => navigation.navigate('TutorialVideos')}

@@ -13,6 +13,7 @@
       "dok-wallet-blockchain-networks/*": ["./dok-wallet-blockchain-networks/*"],
       "assets/*": ["./src/assets/*"],
       "components/*": ["./src/components/*"],
+      "providers/*": ["./src/providers/*"],
       "data/*": ["./src/data/*"],
       "redux/*": ["./src/redux/*"],
       "utils/*": ["./src/utils/*"],

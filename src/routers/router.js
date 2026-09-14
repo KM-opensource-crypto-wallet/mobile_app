@@ -64,6 +64,8 @@ import MessageList from 'screens/main/Home/MessageList';
 import NewMessage from 'screens/main/Home/NewMessage';
 import Message from 'screens/main/Home/Message';
 import {CustomDerivation} from 'screens/main/Home/CustomDerivation';
+import SchedulePayment from 'screens/main/Home/SchedulePayment';
+import ViewSchedulePayment from 'screens/main/Home/ViewSchedulePayment';
 import VoteStaking from 'screens/main/Home/VoteStaking';
 import BlockedConversations from 'screens/main/Settings/BlockedConvervastions';
 import BackupWallets from 'screens/main/Settings/BackupRestore/BackupWallets';
@@ -929,6 +931,36 @@ export const useRoute = isAuth => {
           component={CustomDerivation}
           options={({navigation}) => ({
             title: 'Custom Derivation',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+            ...fadeTransition,
+          })}
+        />
+        <Stack.Screen
+          name="SchedulePayment"
+          component={SchedulePayment}
+          options={({navigation}) => ({
+            title: 'Schedule Payment',
+            headerLeft: () => (
+              <TouchableOpacity
+                style={styles.headerLeftStyle}
+                onPress={() => navigation.goBack()}>
+                <Back width="22" height="18" fill={theme.borderActiveColor} />
+              </TouchableOpacity>
+            ),
+            ...fadeTransition,
+          })}
+        />
+        <Stack.Screen
+          name="ViewSchedulePayment"
+          component={ViewSchedulePayment}
+          options={({navigation}) => ({
+            title: 'Scheduled Payments',
             headerLeft: () => (
               <TouchableOpacity
                 style={styles.headerLeftStyle}
