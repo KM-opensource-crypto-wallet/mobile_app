@@ -7,6 +7,7 @@ import {
   multiplyBNWithFixed,
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
+import {setSendFormFields} from 'utils/sendFormFields';
 import myStyles from './SendFundsFormStyles';
 
 const MAX_HIT_SLOP = {top: 12, left: 12, right: 12, bottom: 12};
@@ -70,8 +71,7 @@ const AmountInputGroup = ({
 }) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-  const {values, errors, touched, handleBlur, handleSubmit, setFieldValue} =
-    formik;
+  const {values, errors, touched, handleBlur, handleSubmit, setValues} = formik;
   const error = (touched.amount || touched.currencyAmount) && errors.amount;
   const currencyRate = coin?.currencyRate;
   const decimal = coin?.decimal;
@@ -79,38 +79,39 @@ const AmountInputGroup = ({
   const onChangeAmount = useCallback(
     text => {
       const amount = validateNumberInInput(text, decimal);
-      setFieldValue('amount', amount);
-      setFieldValue(
-        'currencyAmount',
-        multiplyBNWithFixed(amount, currencyRate, 2),
-      );
+      setSendFormFields(setValues, {
+        amount,
+        currencyAmount: multiplyBNWithFixed(amount, currencyRate, 2),
+      });
     },
-    [currencyRate, decimal, setFieldValue],
+    [currencyRate, decimal, setValues],
   );
 
   const onChangeCurrencyAmount = useCallback(
     text => {
       const currencyAmount = validateNumberInInput(text, 2);
-      setFieldValue('currencyAmount', currencyAmount);
       const rate = new BigNumber(currencyRate);
       const dp = Number(decimal);
       if (!rate.isFinite() || rate.lte(0) || !Number.isInteger(dp) || dp < 0) {
         // No usable rate/decimals: skip the conversion instead of guessing a
         // rate of 1 or feeding NaN into toFixed (which throws).
+        setSendFormFields(setValues, {currencyAmount});
         return;
       }
-      setFieldValue(
-        'amount',
-        new BigNumber(currencyAmount || 0).dividedBy(rate).toFixed(dp),
-      );
+      setSendFormFields(setValues, {
+        currencyAmount,
+        amount: new BigNumber(currencyAmount || 0).dividedBy(rate).toFixed(dp),
+      });
     },
-    [currencyRate, decimal, setFieldValue],
+    [currencyRate, decimal, setValues],
   );
 
   const onPressMax = useCallback(() => {
-    setFieldValue('amount', availableAmount);
-    setFieldValue('currencyAmount', availableAmountCurrency);
-  }, [availableAmount, availableAmountCurrency, setFieldValue]);
+    setSendFormFields(setValues, {
+      amount: availableAmount,
+      currencyAmount: availableAmountCurrency,
+    });
+  }, [availableAmount, availableAmountCurrency, setValues]);
 
   return (
     <>

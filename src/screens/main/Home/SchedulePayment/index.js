@@ -35,6 +35,7 @@ import {showToast} from 'utils/toast';
 import {openAppNotificationSettings} from 'utils/openNotificationSettings';
 import {validationSchemaSchedulePayment} from 'utils/validationSchema';
 import {findCoinForScheduledPayment} from 'utils/scheduledPaymentCoin';
+import {setSendFormFields} from 'utils/sendFormFields';
 import {
   CUSTOM_UNIT,
   MAX_OCCURRENCES,
@@ -231,8 +232,15 @@ const SchedulePayment = ({navigation, route}) => {
       );
     },
   });
-  const {values, errors, touched, handleChange, handleBlur, setFieldValue} =
-    formik;
+  const {
+    values,
+    errors,
+    touched,
+    handleChange,
+    handleBlur,
+    setFieldValue,
+    setValues,
+  } = formik;
 
   useSendFormPrefill(
     formik,
@@ -258,26 +266,28 @@ const SchedulePayment = ({navigation, route}) => {
     // against the previous values and overwrite that result.
     formik.setFieldTouched('scheduledDate', true, false);
     const scheduled = dayjs(date);
-    setFieldValue('scheduledDate', scheduled.format(SCHEDULED_DATE_FORMAT));
+    const next = {scheduledDate: scheduled.format(SCHEDULED_DATE_FORMAT)};
     // Weekly was picked before any date existed to seed a weekday from
     // (see selectRepeatType); seed it now so the chips show the day
     // buildRecurrence would otherwise fall back to silently.
     if (values.repeatType === REPEAT_TYPE.WEEKLY && !values.weeklyDays.length) {
-      setFieldValue('weeklyDays', [scheduled.day()]);
+      next.weeklyDays = [scheduled.day()];
     }
+    setSendFormFields(setValues, next);
     setShowDatePicker(false);
   };
 
   const selectRepeatType = repeatType => {
-    setFieldValue('repeatType', repeatType);
+    const next = {repeatType};
     if (repeatType === REPEAT_TYPE.WEEKLY && !values.weeklyDays.length) {
       const scheduled = dayjs(
         values.scheduledDate,
         SCHEDULED_DATE_FORMAT,
         true,
       );
-      setFieldValue('weeklyDays', scheduled.isValid() ? [scheduled.day()] : []);
+      next.weeklyDays = scheduled.isValid() ? [scheduled.day()] : [];
     }
+    setSendFormFields(setValues, next);
   };
 
   const toggleWeeklyDay = day => {

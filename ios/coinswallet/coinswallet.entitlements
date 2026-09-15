@@ -8,6 +8,8 @@
 	<array>
 		<string>applinks:dokwallet.app</string>
 		<string>applinks:www.dokwallet.app</string>
+		<string>applinks:app.dokwallet.com</string>
+		<string>applinks:www.app.dokwallet.com</string>
 	</array>
 </dict>
 </plist>

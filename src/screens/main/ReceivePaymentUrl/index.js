@@ -36,6 +36,7 @@ import {
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
 import {URLData} from 'utils/wlData';
+import {getCoinSlug} from 'utils/common';
 
 const ReceivePaymentUrl = () => {
   const {theme} = useContext(ThemeContext);
@@ -84,7 +85,16 @@ const ReceivePaymentUrl = () => {
               onSubmit={() => {}}>
               {({handleBlur, values, errors, touched, setFieldValue}) => {
                 const selectedCoin = values?.selectedCoin?.options;
-                const receivePaymentUrl = `${URLData.appUrl}/home/send/send-funds?address=${selectedCoin?.walletAddress}&amount=${values?.amount}&currency=${selectedCoin?.chain_name}:${selectedCoin?.symbol}`;
+                // Wallet-agnostic on purpose: the payer opens this on their
+                // own wallet, which resolves the coin from the path slug.
+                // Must stay byte-identical to the web app's Receive Payment URL.
+                const receivePaymentUrl = `${
+                  URLData.appUrl
+                }/wallet/home/send/${getCoinSlug(
+                  selectedCoin,
+                )}/send-funds?address=${encodeURIComponent(
+                  selectedCoin?.walletAddress ?? '',
+                )}&amount=${encodeURIComponent(values?.amount ?? '')}`;
                 return (
                   <TouchableWithoutFeedback
                     style={styles.container}
