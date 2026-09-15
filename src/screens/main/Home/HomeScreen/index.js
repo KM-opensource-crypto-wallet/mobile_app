@@ -155,6 +155,8 @@ const HomeScreen = ({navigation, route}) => {
   const isWalletConnectInitialized = useSelector(getIsWalletConnectInitialized);
   const wcUri = useSelector(getWCUri);
   const routeStateData = useSelector(getRouteStateData);
+  const allState = useSelector(state => state);
+  console.log('allState', allState);
   const conversationName = useSelector(getConversationName);
 
   const newsBottomSheetRef = useRef();

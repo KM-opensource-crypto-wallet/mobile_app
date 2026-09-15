@@ -38,6 +38,15 @@ import {
 import {getNextOccurrence} from 'utils/scheduleRecurrence';
 import {showToast} from 'utils/toast';
 
+// Why a reminder tap could not open its transfer, as routed in by the
+// notification handler. Unknown values fall back to the generic message.
+const NOTICE_MESSAGE = {
+  payment_unavailable: () => 'This scheduled payment is no longer available',
+  coin_missing: symbol =>
+    `${symbol || 'This coin'} is no longer in your wallet`,
+  open_failed: () => "Couldn't open this scheduled payment. Please try again.",
+};
+
 const PAYMENT_FILTER = {
   CURRENT_TOKEN: 'currentToken',
   ALL: 'all',
@@ -77,10 +86,9 @@ const ViewSchedulePayment = ({navigation, route}) => {
     showToast({
       type: 'errorToast',
       title: 'Scheduled payment',
-      message:
-        notice === 'coin_missing'
-          ? `${noticeSymbol || 'This coin'} is no longer in your wallet`
-          : 'This scheduled payment is no longer available',
+      message: NOTICE_MESSAGE[notice]
+        ? NOTICE_MESSAGE[notice](noticeSymbol)
+        : NOTICE_MESSAGE.payment_unavailable(),
     });
   }, [notice, noticeSymbol, navigation]);
 

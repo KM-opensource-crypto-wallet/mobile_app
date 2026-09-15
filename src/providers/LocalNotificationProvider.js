@@ -239,9 +239,22 @@ export const LocalNotificationProvider = ({children}) => {
   // wallet doesn't hold, so that is a reachable shape, not a theoretical one.
   const runScheduledPaymentHandler = useCallback(
     (data, via = 'direct') =>
-      handleScheduledPaymentNotificationData(data).catch(e =>
-        captureError(e, {tags: {area: 'schedule_notification', via}}),
-      ),
+      handleScheduledPaymentNotificationData(data).catch(e => {
+        captureError(e, {tags: {area: 'schedule_notification', via}});
+        // Reporting alone would strand the user: consumePendingLoginRedirect
+        // has already cleared the pending payload, and the base Login screen
+        // skips its own reset once a handler has claimed it - so on a cold
+        // start a throw leaves them unlocked but still on the Login screen.
+        // Land somewhere real and say why.
+        //
+        // Deliberately not restoring the payload for a retry instead: main.js
+        // reopens the login modal whenever one is pending, so a failure that
+        // reproduces would loop.
+        landOnHomeThen('ViewSchedulePayment', {
+          showAll: true,
+          notice: 'open_failed',
+        });
+      }),
     [handleScheduledPaymentNotificationData],
   );
 
