@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useContext,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useState,
@@ -35,6 +36,7 @@ import {
   getAssetKeyForPayment,
 } from 'utils/scheduledPaymentCoin';
 import {getNextOccurrence} from 'utils/scheduleRecurrence';
+import {showToast} from 'utils/toast';
 
 const PAYMENT_FILTER = {
   CURRENT_TOKEN: 'currentToken',
@@ -59,6 +61,28 @@ const ViewSchedulePayment = ({navigation, route}) => {
   const [paymentFilter, setPaymentFilter] = useState(
     route?.params?.showAll ? PAYMENT_FILTER.ALL : PAYMENT_FILTER.CURRENT_TOKEN,
   );
+
+  // A reminder tap that could not resolve its payment routes the reason here
+  // rather than toasting it itself: the handler runs while LoginModal is still
+  // mounted, and that modal hosts the toast instance Toast.show() resolves to,
+  // so a toast raised there dies with the modal a few milliseconds later. This
+  // screen mounts after it is gone.
+  const notice = route?.params?.notice;
+  const noticeSymbol = route?.params?.noticeSymbol;
+  useEffect(() => {
+    if (!notice) {
+      return;
+    }
+    navigation.setParams({notice: undefined, noticeSymbol: undefined});
+    showToast({
+      type: 'errorToast',
+      title: 'Scheduled payment',
+      message:
+        notice === 'coin_missing'
+          ? `${noticeSymbol || 'This coin'} is no longer in your wallet`
+          : 'This scheduled payment is no longer available',
+    });
+  }, [notice, noticeSymbol, navigation]);
 
   // Expired payments (one-time past due, or a repeating series that ran
   // out) are deleted for good whenever the list is shown — except one whose
@@ -153,11 +177,14 @@ const ViewSchedulePayment = ({navigation, route}) => {
   // on Transfer prefilled with this payment.
   const handleSendNow = useCallback(
     item => {
-      handleScheduledPaymentNotificationData({
-        type: SCHEDULED_PAYMENT_NOTIFICATION_TYPE,
-        scheduledPaymentId: item?.id,
-        walletClientId,
-      });
+      handleScheduledPaymentNotificationData(
+        {
+          type: SCHEDULED_PAYMENT_NOTIFICATION_TYPE,
+          scheduledPaymentId: item?.id,
+          walletClientId,
+        },
+        'send_now',
+      );
     },
     [handleScheduledPaymentNotificationData, walletClientId],
   );

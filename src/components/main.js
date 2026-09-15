@@ -66,12 +66,7 @@ import {consumeExpectedBackground} from 'utils/expectedBackground';
 import {isInAppBrowserSessionActive} from 'utils/inAppBrowser';
 import {getCountry} from 'react-native-localize';
 import {MenuProvider} from 'react-native-popup-menu';
-import {
-  getQueryParams,
-  parseUrlQS,
-  validatePaymentUrl,
-  validateWCUrl,
-} from 'utils/common';
+import {parsePaymentUrl, parseUrlQS, validateWCUrl} from 'utils/common';
 import {
   setIsUpdateAvailable,
   setIsWalletConnectInitialized,
@@ -198,14 +193,15 @@ const Main = () => {
       const qsObj = parseUrlQS(url);
       if (validateWCUrl(url, qsObj)) {
         dispatch(setWcUri(decodeURIComponent(qsObj?.uri)));
-      } else if (validatePaymentUrl(url, qsObj)) {
-        const currentDate = new Date().toISOString();
-        const data = getQueryParams(url);
+        return;
+      }
+      const data = parsePaymentUrl(url);
+      if (data) {
         dispatch(
           setPaymentData({
             ...data,
             meta: safelyJsonParse(data?.meta) || null,
-            date: currentDate,
+            date: new Date().toISOString(),
           }),
         );
       }
@@ -317,15 +313,16 @@ const Main = () => {
           const qsObj = parseUrlQS(url);
           if (validateWCUrl(url, qsObj)) {
             dispatch(setWcUri(decodeURIComponent(qsObj?.uri)));
-          } else if (validatePaymentUrl(url, qsObj)) {
-            const currentDate = new Date().toISOString();
-            const data = getQueryParams(url);
+            return;
+          }
+          const data = parsePaymentUrl(url);
+          if (data) {
             navigationRef.current?.navigate('Home');
             dispatch(
               setPaymentData({
                 ...data,
                 meta: safelyJsonParse(data?.meta) || null,
-                date: currentDate,
+                date: new Date().toISOString(),
               }),
             );
           }

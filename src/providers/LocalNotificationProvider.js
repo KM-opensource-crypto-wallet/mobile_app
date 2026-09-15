@@ -31,15 +31,19 @@ import {setRouteStateData} from 'dok-wallet-blockchain-networks/redux/extraData/
 import {
   deleteHiddenWalletsScheduledPayments,
   pruneExpiredScheduledPayments,
+  removeScheduledPayment,
   syncScheduledPaymentNotifications,
 } from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
+import {isScheduledPaymentExpired} from 'utils/scheduleRecurrence';
 import {getAsyncStorageData, removeAsyncStorageData} from 'utils/asyncStorage';
 import {getAvailableAmount} from 'hooks/useAvailableAmount';
 import {findCoinForScheduledPayment} from 'utils/scheduledPaymentCoin';
 import {
   SCHEDULED_PAYMENT_NOTIFICATION_TYPE,
+  cancelDisplayedRemindersForPayment,
   requestLocalNotificationPermission,
 } from 'utils/scheduledPaymentNotifications';
+import {captureError} from 'services/logger';
 
 // Generic fallback for a notification handler that can't resolve a specific
 // screen (missing/stale data) - always land somewhere real instead of
@@ -135,10 +139,7 @@ export const LocalNotificationProvider = ({children}) => {
       // mounted yet. Land on Sidebar/Home first and let it do the nested
       // navigate once it's actually mounted, same as navigateToTransactionList.
       store.dispatch(setRouteStateData({navigateToWallets: true}));
-      MainNavigation.reset({
-        index: 0,
-        routes: [{name: 'Sidebar'}],
-      });
+      landOnHome();
       return;
     }
     store.dispatch(setCurrentWalletClientId(wallet.clientId));
@@ -150,22 +151,28 @@ export const LocalNotificationProvider = ({children}) => {
     // No matching payment (removed, or pruned once its schedule ran out) —
     // fall back to the list instead of prefilling a transfer for it.
     if (!payment) {
-      landOnHomeThen('ViewSchedulePayment', {showAll: true});
+      // The notice rides on the route rather than being toasted from here:
+      // this runs while LoginModal is still mounted, and that modal hosts the
+      // react-native-toast-message instance that Toast.show() resolves to, so
+      // a toast raised now dies with the modal milliseconds later.
+      landOnHomeThen('ViewSchedulePayment', {
+        showAll: true,
+        notice: 'payment_unavailable',
+      });
       return;
     }
 
     const coin = findCoinForScheduledPayment(wallet, payment);
     if (!coin) {
-      showToast({
-        type: 'errorToast',
-        title: 'Scheduled payment',
-        message: `${
-          payment.asset?.symbol || 'This coin'
-        } is no longer in your wallet`,
-      });
       // The payment's coin isn't in the wallet, so the list's default
-      // current-token filter would hide the very item being looked for.
-      landOnHomeThen('ViewSchedulePayment', {showAll: true});
+      // current-token filter would hide the very item being looked for. Same
+      // reason as the notice above: a toast raised here would be swallowed by
+      // the closing LoginModal.
+      landOnHomeThen('ViewSchedulePayment', {
+        showAll: true,
+        notice: 'coin_missing',
+        noticeSymbol: payment.asset?.symbol || '',
+      });
       return;
     }
 
@@ -209,11 +216,34 @@ export const LocalNotificationProvider = ({children}) => {
     );
     store.dispatch(setExchangeSuccess(false));
     landOnHomeThen('Transfer', {fromScreen: 'SendFunds'});
-    // Transfer reads from currentTransfer, so a fired one-time payment can
-    // now be pruned like any other expired one.
-    await store.dispatch(pruneExpiredScheduledPayments());
+    // The user has now acted on this reminder, which is the only thing that
+    // ends a fired payment's life - the prune deliberately no longer deletes
+    // merely-expired payments. A repeating series still has occurrences left,
+    // so only a spent one-time payment goes.
+    await cancelDisplayedRemindersForPayment(payment.id);
+    if (isScheduledPaymentExpired(payment)) {
+      store.dispatch(
+        removeScheduledPayment({
+          id: payment.id,
+          walletClientId: wallet.clientId,
+        }),
+      );
+    }
     store.dispatch(syncScheduledPaymentNotifications());
   }, []);
+
+  // handleScheduledPaymentNotificationData is async and every caller fires it
+  // and forgets it, so without this a throw inside it becomes a bare unhandled
+  // rejection - no navigation, no toast, nothing in Sentry. Both
+  // setCurrentWalletClientId and setCurrentCoin throw on an id the current
+  // wallet doesn't hold, so that is a reachable shape, not a theoretical one.
+  const runScheduledPaymentHandler = useCallback(
+    (data, via = 'direct') =>
+      handleScheduledPaymentNotificationData(data).catch(e =>
+        captureError(e, {tags: {area: 'schedule_notification', via}}),
+      ),
+    [handleScheduledPaymentNotificationData],
+  );
 
   // Called right after a hidden wallet is revealed (by secret code) so a
   // scheduled-payment notification that arrived while it was still hidden
@@ -225,10 +255,10 @@ export const LocalNotificationProvider = ({children}) => {
         return false;
       }
       pendingHiddenScheduledPaymentDataRef.current = null;
-      handleScheduledPaymentNotificationData(data);
+      runScheduledPaymentHandler(data, 'hidden_reveal');
       return true;
     },
-    [handleScheduledPaymentNotificationData],
+    [runScheduledPaymentHandler],
   );
 
   const handleNotificationData = useCallback(data => {
@@ -264,10 +294,7 @@ export const LocalNotificationProvider = ({children}) => {
     store.dispatch(setCurrentWalletClientId(wallet.clientId));
     store.dispatch(setCurrentCoin(coin._id));
     store.dispatch(setRouteStateData({navigateToTransactionList: true}));
-    MainNavigation.reset({
-      index: 0,
-      routes: [{name: 'Sidebar'}],
-    });
+    landOnHome();
   }, []);
 
   // Single place that decides whether a just-completed login should resolve
@@ -281,7 +308,7 @@ export const LocalNotificationProvider = ({children}) => {
     if (scheduledPaymentData) {
       pendingScheduledPaymentDataRef.current = null;
       setPendingScheduledPaymentDataState(null);
-      handleScheduledPaymentNotificationData(scheduledPaymentData);
+      runScheduledPaymentHandler(scheduledPaymentData, 'login_redirect');
       return true;
     }
     const notificationData = pendingNotificationDataRef.current;
@@ -292,7 +319,7 @@ export const LocalNotificationProvider = ({children}) => {
       return true;
     }
     return false;
-  }, [handleScheduledPaymentNotificationData, handleNotificationData]);
+  }, [runScheduledPaymentHandler, handleNotificationData]);
 
   // A scheduled-payment PRESS reaches JS through three doors: a cold-start
   // press via getInitialNotification, a foreground press via
@@ -343,9 +370,7 @@ export const LocalNotificationProvider = ({children}) => {
       }
       try {
         const data = JSON.parse(raw);
-        if (data?.type === SCHEDULED_PAYMENT_NOTIFICATION_TYPE) {
-          setPendingScheduledPaymentData(data);
-        }
+        handleScheduledPaymentPress({data});
       } catch (e) {
         console.warn('Failed to parse background scheduled payment press', e);
       }
@@ -417,7 +442,8 @@ export const LocalNotificationProvider = ({children}) => {
     () => ({
       pendingScheduledPaymentData,
       setPendingScheduledPaymentData,
-      handleScheduledPaymentNotificationData,
+      // The wrapped runner, so no consumer can leave a rejection unhandled.
+      handleScheduledPaymentNotificationData: runScheduledPaymentHandler,
       consumePendingHiddenScheduledPayment,
       consumePendingLoginRedirect,
       pendingNotificationData,
@@ -429,7 +455,7 @@ export const LocalNotificationProvider = ({children}) => {
     [
       pendingScheduledPaymentData,
       setPendingScheduledPaymentData,
-      handleScheduledPaymentNotificationData,
+      runScheduledPaymentHandler,
       consumePendingHiddenScheduledPayment,
       consumePendingLoginRedirect,
       pendingNotificationData,

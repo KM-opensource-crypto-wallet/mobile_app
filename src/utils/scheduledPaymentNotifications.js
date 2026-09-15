@@ -157,6 +157,63 @@ const buildTrigger = entry => ({
     : {}),
 });
 
+// `id` is optional on DisplayedNotification; the payload we created it from
+// always carries one.
+const getDisplayedId = entry => entry?.id || entry?.notification?.id;
+
+/**
+ * Payment ids whose reminder is still sitting in the notification tray.
+ *
+ * A fired one-time reminder leaves its payment with no upcoming occurrence, so
+ * every expiry check calls it dead - but the notification is still there to be
+ * tapped, and that tap needs the payment to prefill the transfer. "Still
+ * displayed" is the device's own answer to "has the user acted on this yet",
+ * and it costs no extra persisted state and no DELIVERED callback (iOS has
+ * none while the app is away).
+ *
+ * A read failure is left to the caller to handle: a prune that cannot see the
+ * tray must not assume it is empty.
+ */
+export const getPaymentIdsWithDisplayedReminders = async () => {
+  const displayed = await notifee.getDisplayedNotifications();
+  const paymentIds = new Set();
+  (displayed || []).forEach(entry => {
+    const parsed = parseTriggerId(getDisplayedId(entry));
+    if (parsed) {
+      paymentIds.add(parsed.paymentId);
+    }
+  });
+  return paymentIds;
+};
+
+// Always cancelDisplayedNotification, never cancelNotification: a repeating
+// payment's displayed entry and its next pending trigger share one id
+// (`<paymentId>::rd`), so cancelNotification would take the future repeat down
+// with the tray entry.
+const cancelDisplayedReminders = async shouldCancel => {
+  let displayed;
+  try {
+    displayed = await notifee.getDisplayedNotifications();
+  } catch (e) {
+    // Clearing the tray is housekeeping; never fail a caller over it.
+    console.warn('Failed to read displayed notifications', e);
+    return;
+  }
+  await Promise.all(
+    (displayed || [])
+      .map(entry => ({
+        id: getDisplayedId(entry),
+        parsed: parseTriggerId(getDisplayedId(entry)),
+      }))
+      .filter(({id, parsed}) => id && parsed && shouldCancel(parsed.paymentId))
+      .map(({id}) => notifee.cancelDisplayedNotification(id)),
+  );
+};
+
+/** Drop the tray entries for one payment, e.g. once its transfer is prefilled. */
+export const cancelDisplayedRemindersForPayment = paymentId =>
+  cancelDisplayedReminders(id => id === paymentId);
+
 /**
  * Make the OS's pending trigger notifications match what the payments in
  * redux (plus `include`) call for: create what is missing, cancel what is
@@ -199,6 +256,12 @@ export const reconcileScheduledPaymentNotifications = async (
       ),
     ...toCancel.map(id => notifee.cancelNotification(id)),
   ]);
+  // `toCancel` only covers pending triggers; an already-delivered notification
+  // is not one. Without this a deleted payment leaves a notification in the
+  // tray that resolves to nothing when tapped - the same dead end from the
+  // other direction.
+  const livePaymentIds = new Set(payments.map(payment => payment.id));
+  await cancelDisplayedReminders(paymentId => !livePaymentIds.has(paymentId));
   return {
     armedForInclude: include?.id
       ? entries.filter(entry => entry.paymentId === include.id).length
