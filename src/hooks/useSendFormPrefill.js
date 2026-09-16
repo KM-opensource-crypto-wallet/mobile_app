@@ -1,6 +1,7 @@
 import {useEffect} from 'react';
 import {multiplyBNWithFixed} from 'dok-wallet-blockchain-networks/helper';
 import {getBolt11InvoiceAmount} from 'dok-wallet-blockchain-networks/helper/bolt11';
+import {setSendFormFields} from 'utils/sendFormFields';
 
 /**
  * Prefill a send form from route params (QR scan, deep link, memo scan).
@@ -14,28 +15,31 @@ const useSendFormPrefill = (
   {address, amount, memo, refreshKey},
   {isLightning, currencyRate},
 ) => {
-  const {setFieldValue, setFieldTouched} = formik;
+  const {setValues, setFieldTouched} = formik;
   useEffect(() => {
     // A fixed-amount invoice must be paid exactly and locks the amount field,
     // so it outranks any amount carried by the QR/deep link.
     const invoiceAmount = isLightning ? getBolt11InvoiceAmount(address) : null;
     const localAmount = invoiceAmount || amount;
-    if (address) {
-      setFieldValue('toAddress', address);
-    }
-    if (memo) {
-      setFieldValue('memo', memo);
-    }
-    if (localAmount) {
-      setFieldValue('amount', localAmount);
-      setFieldValue(
-        'currencyAmount',
-        multiplyBNWithFixed(localAmount, currencyRate, 2),
-      );
-    }
     if (!address && !localAmount && !memo) {
       return undefined;
     }
+    const prefilled = {};
+    if (address) {
+      prefilled.toAddress = address;
+    }
+    if (memo) {
+      prefilled.memo = memo;
+    }
+    if (localAmount) {
+      prefilled.amount = localAmount;
+      prefilled.currencyAmount = multiplyBNWithFixed(
+        localAmount,
+        currencyRate,
+        2,
+      );
+    }
+    setSendFormFields(setValues, prefilled);
     const timer = setTimeout(() => {
       setFieldTouched('toAddress', true);
       setFieldTouched('amount', true);
@@ -50,7 +54,7 @@ const useSendFormPrefill = (
     refreshKey,
     isLightning,
     currencyRate,
-    setFieldValue,
+    setValues,
     setFieldTouched,
   ]);
 };

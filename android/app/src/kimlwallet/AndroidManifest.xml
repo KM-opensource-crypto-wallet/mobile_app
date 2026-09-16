@@ -44,23 +44,29 @@
               <category android:name="android.intent.category.BROWSABLE" />
               <data android:scheme="kimlwallet" />
           </intent-filter>
+          <!-- Payment links only. pathPattern must match the WHOLE path (hence the
+               trailing-slash twins) and ignores the query string; ".*" is the only
+               wildcard. Android forms the cross product of every scheme x host x
+               path below, so one filter covers all of them. Everything else under
+               /home/send (transactions, staking, receive-funds) has no screen in
+               the app and must stay in the browser. -->
           <intent-filter android:autoVerify="true">
               <action android:name="android.intent.action.VIEW" />
               <category android:name="android.intent.category.DEFAULT" />
               <category android:name="android.intent.category.BROWSABLE" />
-              <data
-                  android:scheme="https"
-                  android:host="kimlview.xyz"
-                  android:pathPrefix="/home/send/" />
-          </intent-filter>
-          <intent-filter android:autoVerify="true">
-              <action android:name="android.intent.action.VIEW" />
-              <category android:name="android.intent.category.DEFAULT" />
-              <category android:name="android.intent.category.BROWSABLE" />
-              <data
-                  android:scheme="https"
-                  android:host="www.kimlview.xyz"
-                  android:pathPrefix="/home/send/" />
+              <data android:scheme="https" />
+              <data android:host="kimlview.xyz" />
+              <data android:host="www.kimlview.xyz" />
+              <data android:host="app.kimlwallet.com" />
+              <data android:host="www.app.kimlwallet.com" />
+              <data android:pathPattern="/home/send/send-funds" />
+              <data android:pathPattern="/home/send/send-funds/" />
+              <data android:pathPattern="/home/send/.*/send-funds" />
+              <data android:pathPattern="/home/send/.*/send-funds/" />
+              <data android:pathPattern="/wallet/home/send/.*/send-funds" />
+              <data android:pathPattern="/wallet/home/send/.*/send-funds/" />
+              <data android:pathPattern="/wallet/.*/home/send/.*/send-funds" />
+              <data android:pathPattern="/wallet/.*/home/send/.*/send-funds/" />
           </intent-filter>
       </activity>
     </application>

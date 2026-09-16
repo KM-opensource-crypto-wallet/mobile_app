@@ -32,7 +32,7 @@ import {
 import Loading from 'components/Loading';
 import {XMTP} from 'utils/xmtp';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {parseUrlQS, validatePaymentUrl} from 'utils/common';
+import {parsePaymentUrl} from 'utils/common';
 import {setPaymentData} from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
 import {showToast} from 'utils/toast';
 import {getMessageAllowUrls} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
@@ -426,13 +426,14 @@ const Message = ({navigation}) => {
           }}
           onPressUrl={url => {
             try {
-              const qsObj = parseUrlQS(url);
-              if (validatePaymentUrl(url, qsObj)) {
-                const currentDate = new Date().toISOString();
-                dispatch(setPaymentData({...qsObj, date: currentDate}));
+              const data = parsePaymentUrl(url);
+              if (data) {
+                dispatch(
+                  setPaymentData({...data, date: new Date().toISOString()}),
+                );
               }
             } catch (e) {
-              console.warn('error in getInitialUrlLink', e);
+              console.warn('error in onPressUrl', e);
             }
           }}
           renderBubble={props => {

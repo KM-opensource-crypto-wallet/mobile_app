@@ -2,8 +2,11 @@ import dayjs from 'dayjs';
 import {
   REPEAT_TYPE,
   MAX_OCCURRENCES,
+  SCHEDULED_PAYMENT_STALE_AFTER_MS,
+  getLastOccurrence,
   getNextOccurrence,
   isScheduledPaymentExpired,
+  isScheduledPaymentStale,
 } from './scheduleRecurrence';
 
 const NOW = dayjs('2026-09-11T10:00:00').valueOf();
@@ -108,5 +111,104 @@ describe('isScheduledPaymentExpired', () => {
 
   it('is true for a payment with no valid scheduledAt', () => {
     expect(isScheduledPaymentExpired({}, NOW)).toBe(true);
+  });
+});
+
+describe('getLastOccurrence', () => {
+  it('is the scheduled time itself for a one-time payment', () => {
+    expect(
+      getLastOccurrence({
+        scheduledAt: NOW,
+        recurrence: {type: REPEAT_TYPE.NONE},
+      }),
+    ).toBe(NOW);
+  });
+
+  it('is the final occurrence of a recurring series', () => {
+    expect(
+      getLastOccurrence({
+        scheduledAt: NOW,
+        recurrence: {type: REPEAT_TYPE.DAILY, interval: 1},
+      }),
+    ).toBe(
+      dayjs(NOW)
+        .add(MAX_OCCURRENCES - 1, 'day')
+        .valueOf(),
+    );
+  });
+
+  it('is null when there is no computable occurrence', () => {
+    expect(getLastOccurrence({})).toBeNull();
+    expect(getLastOccurrence(null)).toBeNull();
+  });
+});
+
+describe('isScheduledPaymentStale', () => {
+  const oneTimeAt = scheduledAt => ({
+    scheduledAt,
+    recurrence: {type: REPEAT_TYPE.NONE},
+  });
+
+  // The regression this whole guard exists for: a reminder fires, the payment
+  // is instantly "expired", and a prune moments later used to delete it out
+  // from under the notification still waiting to be tapped.
+  it('is false for a payment whose reminder just fired', () => {
+    const payment = oneTimeAt(NOW - 60 * 1000);
+    expect(isScheduledPaymentExpired(payment, NOW)).toBe(true);
+    expect(isScheduledPaymentStale(payment, NOW)).toBe(false);
+  });
+
+  it('is false right up to the staleness cutoff', () => {
+    expect(
+      isScheduledPaymentStale(
+        oneTimeAt(NOW - SCHEDULED_PAYMENT_STALE_AFTER_MS),
+        NOW,
+      ),
+    ).toBe(false);
+  });
+
+  it('is true once the cutoff is passed', () => {
+    expect(
+      isScheduledPaymentStale(
+        oneTimeAt(NOW - SCHEDULED_PAYMENT_STALE_AFTER_MS - 1),
+        NOW,
+      ),
+    ).toBe(true);
+  });
+
+  it('is false for an upcoming payment', () => {
+    expect(isScheduledPaymentStale(oneTimeAt(NOW + DAY), NOW)).toBe(false);
+  });
+
+  it('is false for a recurring series mid-run', () => {
+    expect(
+      isScheduledPaymentStale(
+        {
+          scheduledAt: NOW - DAY,
+          recurrence: {type: REPEAT_TYPE.DAILY, interval: 1},
+        },
+        NOW,
+      ),
+    ).toBe(false);
+  });
+
+  it('follows an exhausted series from its last occurrence, not its first', () => {
+    const ranOutAt = NOW - DAY;
+    const payment = {
+      scheduledAt: ranOutAt - (MAX_OCCURRENCES - 1) * DAY,
+      recurrence: {type: REPEAT_TYPE.DAILY, interval: 1},
+    };
+    expect(isScheduledPaymentExpired(payment, NOW)).toBe(true);
+    expect(isScheduledPaymentStale(payment, NOW)).toBe(false);
+    expect(
+      isScheduledPaymentStale(
+        payment,
+        ranOutAt + SCHEDULED_PAYMENT_STALE_AFTER_MS + 1,
+      ),
+    ).toBe(true);
+  });
+
+  it('is true for a payment with no valid scheduledAt', () => {
+    expect(isScheduledPaymentStale({}, NOW)).toBe(true);
   });
 });

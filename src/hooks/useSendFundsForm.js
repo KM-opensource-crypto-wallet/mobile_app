@@ -19,6 +19,7 @@ import {resolveRecipientAddress} from 'dok-wallet-blockchain-networks/helper/rec
 import {useAvailableAmount} from 'hooks/useAvailableAmount';
 import {validateChainRules} from 'utils/sendFormRules';
 import {validationSchemaSendFunds} from 'utils/validationSchema';
+import {setSendFormFields} from 'utils/sendFormFields';
 import {showToast} from 'utils/toast';
 
 /**
@@ -135,23 +136,27 @@ const useSendFundsForm = ({coin, wallet}) => {
 
   const handleRecipientChange = useCallback(
     (formik, text) => {
-      formik.setFieldValue('toAddress', text);
-      if (!isLightning) {
+      const invoiceAmount = isLightning ? getBolt11InvoiceAmount(text) : null;
+      if (invoiceAmount) {
+        setSendFormFields(formik.setValues, {
+          toAddress: text,
+          amount: invoiceAmount,
+          currencyAmount: multiplyBNWithFixed(invoiceAmount, currencyRate, 2),
+        });
         return;
       }
-      const invoiceAmount = getBolt11InvoiceAmount(text);
-      if (invoiceAmount) {
-        formik.setFieldValue('amount', invoiceAmount);
-        formik.setFieldValue(
-          'currencyAmount',
-          multiplyBNWithFixed(invoiceAmount, currencyRate, 2),
-        );
-      } else if (getBolt11InvoiceAmount(formik.values?.toAddress)) {
-        // The previous recipient was a fixed-amount invoice; its amount no
-        // longer applies to this recipient.
-        formik.setFieldValue('amount', '');
-        formik.setFieldValue('currencyAmount', '');
+      // The previous recipient was a fixed-amount invoice; its amount no
+      // longer applies to this recipient. Read it before the write, which is
+      // also how the old value was read when toAddress was set first.
+      if (isLightning && getBolt11InvoiceAmount(formik.values?.toAddress)) {
+        setSendFormFields(formik.setValues, {
+          toAddress: text,
+          amount: '',
+          currencyAmount: '',
+        });
+        return;
       }
+      formik.setFieldValue('toAddress', text);
     },
     [isLightning, currencyRate],
   );
