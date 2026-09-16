@@ -33,6 +33,7 @@
 			<string>dokwallet</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
+				<string>dokwallet</string>
 				<string>com.googleusercontent.apps.667161601287-30elsk2qg7irtafto8siad67f8k9n6qb</string>
 			</array>
 		</dict>
