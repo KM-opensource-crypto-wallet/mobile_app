@@ -21,7 +21,7 @@ class BitcoinCoin: CoinFactory.Coin {
     if(isTestNet){
       derivation =  Derivation.bitcoinTestnet
     }
-    let address  = wallet.getAddressDerivation(coin: .bitcoin, derivation: derivation)
+    let address  = wallet.getAddressDerivation(coin: .bitcoin, derivation: derivation)!
     addressIndex += 1
     return address
   }
@@ -33,7 +33,7 @@ class BitcoinCoin: CoinFactory.Coin {
       derivation =  Derivation.bitcoinTestnet
       version = HDVersion.vpub
     }
-    let extendedKey = wallet.getExtendedPublicKeyDerivation(purpose: .bip84, coin: .bitcoin, derivation: derivation, version: version);
+    let extendedKey = wallet.getExtendedPublicKeyDerivation(purpose: .bip84, coin: .bitcoin, derivation: derivation, version: version)!;
     return extendedKey
   }
 
@@ -44,7 +44,7 @@ class BitcoinCoin: CoinFactory.Coin {
       derivation =  Derivation.bitcoinTestnet
       version = HDVersion.vprv
     }
-    let extendedKey = wallet.getExtendedPrivateKeyDerivation(purpose: .bip84, coin: .bitcoin, derivation: derivation, version: version);
+    let extendedKey = wallet.getExtendedPrivateKeyDerivation(purpose: .bip84, coin: .bitcoin, derivation: derivation, version: version)!;
     return extendedKey
   }
 
@@ -54,7 +54,7 @@ class BitcoinCoin: CoinFactory.Coin {
     if(isTestNet){
       derivation =  Derivation.bitcoinTestnet
     }
-    let privateKeyBytes = wallet.getKeyDerivation(coin: .bitcoin, derivation: derivation).data
+    let privateKeyBytes = wallet.getKeyDerivation(coin: .bitcoin, derivation: derivation)!.data
     return Utils.convertToWif(data: privateKeyBytes, isTestNet: isTestNet, prefix: [0x80], testNetPrefix: [0xef])
   }
 
@@ -64,7 +64,7 @@ class BitcoinCoin: CoinFactory.Coin {
   }
 
   override func addCustomDerivation(derivePath:String, isTestNet:Bool) -> NSMutableDictionary {
-      let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: derivePath)
+      let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: derivePath)!
       let publicKey = privateKey.getPublicKeySecp256k1(compressed: true)
       let address: String
       if isTestNet {

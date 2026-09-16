@@ -14,7 +14,7 @@ class PolkadotCoin: CoinFactory.Coin {
   
   override init(mnemonic: String) {
     super.init(mnemonic: mnemonic)
-    let privateKeyInfo = wallet.getKeyForCoin(coin: .polkadot)
+    let privateKeyInfo = wallet.getKeyForCoin(coin: .polkadot)!
     self.address = CoinType.polkadot.deriveAddress(privateKey: privateKeyInfo)
     self.privateKey = privateKeyInfo.data.hexString;
   }

@@ -14,7 +14,7 @@ class TonCoin: CoinFactory.Coin {
   
   override init(mnemonic: String) {
     super.init(mnemonic: mnemonic)
-    let privateKeyInfo = wallet.getKeyForCoin(coin: .ton)
+    let privateKeyInfo = wallet.getKeyForCoin(coin: .ton)!
     self.address = CoinType.ton.deriveAddress(privateKey: privateKeyInfo)
     self.privateKey = privateKeyInfo.data.hexString;
   }

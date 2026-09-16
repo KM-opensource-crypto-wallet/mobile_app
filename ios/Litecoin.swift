@@ -17,13 +17,13 @@ class LiteCoin: CoinFactory.Coin {
   }
   
   override func getNewAddress(isTestNet:Bool) -> String {
-   let address = CoinType.litecoin.deriveAddress(privateKey: wallet.getKeyForCoin(coin: .litecoin))
+   let address = CoinType.litecoin.deriveAddress(privateKey: wallet.getKeyForCoin(coin: .litecoin)!)
     return address
   }
   
   override func getPrivateKey(isTestNet:Bool) -> String {
     
-    let privateKeyBytes = wallet.getKeyForCoin(coin: .litecoin).data
+    let privateKeyBytes = wallet.getKeyForCoin(coin: .litecoin)!.data
     return Utils.convertToWif(data: privateKeyBytes, isTestNet: false, prefix: [0xB0], testNetPrefix: [0xef])
 
   }

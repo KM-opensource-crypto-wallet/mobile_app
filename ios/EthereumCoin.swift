@@ -13,7 +13,7 @@ class EthereumCoin: CoinFactory.Coin {
 
     override init(mnemonic: String) {
         super.init(mnemonic: mnemonic)
-        self.address = CoinType.ethereum.deriveAddress(privateKey: wallet.getKeyForCoin(coin: .ethereum))
+        self.address = CoinType.ethereum.deriveAddress(privateKey: wallet.getKeyForCoin(coin: .ethereum)!)
     }
 
     override func getNewAddress(isTestNet:Bool) -> String {
@@ -21,7 +21,7 @@ class EthereumCoin: CoinFactory.Coin {
     }
 
     override func getPrivateKey(isTestNet:Bool) -> String {
-        let privateKeyBytes = wallet.getKeyForCoin(coin: .ethereum).data
+        let privateKeyBytes = wallet.getKeyForCoin(coin: .ethereum)!.data
         return privateKeyBytes.hexString
     }
 
@@ -29,7 +29,7 @@ class EthereumCoin: CoinFactory.Coin {
     let result: NSMutableArray = []
     for i in 0..<50 {
           let derivePath = String(format: "m/44'/60'/0'/%@/0", String(i))
-          let privateKey = wallet.getKey(coin: .ethereum, derivationPath: derivePath)
+          let privateKey = wallet.getKey(coin: .ethereum, derivationPath: derivePath)!
           let address = CoinType.ethereum.deriveAddress(privateKey: privateKey)
           let yourAuxDic: NSMutableDictionary = [:]
           yourAuxDic["derivePath"] = derivePath
@@ -41,7 +41,7 @@ class EthereumCoin: CoinFactory.Coin {
     }
   
   override func addCustomDerivation(derivePath:String,isTestNet:Bool) -> NSMutableDictionary {
-      let privateKey = wallet.getKey(coin: .ethereum, derivationPath: derivePath)
+      let privateKey = wallet.getKey(coin: .ethereum, derivationPath: derivePath)!
       let address = CoinType.ethereum.deriveAddress(privateKey: privateKey)
       let yourAuxDic: NSMutableDictionary = [:]
       yourAuxDic["derivePath"] = derivePath

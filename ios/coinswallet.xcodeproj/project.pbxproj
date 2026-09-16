@@ -36,6 +36,7 @@
 		D257DE072BF2252600D7055D /* DogeCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D257DE062BF2252600D7055D /* DogeCoin.swift */; };
 		D26968C92CA6B1C400052999 /* BitcoinCashCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26968C82CA6B1C400052999 /* BitcoinCashCoin.swift */; };
 		D27914512DBCC1ED007F80E9 /* CardanoCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D27914502DBCC1ED007F80E9 /* CardanoCoin.swift */; };
+		7528DF4B27E0A4996661C859 /* ZcashCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = C43B48352BC3962952A7C7B7 /* ZcashCoin.swift */; };
 		D279746B2BDBE24500FE26D5 /* TonCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D279746A2BDBE24500FE26D5 /* TonCoin.swift */; };
 		D28CC4A82B5FCE7800E18851 /* CosmosCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D28CC4A72B5FCE7800E18851 /* CosmosCoin.swift */; };
 		D28DFD542D8B0B4600C77B6F /* deep_link_icon.png in Resources */ = {isa = PBXBuildFile; fileRef = D28DFD532D8B0B4600C77B6F /* deep_link_icon.png */; };
@@ -69,6 +70,7 @@
 		D2E7E5B72DC8CB0E00A414F5 /* Litecoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2CBB65F2AE62DB0004945E4 /* Litecoin.swift */; };
 		D2E7E5B82DC8CB0E00A414F5 /* TezosCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D23105E92B569AA100BC45DD /* TezosCoin.swift */; };
 		D2E7E5BA2DC8CB0E00A414F5 /* TonCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D279746A2BDBE24500FE26D5 /* TonCoin.swift */; };
+		E718685374FBE94E62017FFD /* ZcashCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = C43B48352BC3962952A7C7B7 /* ZcashCoin.swift */; };
 		D2E7E5BB2DC8CB0E00A414F5 /* AptosCoin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D4AE3A2C06FBCD00DA419A /* AptosCoin.swift */; };
 		D2E7E5BF2DC8CB0E00A414F5 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		D2E7E5C02DC8CB0E00A414F5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D2C1E4202BDFB5EC00C33CCC /* PrivacyInfo.xcprivacy */; };
@@ -168,6 +170,7 @@
 		D257DE062BF2252600D7055D /* DogeCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DogeCoin.swift; sourceTree = "<group>"; };
 		D26968C82CA6B1C400052999 /* BitcoinCashCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitcoinCashCoin.swift; sourceTree = "<group>"; };
 		D27914502DBCC1ED007F80E9 /* CardanoCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardanoCoin.swift; sourceTree = "<group>"; };
+		C43B48352BC3962952A7C7B7 /* ZcashCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZcashCoin.swift; sourceTree = "<group>"; };
 		D279746A2BDBE24500FE26D5 /* TonCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TonCoin.swift; sourceTree = "<group>"; };
 		D28CC4A72B5FCE7800E18851 /* CosmosCoin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CosmosCoin.swift; sourceTree = "<group>"; };
 		D28DFD532D8B0B4600C77B6F /* deep_link_icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = deep_link_icon.png; sourceTree = "<group>"; };
@@ -269,6 +272,7 @@
 				D2D4AE3A2C06FBCD00DA419A /* AptosCoin.swift */,
 				D257DE062BF2252600D7055D /* DogeCoin.swift */,
 				D279746A2BDBE24500FE26D5 /* TonCoin.swift */,
+				C43B48352BC3962952A7C7B7 /* ZcashCoin.swift */,
 				D28CC4A72B5FCE7800E18851 /* CosmosCoin.swift */,
 				D2057C2C2BC514C000E14112 /* PolkadotCoin.swift */,
 				D23105E92B569AA100BC45DD /* TezosCoin.swift */,
@@ -823,6 +827,7 @@
 				D23105EA2B569AA100BC45DD /* TezosCoin.swift in Sources */,
 				D279746B2BDBE24500FE26D5 /* TonCoin.swift in Sources */,
 				D2D4AE3B2C06FBCE00DA419A /* AptosCoin.swift in Sources */,
+				7528DF4B27E0A4996661C859 /* ZcashCoin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -871,6 +876,7 @@
 				D2E7E5B82DC8CB0E00A414F5 /* TezosCoin.swift in Sources */,
 				D2E7E5BA2DC8CB0E00A414F5 /* TonCoin.swift in Sources */,
 				D2E7E5BB2DC8CB0E00A414F5 /* AptosCoin.swift in Sources */,
+				E718685374FBE94E62017FFD /* ZcashCoin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

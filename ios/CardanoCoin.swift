@@ -14,7 +14,7 @@ class CardanoCoin: CoinFactory.Coin {
   
   override init(mnemonic: String) {
     super.init(mnemonic: mnemonic)
-    let privateKeyInfo = wallet.getKeyForCoin(coin: .cardano)
+    let privateKeyInfo = wallet.getKeyForCoin(coin: .cardano)!
     self.address = CoinType.cardano.deriveAddress(privateKey: privateKeyInfo)
   }
   

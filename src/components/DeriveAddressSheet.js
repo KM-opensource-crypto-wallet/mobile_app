@@ -9,9 +9,9 @@ import {
   refreshCurrentCoin,
   setSelectedDeriveAddress,
   updateCurrentCoin,
-} from '../../dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {useDispatch, useSelector} from 'react-redux';
-import {selectCurrentCoin} from '../../dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
 import Toast from 'react-native-toast-message';

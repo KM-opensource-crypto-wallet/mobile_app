@@ -7,7 +7,7 @@ class TezosCoin: CoinFactory.Coin {
   
   override init(mnemonic: String) {
     super.init(mnemonic: mnemonic)
-    let privateKeyData =  wallet.getKeyForCoin(coin: .tezos)
+    let privateKeyData =  wallet.getKeyForCoin(coin: .tezos)!
     self.address = CoinType.tezos.deriveAddress(privateKey: privateKeyData)
     let publicKeyData = privateKeyData.getPublicKey(coinType: .tezos).data
     let privatePublicData = privateKeyData.data + publicKeyData;

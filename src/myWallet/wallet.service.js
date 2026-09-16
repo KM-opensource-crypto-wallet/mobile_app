@@ -97,6 +97,37 @@ export const addCustomDeriveAddressToWallet = async (
   }
 };
 
+// Unused: this bridged to a native WalletCore Zcash signer (iOS only), but
+// that signer was found to produce cryptographically invalid signatures.
+// ZcashChain.js now builds and signs v4 Zcash transactions itself in pure JS,
+// so nothing calls this anymore on either platform.
+export const signZcashTransaction = async ({
+  privateKeyHex,
+  utxos,
+  fromAddress,
+  toAddress,
+  amountZatoshi,
+  branchId,
+  isTestNet,
+  dryRun,
+}) => {
+  try {
+    return await NativeKeygen.signZcashTransaction(
+      privateKeyHex,
+      utxos,
+      fromAddress,
+      toAddress,
+      amountZatoshi,
+      branchId,
+      isTestNet,
+      dryRun,
+    );
+  } catch (e) {
+    console.error('Failed to sign zcash transaction: ', e);
+    throw e;
+  }
+};
+
 // this method only for android for sensitive-info-migration
 export const getLegacySecureValue = async (sharedPreference, key) => {
   try {

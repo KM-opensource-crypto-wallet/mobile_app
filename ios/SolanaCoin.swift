@@ -15,12 +15,12 @@ class SolanaCoin: CoinFactory.Coin {
     }
 
     override func getNewAddress(isTestNet:Bool) -> String {
-        let address = wallet.getAddressDerivation(coin: .solana, derivation: .solanaSolana)
+        let address = wallet.getAddressDerivation(coin: .solana, derivation: .solanaSolana)!
         return address
     }
 
     override func getPrivateKey(isTestNet:Bool) -> String {
-      let privateKey = wallet.getKeyDerivation(coin: .solana, derivation: .solanaSolana)
+      let privateKey = wallet.getKeyDerivation(coin: .solana, derivation: .solanaSolana)!
       return convertToCustomPrivateKey(privateKey: privateKey);
     }
 
@@ -33,7 +33,7 @@ class SolanaCoin: CoinFactory.Coin {
     result.add(firstDict)
     for i in 0..<50 {
           let derivePath = String(format:  "m/44'/501'/%@'", String(i))
-          let privateKey = wallet.getKey(coin: .solana, derivationPath: derivePath)
+          let privateKey = wallet.getKey(coin: .solana, derivationPath: derivePath)!
           let address = CoinType.solana.deriveAddress(privateKey: privateKey);
           let yourAuxDic: NSMutableDictionary = [:]
           yourAuxDic["derivePath"] = derivePath
@@ -54,7 +54,7 @@ class SolanaCoin: CoinFactory.Coin {
 
 
   override func addCustomDerivation(derivePath:String,isTestNet:Bool) -> NSMutableDictionary {
-      let privateKey = wallet.getKey(coin: .solana, derivationPath: derivePath)
+      let privateKey = wallet.getKey(coin: .solana, derivationPath: derivePath)!
       let address = CoinType.solana.deriveAddress(privateKey: privateKey)
       let yourAuxDic: NSMutableDictionary = [:]
       yourAuxDic["derivePath"] = derivePath

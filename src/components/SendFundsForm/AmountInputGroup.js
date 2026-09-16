@@ -7,7 +7,6 @@ import {
   multiplyBNWithFixed,
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
-import {setSendFormFields} from 'utils/sendFormFields';
 import myStyles from './SendFundsFormStyles';
 
 const MAX_HIT_SLOP = {top: 12, left: 12, right: 12, bottom: 12};
@@ -71,7 +70,15 @@ const AmountInputGroup = ({
 }) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
-  const {values, errors, touched, handleBlur, handleSubmit, setValues} = formik;
+  const {
+    values,
+    errors,
+    touched,
+    handleBlur,
+    handleSubmit,
+    setFieldValue,
+    setValues,
+  } = formik;
   const error = (touched.amount || touched.currencyAmount) && errors.amount;
   const currencyRate = coin?.currencyRate;
   const decimal = coin?.decimal;
@@ -79,10 +86,14 @@ const AmountInputGroup = ({
   const onChangeAmount = useCallback(
     text => {
       const amount = validateNumberInInput(text, decimal);
-      setSendFormFields(setValues, {
-        amount,
-        currencyAmount: multiplyBNWithFixed(amount, currencyRate, 2),
-      });
+      const currencyAmount = multiplyBNWithFixed(amount, currencyRate, 2);
+      // Set both fields in one Formik update. Two sequential setFieldValue
+      // calls would each validate against the same not-yet-committed
+      // `values` snapshot, so the second call's validation -- run against
+      // the pre-update amount -- would win and could wrongly flag `amount`
+      // as invalid (e.g. right after the Max button jumps it from empty to
+      // the full balance) until the field is touched again.
+      setValues(prev => ({...prev, amount, currencyAmount}));
     },
     [currencyRate, decimal, setValues],
   );
@@ -95,22 +106,23 @@ const AmountInputGroup = ({
       if (!rate.isFinite() || rate.lte(0) || !Number.isInteger(dp) || dp < 0) {
         // No usable rate/decimals: skip the conversion instead of guessing a
         // rate of 1 or feeding NaN into toFixed (which throws).
-        setSendFormFields(setValues, {currencyAmount});
+        setFieldValue('currencyAmount', currencyAmount);
         return;
       }
-      setSendFormFields(setValues, {
-        currencyAmount,
-        amount: new BigNumber(currencyAmount || 0).dividedBy(rate).toFixed(dp),
-      });
+      const amount = new BigNumber(currencyAmount || 0)
+        .dividedBy(rate)
+        .toFixed(dp);
+      setValues(prev => ({...prev, amount, currencyAmount}));
     },
-    [currencyRate, decimal, setValues],
+    [currencyRate, decimal, setValues, setFieldValue],
   );
 
   const onPressMax = useCallback(() => {
-    setSendFormFields(setValues, {
+    setValues(prev => ({
+      ...prev,
       amount: availableAmount,
       currencyAmount: availableAmountCurrency,
-    });
+    }));
   }, [availableAmount, availableAmountCurrency, setValues]);
 
   return (

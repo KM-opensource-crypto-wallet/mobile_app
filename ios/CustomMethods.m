@@ -55,5 +55,17 @@ RCT_EXTERN_METHOD(addCustomDerivation:
                   resolver: (RCTPromiseResolveBlock) resolve
                   rejecter: (RCTPromiseRejectBlock) reject
                   )
+RCT_EXTERN_METHOD(signZcashTransaction:
+                  (NSString *) privateKeyHex
+                  utxos: (NSArray *) utxos
+                  fromAddress: (NSString *) fromAddress
+                  toAddress: (NSString *) toAddress
+                  amountZatoshi: (NSString *) amountZatoshi
+                  branchId: (NSString *) branchId
+                  isTestNet: (BOOL) isTestNet
+                  dryRun: (BOOL) dryRun
+                  resolver: (RCTPromiseResolveBlock) resolve
+                  rejecter: (RCTPromiseRejectBlock) reject
+                  )
 @end
 

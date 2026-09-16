@@ -14,7 +14,7 @@ class AptosCoin: CoinFactory.Coin {
   
   override init(mnemonic: String) {
     super.init(mnemonic: mnemonic)
-    let privateKeyInfo = wallet.getKeyForCoin(coin: .aptos)
+    let privateKeyInfo = wallet.getKeyForCoin(coin: .aptos)!
     self.address = CoinType.aptos.deriveAddress(privateKey: privateKeyInfo)
     self.privateKey = privateKeyInfo.data.hexString;
   }
