@@ -18,7 +18,7 @@ class RippleCoin: CoinFactory.Coin {
   }
 
   override func getNewAddress(isTestNet:Bool) -> String {
-    let address = wallet.getAddressForCoin(coin: .xrp)!
+    let address = wallet.getAddressForCoin(coin: .xrp)
     return address
   }
   

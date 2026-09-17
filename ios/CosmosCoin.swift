@@ -14,7 +14,7 @@ class CosmosCoin: CoinFactory.Coin {
   
   override init(mnemonic: String) {
     super.init(mnemonic: mnemonic)
-    let privateKeyInfo = wallet.getKeyForCoin(coin: .cosmos)!
+    let privateKeyInfo = wallet.getKeyForCoin(coin: .cosmos)
     self.address = CoinType.cosmos.deriveAddress(privateKey: privateKeyInfo)
     self.privateKey = privateKeyInfo.data.hexString;
   }

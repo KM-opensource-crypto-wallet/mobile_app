@@ -17,7 +17,7 @@ class ZcashCoin: CoinFactory.Coin {
   }
 
   private func zcashKey(derivePath: String) -> PrivateKey {
-    return wallet.getKey(coin: .zcash, derivationPath: derivePath)!
+    return wallet.getKey(coin: .zcash, derivationPath: derivePath)
   }
 
   private func zcashAddress(privateKey: PrivateKey, isTestNet: Bool) -> String {

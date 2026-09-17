@@ -13,7 +13,7 @@ class ThorCoin: CoinFactory.Coin {
 
     override init(mnemonic: String) {
         super.init(mnemonic: mnemonic)
-      self.address = CoinType.thorchain.deriveAddress(privateKey: wallet.getKeyForCoin(coin: .thorchain)!)
+      self.address = CoinType.thorchain.deriveAddress(privateKey: wallet.getKeyForCoin(coin: .thorchain))
     }
   
 
@@ -22,7 +22,7 @@ class ThorCoin: CoinFactory.Coin {
     }
 
     override func getPrivateKey(isTestNet:Bool) -> String {
-        let privateKeyBytes = wallet.getKeyForCoin(coin: .thorchain)!.data
+        let privateKeyBytes = wallet.getKeyForCoin(coin: .thorchain).data
         return Base64.encode(data: privateKeyBytes)
     }
 

@@ -16,14 +16,14 @@ class BitcoinCashCoin: CoinFactory.Coin {
   }
   
   override func getNewAddress(isTestNet:Bool) -> String {
-    let address  = wallet.getAddressForCoin(coin: .bitcoinCash)!
+    let address  = wallet.getAddressForCoin(coin: .bitcoinCash)
     return address.replacingOccurrences(of: "bitcoincash:", with: "")
   }
   
 
 
   override func getPrivateKey(isTestNet:Bool) -> String {
-    let privateKeyBytes = wallet.getKeyForCoin(coin: .bitcoinCash)!.data
+    let privateKeyBytes = wallet.getKeyForCoin(coin: .bitcoinCash).data
     return Utils.convertToWif(data: privateKeyBytes, isTestNet: isTestNet, prefix: [0x80], testNetPrefix: [0xef])
   }
   

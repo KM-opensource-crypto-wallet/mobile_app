@@ -21,7 +21,7 @@ class FilecoinCoin: CoinFactory.Coin {
 
   override func getNewAddress(isTestNet: Bool) -> String {
     let path = isTestNet ? testDefaultHDPath : defaultHDPath
-    let privateKey = wallet.getKey(coin: .filecoin, derivationPath: path)!
+    let privateKey = wallet.getKey(coin: .filecoin, derivationPath: path)
     let address = CoinType.filecoin.deriveAddress(privateKey: privateKey)
     if (isTestNet) {
       var modified = address
@@ -33,7 +33,7 @@ class FilecoinCoin: CoinFactory.Coin {
 
   override func getPrivateKey(isTestNet: Bool) -> String {
     let path = isTestNet ? testDefaultHDPath : defaultHDPath
-    let privateKey = wallet.getKey(coin: .filecoin, derivationPath: path)!
+    let privateKey = wallet.getKey(coin: .filecoin, derivationPath: path)
     return privateKey.data.hexString
   }
 

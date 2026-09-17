@@ -3161,11 +3161,11 @@ PODS:
     - ReactNativeDependencies
     - Yoga
   - SwiftCBOR (0.6.0)
-  - TrustWalletCore (4.8.2):
-    - TrustWalletCore/Core (= 4.8.2)
-  - TrustWalletCore/Core (4.8.2):
+  - TrustWalletCore (4.3.9):
+    - TrustWalletCore/Core (= 4.3.9)
+  - TrustWalletCore/Core (4.3.9):
     - TrustWalletCore/Types
-  - TrustWalletCore/Types (4.8.2):
+  - TrustWalletCore/Types (4.3.9):
     - WalletCoreSwiftProtobuf
   - uniffi-bindgen-react-native (0.29.3-1):
     - React-Core
@@ -3309,7 +3309,7 @@ DEPENDENCIES:
   - RNWorklets (from `../node_modules/react-native-worklets`)
   - SDWebImage (= 5.21.0)
   - SensitiveInfo (from `../node_modules/react-native-sensitive-info`)
-  - TrustWalletCore (= 4.8.2)
+  - TrustWalletCore (= 4.3.9)
   - VisionCamera (from `../node_modules/react-native-vision-camera`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -3738,13 +3738,13 @@ SPEC CHECKSUMS:
   SDWebImageWebPCoder: 0e06e365080397465cc73a7a9b472d8a3bd0f377
   SensitiveInfo: e56247f34820c8ffb1cbed94e1d9abeef1268001
   SwiftCBOR: b873af28a9cc66003852fdc79a41852a7e54009a
-  TrustWalletCore: 09e8be18ed2c53f91b9dfda01f3b07ac46b0b76e
+  TrustWalletCore: f3423fa79df3c4904fbda4be83a0c9c183bb4d5f
   uniffi-bindgen-react-native: 125eae9e3a0cf34bf8f3d4b0ceed517df7cc0733
   VisionCamera: b51af005669c6642dd1b4fca434eda4c1778de87
   WalletCoreSwiftProtobuf: a4798576a2d309511fc45f81843d348732ec571d
   Yoga: 18b74b3ade30bebc1904004dfaceae1dd02a330a
   YttriumWrapper: 850d3c5bfa7815ad9962591ff3c1b289039266f2
 
-PODFILE CHECKSUM: f48b284ee480258425ae79de92fc8b2daf09f72c
+PODFILE CHECKSUM: f602574ae7f8e7fc2efb33ad22dcc18629fd1a42
 
 COCOAPODS: 1.16.2

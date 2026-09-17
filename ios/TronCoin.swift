@@ -16,14 +16,14 @@ class TronCoin: CoinFactory.Coin {
     }
     
     override func getNewAddress(isTestNet:Bool) -> String {
-        let privateKey = wallet.getKeyForCoin(coin: .tron)!
+        let privateKey = wallet.getKeyForCoin(coin: .tron)
         let address = CoinType.tron.deriveAddress(privateKey: privateKey)
         addressIndex += 1
         return address
     }
 
     override func getPrivateKey(isTestNet:Bool) -> String {
-        let privateKeyBytes = wallet.getKeyForCoin(coin: .tron)!.data
+        let privateKeyBytes = wallet.getKeyForCoin(coin: .tron).data
         return privateKeyBytes.map { String(format: "%02x", $0) }.joined()
     }
   
@@ -31,7 +31,7 @@ class TronCoin: CoinFactory.Coin {
     let result: NSMutableArray = []
     for i in 0..<50 {
           let derivePath = String(format: "m/44'/195'/0'/%@/0", String(i))
-          let privateKey = wallet.getKey(coin: .tron, derivationPath: derivePath)!
+          let privateKey = wallet.getKey(coin: .tron, derivationPath: derivePath)
           let address = CoinType.tron.deriveAddress(privateKey: privateKey)
           let yourAuxDic: NSMutableDictionary = [:]
           yourAuxDic["derivePath"] = derivePath
@@ -43,7 +43,7 @@ class TronCoin: CoinFactory.Coin {
     }
   
   override func addCustomDerivation(derivePath:String,isTestNet:Bool) -> NSMutableDictionary {
-      let privateKey = wallet.getKey(coin: .tron, derivationPath: derivePath)!
+      let privateKey = wallet.getKey(coin: .tron, derivationPath: derivePath)
       let address = CoinType.tron.deriveAddress(privateKey: privateKey)
       let yourAuxDic: NSMutableDictionary = [:]
       yourAuxDic["derivePath"] = derivePath

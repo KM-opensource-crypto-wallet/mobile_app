@@ -17,22 +17,22 @@ class BitcoinSegwitCoin: CoinFactory.Coin {
   }
 
   override func getNewAddress(isTestNet: Bool) -> String {
-    let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: "m/49'/0'/0'/0/0")!
+    let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: "m/49'/0'/0'/0/0")
     let publicKey = privateKey.getPublicKeySecp256k1(compressed: true)
     return buildP2SHP2WPKHAddress(publicKey: publicKey, isTestNet: isTestNet)
   }
 
   override func getPrivateKey(isTestNet: Bool) -> String {
-    let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: "m/49'/0'/0'/0/0")!
+    let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: "m/49'/0'/0'/0/0")
     return Utils.convertToWif(data: privateKey.data, isTestNet: isTestNet, prefix: [0x80], testNetPrefix: [0xef])
   }
 
   override func getExtendedPublicKey(isTestNet: Bool) -> String {
-    return wallet.getExtendedPublicKey(purpose: .bip49, coin: .bitcoin, version: .ypub)!
+    return wallet.getExtendedPublicKey(purpose: .bip49, coin: .bitcoin, version: .ypub)
   }
 
   override func getExtendedPrivateKey(isTestNet: Bool) -> String {
-    return wallet.getExtendedPrivateKey(purpose: .bip49, coin: .bitcoin, version: .yprv)!
+    return wallet.getExtendedPrivateKey(purpose: .bip49, coin: .bitcoin, version: .yprv)
   }
 
   override func signTransaction(rawData: String) -> String {
@@ -40,7 +40,7 @@ class BitcoinSegwitCoin: CoinFactory.Coin {
   }
 
   override func addCustomDerivation(derivePath: String, isTestNet: Bool) -> NSMutableDictionary {
-    let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: derivePath)!
+    let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: derivePath)
     let publicKey = privateKey.getPublicKeySecp256k1(compressed: true)
     let address = buildP2SHP2WPKHAddress(publicKey: publicKey, isTestNet: isTestNet)
     let dict: NSMutableDictionary = [:]

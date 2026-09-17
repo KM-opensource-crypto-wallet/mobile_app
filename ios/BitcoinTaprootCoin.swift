@@ -30,7 +30,7 @@ class BitcoinTaprootCoin: CoinFactory.Coin {
   }
 
   private func firstReceiveKey(isTestNet: Bool) -> PrivateKey {
-    return wallet.getKey(coin: .bitcoin, derivationPath: accountBasePath(isTestNet: isTestNet) + "/0/0")!
+    return wallet.getKey(coin: .bitcoin, derivationPath: accountBasePath(isTestNet: isTestNet) + "/0/0")
   }
 
   override func getNewAddress(isTestNet: Bool) -> String {
@@ -43,11 +43,11 @@ class BitcoinTaprootCoin: CoinFactory.Coin {
   }
 
   override func getExtendedPublicKey(isTestNet: Bool) -> String {
-    return wallet.getExtendedPublicKeyDerivation(purpose: .bip86, coin: .bitcoin, derivation: derivation(isTestNet: isTestNet), version: isTestNet ? .tpub : .xpub)!
+    return wallet.getExtendedPublicKeyDerivation(purpose: .bip86, coin: .bitcoin, derivation: derivation(isTestNet: isTestNet), version: isTestNet ? .tpub : .xpub)
   }
 
   override func getExtendedPrivateKey(isTestNet: Bool) -> String {
-    return wallet.getExtendedPrivateKeyDerivation(purpose: .bip86, coin: .bitcoin, derivation: derivation(isTestNet: isTestNet), version: isTestNet ? .tprv : .xprv)!
+    return wallet.getExtendedPrivateKeyDerivation(purpose: .bip86, coin: .bitcoin, derivation: derivation(isTestNet: isTestNet), version: isTestNet ? .tprv : .xprv)
   }
 
   override func signTransaction(rawData: String) -> String {
@@ -55,7 +55,7 @@ class BitcoinTaprootCoin: CoinFactory.Coin {
   }
 
   override func addCustomDerivation(derivePath: String, isTestNet: Bool) -> NSMutableDictionary {
-    let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: derivePath)!
+    let privateKey = wallet.getKey(coin: .bitcoin, derivationPath: derivePath)
     let publicKey = privateKey.getPublicKeySecp256k1(compressed: true)
     let dict: NSMutableDictionary = [:]
     dict["derivePath"] = derivePath
