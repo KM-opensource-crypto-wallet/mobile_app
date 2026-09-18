@@ -20,6 +20,7 @@ class DogeCoin: CoinFactory.Coin {
     let address = CoinType.dogecoin.deriveAddress(privateKey: wallet.getKeyForCoin(coin: .dogecoin))
     return address
   }
+  
   override func getPrivateKey(isTestNet:Bool) -> String {
     let privateKeyBytes = wallet.getKeyForCoin(coin: .dogecoin).data
     return Utils.convertToWif(data: privateKeyBytes, isTestNet: false, prefix: [0x9e], testNetPrefix: [0x9e])

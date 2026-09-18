@@ -21,6 +21,7 @@ class TronCoin: CoinFactory.Coin {
         addressIndex += 1
         return address
     }
+    
     override func getPrivateKey(isTestNet:Bool) -> String {
         let privateKeyBytes = wallet.getKeyForCoin(coin: .tron).data
         return privateKeyBytes.map { String(format: "%02x", $0) }.joined()
