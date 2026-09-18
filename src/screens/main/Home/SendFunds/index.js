@@ -158,8 +158,7 @@ const SendFunds = ({navigation, route}) => {
         setModal(true);
         return;
       }
-      // Reachable only for a sponsored-capable token: SendScreen lets those
-      // through without the native coin, so the choice is made here.
+
       if (!isNativeCoinAvailable && !values?.payGasWithToken) {
         showToast({
           type: 'errorToast',

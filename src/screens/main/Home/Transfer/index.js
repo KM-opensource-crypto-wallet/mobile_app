@@ -318,9 +318,7 @@ const FeeSummaryBox = ({
 }) => {
   const formatFee = value =>
     isRefreshing ? 'Refreshing' : `${value || '0'} ${feeSymbol}`;
-  // Sponsored only: the fee is in the user's token, which can carry 18
-  // decimals and wrap the row. Rounds outward so the range never reads
-  // tighter than it is.
+
   const formatFeeRange = (low, high) => {
     if (isRefreshing) {
       return 'Refreshing';
