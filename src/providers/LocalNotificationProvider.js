@@ -11,7 +11,10 @@ import notifee, {EventType} from '@notifee/react-native';
 import {store} from 'redux/store';
 import {MainNavigation} from 'utils/navigation';
 import {showToast} from 'utils/toast';
-import {validateBigNumberStr} from 'dok-wallet-blockchain-networks/helper';
+import {
+  getSponsoredGasCoins,
+  validateBigNumberStr,
+} from 'dok-wallet-blockchain-networks/helper';
 import {
   isWalletHiddenAndLocked,
   selectAllWallets,
@@ -190,6 +193,10 @@ export const LocalNotificationProvider = ({children}) => {
     }
 
     const freshCoin = selectCurrentCoin(store.getState()) || coin;
+
+    const gasToken = payment.payGasWithToken
+      ? getSponsoredGasCoins(freshCoin?.chain_name, wallet?.coins)[0]
+      : null;
     store.dispatch(
       updateCurrentTransferData({
         toAddress: payment.recipientAddress,
@@ -198,6 +205,9 @@ export const LocalNotificationProvider = ({children}) => {
         initialAmount: freshCoin?.type !== 'token' ? payment.amount : 0,
         isSendFunds: true,
         memo: payment.memo || undefined,
+        payGasWithToken: !!gasToken,
+        gasTokenSymbol: gasToken?.symbol ?? null,
+        gasTokenContractAddress: gasToken?.contractAddress ?? null,
       }),
     );
     // Same fee-estimation thunk SendFunds uses — it also carries the

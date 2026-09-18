@@ -6,7 +6,12 @@ import SponsoredGasInfoModal from 'components/SponsoredGasInfoModal';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './SponsoredGasToggleStyles';
 
-const SponsoredGasToggle = ({tokenSymbol, checked, onToggle}) => {
+const SponsoredGasToggle = ({
+  tokenSymbol,
+  checked,
+  onToggle,
+  maxFeeDisplay,
+}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const [showInfo, setShowInfo] = useState(false);
@@ -41,6 +46,7 @@ const SponsoredGasToggle = ({tokenSymbol, checked, onToggle}) => {
       <SponsoredGasInfoModal
         visible={showInfo}
         tokenSymbol={tokenSymbol}
+        maxFeeDisplay={maxFeeDisplay}
         onClose={() => setShowInfo(false)}
       />
     </>

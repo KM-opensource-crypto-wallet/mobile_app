@@ -30,6 +30,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 import {currencySymbol} from 'data/currency';
 import {
   checkIsNativeCoinAvailable,
+  checkCanPaySponsoredGas,
   getCurrentWalletIsAddMoreAddressPopupHidden,
   isImportWalletWithPrivateKey,
   selectCurrentCoin,
@@ -81,6 +82,7 @@ const SendScreen = ({navigation, route}) => {
     getCurrentWalletIsAddMoreAddressPopupHidden,
   );
   const isNativeCoinAvailable = useSelector(checkIsNativeCoinAvailable);
+  const canPaySponsoredGas = useSelector(checkCanPaySponsoredGas);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -395,7 +397,7 @@ const SendScreen = ({navigation, route}) => {
                 <TouchableOpacity
                   style={{...styles.btn, ...styles.shadow, marginRight: 20}}
                   onPress={() => {
-                    if (isNativeCoinAvailable) {
+                    if (isNativeCoinAvailable || canPaySponsoredGas) {
                       dispatch(clearSelectedUTXOs());
                       navigation.navigate('SendFunds');
                     } else {

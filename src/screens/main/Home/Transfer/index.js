@@ -40,8 +40,7 @@ import {
   isCustomAddressNotSupportedChain,
   isEVMChain,
   isFeesOptionChain,
-  isSponsoredGasChain,
-  getSponsoredGasTokenSymbol,
+  getSponsoredGasCoins,
   SPONSOR_EMPTY_CODE,
 } from 'dok-wallet-blockchain-networks/helper';
 import useAdvancedFees from 'hooks/useAdvancedFees';
@@ -314,14 +313,41 @@ const FeeSummaryBox = ({
   maxTotalDisplay,
   isEip1559,
   estimatedFee,
+  isSponsored,
   children,
 }) => {
   const formatFee = value =>
     isRefreshing ? 'Refreshing' : `${value || '0'} ${feeSymbol}`;
+  // Sponsored only: the fee is in the user's token, which can carry 18
+  // decimals and wrap the row. Rounds outward so the range never reads
+  // tighter than it is.
+  const formatFeeRange = (low, high) => {
+    if (isRefreshing) {
+      return 'Refreshing';
+    }
+    const lowBn = new BigNumber(low);
+    const highBn = new BigNumber(high);
+    const top5 = new BigNumber(high).decimalPlaces(5, BigNumber.ROUND_UP);
+    if (!lowBn.isFinite() || !highBn.isFinite() || lowBn.gte(highBn)) {
+      return top5.isFinite()
+        ? `${top5.toFixed()} ${feeSymbol}`
+        : formatFee(high);
+    }
+    const bottom = lowBn.decimalPlaces(5, BigNumber.ROUND_DOWN);
+    const top = highBn.decimalPlaces(5, BigNumber.ROUND_UP);
+    const places = Math.max(bottom.decimalPlaces(), top.decimalPlaces());
+    return `${bottom.toFixed(places)} ~ ${top.toFixed(places)} ${feeSymbol}`;
+  };
   return (
     <View style={styles.box}>
       {children}
-      {isEip1559 ? (
+      {isSponsored ? (
+        <InfoRow
+          styles={styles}
+          label={'Estimated Fee'}
+          value={formatFeeRange(estimatedFee, fee)}
+        />
+      ) : isEip1559 ? (
         <>
           <InfoRow
             styles={styles}
@@ -584,26 +610,13 @@ const Transfer = ({navigation, route}) => {
   const advancedOptionsSheetRef = useRef(null);
 
   const sponsoredGasCoins = useMemo(() => {
-    if (!isSponsoredGasChain(chainName)) {
-      return [];
-    }
     const items = isBatchTransaction
       ? transferData?.transactionsData?.map(item => item?.coinInfo)
       : [transferData?.currentCoin];
     if (!items?.length || items.some(item => !item?.contractAddress)) {
       return [];
     }
-    return (currentWallet?.coins ?? [])
-      .filter(
-        coin =>
-          coin?.chain_name === chainName &&
-          Number(coin?.totalAmount) > 0 &&
-          getSponsoredGasTokenSymbol(chainName, coin?.contractAddress),
-      )
-      .map(coin => ({
-        symbol: getSponsoredGasTokenSymbol(chainName, coin?.contractAddress),
-        contractAddress: coin?.contractAddress,
-      }));
+    return getSponsoredGasCoins(chainName, currentWallet?.coins);
   }, [
     chainName,
     isBatchTransaction,
@@ -693,6 +706,11 @@ const Transfer = ({navigation, route}) => {
       tokenSymbol={activeGasToken.symbol}
       checked={payGasWithToken}
       onToggle={onToggleSponsoredGas}
+      maxFeeDisplay={
+        payGasWithToken && !isFetchingSponsoredQuote
+          ? transferData?.transactionFee
+          : null
+      }
     />
   ) : null;
 
@@ -911,6 +929,7 @@ const Transfer = ({navigation, route}) => {
     feeSymbol: sponsoredFeeSymbol,
     isEip1559,
     estimatedFee: transferData?.estimatedFee,
+    isSponsored: payGasWithToken,
   };
 
   const currencyRate = transferContext.currencyRateForFiat;

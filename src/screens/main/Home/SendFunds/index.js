@@ -29,6 +29,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {getTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSelector';
 import {
+  checkIsNativeCoinAvailable,
   selectCurrentCoin,
   selectCurrentWallet,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
@@ -36,12 +37,7 @@ import {
   isEip7702SupportedChain,
   multiplyBNWithFixed,
   validateBigNumberStr,
-  validateNumberInInput,
-  validateNumber,
-  getSponsoredGasTokenSymbol,
 } from 'dok-wallet-blockchain-networks/helper';
-import SponsoredGasToggle from 'components/SponsoredGasToggle';
-import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {showToast} from 'utils/toast';
 import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import {parseBoolean} from 'utils/common';
@@ -69,6 +65,7 @@ const SendFunds = ({navigation, route}) => {
   const currentWallet = useSelector(selectCurrentWallet);
   const localCurrency = useSelector(getLocalCurrency);
   const transferData = useSelector(getTransferData);
+  const isNativeCoinAvailable = useSelector(checkIsNativeCoinAvailable);
   const floatingHeight = useFloatingHeight();
 
   const {
@@ -90,7 +87,7 @@ const SendFunds = ({navigation, route}) => {
   const [modalVisible, setModalVisible] = useState(false);
 
   const form = useSendFundsForm({coin: currentCoin, wallet: currentWallet});
-  const {availableAmount} = form;
+  const {availableAmount, sponsoredGasToken} = form;
 
   const proceedToTransfer = (values, validAddress) => {
     const toAddress = validAddress || values?.toAddress?.trim();
@@ -150,6 +147,7 @@ const SendFunds = ({navigation, route}) => {
             )
           : '',
       memo: linkMemo || '',
+      payGasWithToken: false,
     },
     validationSchema: form.validationSchema,
     onSubmit: async (values, helpers) => {
@@ -158,6 +156,16 @@ const SendFunds = ({navigation, route}) => {
       }
       if (new BigNumber(values.amount).gt(availableAmount)) {
         setModal(true);
+        return;
+      }
+      // Reachable only for a sponsored-capable token: SendScreen lets those
+      // through without the native coin, so the choice is made here.
+      if (!isNativeCoinAvailable && !values?.payGasWithToken) {
+        showToast({
+          type: 'errorToast',
+          title: `Require ${currentCoin?.chain_display_name} chain`,
+          message: `Add ${currentCoin?.chain_display_name} to pay the network fee, or turn on "Pay gas fees with ${sponsoredGasToken?.symbol}".`,
+        });
         return;
       }
       const {validAddress, resolvedAddress} = await form.resolveRecipient(
