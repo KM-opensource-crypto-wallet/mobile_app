@@ -235,5 +235,4 @@ extension Data {
         reject("0","E_INVALID_COIN", NSError(domain: "", code: 0, userInfo: nil))
       }
   }
-
 }
