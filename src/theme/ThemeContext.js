@@ -8,6 +8,7 @@ import React, {
 import {Appearance} from 'react-native';
 import {getAsyncStorageData, storeAsyncStorageData} from 'utils/asyncStorage';
 import {wlName} from 'utils/wlData';
+import {lighten, withAlpha} from 'components/ui/color';
 
 export const ThemeContext = createContext();
 
@@ -58,7 +59,7 @@ export const ThemeProvider = ({children}) => {
 
   return (
     <ThemeContext.Provider
-      value={{theme, selectedTheme, onChangeSelectedTheme}}>
+      value={{theme, isDarkMode, selectedTheme, onChangeSelectedTheme}}>
       {children}
     </ThemeContext.Provider>
   );
@@ -78,6 +79,13 @@ const WL_COLORS = {
 };
 
 const DYNAMIC_COLOR = WL_COLORS[wlName] || WL_COLORS.dokwallet;
+
+// The Login design specifies #FF5E12 as the button-gradient top stop and
+// #FF6A2B as the dark-mode link colour. Both are derived from the brand accent
+// rather than hard-coded, so the kimlwallet build stays blue.
+const ACCENT = DYNAMIC_COLOR.background;
+const ACCENT_TOP = lighten(ACCENT, 0.06);
+const ACCENT_LINK = lighten(ACCENT, 0.09);
 
 export const lightTheme = {
   ...DYNAMIC_COLOR,
@@ -107,6 +115,27 @@ export const lightTheme = {
   success: '#4CAF50',
   warning: '#FF9800',
   disabledButton: '#708090',
+
+  // --- Login design tokens ---
+  accentTop: ACCENT_TOP,
+  accentLink: ACCENT,
+  accentGlow: withAlpha(ACCENT, 0.13),
+  bgGradient: ['#FBF8F5', '#F6F0EA', '#F3EBE3'],
+  textPrimary: '#1A1613',
+  textMuted: '#6E655E',
+  textFaint: '#8A7F76',
+  glassFill: 'rgba(255, 255, 255, 0.7)',
+  glassBorder: 'rgba(26, 22, 19, 0.08)',
+  glassHighlight: 'rgba(26, 22, 19, 0.06)',
+  sheetBg: '#FFFFFF',
+  sheetInputBg: 'rgba(26, 22, 19, 0.04)',
+  sheetBorder: 'rgba(26, 22, 19, 0.12)',
+  sheetHandle: 'rgba(26, 22, 19, 0.2)',
+  scrim: 'rgba(20, 14, 10, 0.45)',
+  danger: '#D92D20',
+  dangerTop: '#E5372B',
+  dangerSurface: 'rgba(217, 45, 32, 0.1)',
+  positive: '#12B76A',
 };
 
 export const darkTheme = {
@@ -137,4 +166,25 @@ export const darkTheme = {
   success: '#4CAF50',
   warning: '#FF9800',
   disabledButton: '#708090',
+
+  // --- Login design tokens ---
+  accentTop: ACCENT_TOP,
+  accentLink: ACCENT_LINK,
+  accentGlow: withAlpha(ACCENT, 0.18),
+  bgGradient: ['#17130F', '#120E0B', '#0E0B09'],
+  textPrimary: '#F5F1EC',
+  textMuted: '#A89C92',
+  textFaint: '#A89C92',
+  glassFill: 'rgba(255, 255, 255, 0.06)',
+  glassBorder: 'rgba(255, 255, 255, 0.1)',
+  glassHighlight: 'rgba(255, 255, 255, 0.08)',
+  sheetBg: '#1F1F23',
+  sheetInputBg: '#141417',
+  sheetBorder: '#3A3A42',
+  sheetHandle: 'rgba(245, 241, 236, 0.25)',
+  scrim: 'rgba(0, 0, 0, 0.72)',
+  danger: '#F97066',
+  dangerTop: '#E5372B',
+  dangerSurface: '#33201E',
+  positive: '#32D583',
 };

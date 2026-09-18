@@ -1164,6 +1164,11 @@
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.10.1.tgz#1d76d15290c0212076c15ede94d15157ba0c6344"
   integrity sha512-wJ8ReQbHxsAfXhrf9ixl0aYbZorRuOWpBNzm8pL8ftmSxQx/wnJD5Eg861NwJU/czy2VXFIebCeZnZrI9rktIQ==
 
+"@callstack/liquid-glass@^0.8.2":
+  version "0.8.2"
+  resolved "https://registry.yarnpkg.com/@callstack/liquid-glass/-/liquid-glass-0.8.2.tgz#f7a4fb48b3785b94f188e474e38bd2ce8f759029"
+  integrity sha512-Z3bhZLkQLBquA7LIx6Ktv/fFd8nuOsAo1vb/S6Y3tqaQVnHu9RNFreidfZ+SUYnrQu5TqVzEOqq+9CR4jrwd9A==
+
 "@callstack/react-theme-provider@3.0.3":
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/@callstack/react-theme-provider/-/react-theme-provider-3.0.3.tgz#f964dda28cd6e731c3fbcf916b0579c6f9fb2db7"

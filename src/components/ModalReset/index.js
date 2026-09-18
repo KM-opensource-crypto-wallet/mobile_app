@@ -1,13 +1,6 @@
 import React, {useState, useEffect, useContext} from 'react';
-import {
-  Dimensions,
-  TouchableOpacity,
-  View,
-  ScrollView,
-  Keyboard,
-  TouchableWithoutFeedback,
-} from 'react-native';
-import {Modal, Text, TextInput} from 'react-native-paper';
+import {View} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   logOutSuccess,
   fingerprintAuthOut,
@@ -20,22 +13,38 @@ import {useDispatch} from 'react-redux';
 import {resetCurrentTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {resetBatchTransactions} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
 import {deleteAlertsForUserThunk} from 'dok-wallet-blockchain-networks/redux/notificationAlerts/notificationAlertsSlice';
-import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
 import googleDrive from '../../utils/googleDriveBackup';
 import {logoutOneSignal} from 'utils/onesignal';
 import {addBreadcrumb, setUserContext} from 'services/logger';
+import {AppBottomSheet, AppButton, AppText, AppTextInput} from 'components/ui';
 
-const WIDTH = Dimensions.get('window').width + 80;
+/**
+ * Per-action copy. The typed phrase scales with how destructive the action is:
+ * the two flows that wipe the device demand an explicit phrase, while Logout -
+ * which only returns to the Login screen - keeps the original 'confirm'.
+ */
+const PAGE_CONFIG = {
+  Forgot: {
+    title: 'Reset all wallets?',
+    confirmWord: 'RESET ALL WALLETS',
+    confirmLabel: 'Reset all wallets',
+    body: 'This removes every wallet from this device and starts setup from the beginning. Your funds are safe only if you have your 12/18/24-word seed phrase — without it, they cannot be recovered.',
+  },
+  'Delete Account': {
+    title: 'Delete your account?',
+    confirmWord: 'DELETE ACCOUNT',
+    confirmLabel: 'Delete account',
+    body: 'This removes every wallet and your password from this device. Your funds are safe only if you have your 12/18/24-word seed phrase — without it, they cannot be recovered.',
+  },
+  Logout: {
+    title: 'Log out?',
+    confirmWord: 'confirm',
+    confirmLabel: 'Log out',
+    body: 'You will need your password to get back in. Your wallets stay on this device.',
+  },
+};
 
-const isIpad = WIDTH >= 768;
-
-let ITEM_WIDTH;
-
-if (isIpad) {
-  ITEM_WIDTH = Math.round(WIDTH * 0.6);
-} else {
-  ITEM_WIDTH = Math.round(WIDTH * 0.7);
-}
+const DEFAULT_CONFIG = PAGE_CONFIG.Logout;
 
 const ModalReset = ({visible, hideModal, navigation, page}) => {
   const {theme} = useContext(ThemeContext);
@@ -43,11 +52,22 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
   const [text, setText] = useState('');
   const dispatch = useDispatch();
   const [list, setList] = useState('');
-  const keyboardHeight = useKeyboardHeight();
 
   useEffect(() => {
     setList(page);
   }, [page]);
+
+  // Reset the typed confirmation whenever the sheet is reopened, so a previous
+  // attempt never leaves the destructive button already armed.
+  useEffect(() => {
+    if (!visible) {
+      setText('');
+    }
+  }, [visible]);
+
+  const config = PAGE_CONFIG[list] || DEFAULT_CONFIG;
+  const isArmed =
+    text.trim().toLowerCase() === config.confirmWord.toLowerCase();
 
   const handlerNo = () => {
     if (list === 'Delete Account') {
@@ -97,79 +117,63 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
   };
 
   return (
-    <Modal
+    <AppBottomSheet
       visible={visible}
-      contentContainerStyle={{
-        backgroundColor: theme.secondaryBackgroundColor,
-        width: ITEM_WIDTH,
-        alignSelf: 'center',
-        borderRadius: 10,
-        marginBottom: keyboardHeight > 0 ? keyboardHeight / 2 : 0,
-      }}
-      dismissable={false}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{flexGrow: 1}}
-          showsVerticalScrollIndicator={false}>
-          <View style={styles.infoList}>
-            <Text style={styles.titleInfo}>{page}</Text>
-            <Text style={styles.info}>
-              It will delete all wallets and password. Please make sure you have
-              a copy of 12/18/24-word seed phrase. You will need it in order to
-              restore your wallet. Without it you will NOT be able to restore
-              your wallet and you will lose access to your funds.
-            </Text>
-            <Text style={styles.info}>
-              Write confirm to delete all wallets.
-            </Text>
-            <TextInput
-              style={styles.inputStyle}
-              textColor={theme.font}
-              theme={{
-                colors: {
-                  onSurfaceVariant: theme.gray,
-                },
-              }}
-              outlineColor={theme.gray}
-              activeOutlineColor={theme.font}
-              autoCapitalize="none"
-              returnKeyType="done"
-              mode="outlined"
-              onChangeText={setText}
-              value={text}
-              placeholder={'Confirm'}
-              placeholderTextColor={theme.placeholderColor}
-              onSubmitEditing={() => {
-                if (text.toLowerCase() === 'confirm') {
-                  handlerYes();
-                }
-              }}
-            />
-          </View>
+      dismissable={false}
+      onRequestClose={handlerNo}>
+      <View style={styles.header}>
+        <View style={styles.iconTile}>
+          <Icon name="alert-outline" size={26} color={theme.danger} />
+        </View>
+        <AppText variant="h2" style={styles.title}>
+          {config.title}
+        </AppText>
+      </View>
 
-          <View style={styles.btnList}>
-            <View style={styles.learnBorder}>
-              <TouchableOpacity
-                style={styles.learnBox}
-                onPress={() => handlerNo()}>
-                <Text style={styles.learnText}>No</Text>
-              </TouchableOpacity>
-            </View>
+      <AppText variant="body" tone="muted">
+        {config.body}
+      </AppText>
 
-            <TouchableOpacity
-              style={[
-                styles.learnBox,
-                text.toLowerCase() !== 'confirm' && {opacity: 0.5},
-              ]}
-              onPress={() => handlerYes()}
-              disabled={text.toLowerCase() !== 'confirm'}>
-              <Text style={styles.learnText}>Yes</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </Modal>
+      <View>
+        <AppText variant="overline" tone="faint" style={styles.label}>
+          Type{' '}
+          <AppText variant="overline" style={styles.confirmWord}>
+            {config.confirmWord}
+          </AppText>{' '}
+          to confirm
+        </AppText>
+        <AppTextInput
+          surface="solid"
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="done"
+          placeholder={config.confirmWord}
+          onChangeText={setText}
+          value={text}
+          onSubmitEditing={() => {
+            if (isArmed) {
+              handlerYes();
+            }
+          }}
+        />
+      </View>
+
+      <View style={styles.actions}>
+        <AppButton
+          variant="secondary"
+          title="Cancel"
+          style={styles.cancel}
+          onPress={handlerNo}
+        />
+        <AppButton
+          variant="destructive"
+          title={config.confirmLabel}
+          style={styles.confirm}
+          disabled={!isArmed}
+          onPress={handlerYes}
+        />
+      </View>
+    </AppBottomSheet>
   );
 };
 

@@ -1,97 +1,59 @@
-import {StyleSheet, Dimensions} from 'react-native';
+import {StyleSheet} from 'react-native';
+import {screenPadding, spacing} from 'components/ui/tokens';
 
-const {width: screenWidth} = Dimensions.get('window');
-
-const isIpad = screenWidth >= 768;
-
-let inputWidth;
-
-if (isIpad) {
-  inputWidth = screenWidth / 2;
-} else {
-  inputWidth = screenWidth / 1.1;
-}
-
+/**
+ * Layout only. Colours, type and control metrics live in the UI kit
+ * (components/ui) and in ThemeContext.
+ */
 const myStyles = theme =>
   StyleSheet.create({
-    safeAreaView: {
-      flex: 1,
-      backgroundColor: theme.backgroundColor,
-    },
+    safeAreaView: {flex: 1},
     container: {
       flex: 1,
-      backgroundColor: theme.backgroundColor,
       alignItems: 'center',
-      justifyContent: 'flex-start',
+      paddingHorizontal: screenPadding,
     },
-    formInput: {
-      width: inputWidth,
-      marginTop: 16,
-    },
-    brand: {
-      color: theme.font,
-      fontSize: 16,
-      marginBottom: 10,
-      textAlign: 'left',
-      fontFamily: 'Roboto-Regular',
-      fontWeight: 'bold',
-    },
-    image: {
-      marginBottom: 10,
-    },
-    title: {
-      color: theme.font,
-      fontSize: 30,
-      marginVertical: 16,
-      textAlign: 'left',
-      fontFamily: 'Roboto-Regular',
-      fontWeight: 'bold',
-    },
-    input: {
-      marginBottom: 20,
-      backgroundColor: theme.backgroundColor,
-    },
-    button: {
-      backgroundColor: theme.background,
-      height: 60,
-      borderRadius: 10,
-      fontSize: 20,
+    hero: {
       alignItems: 'center',
-      justifyContent: 'center',
+      gap: spacing.xl,
     },
-    buttonTitle: {
-      color: theme.title,
-      fontSize: 16,
-      fontFamily: 'Roboto-Regular',
+    // The keyboard-open layout (design 2a) pulls the logo and hero up so the
+    // password row can dock above the keyboard.
+    logo: {marginTop: 48},
+    logoCompact: {marginTop: spacing.xl},
+    heroSpacing: {marginTop: 84},
+    heroSpacingCompact: {marginTop: spacing.xxl},
+    heroCopy: {alignItems: 'center'},
+    subtitle: {marginTop: spacing.xs, textAlign: 'center'},
+    title: {textAlign: 'center'},
+    bottom: {
+      marginTop: 'auto',
+      width: '100%',
+      gap: spacing.md,
     },
-    textConfirm: {
-      marginTop: -15,
-      marginBottom: 10,
-      color: 'red',
-      marginLeft: 10,
-      fontSize: 12,
-    },
-    textWarning: {
-      marginBottom: 10,
-      color: 'red',
-      fontSize: 15,
-    },
-    reset: {
-      marginTop: 10,
+    fieldRow: {
+      flexDirection: 'row',
       alignItems: 'center',
+      gap: spacing.md,
     },
-    resetTitle: {
-      color: theme.font,
-      fontSize: 16,
-      marginBottom: 5,
-      fontFamily: 'Roboto-Regular',
+    field: {flex: 1},
+    warning: {textAlign: 'center'},
+    footer: {
+      alignItems: 'center',
+      gap: spacing.lg,
+      paddingBottom: spacing.lg,
+      marginTop: spacing.xs,
     },
-    resetText: {
-      color: theme.background,
-      fontSize: 16,
-      fontFamily: 'Roboto-Regular',
-      width: 230,
-      textAlign: 'center',
+    footerNote: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    homeIndicator: {
+      width: 134,
+      height: 5,
+      borderRadius: 3,
+      backgroundColor: theme.sheetHandle,
     },
   });
 

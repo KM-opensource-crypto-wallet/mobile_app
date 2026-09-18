@@ -5,15 +5,8 @@ import React, {
   useContext,
   useRef,
 } from 'react';
-import {
-  TouchableOpacity,
-  View,
-  Text,
-  Keyboard,
-  TouchableWithoutFeedback,
-  AppState,
-} from 'react-native';
-import {TextInput} from 'react-native-paper';
+import {View, Keyboard, TouchableWithoutFeedback, AppState} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {Formik} from 'formik';
 import {useSelector, useDispatch} from 'react-redux';
 import {
@@ -44,25 +37,41 @@ import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useLocalNotification} from 'providers/hooks/useLocalNotification';
 import {addBreadcrumb} from 'services/logger';
+import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
+import {
+  AppButton,
+  AppText,
+  BiometricButton,
+  GradientBackground,
+  PasswordInput,
+} from 'components/ui';
+
+// The wordmark is 210x85 in both white-label variants.
+const LOGO_RATIO = 210 / 85;
 
 const LoginComponent = ({onClose, visible}) => {
   const navigation = useNavigation();
-  const {theme} = useContext(ThemeContext);
+  const {theme, isDarkMode} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const {consumePendingLoginRedirect} = useLocalNotification();
 
   const dispatch = useDispatch();
-  const [hide, setHide] = useState(true);
   const [wrong, setWrong] = useState(false);
   const [modal, setModal] = useState(false);
+  // 'idle' | 'scanning' | 'success' - drives the biometric tile and its copy.
+  const [bioState, setBioState] = useState('idle');
   const storePassword = useSelector(getUserPassword);
   const fingerprint = useSelector(isFingerprint);
   const allWallets = useSelector(selectAllWallets);
   const isNoAppUpdate = useSelector(isNoUpdateAvailable);
   const appState = useRef(AppState.currentState);
   const rateLimitCheck = useSelector(isWalletReset);
+  const keyboardHeight = useKeyboardHeight();
 
   const lastAttempt = useSelector(getLastAttempt);
+
+  const keyboardOpen = keyboardHeight > 0;
+  const showBio = fingerprint && isNoAppUpdate;
 
   const redirectSuccess = useCallback(() => {
     addBreadcrumb('auth', 'unlock', {via: onClose ? 'modal' : 'screen'});
@@ -88,9 +97,11 @@ const LoginComponent = ({onClose, visible}) => {
   const handleFingerprintAuth = useCallback(async () => {
     if (fingerprint && isNoAppUpdate) {
       try {
+        setBioState('scanning');
         const isAuth = await FingerprintScanner.authenticate({
           description: `Unlock ${WL_APP_NAME} with your fingerprint`,
         });
+        setBioState('success');
         dispatch(fingerprintAuthSuccess(isAuth));
         if (hasWallet()) {
           redirectSuccess();
@@ -101,6 +112,7 @@ const LoginComponent = ({onClose, visible}) => {
           });
         }
       } catch (error) {
+        setBioState('idle');
         if (error.name === 'SystemCancel') {
           console.error('Authentication was canceled by the system');
         } else {
@@ -139,6 +151,7 @@ const LoginComponent = ({onClose, visible}) => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
   const handleSubmit = useCallback(
     async values => {
       Keyboard.dismiss();
@@ -185,13 +198,60 @@ const LoginComponent = ({onClose, visible}) => {
       storePassword,
     ],
   );
+
+  const bioCopy = {
+    scanning: {title: 'Scanning…', subtitle: 'Hold still for a moment'},
+    success: {title: 'Unlocked', subtitle: 'Opening your wallet…'},
+    idle: {
+      title: 'Unlock to continue',
+      subtitle: 'Tap the icon, or use your password',
+    },
+  }[bioState];
+
+  const heading = showBio
+    ? bioCopy
+    : {
+        title: 'Welcome back',
+        subtitle: 'Enter your password to unlock your wallet',
+      };
+
+  const logoHeight = keyboardOpen ? 40 : 46;
+  const Logo = isDarkMode ? LOGO_DARK : LOGO;
+
   return (
-    <SafeAreaView style={styles.safeAreaView}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.container}>
-          <View style={styles.formInput}>
-            {theme.backgroundColor === '#121212' ? <LOGO_DARK /> : <LOGO />}
-            <Text style={styles.title}>Sign in</Text>
+    <GradientBackground glowTop={keyboardOpen ? 60 : 140}>
+      <SafeAreaView style={styles.safeAreaView}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={styles.container}>
+            <Logo
+              width={Math.round(logoHeight * LOGO_RATIO)}
+              height={logoHeight}
+              style={keyboardOpen ? styles.logoCompact : styles.logo}
+            />
+
+            <View
+              style={[
+                styles.hero,
+                keyboardOpen ? styles.heroSpacingCompact : styles.heroSpacing,
+              ]}>
+              {showBio && !keyboardOpen && (
+                <BiometricButton
+                  state={bioState}
+                  onPress={handleFingerprintAuth}
+                />
+              )}
+              <View style={styles.heroCopy}>
+                <AppText
+                  variant={keyboardOpen ? 'title' : 'h1'}
+                  style={styles.title}>
+                  {heading.title}
+                </AppText>
+                <AppText variant="body" tone="muted" style={styles.subtitle}>
+                  {heading.subtitle}
+                </AppText>
+              </View>
+            </View>
+
             <Formik
               initialValues={{password: ''}}
               validationSchema={validationSchemaLogin}
@@ -199,78 +259,85 @@ const LoginComponent = ({onClose, visible}) => {
               {({
                 handleChange,
                 handleBlur,
-                handleSubmit,
+                handleSubmit: submitForm,
                 values,
                 errors,
                 touched,
+                isSubmitting,
               }) => (
-                <View>
-                  <TextInput
-                    textColor={theme.font}
-                    style={styles.input}
-                    label="Password"
-                    theme={{
-                      colors: {
-                        onSurfaceVariant: '#989898',
-                        primary: errors.password ? 'red' : '#989898',
-                      },
-                    }}
-                    outlineColor={errors.password ? 'red' : '#989898'}
-                    activeOutlineColor={
-                      errors.password ? 'red' : theme.borderActiveColor
-                    }
-                    autoCapitalize="none"
-                    returnKeyType="next"
-                    mode="outlined"
-                    secureTextEntry={hide ? true : false}
-                    blurOnSubmit={false}
-                    right={
-                      <TextInput.Icon
-                        icon={hide ? 'eye' : 'eye-off'}
-                        onPress={() => setHide(!hide)}
+                <View style={styles.bottom}>
+                  <View style={styles.fieldRow}>
+                    <PasswordInput
+                      containerStyle={styles.field}
+                      error={
+                        errors.password && touched.password
+                          ? errors.password
+                          : undefined
+                      }
+                      returnKeyType="go"
+                      autoFocus={!fingerprint && isNoAppUpdate}
+                      onChangeText={handleChange('password')}
+                      onBlur={handleBlur('password')}
+                      onSubmitEditing={submitForm}
+                      value={values.password}
+                    />
+                    {showBio && keyboardOpen && (
+                      <BiometricButton
+                        size="compact"
+                        state={bioState}
+                        onPress={handleFingerprintAuth}
                       />
-                    }
-                    name="password"
-                    autoFocus={!fingerprint && isNoAppUpdate}
-                    onChangeText={handleChange('password')}
-                    onBlur={handleBlur('password')}
-                    value={values.password}
-                  />
-                  {errors.password && touched.password && (
-                    <Text style={styles.textConfirm}>{errors.password}</Text>
-                  )}
-                  {wrong === true && (
-                    <Text style={styles.textWarning}>
-                      * You have entered an invalid password
-                    </Text>
+                    )}
+                  </View>
+
+                  {wrong && (
+                    <AppText
+                      variant="label"
+                      tone="danger"
+                      style={styles.warning}>
+                      You have entered an invalid password
+                    </AppText>
                   )}
 
-                  <TouchableOpacity
-                    style={styles.button}
-                    onPress={handleSubmit}>
-                    <Text style={styles.buttonTitle}>Sign in</Text>
-                  </TouchableOpacity>
+                  <AppButton
+                    title={isSubmitting ? 'Unlocking…' : 'Sign in'}
+                    loading={isSubmitting}
+                    onPress={submitForm}
+                  />
+
+                  {!onClose && (
+                    <AppButton
+                      variant="link"
+                      title="Forgot password? Reset all wallets & start over"
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setModal(true);
+                      }}
+                    />
+                  )}
+
+                  {!keyboardOpen && (
+                    <View style={styles.footer}>
+                      <View style={styles.footerNote}>
+                        <Icon
+                          name="lock-outline"
+                          size={13}
+                          color={theme.textFaint}
+                        />
+                        <AppText variant="caption" tone="faint">
+                          Non-custodial · your keys never leave this device
+                        </AppText>
+                      </View>
+                      <View style={styles.homeIndicator} />
+                    </View>
+                  )}
                 </View>
               )}
             </Formik>
-            {!onClose && (
-              <View style={styles.reset}>
-                <Text style={styles.resetTitle}>Forgot your password?</Text>
-                <TouchableOpacity
-                  // onPress={() => navigation.navigate('Registration')}
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    setModal(true);
-                  }}>
-                  <Text style={styles.resetText}>
-                    Reset your wallet by using you seed phrase
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
-        </View>
-      </TouchableWithoutFeedback>
+        </TouchableWithoutFeedback>
+      </SafeAreaView>
+
       <ModalInfo
         visible={lastAttempt}
         title={Constants.lastAttempt.title}
@@ -285,7 +352,7 @@ const LoginComponent = ({onClose, visible}) => {
         navigation={navigation}
         page={'Forgot'}
       />
-    </SafeAreaView>
+    </GradientBackground>
   );
 };
 export default LoginComponent;

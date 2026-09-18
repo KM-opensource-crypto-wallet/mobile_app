@@ -36,6 +36,7 @@
     "@aptos-labs/ts-sdk": "^5.2.0",
     "@bitcoinerlab/secp256k1": "^1.2.0",
     "@breeztech/breez-sdk-spark-react-native": "^0.23.0",
+    "@callstack/liquid-glass": "^0.8.2",
     "@cosmjs/encoding": "^0.38.1",
     "@cosmjs/launchpad": "^0.27.1",
     "@cosmjs/proto-signing": "^0.38.1",
