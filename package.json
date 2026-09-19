@@ -105,6 +105,7 @@
     "bip39": "^3.1.0",
     "bitcoincashjs": "^0.1.14",
     "bitcoinjs-lib": "git+https://github.com/dokwallet/bitcoinjs-lib.git#cashv6",
+    "blakejs": "^1.2.1",
     "browserify-zlib": "^0.1.4",
     "bs58": "^6.0.0",
     "buffer": "^6.0.3",

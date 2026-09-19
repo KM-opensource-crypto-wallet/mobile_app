@@ -12,7 +12,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 import {SCREEN_WIDTH} from 'utils/dimensions';
 import AddIcon from 'assets/images/icons/add-icon.svg';
 import MinusIcon from 'assets/images/icons/minus-icon.svg';
-import {validateNumber} from '../../dok-wallet-blockchain-networks/helper';
+import {validateNumber} from 'dok-wallet-blockchain-networks/helper';
 
 const ValidatorItem = ({
   item,

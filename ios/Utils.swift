@@ -9,6 +9,16 @@ import Foundation
 import WalletCore
 
 class Utils {
+  // Base58Check-encodes a version prefix + payload (e.g. a pubkey hash), for
+  // address formats -- like Zcash's transparent addresses -- whose version
+  // prefix is more than the single byte bitcoinjs-lib/WalletCore's own
+  // `CoinType.deriveAddress` assume.
+  static func encodeBase58CheckAddress(prefix: [UInt8], payload: Data) -> String {
+    let versionedPayload = Data(prefix) + payload
+    let checksum = Data(Hash.sha256SHA256(data: versionedPayload).prefix(4))
+    return Base58.encodeNoCheck(data: versionedPayload + checksum)
+  }
+
   static func convertToWif(data: Data,isTestNet:Bool,prefix: [UInt8], testNetPrefix: [UInt8] ) -> String{
     let privateKeyData = data
     var prefix = Data(prefix)

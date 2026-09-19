@@ -12,7 +12,7 @@ import ConversationItem from 'components/ConversationItem';
 import EmptyView from 'components/EmptyView';
 import {shallowEqual, useDispatch, useSelector} from 'react-redux';
 import {getConversations} from 'dok-wallet-blockchain-networks/redux/messages/messageSelector';
-import {forwardMessages} from '../../dok-wallet-blockchain-networks/redux/messages/messageSlice';
+import {forwardMessages} from 'dok-wallet-blockchain-networks/redux/messages/messageSlice';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
 const ForwardMessage = ({navigation, route}) => {
