@@ -10,7 +10,7 @@ import {Portal, Provider} from 'react-native-paper';
 import {useFormik} from 'formik';
 import {useDispatch, useSelector} from 'react-redux';
 import BigNumber from 'bignumber.js';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {v4} from 'uuid';
 import myStyles from './SendFundsStyles';
 import ModalSend from 'components/ModalSend';
@@ -21,7 +21,7 @@ import useSendFundsForm from 'hooks/useSendFundsForm';
 import useSendFormPrefill from 'hooks/useSendFormPrefill';
 import isJson from 'dok-wallet-blockchain-networks/service/isJson';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import {IS_ANDROID, useFloatingHeight} from 'utils/dimensions';
+import {useFloatingHeight} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
 import {
   calculateEstimateFee,
@@ -215,12 +215,9 @@ const SendFunds = ({navigation, route}) => {
     <Provider>
       <Portal>
         <KeyboardAwareScrollView
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
-          keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
+          bottomOffset={24}
           contentContainerStyle={styles.contentContainerStyle}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={{flex: 1}}>

@@ -13,10 +13,9 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
 } from 'react-native';
+import {KeyboardAvoidingView} from 'react-native-keyboard-controller';
 import {Switch, TextInput} from 'react-native-paper';
 import {useSelector, useDispatch, shallowEqual} from 'react-redux';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -476,7 +475,7 @@ const HideWallet = ({navigation, route}) => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView
           keyboardVerticalOffset={80}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior="padding"
           style={styles.container}>
           <ScrollView
             style={{flex: 1}}

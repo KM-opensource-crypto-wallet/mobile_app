@@ -36,9 +36,6 @@ import {parsePaymentUrl} from 'utils/common';
 import {setPaymentData} from 'dok-wallet-blockchain-networks/redux/extraData/extraDataSlice';
 import {showToast} from 'utils/toast';
 import {getMessageAllowUrls} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
-import {useIsFocused} from '@react-navigation/native';
-import {IS_ANDROID} from 'utils/dimensions';
-import {setAdjustPan, setAdjustResize} from 'rn-android-keyboard-adjust';
 
 import Clipboard from '@react-native-clipboard/clipboard';
 import {triggerHapticFeedbackLight} from 'utils/hapticFeedback';
@@ -68,7 +65,6 @@ const Message = ({navigation}) => {
   const isFetchingMoreMsg = useSelector(isFetchingMoreMessages);
   const messageAllowUrls = useSelector(getMessageAllowUrls);
   const isAllMsgLoaded = useSelector(isAllMessageLoaded);
-  const isFocused = useIsFocused();
   const [pendingScrollMessageId, setPendingScrollMessageId] = useState(null);
   const messages = useMemo(() => {
     return messageData[conversation?.topic] || [];
@@ -111,16 +107,6 @@ const Message = ({navigation}) => {
       ],
     };
   });
-
-  useEffect(() => {
-    if (IS_ANDROID) {
-      if (isFocused) {
-        setAdjustResize();
-      } else {
-        setAdjustPan();
-      }
-    }
-  }, [isFocused]);
 
   useEffect(() => {
     if (conversation?.topic) {
@@ -402,6 +388,10 @@ const Message = ({navigation}) => {
         </View>
       ) : (
         <GiftedChat
+          keyboardProviderProps={{
+            statusBarTranslucent: false,
+            navigationBarTranslucent: false,
+          }}
           messages={messages}
           user={{
             _id: conversation?.clientAddress,

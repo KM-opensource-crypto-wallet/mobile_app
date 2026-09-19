@@ -1,8 +1,14 @@
-import React, {forwardRef, useContext, useState} from 'react';
+import React, {forwardRef, useContext, useEffect} from 'react';
 import {StyleSheet, TextInput, View} from 'react-native';
+import Animated, {
+  Easing,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import {ThemeContext} from 'theme/ThemeContext';
 import AppText from './AppText';
-import GlassSurface from './GlassSurface';
 import {withAlpha} from './color';
 import {controlHeight, radius, spacing, type} from './tokens';
 
@@ -10,11 +16,20 @@ import {controlHeight, radius, spacing, type} from './tokens';
  * Text field primitive.
  *
  * Built on React Native's TextInput rather than react-native-paper's: the
- * design's field is a frosted row with a trailing adornment, which Paper's
+ * design's field is a single row with a trailing adornment, which Paper's
  * `mode="outlined"` cannot express. 35 files currently re-specify the same ~10
  * Paper theming props by hand - new screens should use this instead.
  *
- * `surface`: 'glass' (on a gradient, as on Login) or 'solid' (inside a sheet).
+ * The field is deliberately a solid surface rather than GlassSurface: real
+ * liquid glass samples the warm background gradient, which tints the field
+ * cream instead of white.
+ *
+ * `surface`: 'screen' (on the gradient, as on Login) or 'sheet' (inside a
+ * bottom sheet, which has its own background).
+ *
+ * `InputComponent` swaps the underlying input - pass gorhom's
+ * BottomSheetTextInput when the field lives inside a bottom sheet, which needs
+ * it to track focus and keyboard height.
  */
 const AppTextInput = forwardRef(
   (
@@ -22,7 +37,8 @@ const AppTextInput = forwardRef(
       label,
       error,
       right,
-      surface = 'glass',
+      surface = 'screen',
+      InputComponent = TextInput,
       containerStyle,
       inputStyle,
       onFocus,
@@ -32,36 +48,44 @@ const AppTextInput = forwardRef(
     ref,
   ) => {
     const {theme} = useContext(ThemeContext);
-    const [focused, setFocused] = useState(false);
+    // 0 = resting, 1 = focused. Animated so the ring eases in rather than
+    // snapping between two style objects.
+    const focus = useSharedValue(0);
 
-    const focusRing = error
-      ? {
-          borderColor: theme.danger,
-          borderWidth: 1.5,
-        }
-      : focused
-      ? {
-          borderColor: withAlpha(theme.background, 0.55),
-          borderWidth: 1.5,
-          shadowColor: theme.background,
-          shadowOpacity: 0.18,
-          shadowRadius: 8,
-          shadowOffset: {width: 0, height: 0},
-        }
-      : null;
+    const restingBorder =
+      surface === 'sheet' ? theme.sheetBorder : theme.inputBorder;
+    const activeBorder = withAlpha(theme.background, 0.55);
+
+    const fill =
+      surface === 'sheet'
+        ? {backgroundColor: theme.sheetInputBg}
+        : {backgroundColor: theme.inputFill};
+
+    useEffect(() => {
+      if (error) {
+        focus.value = withTiming(0, ANIMATION);
+      }
+    }, [error, focus]);
+
+    const ringStyle = useAnimatedStyle(() => ({
+      borderColor: error
+        ? theme.danger
+        : interpolateColor(focus.value, [0, 1], [restingBorder, activeBorder]),
+      shadowOpacity: error ? 0 : focus.value * 0.18,
+    }));
 
     const row = (
       <View style={styles.row}>
-        <TextInput
+        <InputComponent
           ref={ref}
           placeholderTextColor={theme.textMuted}
           style={[styles.input, {color: theme.textPrimary}, inputStyle]}
           onFocus={e => {
-            setFocused(true);
+            focus.value = withTiming(1, ANIMATION);
             onFocus?.(e);
           }}
           onBlur={e => {
-            setFocused(false);
+            focus.value = withTiming(0, ANIMATION);
             onBlur?.(e);
           }}
           {...rest}
@@ -77,22 +101,15 @@ const AppTextInput = forwardRef(
             {label}
           </AppText>
         ) : null}
-        {surface === 'glass' ? (
-          <GlassSurface style={[styles.field, focusRing]}>{row}</GlassSurface>
-        ) : (
-          <View
-            style={[
-              styles.field,
-              styles.solid,
-              {
-                backgroundColor: theme.sheetInputBg,
-                borderColor: theme.sheetBorder,
-              },
-              focusRing,
-            ]}>
-            {row}
-          </View>
-        )}
+        <Animated.View
+          style={[
+            styles.field,
+            fill,
+            {shadowColor: theme.background},
+            ringStyle,
+          ]}>
+          {row}
+        </Animated.View>
         {error ? (
           <AppText variant="label" tone="danger" style={styles.error}>
             {error}
@@ -105,9 +122,18 @@ const AppTextInput = forwardRef(
 
 AppTextInput.displayName = 'AppTextInput';
 
+const ANIMATION = {duration: 250, easing: Easing.ease};
+
 const styles = StyleSheet.create({
-  field: {height: controlHeight, justifyContent: 'center'},
-  solid: {borderRadius: radius.control, borderWidth: 1.5},
+  field: {
+    height: controlHeight,
+    justifyContent: 'center',
+    borderRadius: radius.control,
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    shadowRadius: 8,
+    shadowOffset: {width: 0, height: 0},
+  },
   row: {flexDirection: 'row', alignItems: 'center', height: '100%'},
   input: {
     flex: 1,

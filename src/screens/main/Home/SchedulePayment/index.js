@@ -12,7 +12,7 @@ import {TextInput} from 'react-native-paper';
 import {useFormik} from 'formik';
 import dayjs from 'dayjs';
 import {useDispatch, useSelector} from 'react-redux';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import myStyles from './SchedulePaymentStyles';
 import sendFundsFormStyles from 'components/SendFundsForm/SendFundsFormStyles';
 import {ThemeContext} from 'theme/ThemeContext';
@@ -30,7 +30,6 @@ import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/se
 import {multiplyBNWithFixed} from 'dok-wallet-blockchain-networks/helper';
 import {submitScheduledPayment} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
 import {selectIsSubmittingSchedulePayment} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSelectors';
-import {IS_ANDROID} from 'utils/dimensions';
 import {showToast} from 'utils/toast';
 import {openAppNotificationSettings} from 'utils/openNotificationSettings';
 import {validationSchemaSchedulePayment} from 'utils/validationSchema';
@@ -365,12 +364,9 @@ const SchedulePayment = ({navigation, route}) => {
   return (
     <DokSafeAreaView style={styles.container}>
       <KeyboardAwareScrollView
-        enableOnAndroid={true}
-        enableAutomaticScroll={true}
         bounces={false}
         keyboardShouldPersistTaps={'always'}
-        {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
-        keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
+        bottomOffset={24}
         contentContainerStyle={styles.contentContainerStyle}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.formInput}>

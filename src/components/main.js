@@ -78,7 +78,6 @@ import ModalAppUpdate from 'components/ModalAppUpdates';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import {isTestFlight} from 'react-native-test-flight';
-import {setAdjustPan} from 'rn-android-keyboard-adjust';
 import {
   getAndroidLatestVersion,
   getDisableMessage,
@@ -287,9 +286,6 @@ const Main = () => {
 
   useEffect(() => {
     let unsubscribe = null;
-    if (IS_ANDROID) {
-      setAdjustPan();
-    }
     if (isReduxStoreLoad) {
       BootSplash.hide({fade: true}).catch(e =>
         captureError(e, {tags: {area: 'bootsplash'}}),

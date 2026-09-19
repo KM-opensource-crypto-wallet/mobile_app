@@ -18,9 +18,8 @@ import {IS_ANDROID, useFloatingHeight} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './VerifyStyles';
 import {useFloatingWidth} from 'hooks/useFloatingWidth';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
-import {SCREEN_HEIGHT} from '@gorhom/bottom-sheet';
 import {useDispatch} from 'react-redux';
 import {setIsAskedBackupModal} from 'dok-wallet-blockchain-networks/redux/currency/currencySlice';
 import {setBackedUp} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
@@ -92,10 +91,8 @@ export const Verify = ({route, navigation}) => {
   const selectedItem = list[selected - 1];
   return (
     <KeyboardAwareScrollView
-      enableOnAndroid={true}
-      enableAutomaticScroll={true}
       bounces={false}
-      extraScrollHeight={-SCREEN_HEIGHT * 0.15}
+      bottomOffset={24}
       style={styles.container}
       contentContainerStyle={{flexGrow: 1}}>
       <View

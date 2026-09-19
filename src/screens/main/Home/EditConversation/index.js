@@ -11,9 +11,8 @@ import {
   Text,
   TouchableWithoutFeedback,
   Keyboard,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
+import {KeyboardAvoidingView} from 'react-native-keyboard-controller';
 import {TextInput} from 'react-native-paper';
 import {Formik} from 'formik';
 import * as Yup from 'yup';
@@ -62,7 +61,7 @@ const EditConversation = ({navigation}) => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView
           keyboardVerticalOffset={80}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior="padding"
           style={styles.container}>
           <View style={styles.formInput}>
             <Text style={styles.brand}>{''}</Text>

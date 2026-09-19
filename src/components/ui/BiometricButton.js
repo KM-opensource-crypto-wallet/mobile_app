@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {ThemeContext} from 'theme/ThemeContext';
+import BiometricGlyph from './BiometricGlyph';
 import GlassSurface from './GlassSurface';
 import {withAlpha} from './color';
 import {controlHeight, radius} from './tokens';
@@ -21,12 +22,15 @@ const HERO_SIZE = 112;
  * the 56pt square that sits beside the password field once the keyboard is up.
  * `state` drives the visuals: idle glyph, a rotating ring while scanning, a
  * green check on success.
+ *
+ * `type` is the device's real biometry ('faceid' | 'touchid'), so a Touch ID
+ * phone does not show a Face ID glyph.
  */
 const BiometricButton = ({
   onPress,
   state = 'idle',
   size = 'hero',
-  faceId = true,
+  type = 'faceid',
 }) => {
   const {theme} = useContext(ThemeContext);
   const spin = useRef(new Animated.Value(0)).current;
@@ -59,11 +63,7 @@ const BiometricButton = ({
   const content = success ? (
     <Icon name="check" size={glyphSize} color={theme.positive} />
   ) : (
-    <Icon
-      name={faceId ? 'face-recognition' : 'fingerprint'}
-      size={glyphSize}
-      color={glyphColor}
-    />
+    <BiometricGlyph type={type} size={glyphSize} color={glyphColor} />
   );
 
   const ring = scanning && (

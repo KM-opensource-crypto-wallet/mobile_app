@@ -12,13 +12,13 @@ import {TextInput} from 'react-native-paper';
 import {useSelector, useDispatch} from 'react-redux';
 import {Portal, Provider} from 'react-native-paper';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import {IS_ANDROID, useFloatingHeight} from 'utils/dimensions';
+import {useFloatingHeight} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
 import {
   calculateEstimateFee,
   updateCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {currencySymbol} from 'data/currency';
 import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import BigNumber from 'bignumber.js';
@@ -282,13 +282,10 @@ const WithdrawStaking = ({navigation, route}) => {
     <Provider>
       <Portal>
         <KeyboardAwareScrollView
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
+          bottomOffset={24}
           enableResetScrollToCoords={false}
-          keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           contentContainerStyle={styles.contentContainerStyle}>
           <TouchableWithoutFeedback
             onPress={() => {

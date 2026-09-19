@@ -61,8 +61,16 @@ const AppButton = ({
     },
   };
 
-  const {container, tone} = VARIANTS[variant] || VARIANTS.primary;
+  let {container, tone} = VARIANTS[variant] || VARIANTS.primary;
   const isLink = variant === 'link';
+
+  // A disabled filled button gets the design's muted surface rather than a
+  // faded gradient, which otherwise reads as a washed-out version of the
+  // destructive red.
+  if (isDisabled && !isLink && variant !== 'secondary') {
+    container = {backgroundColor: theme.disabledSurface};
+    tone = 'disabled';
+  }
 
   return (
     <TouchableOpacity
@@ -74,7 +82,7 @@ const AppButton = ({
       style={[
         isLink ? styles.link : styles.base,
         container,
-        isDisabled && styles.disabled,
+        isDisabled && isLink && styles.disabledLink,
         style,
       ]}
       {...rest}>
@@ -114,7 +122,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     gap: spacing.sm,
   },
-  disabled: {opacity: 0.5},
+  disabledLink: {opacity: 0.5},
   spinner: {marginRight: spacing.xs},
   slot: {marginLeft: spacing.sm},
 });

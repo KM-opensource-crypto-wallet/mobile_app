@@ -8,6 +8,7 @@ import Toasts from 'components/Toasts';
 import ErrorBoundary from 'react-native-error-boundary';
 import ErrorComponent from 'components/ErrorComponent';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {KeyboardProvider} from 'react-native-keyboard-controller';
 import {DokApi} from 'dok-wallet-blockchain-networks/config/dokApi';
 import {
   initializeDokApiIntegrity,
@@ -53,8 +54,18 @@ export default function MainApp() {
           <PaperProvider>
             <ThemeProvider>
               <SafeAreaProvider>
-                {integrityReady && <Main />}
-                <Toasts />
+                {/* KeyboardProvider puts Android into edge-to-edge mode; the
+                    two translucent flags are passed explicitly (not left to
+                    their defaults) so the library re-inserts the system-bar
+                    padding and the app keeps its current non-edge-to-edge
+                    appearance. Changing them here is the only supported way -
+                    StatusBar's backgroundColor no longer applies on Android. */}
+                <KeyboardProvider
+                  statusBarTranslucent={false}
+                  navigationBarTranslucent={false}>
+                  {integrityReady && <Main />}
+                  <Toasts />
+                </KeyboardProvider>
               </SafeAreaProvider>
             </ThemeProvider>
           </PaperProvider>

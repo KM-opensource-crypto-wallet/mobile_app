@@ -6,8 +6,7 @@ import {validationSchemaOTC} from 'utils/validationSchema';
 import myStyles from './OTCScreenStyles';
 import {ThemeContext} from 'theme/ThemeContext';
 import DokCountryPicker from 'components/DokCountryPicker';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {IS_ANDROID} from 'utils/dimensions';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 
 export const OTCScreen = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -28,11 +27,8 @@ export const OTCScreen = ({navigation}) => {
 
   return (
     <KeyboardAwareScrollView
-      enableOnAndroid={true}
-      enableAutomaticScroll={true}
-      {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
+      bottomOffset={24}
       enableResetScrollToCoords={false}
-      keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
       style={styles.container}
       contentContainerStyle={styles.contentContainerStyle}>
       <Formik

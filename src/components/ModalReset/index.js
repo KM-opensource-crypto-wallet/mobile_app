@@ -1,5 +1,12 @@
-import React, {useState, useEffect, useContext} from 'react';
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+  useCallback,
+} from 'react';
 import {View} from 'react-native';
+import {BottomSheetTextInput} from '@gorhom/bottom-sheet';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   logOutSuccess,
@@ -50,6 +57,7 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const [text, setText] = useState('');
+  const confirmInputRef = useRef(null);
   const dispatch = useDispatch();
   const [list, setList] = useState('');
 
@@ -64,6 +72,12 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
       setText('');
     }
   }, [visible]);
+
+  // The sheet exists to be typed into, so put the caret in the field as soon as
+  // it is on screen rather than making the user tap it.
+  const handleOpened = useCallback(() => {
+    confirmInputRef.current?.focus();
+  }, []);
 
   const config = PAGE_CONFIG[list] || DEFAULT_CONFIG;
   const isArmed =
@@ -120,6 +134,7 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
     <AppBottomSheet
       visible={visible}
       dismissable={false}
+      onOpened={handleOpened}
       onRequestClose={handlerNo}>
       <View style={styles.header}>
         <View style={styles.iconTile}>
@@ -143,7 +158,9 @@ const ModalReset = ({visible, hideModal, navigation, page}) => {
           to confirm
         </AppText>
         <AppTextInput
-          surface="solid"
+          ref={confirmInputRef}
+          InputComponent={BottomSheetTextInput}
+          surface="sheet"
           autoCapitalize="none"
           autoCorrect={false}
           returnKeyType="done"

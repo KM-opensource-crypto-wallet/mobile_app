@@ -9,7 +9,7 @@ import {
 
 import myStyles from './OTC2ScreenStyles';
 import {ThemeContext} from 'theme/ThemeContext';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {shallowEqual, useSelector} from 'react-redux';
 import {other, otherDark} from 'data/currency';
 import DokDropdown from 'components/DokDropdown';
@@ -137,10 +137,7 @@ export const OTC2Screen = ({navigation, route}) => {
     !terms;
   return (
     <KeyboardAwareScrollView
-      enableOnAndroid={true}
-      enableAutomaticScroll={true}
       enableResetScrollToCoords={false}
-      keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
       style={styles.container}
       contentContainerStyle={styles.contentContainerStyle}>
       <View style={{flex: 1}}>

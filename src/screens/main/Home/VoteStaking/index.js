@@ -7,16 +7,18 @@ import React, {
   useState,
 } from 'react';
 import myStyles from './VoteStakingStyle';
-import {Keyboard, Text, TouchableOpacity, View} from 'react-native';
+import {FlatList, Text, TouchableOpacity, View} from 'react-native';
 import {shallowEqual, useDispatch, useSelector} from 'react-redux';
-import {IS_ANDROID} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
 
 import {
   calculateEstimateFee,
   updateCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import {KeyboardAwareFlatList} from 'react-native-keyboard-aware-scroll-view';
+import {
+  KeyboardAwareScrollView,
+  useKeyboardAnimation,
+} from 'react-native-keyboard-controller';
 import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
   isValidObject,
@@ -38,7 +40,7 @@ import Loading from 'components/Loading';
 import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import ValidatorItem from 'components/ValidatorItem';
 import {Searchbar} from 'react-native-paper';
-import Animated, {useSharedValue, withTiming} from 'react-native-reanimated';
+import Animated, {useDerivedValue} from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 
@@ -59,31 +61,16 @@ const VoteStaking = ({navigation}) => {
     }
     return 0;
   }, [currentCoin]);
-  const bottomValue = useSharedValue(0);
+  const {height: keyboardHeight} = useKeyboardAnimation();
   const {bottom} = useSafeAreaInsets();
+  const bottomValue = useDerivedValue(() =>
+    keyboardHeight.value > 0 ? -(keyboardHeight.value - (86 + bottom)) : 0,
+  );
   const isMountedRef = useRef(false);
   const initialSelectedVotes = useRef(null);
 
   useEffect(() => {
-    const showSubscription = Keyboard.addListener('keyboardWillShow', e => {
-      bottomValue.value = withTiming(
-        -(e.endCoordinates.height - (86 + bottom)),
-        {
-          duration: e.duration,
-        },
-      );
-    });
-    const hideSubscription = Keyboard.addListener('keyboardWillHide', e => {
-      bottomValue.value = withTiming(0, {
-        duration: e.duration,
-      });
-    });
     isMountedRef.current = true;
-    return () => {
-      showSubscription?.remove?.();
-      hideSubscription?.remove?.();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -229,12 +216,11 @@ const VoteStaking = ({navigation}) => {
           style={styles.input}
           onChangeText={handleSearch}
         />
-        <KeyboardAwareFlatList
+        <KeyboardAwareScrollView
+          ScrollViewComponent={FlatList}
           style={styles.flatlistStyle}
-          enableOnAndroid={true}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
+          bottomOffset={24}
           keyboardShouldPersistTaps={'always'}
-          keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           keyExtractor={item => item.validatorAddress}
           data={validatorsList}
           contentContainerStyle={styles.contentContainerStyle}

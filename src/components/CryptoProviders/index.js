@@ -42,9 +42,8 @@ import {
   validateNumber,
   validateNumberInInput,
 } from 'dok-wallet-blockchain-networks/helper';
-import {IS_ANDROID} from 'utils/dimensions';
 import ModalAddCoins from 'components/ModalAddCoins';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 
 const currencyPicker = [
   {
@@ -195,13 +194,10 @@ const CryptoProviders = () => {
           onDismiss={onDismissAddCoinsSheet}
         />
         <KeyboardAwareScrollView
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
+          bottomOffset={24}
           enableResetScrollToCoords={false}
-          keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           contentContainerStyle={styles.contentContainerStyle}>
           <TouchableWithoutFeedback
             style={styles.container}

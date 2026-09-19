@@ -24,7 +24,7 @@ import {
   isEVMChain,
   PrivateKeyList,
 } from 'dok-wallet-blockchain-networks/helper';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {useDispatch, useSelector} from 'react-redux';
 import {
@@ -238,12 +238,9 @@ const AddAddress = ({navigation, route}) => {
 
   return (
     <KeyboardAwareScrollView
-      enableOnAndroid={true}
-      enableAutomaticScroll={true}
       bounces={false}
       keyboardShouldPersistTaps={'always'}
-      {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
-      keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
+      bottomOffset={24}
       contentContainerStyle={styles.contentContainerStyle}>
       <TouchableWithoutFeedback
         style={styles.container}

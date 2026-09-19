@@ -17,6 +17,7 @@ const TONES = {
   accent: theme => theme.accentLink,
   danger: theme => theme.danger,
   onAccent: () => '#FFFFFF',
+  disabled: theme => theme.disabledText,
 };
 
 const AppText = ({

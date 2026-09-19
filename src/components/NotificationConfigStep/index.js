@@ -1,7 +1,7 @@
 import React, {memo, useContext} from 'react';
 import {View, Text, TouchableOpacity, ActivityIndicator} from 'react-native';
 import {TextInput, Switch} from 'react-native-paper';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {ThemeContext} from 'theme/ThemeContext';
 import CoinIcon from 'components/CoinIcon/CoinIcon';
 import ChainItem from 'components/ChainItem';
@@ -9,7 +9,6 @@ import {
   getCustomizePublicAddress,
   isBitcoinChain,
 } from 'dok-wallet-blockchain-networks/helper';
-import {IS_ANDROID} from 'utils/dimensions';
 import myStyles from './NotificationConfigStepStyles';
 import {
   coinKey,
@@ -47,12 +46,9 @@ const NotificationConfigStep = ({
 
   return (
     <KeyboardAwareScrollView
-      enableOnAndroid={true}
-      enableAutomaticScroll={true}
       bounces={false}
       keyboardShouldPersistTaps={'always'}
-      {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
-      keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
+      bottomOffset={24}
       contentContainerStyle={styles.contentContainerStyle}>
       <View style={styles.formContainer}>
         {/* Multi-coin tab strip */}

@@ -20,14 +20,12 @@ import isJson from 'dok-wallet-blockchain-networks/service/isJson';
 import {Portal, Provider} from 'react-native-paper';
 import {validationSchemaSendNFT} from 'utils/validationSchema';
 
-import {IS_ANDROID} from 'utils/dimensions';
-
 import {ThemeContext} from 'theme/ThemeContext';
 import {
   calculateEstimateFee,
   updateCurrentTransferData,
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {
   getSelectedNft,
   selectCurrentWallet,
@@ -148,13 +146,10 @@ const SendNFT = ({navigation, route}) => {
     <Provider>
       <Portal>
         <KeyboardAwareScrollView
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
+          bottomOffset={24}
           enableResetScrollToCoords={false}
-          keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           contentContainerStyle={styles.contentContainerStyle}>
           <Formik
             innerRef={formikRef}

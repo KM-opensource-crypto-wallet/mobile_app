@@ -22,7 +22,7 @@ import AdvancedFeesSheet from 'components/AdvancedFeesSheet';
 
 import {useDispatch, useSelector} from 'react-redux';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import {IS_ANDROID, SCREEN_WIDTH, useFloatingHeight} from 'utils/dimensions';
+import {SCREEN_WIDTH, useFloatingHeight} from 'utils/dimensions';
 import {sendFunds} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {ThemeContext} from 'theme/ThemeContext';
 import {
@@ -68,7 +68,7 @@ import {
 import FastImage from '@d11/react-native-fast-image';
 import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
 import ValidatorItem from 'components/ValidatorItem';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {getSellCryptoRequestDetails} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSelectors';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {handleTransferRedirect} from 'utils/common';
@@ -1097,13 +1097,10 @@ const Transfer = ({navigation, route}) => {
         <Loading />
       ) : feeSuccess || estimateStatus === 'success' ? (
         <KeyboardAwareScrollView
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
+          bottomOffset={24}
           // enableResetScrollToCoords={false}
-          keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           contentContainerStyle={styles.contentContainerStyle}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View

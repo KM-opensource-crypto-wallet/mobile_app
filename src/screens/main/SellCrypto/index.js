@@ -11,8 +11,7 @@ import ProgressDialog from 'react-native-progress-dialog';
 import {ThemeContext} from 'theme/ThemeContext';
 import myStyles from './SellCryptoStyles';
 import {Portal, Provider, TextInput} from 'react-native-paper';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {IS_ANDROID} from 'utils/dimensions';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {Formik} from 'formik';
 import {sellCryptoValidation} from 'utils/validationSchema';
 import DokDropdown from 'components/DokDropdown';
@@ -246,13 +245,10 @@ const SellCrypto = ({navigation}) => {
     <Provider>
       <Portal>
         <KeyboardAwareScrollView
-          enableOnAndroid={true}
-          enableAutomaticScroll={true}
           bounces={false}
           keyboardShouldPersistTaps={'always'}
-          {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
+          bottomOffset={24}
           enableResetScrollToCoords={false}
-          keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
           contentContainerStyle={styles.contentContainerStyle}>
           <TouchableWithoutFeedback
             style={styles.container}

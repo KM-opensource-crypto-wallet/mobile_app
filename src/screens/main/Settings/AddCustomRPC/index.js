@@ -19,7 +19,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 import {IS_ANDROID} from 'utils/dimensions';
 import SelectInput from 'components/SelectInput';
 import {CustomRPCList} from 'dok-wallet-blockchain-networks/helper';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-controller';
 import {useDispatch, useSelector} from 'react-redux';
 import {selectVisibleWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
@@ -166,12 +166,9 @@ const AddCustomRPC = ({navigation, route}) => {
 
   return (
     <KeyboardAwareScrollView
-      enableOnAndroid={true}
-      enableAutomaticScroll={true}
       bounces={false}
       keyboardShouldPersistTaps={'always'}
-      {...(IS_ANDROID ? {extraScrollHeight: 30} : {})}
-      keyboardOpeningTime={Number.MAX_SAFE_INTEGER}
+      bottomOffset={24}
       contentContainerStyle={styles.contentContainerStyle}>
       <TouchableWithoutFeedback
         style={styles.container}
