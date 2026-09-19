@@ -11,8 +11,9 @@ import {shallowEqual, useDispatch, useSelector} from 'react-redux';
 import {NavigationContainer} from '@react-navigation/native';
 import {useRoute} from 'routers/router';
 import {
+  getHasAccount,
+  getIsVaultUnlocked,
   getLoading,
-  getUserPassword,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 import Spinner from 'components/Spinner';
 import {MainNavigation} from 'utils/navigation';
@@ -34,13 +35,15 @@ import {getLockTime} from 'dok-wallet-blockchain-networks/redux/settings/setting
 import {
   createClientIdIfNotExist,
   createIfNotExistsMasterClientId,
+  hydrateWalletSecrets,
   rehideWalletsOnBackground,
   reassignCurrentWalletIfHidden,
   resetCoinsToDefaultAddressForPrivacyMode,
   resetNfts,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {selectCurrentWalletClientId} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {store} from 'redux/store';
+import {persistor, store, vaultSync} from 'redux/store';
+import {consumeOrphanVaultPayload} from 'redux/storage/migrateLegacyRoot2';
 import {
   setupOneSignal,
   initOneSignal,
@@ -127,7 +130,8 @@ const Main = () => {
   const navigationRef = React.useRef();
   const isLoading = useSelector(getLoading);
   const dispatch = useDispatch();
-  const storePassword = useSelector(getUserPassword);
+  const hasAccount = useSelector(getHasAccount);
+  const isVaultUnlocked = useSelector(getIsVaultUnlocked);
   const lockTime = useSelector(getLockTime);
   const isReduxStoreLoad = useSelector(isReduxStoreLoaded);
   const kimlWalletLatestVersion = useSelector(getAndroidLatestVersion);
@@ -137,7 +141,7 @@ const Main = () => {
   );
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   // const phrase = useSelector(getWalletPhrase);
-  const routing = useRoute(storePassword);
+  const routing = useRoute(hasAccount);
   const appState = useRef(AppLifecycle.currentState);
   const lockTimeSet = useRef(null);
   const lockTimeRef = useRef(lockTime);
@@ -302,6 +306,12 @@ const Main = () => {
       dispatch(createClientIdIfNotExist());
       dispatch(resetCoinsToDefaultAddressForPrivacyMode());
       dispatch(reassignCurrentWalletIfHidden());
+      // Legacy wallets migrated without a password have no vault yet; their
+      // secrets are held for this session until Registration creates one.
+      const orphanSecrets = consumeOrphanVaultPayload();
+      if (orphanSecrets) {
+        dispatch(hydrateWalletSecrets(orphanSecrets));
+      }
       // Cold start's persist-rehydrate transform force-hides every
       // non-MANUAL-relock wallet again - delete the scheduled payments (and
       // reminders) of any wallet that reveals as hidden+locked with "Delete
@@ -335,7 +345,6 @@ const Main = () => {
         IS_IOS ? 'ios' : 'android'
       }_${getVersion()}_${getBuildNumber()}`;
       dispatch(checkNewsAvailable({key}));
-      initializeWalletConnect();
     }
     return () => {
       unsubscribe?.remove && unsubscribe.remove();
@@ -343,6 +352,18 @@ const Main = () => {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReduxStoreLoad]);
+
+  // WalletConnect needs signing keys: a session_request arriving while the
+  // user sits on Login would open the request modal over it with no key to
+  // sign (spec §12.2.2). Start it once per session, after the vault unlocked.
+  const walletConnectStarted = useRef(false);
+  useEffect(() => {
+    if (isReduxStoreLoad && isVaultUnlocked && !walletConnectStarted.current) {
+      walletConnectStarted.current = true;
+      initializeWalletConnect();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReduxStoreLoad, isVaultUnlocked]);
 
   useEffect(() => {
     const fromDevice = Platform.OS;
@@ -390,6 +411,10 @@ const Main = () => {
           checkInAppUpdates();
           fetchRPCUrl();
         } else if (nextAppState === 'background') {
+          // Persist writes are throttled and the vault write debounced; push
+          // both out before the OS suspends the process.
+          persistor.flush().catch(() => {});
+          vaultSync.flush().catch(() => {});
           // consumeExpectedBackground() must run unconditionally so a
           // one-shot mark (Linking flows) is always cleared here.
           const isSelfInitiatedBackground =

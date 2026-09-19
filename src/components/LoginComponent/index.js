@@ -21,12 +21,17 @@ import {
   fingerprintAuthSuccess,
   loadingOff,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
-import {getUserPassword} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 import {validationSchemaLogin} from 'utils/validationSchema';
 import ModalReset from 'components/ModalReset';
 import {isFingerprint} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import FingerprintScanner from 'react-native-fingerprint-scanner';
 import {ThemeContext} from 'theme/ThemeContext';
+import {
+  UNLOCK_ERROR_CODES,
+  getBiometricUnlockState,
+  isInvalidPassword,
+  unlockWithBiometric,
+  unlockWithPassword,
+} from 'security/unlockFlow';
 import myStyles from './LoginScreenStyles';
 import {selectAllWallets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {isNoUpdateAvailable} from 'dok-wallet-blockchain-networks/redux/extraData/extraSelectors';
@@ -43,7 +48,7 @@ import {getLastAttempt} from 'dok-wallet-blockchain-networks/redux/auth/authSele
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useLocalNotification} from 'providers/hooks/useLocalNotification';
-import {addBreadcrumb} from 'services/logger';
+import {addBreadcrumb, captureError} from 'services/logger';
 
 const LoginComponent = ({onClose, visible}) => {
   const navigation = useNavigation();
@@ -55,7 +60,10 @@ const LoginComponent = ({onClose, visible}) => {
   const [hide, setHide] = useState(true);
   const [wrong, setWrong] = useState(false);
   const [modal, setModal] = useState(false);
-  const storePassword = useSelector(getUserPassword);
+  // One-line hint above the password field (biometrics need re-enabling) or a
+  // blocking problem (wallets without keys) that must not be dismissed.
+  const [notice, setNotice] = useState(null);
+  const [blocked, setBlocked] = useState(null);
   const fingerprint = useSelector(isFingerprint);
   const allWallets = useSelector(selectAllWallets);
   const isNoAppUpdate = useSelector(isNoUpdateAvailable);
@@ -85,29 +93,51 @@ const LoginComponent = ({onClose, visible}) => {
     return allWallets?.length !== 0;
   }, [allWallets]);
 
+  // Biometric unlock reads the DEK from the biometric-bound secure item; the
+  // OS shows its own prompt. When the setting is on but the item is missing
+  // (Android right after migration, or after an enrollment change) the user
+  // types the password once and unlockFlow re-creates it.
   const handleFingerprintAuth = useCallback(async () => {
-    if (fingerprint && isNoAppUpdate) {
-      try {
-        const isAuth = await FingerprintScanner.authenticate({
-          description: `Unlock ${WL_APP_NAME} with your fingerprint`,
+    if (!fingerprint || !isNoAppUpdate) {
+      return;
+    }
+    const biometricState = await getBiometricUnlockState();
+    if (biometricState === 'unavailable') {
+      // No enrolled sensor (or a simulator): password only, no nagging.
+      return;
+    }
+    if (biometricState === 'not_enrolled') {
+      setNotice(
+        `Enter your password once to enable ${WL_APP_NAME} biometric unlock.`,
+      );
+      return;
+    }
+    try {
+      await dispatch(unlockWithBiometric());
+      dispatch(fingerprintAuthSuccess(true));
+      if (hasWallet()) {
+        redirectSuccess();
+      } else {
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'ResetWallet', params: {isFromOnBoarding: true}}],
         });
-        dispatch(fingerprintAuthSuccess(isAuth));
-        if (hasWallet()) {
-          redirectSuccess();
-        } else {
-          navigation.reset({
-            index: 0,
-            routes: [{name: 'ResetWallet', params: {isFromOnBoarding: true}}],
-          });
-        }
-      } catch (error) {
-        if (error.name === 'SystemCancel') {
-          console.error('Authentication was canceled by the system');
-        } else {
-          console.error('Error checking fingerprint settings:', error);
-        }
-      } finally {
-        FingerprintScanner.release();
+      }
+    } catch (error) {
+      switch (error?.code) {
+        case UNLOCK_ERROR_CODES.BIOMETRIC_CANCELLED:
+          break;
+        case UNLOCK_ERROR_CODES.BIOMETRIC_INVALIDATED:
+          setNotice(
+            'Your device biometrics changed. Enter your password once to re-enable biometric unlock.',
+          );
+          break;
+        case UNLOCK_ERROR_CODES.MISSING_SECRETS:
+          setBlocked(error.message);
+          break;
+        default:
+          captureError(error, {tags: {area: 'auth', op: 'unlock_biometric'}});
+          setNotice('Biometric unlock failed. Enter your password.');
       }
     }
   }, [
@@ -142,12 +172,34 @@ const LoginComponent = ({onClose, visible}) => {
   const handleSubmit = useCallback(
     async values => {
       Keyboard.dismiss();
-      if (storePassword === values.password) {
+      let unlocked = false;
+      try {
+        // "Correct password" = the vault's DEK unwrapped; nothing is compared.
+        await dispatch(unlockWithPassword(values.password));
+        unlocked = true;
+      } catch (error) {
+        if (isInvalidPassword(error)) {
+          // fall through to the wrong-password handling below
+        } else if (error?.code === UNLOCK_ERROR_CODES.MISSING_SECRETS) {
+          setBlocked(error.message);
+          dispatch(loadingOff());
+          return;
+        } else {
+          captureError(error, {tags: {area: 'auth', op: 'unlock_password'}});
+          setBlocked(
+            'Your wallet could not be unlocked because its secure storage is unavailable. Please restart the app.',
+          );
+          dispatch(loadingOff());
+          return;
+        }
+      }
+      if (unlocked) {
         if (rateLimitCheck) {
           dispatch(resetAttempts());
         }
+        setNotice(null);
         dispatch(fingerprintAuthSuccess(true));
-        dispatch(logInSuccess(values.password));
+        dispatch(logInSuccess());
         dispatch(loadingOff());
         if (hasWallet()) {
           redirectSuccess();
@@ -175,15 +227,7 @@ const LoginComponent = ({onClose, visible}) => {
         dispatch(loadingOff());
       }
     },
-    [
-      dispatch,
-      hasWallet,
-      navigation,
-      onClose,
-      rateLimitCheck,
-      redirectSuccess,
-      storePassword,
-    ],
+    [dispatch, hasWallet, navigation, onClose, rateLimitCheck, redirectSuccess],
   );
   return (
     <SafeAreaView style={styles.safeAreaView}>
@@ -244,6 +288,12 @@ const LoginComponent = ({onClose, visible}) => {
                       * You have entered an invalid password
                     </Text>
                   )}
+                  {notice ? (
+                    <Text style={styles.textWarning}>{notice}</Text>
+                  ) : null}
+                  {blocked ? (
+                    <Text style={styles.textWarning}>{blocked}</Text>
+                  ) : null}
 
                   <TouchableOpacity
                     style={styles.button}

@@ -1,7 +1,7 @@
 # Secure Storage & Key-Management Redesign — Implementation Plan
 
 Date: 2026-09-18
-Status: APPROVED 2026-09-18 — plan only, implementation not started. Execute phase by phase with the superpowers `executing-plans` workflow (TDD per task).
+Status: SUPERSEDED 2026-09-19 by `2026-09-19-secure-storage-final-plan.md` (kept as history). Originally: APPROVED 2026-09-18 — plan only, implementation not started. Execute phase by phase with the superpowers `executing-plans` workflow (TDD per task).
 App: DOK Wallet / KIML Wallet — React Native 0.86.3, New Architecture, Hermes, Nitro modules already in the build.
 
 ---

@@ -1,49 +1,62 @@
-import React, {useEffect, useState} from 'react';
-import {IS_ANDROID} from 'utils/dimensions';
+import React, {useCallback, useEffect, useState} from 'react';
 import {View} from 'react-native';
-import {getAsyncStorageData, storeAsyncStorageData} from 'utils/asyncStorage';
-import {setItem} from 'react-native-sensitive-info';
-import MainApp from 'components/MainApp';
 import {
-  clearLegacySecureStorage,
-  getLegacySecureValue,
-} from 'myWallet/wallet.service';
+  bootstrapStorage,
+  resetBootstrap,
+  setBootstrapContext,
+} from 'redux/storage/bootstrap';
+import StorageErrorScreen from 'components/StorageErrorScreen';
+import {captureError} from 'services/logger';
+
+// Loaded only once storage is ready: importing MainApp evaluates redux/store,
+// whose first persisted read would otherwise race the bootstrap (the Android
+// SharedPreferences migration that used to live here, and the persist:root2
+// → vault migration now run inside bootstrapStorage()).
+let MainApp = null;
 
 export default function App() {
-  const [isMigrating, setIsMigrating] = useState(IS_ANDROID);
+  const [status, setStatus] = useState('booting');
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    (async () => {
-      if (IS_ANDROID) {
-        const isMigrationDone = await getAsyncStorageData(
-          'sensitive_info_migration',
-        );
-        if (isMigrationDone === 'true') {
-          setIsMigrating(false);
-        } else {
-          console.log('migration started');
-          const sharedPreference = process.env.REDUX_SHARED_PREFERENCE_NAME;
-          const reduxKey = `persist:${process.env.REDUX_KEY}`;
-          let oldData = await getLegacySecureValue(sharedPreference, reduxKey);
-          if (oldData) {
-            await setItem(reduxKey, oldData, {
-              accessControl: 'none',
-              keychainService: process.env.REDUX_KEYCHAIN_NAME,
-            });
-            console.log('migration saved');
-            await clearLegacySecureStorage(sharedPreference);
-            console.log('migration completed');
-          }
-          await storeAsyncStorageData('sensitive_info_migration', 'true');
-          setIsMigrating(false);
+  const boot = useCallback(() => {
+    setStatus('booting');
+    setBootstrapContext('foreground');
+    bootstrapStorage().then(
+      () => {
+        if (!MainApp) {
+          MainApp = require('components/MainApp').default;
         }
-      }
-    })();
+        setStatus('ready');
+      },
+      bootError => {
+        captureError(bootError, {
+          level: 'fatal',
+          tags: {area: 'storage', op: 'bootstrap'},
+        });
+        setError(bootError);
+        setStatus('fatal');
+      },
+    );
   }, []);
 
-  if (isMigrating) {
-    return <View />;
-  }
+  useEffect(() => {
+    boot();
+  }, [boot]);
 
-  return <MainApp />;
+  if (status === 'ready') {
+    return <MainApp />;
+  }
+  if (status === 'fatal') {
+    return (
+      <StorageErrorScreen
+        error={error}
+        onRetry={() => {
+          resetBootstrap();
+          boot();
+        }}
+      />
+    );
+  }
+  // BootSplash stays up until the store reports loaded, so nothing to draw.
+  return <View />;
 }

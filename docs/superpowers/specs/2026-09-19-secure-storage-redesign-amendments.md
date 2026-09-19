@@ -1,7 +1,7 @@
 # Amendments — Secure Storage & Key-Management Redesign
 
 Date: 2026-09-19
-Status: PROPOSED — append to the plan as §12 and resolve §12.2 before Phase 1 starts.
+Status: SUPERSEDED 2026-09-19 — folded into `2026-09-19-secure-storage-final-plan.md` (kept as history). Originally: PROPOSED — append to the plan as §12 and resolve §12.2 before Phase 1 starts.
 Basis: external review (Kimi, 2026-09-19) plus verification against `mobile_app` @ `ae97159`, `web_wallet` @ `b380d16`, shared submodule `dok-wallet-blockchain-networks` (`KM-opensource-crypto-wallet/blockchains`) @ `da92f47` — the same commit in both repos.
 
 None of the following changes the architecture of §3. Two items (§12.2.1, §12.2.2) should gate the start of Phase 1; the rest are edits to existing sections.

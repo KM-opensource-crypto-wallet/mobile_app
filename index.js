@@ -17,10 +17,13 @@ import {name as coinswallet} from './app.json';
 import * as Sentry from '@sentry/react-native';
 import {initSentry} from 'services/logger';
 import notifee, {EventType} from '@notifee/react-native';
+// From the store-free utils module on purpose: importing the provider here
+// would evaluate redux/store (and start the storage bootstrap) before App.js
+// gets to declare whether this runtime is a foreground or a headless one.
 import {
   SCHEDULED_PAYMENT_NOTIFICATION_TYPE,
   SCHEDULED_PAYMENT_BACKGROUND_PRESS_STORAGE_KEY,
-} from 'providers/LocalNotificationProvider';
+} from 'utils/scheduledPaymentNotifications';
 import {storeAsyncStorageData} from 'utils/asyncStorage';
 
 // Required registration point for notifee so Android can deliver
@@ -43,6 +46,11 @@ const syncScheduledPaymentRemindersInBackground = async () => {
   // rehydrated before the plan is computed — reconciling against an empty
   // store would cancel every reminder. Required here rather than imported so
   // the slice's thunk only loads when a reminder actually fires.
+  // No time budget for the 600k-iteration password KDF here: in headless
+  // context the storage bootstrap migrates only the non-secret slices and
+  // leaves the full migration to the next foreground launch (spec §12.3.5).
+  const {setBootstrapContext} = require('./src/redux/storage/bootstrap');
+  setBootstrapContext('headless');
   const {store, persistor} = require('./src/redux/store');
   const {
     syncScheduledPaymentNotifications,

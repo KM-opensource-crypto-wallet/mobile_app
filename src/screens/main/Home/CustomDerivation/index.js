@@ -16,6 +16,7 @@ import {
   SectionList,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {usePreventScreenshot} from 'hooks/usePreventScreenshot';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
 import myStyles from './CustomDerivationStyles';
 import {ThemeContext} from 'theme/ThemeContext';
@@ -67,6 +68,8 @@ const generatePaths = (chain, label) => {
 };
 
 export const CustomDerivation = ({navigation}) => {
+  // Shows and copies derived private keys: block screenshots / recording.
+  usePreventScreenshot();
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
   const {bottom} = useSafeAreaInsets();

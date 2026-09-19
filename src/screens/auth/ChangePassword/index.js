@@ -8,9 +8,11 @@ import {
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {Formik} from 'formik';
-import {useSelector, useDispatch} from 'react-redux';
+import {useDispatch} from 'react-redux';
 import {changePasswordSuccess} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
-import {getUserPassword} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
+import * as vault from 'dok-wallet-blockchain-networks/security/vault';
+import {VAULT_ERROR_CODES} from 'dok-wallet-blockchain-networks/security/errors';
+import {captureError} from 'services/logger';
 import myStyles from './ChangePasswordStyles';
 import {useFloatingHeight} from 'utils/dimensions';
 import {validationSchemaChangePassword} from 'utils/validationSchema';
@@ -26,19 +28,34 @@ const ChangePassword = ({navigation}) => {
   const [hide, setHide] = useState(true);
   const floatingHeight = useFloatingHeight();
   const [wrong, setWrong] = useState(false);
-  const storePassword = useSelector(getUserPassword);
+  const [busy, setBusy] = useState(false);
 
-  const validateCurrentPassword = (value, storedPassword) => {
-    if (value !== storedPassword) {
-      setWrong(true);
+  // Re-wraps the vault key under the new password; the current password is
+  // enforced by the unwrap (previously nothing blocked a wrong one — D1).
+  const handleSubmit = async values => {
+    if (busy) {
       return;
     }
+    setBusy(true);
+    try {
+      await vault.changePassword(values.currentPassword, values.newPassword);
+    } catch (error) {
+      setBusy(false);
+      if (error?.code === VAULT_ERROR_CODES.INVALID_PASSWORD) {
+        setWrong(true);
+        return;
+      }
+      captureError(error, {tags: {area: 'vault', op: 'change_password'}});
+      showToast({
+        type: 'errorToast',
+        title: 'Password not updated',
+        message: 'Secure storage is unavailable. Please try again.',
+      });
+      return;
+    }
+    setBusy(false);
     setWrong(false);
-    return;
-  };
-
-  const handleSubmit = values => {
-    dispatch(changePasswordSuccess(values.newPassword));
+    dispatch(changePasswordSuccess());
     showToast({
       type: 'successToast',
       title: 'Password updated',
@@ -110,10 +127,7 @@ const ChangePassword = ({navigation}) => {
                       onChangeText={handleChange('currentPassword')}
                       // onBlur={handleBlur('currentPassword')}
                       onBlur={() => {
-                        validateCurrentPassword(
-                          values.currentPassword,
-                          storePassword,
-                        );
+                        setWrong(false);
                         handleBlur('currentPassword');
                       }}
                       onSubmitEditing={handleSubmit}

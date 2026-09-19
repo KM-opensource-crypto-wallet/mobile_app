@@ -3,6 +3,7 @@ import {TouchableOpacity, View, Text, Modal} from 'react-native';
 
 import styles from './ModalDeleteData';
 import {persistor} from 'redux/store';
+import {wipeAllLocalData} from 'redux/storage/wipe';
 import RNRestart from 'react-native-restart';
 import googleDrive from '../../utils/googleDriveBackup';
 import {logoutOneSignal} from 'utils/onesignal';
@@ -15,7 +16,8 @@ const ModalDeleteData = ({visible, hideModal}) => {
   const handlerYes = async () => {
     try {
       hideModal();
-      await persistor.purge();
+      // Redux keys, the MMKV file and its key, the vault and the legacy blob.
+      await wipeAllLocalData({persistor});
       await googleDrive.googleSignOut();
       logoutOneSignal();
       RNRestart.restart();

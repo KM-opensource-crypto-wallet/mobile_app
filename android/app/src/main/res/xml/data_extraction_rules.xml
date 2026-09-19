@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ backup and device-to-device transfer rules (allowBackup is
+  already false; this closes the transfer path and documents intent).
+  Excluded: the encrypted MMKV state store (files/mmkv), the Keystore-wrapped
+  secrets written by react-native-sensitive-info (sensitive_info.xml), and the
+  legacy pre-RNSI-5 redux SharedPreferences. Keys in AndroidKeyStore never
+  leave the device, so a copied ciphertext would be unreadable anyway; keeping
+  it out of backups avoids leaking wallet structure and confusing a restore.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="mmkv/" />
+        <exclude domain="sharedpref" path="sensitive_info.xml" />
+        <exclude domain="sharedpref" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="mmkv/" />
+        <exclude domain="sharedpref" path="sensitive_info.xml" />
+        <exclude domain="sharedpref" path="." />
+    </device-transfer>
+</data-extraction-rules>
