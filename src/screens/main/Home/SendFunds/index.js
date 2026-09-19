@@ -29,6 +29,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSlice';
 import {getTransferData} from 'dok-wallet-blockchain-networks/redux/currentTransfer/currentTransferSelector';
 import {
+  checkIsNativeCoinAvailable,
   selectCurrentCoin,
   selectCurrentWallet,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
@@ -37,6 +38,7 @@ import {
   multiplyBNWithFixed,
   validateBigNumberStr,
 } from 'dok-wallet-blockchain-networks/helper';
+import {showToast} from 'utils/toast';
 import {setExchangeSuccess} from 'dok-wallet-blockchain-networks/redux/exchange/exchangeSlice';
 import {parseBoolean} from 'utils/common';
 import {addBatchTransaction} from 'dok-wallet-blockchain-networks/redux/batchTransaction/batchTransactionSlice';
@@ -63,6 +65,7 @@ const SendFunds = ({navigation, route}) => {
   const currentWallet = useSelector(selectCurrentWallet);
   const localCurrency = useSelector(getLocalCurrency);
   const transferData = useSelector(getTransferData);
+  const isNativeCoinAvailable = useSelector(checkIsNativeCoinAvailable);
   const floatingHeight = useFloatingHeight();
 
   const {
@@ -84,7 +87,7 @@ const SendFunds = ({navigation, route}) => {
   const [modalVisible, setModalVisible] = useState(false);
 
   const form = useSendFundsForm({coin: currentCoin, wallet: currentWallet});
-  const {availableAmount} = form;
+  const {availableAmount, sponsoredGasToken} = form;
 
   const proceedToTransfer = (values, validAddress) => {
     const toAddress = validAddress || values?.toAddress?.trim();
@@ -106,6 +109,9 @@ const SendFunds = ({navigation, route}) => {
         memo,
         selectedUTXOs: transferData?.selectedUTXOs,
         selectedUTXOsValue: transferData?.selectedUTXOsValue,
+        payGasWithToken: !!sponsoredGasToken && !!values?.payGasWithToken,
+        gasTokenSymbol: sponsoredGasToken?.symbol ?? null,
+        gasTokenContractAddress: sponsoredGasToken?.contractAddress ?? null,
       }),
     );
     dispatch(
@@ -141,6 +147,7 @@ const SendFunds = ({navigation, route}) => {
             )
           : '',
       memo: linkMemo || '',
+      payGasWithToken: false,
     },
     validationSchema: form.validationSchema,
     onSubmit: async (values, helpers) => {
@@ -149,6 +156,15 @@ const SendFunds = ({navigation, route}) => {
       }
       if (new BigNumber(values.amount).gt(availableAmount)) {
         setModal(true);
+        return;
+      }
+
+      if (!isNativeCoinAvailable && !values?.payGasWithToken) {
+        showToast({
+          type: 'errorToast',
+          title: `Require ${currentCoin?.chain_display_name} chain`,
+          message: `Add ${currentCoin?.chain_display_name} to pay the network fee, or turn on "Pay gas fees with ${sponsoredGasToken?.symbol}".`,
+        });
         return;
       }
       const {validAddress, resolvedAddress} = await form.resolveRecipient(

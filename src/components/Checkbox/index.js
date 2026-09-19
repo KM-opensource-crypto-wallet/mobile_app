@@ -2,7 +2,7 @@ import React, {useContext} from 'react';
 import {CheckBox} from '@rneui/themed';
 import {ThemeContext} from 'theme/ThemeContext';
 
-const Checkbox = ({checked, onChange, customStyle}) => {
+const Checkbox = ({checked, onChange, customStyle, size = 28}) => {
   const {theme} = useContext(ThemeContext);
   return (
     <CheckBox
@@ -16,7 +16,7 @@ const Checkbox = ({checked, onChange, customStyle}) => {
         },
         customStyle ? customStyle : {},
       ]}
-      size={28}
+      size={size}
       checked={checked}
       onPress={onChange}
       iconType="material-community"
