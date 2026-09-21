@@ -8,7 +8,11 @@
 // after an enrollment change invalidated it).
 import * as vault from 'dok-wallet-blockchain-networks/security/vault';
 import {VAULT_ERROR_CODES} from 'dok-wallet-blockchain-networks/security/errors';
-import {hydrateWalletSecrets} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {
+  hydrateWalletSecrets,
+  reassignCurrentWalletIfHidden,
+  resetCoinsToDefaultAddressForPrivacyMode,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {vaultUnlocked} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {isFingerprint} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {addBreadcrumb, captureError} from 'services/logger';
@@ -78,6 +82,11 @@ const completeUnlock = async (dispatch, getState, payload, via) => {
     throw new MissingSecretsError(missing);
   }
   vaultSync.markSynced(payload);
+  // Wallet housekeeping that needs the keys in place (was pre-unlock in main.js):
+  // privacy mode re-points each coin to its default derive address AND that
+  // address's key; hidden-wallet reassignment follows in the same tick.
+  dispatch(resetCoinsToDefaultAddressForPrivacyMode());
+  dispatch(reassignCurrentWalletIfHidden());
   dispatch(vaultUnlocked());
   addBreadcrumb('auth', 'vault.unlocked', {via});
   try {

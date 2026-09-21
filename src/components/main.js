@@ -37,8 +37,6 @@ import {
   createIfNotExistsMasterClientId,
   hydrateWalletSecrets,
   rehideWalletsOnBackground,
-  reassignCurrentWalletIfHidden,
-  resetCoinsToDefaultAddressForPrivacyMode,
   resetNfts,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {selectCurrentWalletClientId} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
@@ -304,8 +302,9 @@ const Main = () => {
       getInitialUrlLink();
       dispatch(createIfNotExistsMasterClientId());
       dispatch(createClientIdIfNotExist());
-      dispatch(resetCoinsToDefaultAddressForPrivacyMode());
-      dispatch(reassignCurrentWalletIfHidden());
+      // resetCoinsToDefaultAddressForPrivacyMode and reassignCurrentWalletIfHidden
+      // moved to unlockFlow: the privacy reset must see the hydrated derive keys,
+      // otherwise it pairs the default address with a different address's key.
       // Legacy wallets migrated without a password have no vault yet; their
       // secrets are held for this session until Registration creates one.
       const orphanSecrets = consumeOrphanVaultPayload();
