@@ -156,8 +156,6 @@ const HomeScreen = ({navigation, route}) => {
   const wcUri = useSelector(getWCUri);
   const routeStateData = useSelector(getRouteStateData);
   const conversationName = useSelector(getConversationName);
-  const allState = useSelector(state => state);
-  console.log('allState', allState);
 
   const newsBottomSheetRef = useRef();
   const selectedTopicRef = useRef();

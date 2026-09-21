@@ -14,7 +14,7 @@
     "clean:start": "yarn clean:watchman && react-native start --reset-cache",
     "test": "jest",
     "clean:android": "cd android && ./gradlew clean && cd ..",
-    "clean:ios": "cd ios && rm -rf Pods && cd ..",
+    "clean:ios": "cd ios && rm -rf Pods Podfile.lock && cd ..",
     "clean:npm": "rm -rf node_modules && npm cache clean --force && npm install && rm -rf $TMPDIR/metro-cache && rm -rf $TMPDIR/haste-map-*",
     "clean:watchman": "rm -rf ./android/.gradle && watchman watch-del-all",
     "clean:all": "npm run clean:android && npm run clean:ios && npm run clean:watchman && npm run clean:npm",
