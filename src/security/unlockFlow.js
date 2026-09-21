@@ -103,6 +103,14 @@ const completeUnlock = async (dispatch, getState, payload, via) => {
 export const unlockWithPassword = password => async (dispatch, getState) => {
   const payload = await vault.unlockWithPassword(password);
   await completeUnlock(dispatch, getState, payload, 'password');
+  // The vault re-wraps a stale KDF envelope during a password unlock but never
+  // fails the unlock over it; if the write did not stick, say so here.
+  if (await vault.needsKdfUpgrade().catch(() => false)) {
+    captureError(new Error('KDF parameter upgrade did not persist'), {
+      level: 'warning',
+      tags: {area: 'vault', op: 'kdf_upgrade'},
+    });
+  }
 };
 
 export const unlockWithBiometric = () => async (dispatch, getState) => {

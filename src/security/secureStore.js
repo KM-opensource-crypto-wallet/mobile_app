@@ -89,27 +89,51 @@ const buildGetOptions = options => ({
     : {}),
 });
 
-export const get = async (key, options) => {
-  try {
-    return await getItem(key, buildGetOptions(options));
-  } catch (error) {
-    if (error?.code === RNSI_NOT_FOUND) {
-      return null;
-    }
-    // Some Android builds throw a generic error for a missing key instead of
-    // E_NOT_FOUND (see utils/apiIntegrity.js). Only for unprotected items and
-    // only for unclassified errors: a protected read's failure, or a known
-    // code such as E_KEYSTORE_UNAVAILABLE, must never be mistaken for "absent".
-    if (!isProtected(options) && !CODE_MAP[error?.code]) {
-      try {
-        if (!(await hasItem(key, serviceOnly))) {
-          return null;
-        }
-      } catch {
-        // fall through to the translated error
+// "Missing" vs "failed" for a read. Some Android builds throw a generic error
+// for a missing key instead of E_NOT_FOUND (see utils/apiIntegrity.js). Only
+// for unprotected items and only for unclassified errors: a protected read's
+// failure, or a known code such as E_KEYSTORE_UNAVAILABLE, must never be
+// mistaken for "absent" — a caller that treats a transient failure as
+// "nothing stored" would move on without the data.
+const classifyReadError = async (error, key, rnsiOptions, protectedRead) => {
+  if (error?.code === RNSI_NOT_FOUND) {
+    return null;
+  }
+  if (!protectedRead && !CODE_MAP[error?.code]) {
+    try {
+      if (
+        !(await hasItem(key, {keychainService: rnsiOptions.keychainService}))
+      ) {
+        return null;
       }
+    } catch {
+      // fall through to the translated error
     }
-    throw translate(error);
+  }
+  throw translate(error);
+};
+
+export const get = async (key, options) => {
+  const rnsiOptions = buildGetOptions(options);
+  try {
+    return await getItem(key, rnsiOptions);
+  } catch (error) {
+    return classifyReadError(error, key, rnsiOptions, isProtected(options));
+  }
+};
+
+/**
+ * Unprotected read from another keychain service (the pre-vault
+ * `persist:root2` blob under REDUX_KEYCHAIN_NAME). Same missing-vs-failed
+ * rules as get(): null only when the item is really absent, otherwise a
+ * SecureStoreError so the caller can fail instead of assuming "nothing there".
+ */
+export const getFromService = async (key, keychainService) => {
+  const rnsiOptions = {keychainService};
+  try {
+    return await getItem(key, rnsiOptions);
+  } catch (error) {
+    return classifyReadError(error, key, rnsiOptions, false);
   }
 };
 

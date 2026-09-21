@@ -12,8 +12,8 @@
 // In the notifee headless task there is no time budget for a 600k PBKDF2, so
 // only the non-secret slices are written and the state machine stays at 0;
 // the next foreground launch redoes everything (spec §12.3.5).
-import {getItem} from 'react-native-sensitive-info';
 import * as vault from 'dok-wallet-blockchain-networks/security/vault';
+import {getFromService} from 'security/secureStore';
 import {
   buildPersistEnvelope,
   parseLegacyRoot,
@@ -48,17 +48,14 @@ export const consumeOrphanVaultPayload = () => {
   return payload;
 };
 
-export const readLegacyRoot = async () => {
-  try {
-    return await getItem(LEGACY_ROOT_KEY, {
-      keychainService: LEGACY_KEYCHAIN_SERVICE,
-      accessControl: 'none',
-    });
-  } catch (error) {
-    // Android throws for a missing key.
-    return null;
-  }
-};
+// null only when the blob is genuinely absent (E_NOT_FOUND, or the generic
+// Android missing-key error confirmed by hasItem). Any other failure — Keystore
+// unavailable, Keychain not yet readable, unknown — propagates so the bootstrap
+// rejects and shows StorageErrorScreen, instead of runMigrations concluding
+// "fresh install" and marking schemaVersion=3 over an un-migrated blob. An
+// `unavailable` rejection is retried by the next bootstrapStorage() call.
+export const readLegacyRoot = () =>
+  getFromService(LEGACY_ROOT_KEY, LEGACY_KEYCHAIN_SERVICE);
 
 export const hasLegacyRoot = async () => (await readLegacyRoot()) != null;
 
@@ -99,9 +96,8 @@ export const migrateLegacyRoot2 = async ({mmkv, context = 'foreground'}) => {
       error,
     );
   }
-  const {slices, vaultPayload, password, counts} = splitLegacyRoot(
-    parsed.slices,
-  );
+  const {slices, vaultPayload, legacyWallets, password, counts} =
+    splitLegacyRoot(parsed.slices);
 
   if (context === 'headless') {
     writeSlices(mmkv, slices);
@@ -138,7 +134,8 @@ export const migrateLegacyRoot2 = async ({mmkv, context = 'foreground'}) => {
   // Self-verify against what was actually written before committing.
   const written = mmkv.getString(persistKey('wallets'));
   const verification = verifyMigration({
-    legacyWallets: parsed.slices.wallets,
+    // Normalized copy: carries the clientIds assigned to pre-clientId wallets.
+    legacyWallets,
     migratedWallets: written ? parsePersistEnvelope(written) : undefined,
     decryptedVault: password ? await vault.readSecrets() : vaultPayload,
   });

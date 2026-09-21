@@ -208,6 +208,37 @@ describe('migrateLegacyRoot2', () => {
     );
   });
 
+  it('assigns a clientId to pre-clientId wallets and keeps their secrets reachable', async () => {
+    // Wallets from before clientId existed only got one at runtime via
+    // createClientIdIfNotExist; the migration must not strip them into limbo.
+    const slices = legacySlices();
+    slices.wallets.allWallets.push({
+      walletName: 'Ancient',
+      phrase: MNEMONIC,
+      coins: [],
+    });
+    slices.wallets.currentWalletIndex = 2;
+    await seedLegacy(slices);
+
+    const mmkv = await bootstrapStorage();
+    expect(mmkv.getNumber(STORAGE_KEYS.schemaVersion)).toBe(
+      SCHEMA_VERSION.migrated,
+    );
+
+    const wallets = parsePersistEnvelope(mmkv.getString('persist:wallets'));
+    const ancient = wallets.allWallets[2];
+    expect(ancient.walletName).toBe('Ancient');
+    expect(ancient.clientId).toEqual(expect.any(String));
+    expect(ancient.phrase).toBeUndefined();
+    expect(wallets.currentWalletClientId).toBe(ancient.clientId);
+
+    const payload = await vault.unlockWithPassword('Secret123!');
+    expect(payload.wallets[ancient.clientId].phrase).toBe(MNEMONIC);
+    expect(Object.keys(payload.wallets).sort()).toEqual(
+      ['w1', 'w2', ancient.clientId].sort(),
+    );
+  });
+
   it('redoes cleanly after a kill mid-migration (vault written, slices not)', async () => {
     const slices = legacySlices();
     await seedLegacy(slices);
@@ -302,6 +333,71 @@ describe('migrateLegacyRoot2', () => {
     expect(mmkv.getNumber(STORAGE_KEYS.schemaVersion)).toBe(
       SCHEMA_VERSION.finalized,
     );
+  });
+
+  describe('legacy blob read failures are never mistaken for "no legacy blob"', () => {
+    // Make only the legacy-key read fail; every other secure-store read
+    // (reinstall check, MMKV key) keeps the mock's normal behaviour.
+    const failLegacyReadWith = code => {
+      const real = rnsi.getItem.getMockImplementation();
+      rnsi.getItem.mockImplementation(async (key, options) => {
+        if (key === LEGACY_ROOT_KEY) {
+          throw Object.assign(new Error(code), {code});
+        }
+        return real(key, options);
+      });
+      return () => rnsi.getItem.mockImplementation(real);
+    };
+
+    it('Keystore unavailable: bootstrap rejects (retryable), nothing is marked, legacy stays', async () => {
+      const slices = legacySlices();
+      await seedLegacy(slices);
+      const restore = failLegacyReadWith('E_KEYSTORE_UNAVAILABLE');
+      try {
+        await expect(bootstrapStorage()).rejects.toMatchObject({
+          code: 'unavailable',
+        });
+        expect(() => getStateStore()).toThrow();
+      } finally {
+        restore();
+      }
+      expect(await legacyStillThere()).toBe(true);
+
+      // `unavailable` clears the memo: the next call runs the real migration.
+      const mmkv = await bootstrapStorage();
+      expect(mmkv.getNumber(STORAGE_KEYS.schemaVersion)).toBe(
+        SCHEMA_VERSION.migrated,
+      );
+      expect(await vault.unlockWithPassword('Secret123!')).toEqual(
+        extractVaultPayload(slices.wallets.allWallets),
+      );
+    });
+
+    it('unknown error while the blob exists: rejects, never finalizes over it', async () => {
+      await seedLegacy(legacySlices());
+      const restore = failLegacyReadWith('E_SOMETHING_ELSE');
+      try {
+        await expect(bootstrapStorage()).rejects.toMatchObject({
+          code: 'unknown',
+        });
+      } finally {
+        restore();
+      }
+      expect(await legacyStillThere()).toBe(true);
+      expect(() => getStateStore()).toThrow();
+    });
+
+    it('generic Android missing-key error with no blob really is a fresh install', async () => {
+      const restore = failLegacyReadWith('E_SOMETHING_ELSE');
+      try {
+        const mmkv = await bootstrapStorage();
+        expect(mmkv.getNumber(STORAGE_KEYS.schemaVersion)).toBe(
+          SCHEMA_VERSION.finalized,
+        );
+      } finally {
+        restore();
+      }
+    });
   });
 
   describe('finalizeLegacyMigration', () => {

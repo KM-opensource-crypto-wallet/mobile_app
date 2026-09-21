@@ -84,7 +84,9 @@ export const aesGcmEncrypt = async (key, iv, plaintext, aad) => {
 
 export const aesGcmDecrypt = async (key, iv, ctWithTag, aad) => {
   const all = toBuffer(ctWithTag);
-  if (all.length <= TAG_BYTES) {
+  // Exactly TAG_BYTES = empty plaintext, which GCM authenticates fine (and
+  // which the WebCrypto adapter already accepts).
+  if (all.length < TAG_BYTES) {
     throw new VaultCryptoError(
       VAULT_CRYPTO_ERROR_CODES.AUTH_FAILED,
       'Ciphertext too short',
