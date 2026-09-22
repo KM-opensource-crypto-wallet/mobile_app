@@ -15,6 +15,12 @@ const messageFor = error => {
         'changed or deleted. Please try again; if this keeps happening, ' +
         'reinstall the previous version or contact support before resetting.'
       );
+    case MIGRATION_ERROR_CODES.NATIVE_STORE:
+      return (
+        'Secure storage could not be upgraded. Nothing has been changed or ' +
+        'deleted. Close the app completely and open it again; if this keeps ' +
+        'happening, contact support before resetting.'
+      );
     case 'unavailable':
       return (
         'Secure storage is not available right now. Unlock your device and ' +

@@ -22,11 +22,20 @@ export const LEGACY_SHARED_PREFERENCES =
   process.env.REDUX_SHARED_PREFERENCE_NAME;
 
 // Both legacy locations. deleteItem resolves false for a missing item (the
-// normal case after finalisation) and never throws for one.
+// normal case after finalisation) and never throws for one. The two removals
+// are independent: a Keystore failure on the secure-store item must not leave
+// the plaintext pre-RNSI-5 SharedPreferences blob behind, so both are always
+// attempted and the first failure is rethrown afterwards.
 export const removeLegacyRootBlob = async () => {
-  await deleteItem(LEGACY_ROOT_KEY, {service: LEGACY_KEYCHAIN_SERVICE});
-  if (Platform.OS === 'android' && LEGACY_SHARED_PREFERENCES) {
-    await clearLegacySecureStorage(LEGACY_SHARED_PREFERENCES);
+  const results = await Promise.allSettled([
+    deleteItem(LEGACY_ROOT_KEY, {service: LEGACY_KEYCHAIN_SERVICE}),
+    Platform.OS === 'android' && LEGACY_SHARED_PREFERENCES
+      ? clearLegacySecureStorage(LEGACY_SHARED_PREFERENCES)
+      : Promise.resolve(),
+  ]);
+  const failed = results.find(result => result.status === 'rejected');
+  if (failed) {
+    throw failed.reason;
   }
 };
 

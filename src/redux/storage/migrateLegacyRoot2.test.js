@@ -17,6 +17,8 @@ import {
 } from 'redux/storage/bootstrap';
 import {
   MIGRATION_ERROR_CODES,
+  RNSI_LEGACY_PREFS,
+  RNSI_V6_MARKER,
   consumeOrphanVaultPayload,
   finalizeLegacyMigration,
   migrateLegacyRoot2,
@@ -482,6 +484,79 @@ describe('migrateLegacyRoot2', () => {
       seedPreferences(legacySlices({fingerprint: true}));
       await bootstrapStorage();
       expect(getLegacySecureValue).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('react-native-sensitive-info 5.6.2 store not yet re-shaped (Android)', () => {
+    // The native SensitiveInfoV6Migration failed or has not run: the 6.x item
+    // is absent, the 5.6.2 entry is still in `sensitive_info`, and the marker
+    // does not say "done".
+    const legacyEntryKey = `${LEGACY_KEYCHAIN_SERVICE}::${LEGACY_ROOT_KEY}`;
+    const seedNativeStore = ({state = null, error = null} = {}) => {
+      getLegacySecureValue.mockImplementation(async (prefs, key) => {
+        if (prefs === RNSI_LEGACY_PREFS && key === legacyEntryKey) {
+          return '{"ciphertext":"Y2lwaGVy","iv":"aXY="}';
+        }
+        if (prefs === RNSI_V6_MARKER.prefs && key === RNSI_V6_MARKER.state) {
+          return state;
+        }
+        if (prefs === RNSI_V6_MARKER.prefs && key === RNSI_V6_MARKER.error) {
+          return error;
+        }
+        return null;
+      });
+    };
+
+    afterEach(() => {
+      getLegacySecureValue.mockReset();
+      getLegacySecureValue.mockImplementation(async () => null);
+    });
+
+    it('bootstrap rejects instead of finalising over the un-migrated blob; the next launch migrates', async () => {
+      Platform.OS = 'android';
+      seedNativeStore({
+        error: 'IllegalStateException: SharedPreferences commit failed',
+      });
+
+      await expect(bootstrapStorage()).rejects.toMatchObject({
+        code: MIGRATION_ERROR_CODES.NATIVE_STORE,
+      });
+      expect(() => getStateStore()).toThrow();
+      // Nothing was marked: the raw MMKV file has no schema version.
+      expect(
+        mmkvModule.__mock.instances
+          .get('dok.state')
+          .getNumber(STORAGE_KEYS.schemaVersion),
+      ).toBeUndefined();
+
+      // Next launch: the native re-shape succeeded, the 6.x item is readable.
+      const slices = legacySlices();
+      await seedLegacy(slices);
+      seedNativeStore({state: 'done'});
+      resetBootstrap();
+      const mmkv = await bootstrapStorage();
+      expect(mmkv.getNumber(STORAGE_KEYS.schemaVersion)).toBe(
+        SCHEMA_VERSION.migrated,
+      );
+    });
+
+    it('a retained 5.6.2 entry after a completed re-shape (e.g. after Delete all data) is a fresh install', async () => {
+      Platform.OS = 'android';
+      seedNativeStore({state: 'done'});
+      const mmkv = await bootstrapStorage();
+      expect(mmkv.getNumber(STORAGE_KEYS.schemaVersion)).toBe(
+        SCHEMA_VERSION.finalized,
+      );
+    });
+
+    it('is not consulted on iOS', async () => {
+      Platform.OS = 'ios';
+      seedNativeStore();
+      const mmkv = await bootstrapStorage();
+      expect(getLegacySecureValue).not.toHaveBeenCalled();
+      expect(mmkv.getNumber(STORAGE_KEYS.schemaVersion)).toBe(
+        SCHEMA_VERSION.finalized,
+      );
     });
   });
 

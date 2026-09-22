@@ -35,6 +35,20 @@ import {
 export const MIGRATION_ERROR_CODES = Object.freeze({
   PARSE: 'migrate_parse',
   VERIFY: 'migrate_verify',
+  // Android: the native react-native-sensitive-info 5.6.2 → 6.x re-shape
+  // (SensitiveInfoV6Migration.kt) has not completed, so the legacy blob is
+  // there but unreadable through RNSI 6. Retried natively on the next launch.
+  NATIVE_STORE: 'migrate_native_store',
+});
+
+// Mirrors SensitiveInfoV6Migration.kt: the 5.6.2 SharedPreferences file and
+// the marker it writes (string keys, readable through getLegacySecureValue).
+export const RNSI_LEGACY_PREFS = 'sensitive_info';
+export const RNSI_V6_MARKER = Object.freeze({
+  prefs: 'rnsi_v6_migration',
+  state: 'state',
+  stateDone: 'done',
+  error: 'error',
 });
 
 const migrationError = (code, message, cause) =>
@@ -63,23 +77,64 @@ export const consumeOrphanVaultPayload = () => {
 // into the secure store first (the old App.js step) would hit RNSI 6's 1 MiB
 // write limit on a large state and silently end in "no legacy blob". Like the
 // keychain item, those preferences are retained until finalisation.
+//
+// RNSI 5.6.2 Android builds kept it in `sensitive_info` under
+// "<service>::<key>"; RNSI 6 reads a different file, filled by the native
+// re-shape in MainApplication.onCreate. If that re-shape has not completed the
+// blob is invisible to RNSI 6 — never "absent": finalising here would strand
+// the wallets for good, so the bootstrap rejects and the next launch retries.
 export const readLegacyRoot = async () => {
   const fromSecureStore = await getFromService(
     LEGACY_ROOT_KEY,
     LEGACY_KEYCHAIN_SERVICE,
   );
-  if (
-    fromSecureStore != null ||
-    Platform.OS !== 'android' ||
-    !LEGACY_SHARED_PREFERENCES
-  ) {
+  if (fromSecureStore != null || Platform.OS !== 'android') {
     return fromSecureStore;
   }
-  const fromPreferences = await getLegacySecureValue(
-    LEGACY_SHARED_PREFERENCES,
-    LEGACY_ROOT_KEY,
+  if (LEGACY_SHARED_PREFERENCES) {
+    const fromPreferences = await getLegacySecureValue(
+      LEGACY_SHARED_PREFERENCES,
+      LEGACY_ROOT_KEY,
+    );
+    if (fromPreferences) {
+      return fromPreferences;
+    }
+  }
+  await assertNativeStoreMigrated();
+  return null;
+};
+
+const assertNativeStoreMigrated = async () => {
+  const legacyEntry = await getLegacySecureValue(
+    RNSI_LEGACY_PREFS,
+    `${LEGACY_KEYCHAIN_SERVICE}::${LEGACY_ROOT_KEY}`,
   );
-  return fromPreferences || null;
+  if (legacyEntry == null) {
+    return;
+  }
+  const state = await getLegacySecureValue(
+    RNSI_V6_MARKER.prefs,
+    RNSI_V6_MARKER.state,
+  );
+  if (state === RNSI_V6_MARKER.stateDone) {
+    // Re-shaped, then the 6.x item was deleted (finalised or wiped); the
+    // retained 5.6.2 entry is dead ciphertext (its Keystore alias went with it).
+    return;
+  }
+  const nativeError = await getLegacySecureValue(
+    RNSI_V6_MARKER.prefs,
+    RNSI_V6_MARKER.error,
+  );
+  const error = migrationError(
+    MIGRATION_ERROR_CODES.NATIVE_STORE,
+    'Secure store upgrade has not completed',
+    nativeError ? new Error(nativeError) : undefined,
+  );
+  captureError(error, {
+    tags: {area: 'storage', op: 'migrate', step: 'native_store'},
+    extra: {nativeError: nativeError || null},
+  });
+  throw error;
 };
 
 export const hasLegacyRoot = async () => (await readLegacyRoot()) != null;

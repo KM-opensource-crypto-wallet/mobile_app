@@ -30,6 +30,15 @@ object SensitiveInfoV6Migration {
   const val LEGACY_PREFS = "sensitive_info"
   const val MARKER_PREFS = "rnsi_v6_migration"
   private const val MARKER_DONE = "done"
+  // String twins of the outcome, readable from JS through
+  // NativeKeygenModule.getLegacySecureValue (a getString on a boolean would throw):
+  // `state` = "done" once the re-shape has been committed, `error` = the last failure.
+  // The JS bootstrap refuses to treat a still-present 5.6.2 blob as "no legacy data"
+  // until `state` is "done", so a failed run here is retried on the next launch
+  // instead of being finalised over.
+  const val MARKER_STATE = "state"
+  const val MARKER_STATE_DONE = "done"
+  const val MARKER_ERROR = "error"
   private const val MARKER_COUNT = "count"
   private const val MARKER_AT = "at"
   private const val SEPARATOR = "::"
@@ -92,12 +101,25 @@ object SensitiveInfoV6Migration {
     return storageKey.substring(0, index) to storageKey.substring(index + SEPARATOR.length)
   }
 
-  /** Never throws: a failure here must not stop the app from starting. */
+  /**
+   * Never throws: a failure here must not stop the app from starting — React still loads so the
+   * storage error screen can be shown. The failure is recorded in the marker for the JS bootstrap
+   * (see [MARKER_ERROR]); the marker's `done` flag stays unset so the next launch retries.
+   */
   fun runIfNeeded(context: Context) {
+    val appContext = context.applicationContext
     try {
-      run(context.applicationContext)
+      run(appContext)
     } catch (error: Throwable) {
       Log.e(TAG, "migration failed", error)
+      try {
+        appContext.getSharedPreferences(MARKER_PREFS, Context.MODE_PRIVATE)
+          .edit()
+          .putString(MARKER_ERROR, "${error.javaClass.simpleName}: ${error.message}")
+          .commit()
+      } catch (markerError: Throwable) {
+        Log.e(TAG, "could not record migration failure", markerError)
+      }
     }
   }
 
@@ -134,11 +156,18 @@ object SensitiveInfoV6Migration {
       }
     }
 
-    marker.edit()
+    val markerWritten = marker.edit()
       .putBoolean(MARKER_DONE, true)
+      .putString(MARKER_STATE, MARKER_STATE_DONE)
+      .remove(MARKER_ERROR)
       .putInt(MARKER_COUNT, migrated)
       .putLong(MARKER_AT, System.currentTimeMillis())
       .commit()
+    if (!markerWritten) {
+      // The entries themselves are committed; without the marker the next launch simply
+      // re-runs and skips every key that already exists.
+      throw IllegalStateException("migration marker commit failed")
+    }
     Log.i(TAG, "migrated=$migrated skipped=$skipped")
   }
 }

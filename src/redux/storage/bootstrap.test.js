@@ -15,11 +15,15 @@ import {
   setSchemaVersion,
 } from 'redux/storage/bootstrap';
 import {mmkvStorage} from 'redux/storage/mmkvStorage';
+import {Platform} from 'react-native';
 import {
   wipeAllLocalData,
+  removeLegacyRootBlob,
   LEGACY_ROOT_KEY,
   LEGACY_KEYCHAIN_SERVICE,
+  LEGACY_SHARED_PREFERENCES,
 } from 'redux/storage/wipe';
+import {clearLegacySecureStorage} from 'myWallet/wallet.service';
 import {
   SECURE_STORE_ERROR_CODES,
   SecureStoreError,
@@ -220,6 +224,25 @@ describe('storage bootstrap (mobile)', () => {
       // A later bootstrap starts from nothing with a fresh key.
       const fresh = await bootstrapStorage();
       expect(fresh.getString('persist:wallets')).toBeUndefined();
+    });
+
+    it('removeLegacyRootBlob still clears the Android SharedPreferences blob when the secure-store delete rejects', async () => {
+      const os = Platform.OS;
+      Platform.OS = 'android';
+      const real = rnsi.deleteItem.getMockImplementation();
+      rnsi.deleteItem.mockImplementation(async () => {
+        throw new Error('keystore busy');
+      });
+      clearLegacySecureStorage.mockClear();
+      try {
+        await expect(removeLegacyRootBlob()).rejects.toThrow('keystore busy');
+        expect(clearLegacySecureStorage).toHaveBeenCalledWith(
+          LEGACY_SHARED_PREFERENCES,
+        );
+      } finally {
+        rnsi.deleteItem.mockImplementation(real);
+        Platform.OS = os;
+      }
     });
 
     it('keeps going after a failing step and rethrows the first error', async () => {
