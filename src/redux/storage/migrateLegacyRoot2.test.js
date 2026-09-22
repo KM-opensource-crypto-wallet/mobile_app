@@ -492,13 +492,14 @@ describe('migrateLegacyRoot2', () => {
     // is absent, the 5.6.2 entry is still in `sensitive_info`, and the marker
     // does not say "done".
     const legacyEntryKey = `${LEGACY_KEYCHAIN_SERVICE}::${LEGACY_ROOT_KEY}`;
-    const seedNativeStore = ({state = null, error = null} = {}) => {
+    const entryMarkerKey = `${RNSI_V6_MARKER.entryPrefix}${legacyEntryKey}`;
+    const seedNativeStore = ({entry = null, error = null} = {}) => {
       getLegacySecureValue.mockImplementation(async (prefs, key) => {
         if (prefs === RNSI_LEGACY_PREFS && key === legacyEntryKey) {
           return '{"ciphertext":"Y2lwaGVy","iv":"aXY="}';
         }
-        if (prefs === RNSI_V6_MARKER.prefs && key === RNSI_V6_MARKER.state) {
-          return state;
+        if (prefs === RNSI_V6_MARKER.prefs && key === entryMarkerKey) {
+          return entry;
         }
         if (prefs === RNSI_V6_MARKER.prefs && key === RNSI_V6_MARKER.error) {
           return error;
@@ -532,7 +533,7 @@ describe('migrateLegacyRoot2', () => {
       // Next launch: the native re-shape succeeded, the 6.x item is readable.
       const slices = legacySlices();
       await seedLegacy(slices);
-      seedNativeStore({state: 'done'});
+      seedNativeStore({entry: 'migrated'});
       resetBootstrap();
       const mmkv = await bootstrapStorage();
       expect(mmkv.getNumber(STORAGE_KEYS.schemaVersion)).toBe(
@@ -542,11 +543,42 @@ describe('migrateLegacyRoot2', () => {
 
     it('a retained 5.6.2 entry after a completed re-shape (e.g. after Delete all data) is a fresh install', async () => {
       Platform.OS = 'android';
-      seedNativeStore({state: 'done'});
+      seedNativeStore({entry: 'migrated'});
       const mmkv = await bootstrapStorage();
       expect(mmkv.getNumber(STORAGE_KEYS.schemaVersion)).toBe(
         SCHEMA_VERSION.finalized,
       );
+    });
+
+    it('an entry the native step skipped (corrupt or protected) is an upgrade error, never schema 3', async () => {
+      Platform.OS = 'android';
+      seedNativeStore({entry: 'skipped'});
+      await expect(bootstrapStorage()).rejects.toMatchObject({
+        code: MIGRATION_ERROR_CODES.PARSE,
+      });
+      expect(() => getStateStore()).toThrow();
+      expect(
+        mmkvModule.__mock.instances
+          .get('dok.state')
+          .getNumber(STORAGE_KEYS.schemaVersion),
+      ).toBeUndefined();
+    });
+
+    it('a global "done" without this entry\'s own status is not proof for it', async () => {
+      Platform.OS = 'android';
+      // Only unrelated statuses exist: the redux root entry has none.
+      getLegacySecureValue.mockImplementation(async (prefs, key) => {
+        if (prefs === RNSI_LEGACY_PREFS && key === legacyEntryKey) {
+          return '{"ciphertext":"Y2lwaGVy","iv":"aXY="}';
+        }
+        if (prefs === RNSI_V6_MARKER.prefs && key === 'state') {
+          return 'done';
+        }
+        return null;
+      });
+      await expect(bootstrapStorage()).rejects.toMatchObject({
+        code: MIGRATION_ERROR_CODES.NATIVE_STORE,
+      });
     });
 
     it('is not consulted on iOS', async () => {

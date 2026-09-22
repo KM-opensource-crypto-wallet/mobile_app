@@ -39,6 +39,14 @@ object SensitiveInfoV6Migration {
   const val MARKER_STATE = "state"
   const val MARKER_STATE_DONE = "done"
   const val MARKER_ERROR = "error"
+  // Per-entry outcome, `entry.<service>::<key>` → [ENTRY_MIGRATED] | [ENTRY_EXISTS] |
+  // [ENTRY_SKIPPED], committed together with `state`. The JS bootstrap checks the status of
+  // its own entry (the redux root), never the global flag: a corrupt or protected entry that
+  // was skipped must surface as an upgrade error, not as a fresh install.
+  const val MARKER_ENTRY_PREFIX = "entry."
+  const val ENTRY_MIGRATED = "migrated"
+  const val ENTRY_EXISTS = "exists"
+  const val ENTRY_SKIPPED = "skipped"
   private const val MARKER_COUNT = "count"
   private const val MARKER_AT = "at"
   private const val SEPARATOR = "::"
@@ -49,6 +57,9 @@ object SensitiveInfoV6Migration {
     val suffix = digest.take(8).joinToString("") { String.format(Locale.US, "%02x", it) }
     return "sensitive_info_$suffix"
   }
+
+  /** Marker key holding the outcome for one 5.6.2 entry. */
+  fun entryMarkerKey(service: String, key: String): String = "$MARKER_ENTRY_PREFIX$service$SEPARATOR$key"
 
   /** Mirrors 5.6.2 `SecureStorage.generateKeyAlias`: sha256("service::key") hex, first 32 chars. */
   fun legacyAliasFor(service: String, key: String): String {
@@ -131,22 +142,27 @@ object SensitiveInfoV6Migration {
     val entries = source.all
     var migrated = 0
     var skipped = 0
+    val markerEditor = marker.edit()
     if (entries.isNotEmpty()) {
       val targets = HashMap<String, SharedPreferences.Editor>()
       for ((storageKey, value) in entries) {
         val raw = value as? String ?: continue
         val (service, key) = splitLegacyKey(storageKey) ?: continue
+        val entryMarker = entryMarkerKey(service, key)
         val target = context.getSharedPreferences(preferencesFileFor(service), Context.MODE_PRIVATE)
         if (target.contains(key)) {
           skipped += 1
+          markerEditor.putString(entryMarker, ENTRY_EXISTS)
           continue
         }
         val converted = legacyEntryToV6Json(service, key, raw)
         if (converted == null) {
           skipped += 1
+          markerEditor.putString(entryMarker, ENTRY_SKIPPED)
           continue
         }
         targets.getOrPut(preferencesFileFor(service)) { target.edit() }.putString(key, converted.toString())
+        markerEditor.putString(entryMarker, ENTRY_MIGRATED)
         migrated += 1
       }
       for (editor in targets.values) {
@@ -156,7 +172,8 @@ object SensitiveInfoV6Migration {
       }
     }
 
-    val markerWritten = marker.edit()
+    // Entry statuses are published only here, after every target commit succeeded.
+    val markerWritten = markerEditor
       .putBoolean(MARKER_DONE, true)
       .putString(MARKER_STATE, MARKER_STATE_DONE)
       .remove(MARKER_ERROR)

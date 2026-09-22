@@ -43,12 +43,16 @@ export const MIGRATION_ERROR_CODES = Object.freeze({
 
 // Mirrors SensitiveInfoV6Migration.kt: the 5.6.2 SharedPreferences file and
 // the marker it writes (string keys, readable through getLegacySecureValue).
+// `entry.<service>::<key>` holds that entry's own outcome; it is committed
+// only after the re-shaped data is, so it is the per-entry proof of success.
 export const RNSI_LEGACY_PREFS = 'sensitive_info';
 export const RNSI_V6_MARKER = Object.freeze({
   prefs: 'rnsi_v6_migration',
-  state: 'state',
-  stateDone: 'done',
   error: 'error',
+  entryPrefix: 'entry.',
+  entryMigrated: 'migrated',
+  entryExists: 'exists',
+  entrySkipped: 'skipped',
 });
 
 const migrationError = (code, message, cause) =>
@@ -105,21 +109,39 @@ export const readLegacyRoot = async () => {
 };
 
 const assertNativeStoreMigrated = async () => {
+  const legacyEntryKey = `${LEGACY_KEYCHAIN_SERVICE}::${LEGACY_ROOT_KEY}`;
   const legacyEntry = await getLegacySecureValue(
     RNSI_LEGACY_PREFS,
-    `${LEGACY_KEYCHAIN_SERVICE}::${LEGACY_ROOT_KEY}`,
+    legacyEntryKey,
   );
   if (legacyEntry == null) {
     return;
   }
-  const state = await getLegacySecureValue(
+  const entryStatus = await getLegacySecureValue(
     RNSI_V6_MARKER.prefs,
-    RNSI_V6_MARKER.state,
+    `${RNSI_V6_MARKER.entryPrefix}${legacyEntryKey}`,
   );
-  if (state === RNSI_V6_MARKER.stateDone) {
-    // Re-shaped, then the 6.x item was deleted (finalised or wiped); the
-    // retained 5.6.2 entry is dead ciphertext (its Keystore alias went with it).
+  if (
+    entryStatus === RNSI_V6_MARKER.entryMigrated ||
+    entryStatus === RNSI_V6_MARKER.entryExists
+  ) {
+    // This entry was re-shaped, then the 6.x item was deleted (finalised or
+    // wiped); the retained 5.6.2 copy is dead ciphertext (its Keystore alias
+    // went with it).
     return;
+  }
+  if (entryStatus === RNSI_V6_MARKER.entrySkipped) {
+    // The native step ran but could not re-shape this entry (unparseable,
+    // no ciphertext/IV, or user-authentication bound). Retrying will not
+    // help; same handling as unreadable legacy data.
+    const error = migrationError(
+      MIGRATION_ERROR_CODES.PARSE,
+      'Stored wallet data could not be moved to the new secure store',
+    );
+    captureError(error, {
+      tags: {area: 'storage', op: 'migrate', step: 'native_store_skipped'},
+    });
+    throw error;
   }
   const nativeError = await getLegacySecureValue(
     RNSI_V6_MARKER.prefs,

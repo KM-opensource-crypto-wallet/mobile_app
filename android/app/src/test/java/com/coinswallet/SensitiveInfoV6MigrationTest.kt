@@ -89,6 +89,17 @@ class SensitiveInfoV6MigrationTest {
     assertNull(SensitiveInfoV6Migration.splitLegacyKey("service::"))
   }
 
+  @Test
+  fun `entry marker key is the prefixed 5_6_2 storage key`() {
+    assertEquals(
+      "entry.myKeychain::persist:root2",
+      SensitiveInfoV6Migration.entryMarkerKey(service, key)
+    )
+    assertEquals("migrated", SensitiveInfoV6Migration.ENTRY_MIGRATED)
+    assertEquals("exists", SensitiveInfoV6Migration.ENTRY_EXISTS)
+    assertEquals("skipped", SensitiveInfoV6Migration.ENTRY_SKIPPED)
+  }
+
   private fun sha256Hex(input: String): String =
     java.security.MessageDigest.getInstance("SHA-256").digest(input.toByteArray())
       .joinToString("") { String.format("%02x", it) }
