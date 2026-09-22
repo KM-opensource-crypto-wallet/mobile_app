@@ -21,7 +21,20 @@ import {
   finalizeLegacyMigration,
   migrateLegacyRoot2,
 } from 'redux/storage/migrateLegacyRoot2';
-import {LEGACY_KEYCHAIN_SERVICE, LEGACY_ROOT_KEY} from 'redux/storage/wipe';
+import {
+  LEGACY_KEYCHAIN_SERVICE,
+  LEGACY_ROOT_KEY,
+  LEGACY_SHARED_PREFERENCES,
+} from 'redux/storage/wipe';
+import * as secureStore from 'security/secureStore';
+import {
+  SECURE_STORE_ERROR_CODES,
+  SecureStoreError,
+} from 'dok-wallet-blockchain-networks/security/errors';
+import {
+  clearLegacySecureStorage,
+  getLegacySecureValue,
+} from 'myWallet/wallet.service';
 
 jest.mock('services/logger', () => ({
   addBreadcrumb: jest.fn(),
@@ -120,14 +133,14 @@ const legacyRoot = slices =>
 
 const seedLegacy = async slices => {
   await rnsi.setItem(LEGACY_ROOT_KEY, legacyRoot(slices), {
-    keychainService: LEGACY_KEYCHAIN_SERVICE,
+    service: LEGACY_KEYCHAIN_SERVICE,
     accessControl: 'none',
   });
 };
 
 const legacyStillThere = async () =>
   (await rnsi.getItem(LEGACY_ROOT_KEY, {
-    keychainService: LEGACY_KEYCHAIN_SERVICE,
+    service: LEGACY_KEYCHAIN_SERVICE,
   })) != null;
 
 describe('migrateLegacyRoot2', () => {
@@ -311,7 +324,7 @@ describe('migrateLegacyRoot2', () => {
 
   it('corrupt legacy JSON is fatal: nothing written, promise stays rejected, legacy untouched', async () => {
     await rnsi.setItem(LEGACY_ROOT_KEY, '{not json', {
-      keychainService: LEGACY_KEYCHAIN_SERVICE,
+      service: LEGACY_KEYCHAIN_SERVICE,
       accessControl: 'none',
     });
     await expect(bootstrapStorage()).rejects.toMatchObject({
@@ -349,17 +362,24 @@ describe('migrateLegacyRoot2', () => {
       return () => rnsi.getItem.mockImplementation(real);
     };
 
-    it('Keystore unavailable: bootstrap rejects (retryable), nothing is marked, legacy stays', async () => {
+    it('secure store unavailable: bootstrap rejects (retryable), nothing is marked, legacy stays', async () => {
       const slices = legacySlices();
       await seedLegacy(slices);
-      const restore = failLegacyReadWith('E_KEYSTORE_UNAVAILABLE');
+      // RNSI 6 has no dedicated "keystore unavailable" code; the adapter
+      // reports `unavailable` itself (e.g. a downgraded protected write, or
+      // the web adapter without IndexedDB). Only that code clears the memo.
+      const spy = jest
+        .spyOn(secureStore, 'getFromService')
+        .mockRejectedValueOnce(
+          new SecureStoreError(SECURE_STORE_ERROR_CODES.UNAVAILABLE, 'locked'),
+        );
       try {
         await expect(bootstrapStorage()).rejects.toMatchObject({
           code: 'unavailable',
         });
         expect(() => getStateStore()).toThrow();
       } finally {
-        restore();
+        spy.mockRestore();
       }
       expect(await legacyStillThere()).toBe(true);
 
@@ -397,6 +417,71 @@ describe('migrateLegacyRoot2', () => {
       } finally {
         restore();
       }
+    });
+  });
+
+  describe('pre-RNSI-5 Android SharedPreferences blob', () => {
+    const seedPreferences = slices => {
+      getLegacySecureValue.mockImplementation(async (prefs, key) =>
+        prefs === LEGACY_SHARED_PREFERENCES && key === LEGACY_ROOT_KEY
+          ? legacyRoot(slices)
+          : null,
+      );
+    };
+
+    afterEach(() => {
+      getLegacySecureValue.mockReset();
+      getLegacySecureValue.mockImplementation(async () => null);
+      clearLegacySecureStorage.mockClear();
+    });
+
+    it('is read directly (never copied through the 1 MiB-capped secure store) and retained until finalisation', async () => {
+      Platform.OS = 'android';
+      const slices = legacySlices();
+      seedPreferences(slices);
+
+      const mmkv = await bootstrapStorage();
+
+      expect(mmkv.getNumber(STORAGE_KEYS.schemaVersion)).toBe(
+        SCHEMA_VERSION.migrated,
+      );
+      expect(getLegacySecureValue).toHaveBeenCalledWith(
+        LEGACY_SHARED_PREFERENCES,
+        LEGACY_ROOT_KEY,
+      );
+      // Not written into the secure store, not cleared yet.
+      expect(await legacyStillThere()).toBe(false);
+      expect(clearLegacySecureStorage).not.toHaveBeenCalled();
+      expect(await vault.unlockWithPassword('Secret123!')).toEqual(
+        extractVaultPayload(slices.wallets.allWallets),
+      );
+
+      const getState = () => ({
+        wallets: {allWallets: slices.wallets.allWallets},
+      });
+      expect(await finalizeLegacyMigration({mmkv, getState})).toBe(true);
+      expect(clearLegacySecureStorage).toHaveBeenCalledWith(
+        LEGACY_SHARED_PREFERENCES,
+      );
+    });
+
+    it('is not consulted on iOS', async () => {
+      Platform.OS = 'ios';
+      seedPreferences(legacySlices());
+      const mmkv = await bootstrapStorage();
+      expect(getLegacySecureValue).not.toHaveBeenCalled();
+      expect(mmkv.getNumber(STORAGE_KEYS.schemaVersion)).toBe(
+        SCHEMA_VERSION.finalized,
+      );
+    });
+
+    it('a secure-store copy wins over the preferences copy', async () => {
+      Platform.OS = 'android';
+      const slices = legacySlices();
+      await seedLegacy(slices);
+      seedPreferences(legacySlices({fingerprint: true}));
+      await bootstrapStorage();
+      expect(getLegacySecureValue).not.toHaveBeenCalled();
     });
   });
 

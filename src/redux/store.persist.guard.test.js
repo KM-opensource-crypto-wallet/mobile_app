@@ -269,4 +269,63 @@ describe('store persistence guard', () => {
     expect(await vault.hasVault()).toBe(false);
     expect(vault.isUnlocked()).toBe(false);
   });
+
+  // Reported bug: reset wallet → create/import a wallet → quit → relaunch →
+  // login → the wallet is gone (no "missing keys" report either).
+  it('REPRO: after reset+logout, a new vault + new wallet survive a relaunch', async () => {
+    // Registration after the reset.
+    await vault.createVault('NewPass1!');
+    store.dispatch(signUpSuccess());
+    // Import a wallet (what the real thunk's fulfilled reducer receives).
+    const imported = {...newStoreWallet(), clientId: 'w2', walletName: 'New'};
+    store.dispatch({
+      type: 'wallets/createWallet/fulfilled',
+      payload: {newStoreWallet: imported, isFromImportWallet: true},
+    });
+    expect(store.getState().wallets.allWallets).toHaveLength(1);
+
+    // "Quit": background flushes.
+    await persistor.flush();
+    await vaultSync.flush();
+
+    // What is on disk after the quit?
+    const persistedWallets = persistedValues()['persist:wallets'].allWallets;
+    expect(persistedWallets.map(w => w.clientId)).toEqual(['w2']);
+    const secrets = await vault.readSecrets();
+    expect(Object.keys(secrets.wallets)).toEqual(['w2']);
+
+    // "Relaunch + login": rehydrate the stripped slice, merge the vault back.
+    vault.lock();
+    const payload = await vault.unlockWithPassword('NewPass1!');
+    const {
+      hydrateWalletSecrets,
+    } = require('dok-wallet-blockchain-networks/redux/wallets/walletSecrets');
+    const hydrated = hydrateWalletSecrets(persistedWallets, payload);
+    expect(hydrated).toHaveLength(1);
+    expect(hydrated[0].phrase).toBe(MNEMONIC);
+  });
+
+  // The actual bug: redux-persist serialises one top-level field per
+  // `throttle` tick and writes the slice only once every changed field has
+  // been processed, so with throttle 1000 a new wallet reached MMKV ~7-9 s
+  // after creation. Quitting inside that window lost the wallet (its keys were
+  // already in the vault, orphaned). No explicit flush here on purpose.
+  it('a new wallet reaches MMKV right away, not after a multi-second throttle window', async () => {
+    const fast = {...newStoreWallet(), clientId: 'w-fast', walletName: 'Fast'};
+    store.dispatch({
+      type: 'wallets/createWallet/fulfilled',
+      payload: {newStoreWallet: fast, isFromImportWallet: true},
+    });
+    await waitFor(
+      () =>
+        (persistedValues()['persist:wallets']?.allWallets || []).some(
+          w => w.clientId === 'w-fast',
+        ),
+      {timeout: 1500},
+    );
+    await vaultSync.flush();
+    expect(Object.keys((await vault.readSecrets()).wallets)).toContain(
+      'w-fast',
+    );
+  });
 });

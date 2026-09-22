@@ -22,10 +22,13 @@ import {
   verifyMigration,
 } from 'dok-wallet-blockchain-networks/redux/storage/legacyRootMigration';
 import {addBreadcrumb, captureError, logger} from 'services/logger';
+import {Platform} from 'react-native';
+import {getLegacySecureValue} from 'myWallet/wallet.service';
 import {SCHEMA_VERSION, STORAGE_KEYS} from './bootstrap';
 import {
   LEGACY_KEYCHAIN_SERVICE,
   LEGACY_ROOT_KEY,
+  LEGACY_SHARED_PREFERENCES,
   removeLegacyRootBlob,
 } from './wipe';
 
@@ -54,8 +57,30 @@ export const consumeOrphanVaultPayload = () => {
 // rejects and shows StorageErrorScreen, instead of runMigrations concluding
 // "fresh install" and marking schemaVersion=3 over an un-migrated blob. An
 // `unavailable` rejection is retried by the next bootstrapStorage() call.
-export const readLegacyRoot = () =>
-  getFromService(LEGACY_ROOT_KEY, LEGACY_KEYCHAIN_SERVICE);
+//
+// Pre-RNSI-5 Android builds kept the blob in plain SharedPreferences
+// (REDUX_SHARED_PREFERENCE_NAME). It is read from there directly — copying it
+// into the secure store first (the old App.js step) would hit RNSI 6's 1 MiB
+// write limit on a large state and silently end in "no legacy blob". Like the
+// keychain item, those preferences are retained until finalisation.
+export const readLegacyRoot = async () => {
+  const fromSecureStore = await getFromService(
+    LEGACY_ROOT_KEY,
+    LEGACY_KEYCHAIN_SERVICE,
+  );
+  if (
+    fromSecureStore != null ||
+    Platform.OS !== 'android' ||
+    !LEGACY_SHARED_PREFERENCES
+  ) {
+    return fromSecureStore;
+  }
+  const fromPreferences = await getLegacySecureValue(
+    LEGACY_SHARED_PREFERENCES,
+    LEGACY_ROOT_KEY,
+  );
+  return fromPreferences || null;
+};
 
 export const hasLegacyRoot = async () => (await readLegacyRoot()) != null;
 

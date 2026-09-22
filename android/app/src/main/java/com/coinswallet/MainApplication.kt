@@ -25,6 +25,8 @@ class MainApplication : Application(), ReactApplication {
 
   override fun onCreate() {
     super.onCreate()
+    // react-native-sensitive-info 5.6.2 → 6.x store layout, before any JS can read it.
+    SensitiveInfoV6Migration.runIfNeeded(this)
     loadReactNative(this)
   }
 

@@ -7,6 +7,7 @@ import {wipeAllLocalData} from 'redux/storage/wipe';
 import RNRestart from 'react-native-restart';
 import googleDrive from '../../utils/googleDriveBackup';
 import {logoutOneSignal} from 'utils/onesignal';
+import {captureError} from 'services/logger';
 
 const ModalDeleteData = ({visible, hideModal}) => {
   const handlerNo = () => {
@@ -18,7 +19,13 @@ const ModalDeleteData = ({visible, hideModal}) => {
       hideModal();
       // Redux keys, the MMKV file and its key, the vault and the legacy blob.
       await wipeAllLocalData({persistor});
-      await googleDrive.googleSignOut();
+      // Best-effort: local data is already gone, the restart must still happen.
+      await googleDrive.googleSignOut().catch(error =>
+        captureError(error, {
+          level: 'warning',
+          tags: {area: 'backup', op: 'google_sign_out', from: 'wipe'},
+        }),
+      );
       logoutOneSignal();
       RNRestart.restart();
     } catch (e) {

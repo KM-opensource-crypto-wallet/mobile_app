@@ -20,6 +20,10 @@ import {
   LEGACY_ROOT_KEY,
   LEGACY_KEYCHAIN_SERVICE,
 } from 'redux/storage/wipe';
+import {
+  SECURE_STORE_ERROR_CODES,
+  SecureStoreError,
+} from 'dok-wallet-blockchain-networks/security/errors';
 
 jest.mock('services/logger', () => ({
   addBreadcrumb: jest.fn(),
@@ -140,15 +144,35 @@ describe('storage bootstrap (mobile)', () => {
     expect(await secureStore.get('vault.dek.password')).toBe(wrap);
   });
 
-  it('clears the memo on failure so the next call retries', async () => {
-    rnsi.getItem.mockRejectedValueOnce(
-      Object.assign(new Error('locked'), {code: 'E_KEYSTORE_UNAVAILABLE'}),
-    );
+  it('clears the memo on an `unavailable` failure so the next call retries', async () => {
+    // e.g. a protected write the platform downgraded (secureStore.set) or a
+    // web adapter without IndexedDB: the adapter reports `unavailable`.
+    const spy = jest
+      .spyOn(secureStore, 'get')
+      .mockRejectedValueOnce(
+        new SecureStoreError(SECURE_STORE_ERROR_CODES.UNAVAILABLE, 'locked'),
+      );
+    try {
+      await expect(bootstrapStorage()).rejects.toMatchObject({
+        code: 'unavailable',
+      });
+      expect(isStorageReady()).toBe(false);
+      await expect(bootstrapStorage()).resolves.toBeDefined();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('a failed read of an existing MMKV key is fatal, not "no key yet"', async () => {
+    await bootstrapStorage();
+    const key = await secureStore.get(STORAGE_KEYS.mmkvKey);
+    resetBootstrap();
+    rnsi.getItem.mockRejectedValueOnce(new Error('Keychain fetch failed'));
     await expect(bootstrapStorage()).rejects.toMatchObject({
-      code: 'unavailable',
+      name: 'SecureStoreError',
     });
-    expect(isStorageReady()).toBe(false);
-    await expect(bootstrapStorage()).resolves.toBeDefined();
+    // The stored key was not replaced by a fresh one.
+    expect(await secureStore.get(STORAGE_KEYS.mmkvKey)).toBe(key);
   });
 
   it('schema version round-trips as a number', async () => {
@@ -173,7 +197,7 @@ describe('storage bootstrap (mobile)', () => {
       await mmkvStorage.setItem('persist:wallets', '{}');
       await vault.createVault('pw');
       await rnsi.setItem(LEGACY_ROOT_KEY, '{"legacy":true}', {
-        keychainService: LEGACY_KEYCHAIN_SERVICE,
+        service: LEGACY_KEYCHAIN_SERVICE,
         accessControl: 'none',
       });
       const persistor = {purge: jest.fn(async () => {})};
@@ -188,7 +212,7 @@ describe('storage bootstrap (mobile)', () => {
       expect(await secureStore.get(STORAGE_KEYS.mmkvKey)).toBeNull();
       expect(
         await rnsi.getItem(LEGACY_ROOT_KEY, {
-          keychainService: LEGACY_KEYCHAIN_SERVICE,
+          service: LEGACY_KEYCHAIN_SERVICE,
         }),
       ).toBeNull();
       expect(isStorageReady()).toBe(false);

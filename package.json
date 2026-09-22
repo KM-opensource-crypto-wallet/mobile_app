@@ -183,7 +183,7 @@
     "react-native-safe-area-context": "^5.8.0",
     "react-native-screenguard": "^1.1.0",
     "react-native-screens": "^4.25.2",
-    "react-native-sensitive-info": "5.6.2",
+    "react-native-sensitive-info": "6.1.5",
     "react-native-share": "^12.2.1",
     "react-native-svg": "^15.13.0",
     "react-native-svg-transformer": "^1.5.0",

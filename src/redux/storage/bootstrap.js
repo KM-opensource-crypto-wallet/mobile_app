@@ -4,30 +4,24 @@
 // synchronous exports and none of their import sites change.
 //
 // Order:
-//   1. Android: legacy SharedPreferences → Keychain-backed store (was App.js)
-//   2. reinstall detection (stale Keychain items, no MMKV file)
-//   3. MMKV key from the secure store (created on first run)
-//   4. open MMKV
-//   5. persist:root2 → per-slice + vault migration when schemaVersion is 0
+//   1. reinstall detection (stale Keychain items, no MMKV file)
+//   2. MMKV key from the secure store (created on first run)
+//   3. open MMKV
+//   4. persist:root2 → per-slice + vault migration when schemaVersion is 0
+//      (the blob is read from the secure store, or on Android from the
+//      pre-RNSI-5 SharedPreferences — see migrateLegacyRoot2.readLegacyRoot)
 //
-// A failure in 5 is fatal: the promise stays rejected (no retry loop through
+// A failure in 4 is fatal: the promise stays rejected (no retry loop through
 // the 11 slice reads) and App.js shows the storage error screen. Only an
 // `unavailable` secure store (Keystore locked before first device unlock, in
 // the headless task) clears the memo so the next call can retry.
 import {createMMKV, existsMMKV} from 'react-native-mmkv';
-import {setItem} from 'react-native-sensitive-info';
 import * as secureStore from 'security/secureStore';
 import {randomBytes} from 'security/vaultCrypto';
 import * as vault from 'dok-wallet-blockchain-networks/security/vault';
 import {base64Encode} from 'dok-wallet-blockchain-networks/security/bytes';
 import {SECURE_STORE_ERROR_CODES} from 'dok-wallet-blockchain-networks/security/errors';
-import {addBreadcrumb, captureError} from 'services/logger';
-import {IS_ANDROID} from 'utils/dimensions';
-import {getAsyncStorageData, storeAsyncStorageData} from 'utils/asyncStorage';
-import {
-  clearLegacySecureStorage,
-  getLegacySecureValue,
-} from 'myWallet/wallet.service';
+import {addBreadcrumb} from 'services/logger';
 
 export const STATE_MMKV_ID = 'dok.state';
 
@@ -52,8 +46,6 @@ export const SCHEMA_VERSION = Object.freeze({
 export const MMKV_KEY_BYTES = 24;
 export const generateMmkvKey = () => base64Encode(randomBytes(MMKV_KEY_BYTES));
 
-const ANDROID_LEGACY_MIGRATION_FLAG = 'sensitive_info_migration';
-
 let bootstrapPromise = null;
 let instance = null;
 let context = 'foreground';
@@ -67,32 +59,6 @@ export const getBootstrapContext = () => context;
 
 const openStateStore = encryptionKey =>
   createMMKV({id: STATE_MMKV_ID, encryptionKey, encryptionType: 'AES-256'});
-
-/**
- * Pre-RNSI-5 Android builds kept the redux blob in SharedPreferences; move it
- * into the Keychain-backed store once so the persist:root2 migrator can find
- * it. Moved here from App.js so it can no longer race the store's first read.
- */
-const migrateAndroidLegacySharedPreferences = async () => {
-  if (!IS_ANDROID) {
-    return;
-  }
-  if ((await getAsyncStorageData(ANDROID_LEGACY_MIGRATION_FLAG)) === 'true') {
-    return;
-  }
-  const sharedPreference = process.env.REDUX_SHARED_PREFERENCE_NAME;
-  const reduxKey = `persist:${process.env.REDUX_KEY}`;
-  const oldData = await getLegacySecureValue(sharedPreference, reduxKey);
-  if (oldData) {
-    await setItem(reduxKey, oldData, {
-      accessControl: 'none',
-      keychainService: process.env.REDUX_KEYCHAIN_NAME,
-    });
-    await clearLegacySecureStorage(sharedPreference);
-    addBreadcrumb('storage', 'storage.android_legacy_migrated', {}, 'info');
-  }
-  await storeAsyncStorageData(ANDROID_LEGACY_MIGRATION_FLAG, 'true');
-};
 
 /**
  * iOS Keychain items survive an uninstall; the MMKV file does not. A missing
@@ -150,14 +116,6 @@ const runMigrations = async mmkv => {
 const run = async () => {
   const startedAt = Date.now();
   lastRunContext = context;
-  try {
-    await migrateAndroidLegacySharedPreferences();
-  } catch (error) {
-    // Not fatal: the Keychain copy may already exist from a previous attempt.
-    captureError(error, {
-      tags: {area: 'storage', op: 'bootstrap', step: 'android_legacy'},
-    });
-  }
   const reinstalled = await detectReinstall();
   const key = await getOrCreateMmkvKey();
   const mmkv = openStateStore(key);

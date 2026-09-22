@@ -1,5 +1,9 @@
 import {createMigrate, persistReducer, persistStore} from 'redux-persist';
-import {combineReducers, configureStore} from '@reduxjs/toolkit';
+import {
+  combineReducers,
+  configureStore,
+  createListenerMiddleware,
+} from '@reduxjs/toolkit';
 
 import {authSlice} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {settingsSlice} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
@@ -35,7 +39,10 @@ import {
   schedulePaymentPersistTransform,
   sellCryptoPersistTransform,
 } from 'dok-wallet-blockchain-networks/redux/storage/persistTransforms';
-import {createVaultSync} from 'dok-wallet-blockchain-networks/security/vaultSync';
+import {
+  IMMEDIATE_VAULT_WRITE_ACTIONS,
+  createVaultSync,
+} from 'dok-wallet-blockchain-networks/security/vaultSync';
 import {addBreadcrumb} from 'services/logger';
 import {mmkvStorage} from './storage/mmkvStorage';
 import {createTimedSerialize} from './storage/persistTiming';
@@ -49,7 +56,14 @@ import {createTimedSerialize} from './storage/persistTiming';
 //     the vault (security/vault.js), kept in step by the vaultSync listener;
 //   - `timeout: 0` is mandatory: the default 5 s timer would rehydrate initial
 //     state after a slow bootstrap and then persist it over the real data;
-//   - `throttle: 1000` batches the write bursts that used to freeze the UI.
+//   - no `throttle`: redux-persist serialises ONE top-level field per throttle
+//     tick and writes a slice only once every changed field has been processed,
+//     so `throttle: 1000` made the first wallets write after launch wait ~9 s
+//     (nine fields). A quit inside that window lost a freshly created wallet
+//     from MMKV while its keys sat orphaned in the vault. MMKV writes are
+//     synchronous and cheap, so the per-tick default is what the pre-vault
+//     store used too. `persistFlush` below additionally forces the write on
+//     the wallet-creating actions and on resetWallet.
 export const PERSIST_VERSION = 1;
 
 // Slices that are never persisted (rebuilt from the network / per session).
@@ -71,7 +85,6 @@ const makePersistConfig = (slice, {blacklist, transforms} = {}) => ({
   version: PERSIST_VERSION,
   migrate: createMigrate({}, {debug: false}),
   timeout: 0,
-  throttle: 1000,
   ...(blacklist ? {blacklist} : {}),
   ...(transforms ? {transforms} : {}),
   // Dev only: per-slice serialize timing (R9a evidence); read with
@@ -137,6 +150,20 @@ const rejectedActionBreadcrumb = () => next => action => {
 // called from the background lifecycle handler next to persistor.flush().
 export const vaultSync = createVaultSync();
 
+// Key material must be on disk before the user can quit: the same actions the
+// vault writes immediately for also flush redux-persist right away (and
+// resetWallet, so an emptied wallet list is never rolled back by a kill).
+// `persistor` is assigned below; the effect only runs after dispatches.
+const persistFlush = createListenerMiddleware();
+persistFlush.startListening({
+  predicate: action =>
+    IMMEDIATE_VAULT_WRITE_ACTIONS.includes(action?.type) ||
+    action?.type === 'wallets/resetWallet',
+  effect: async () => {
+    await persistor.flush();
+  },
+});
+
 const store = configureStore({
   reducer: rootReducer,
   middleware: getDefaultMiddleware =>
@@ -144,7 +171,7 @@ const store = configureStore({
       serializableCheck: false,
       immutableCheck: false,
     })
-      .prepend(vaultSync.middleware)
+      .prepend(vaultSync.middleware, persistFlush.middleware)
       .concat(rejectedActionBreadcrumb),
 });
 

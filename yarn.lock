@@ -13451,10 +13451,10 @@ react-native-screens@^4.25.2:
     react-freeze "^1.0.0"
     warn-once "^0.1.0"
 
-react-native-sensitive-info@5.6.2:
-  version "5.6.2"
-  resolved "https://registry.yarnpkg.com/react-native-sensitive-info/-/react-native-sensitive-info-5.6.2.tgz#8f38a2f210f30c4f4204fc561adcf06b5465f98f"
-  integrity sha512-crIx/ptLfk3nszFkfoGhuAqHOJcVYtI8VMIVTdwpcM0Jl0xuvOKVKpP8E+unQB1NC5wtkJbaLP3TP31v7jeZ9w==
+react-native-sensitive-info@6.1.5:
+  version "6.1.5"
+  resolved "https://registry.yarnpkg.com/react-native-sensitive-info/-/react-native-sensitive-info-6.1.5.tgz#0e633bc346290b2655d77fec89d479838858a6e7"
+  integrity sha512-HDeoC8pRb/PnkSGOcq33kKh0TqGhUyYtCNvPdGEov1rdEwjwrC0gzjM3x4ViMd5vQx2jAI46nmIr02W+Is9YKA==
 
 react-native-share@^12.2.1:
   version "12.3.1"

@@ -22,7 +22,7 @@ Glossary, used throughout:
 | **KDF** | Key Derivation Function. Here PBKDF2-HMAC-SHA256 with 600 000 iterations and a 32-byte salt. Turns a password into a KEK slowly, on purpose. |
 | **AES-GCM** | The cipher used everywhere. Encrypts and also authenticates: if a single byte of ciphertext or of the wrong key is used, decryption fails loudly instead of returning garbage. |
 | **AAD** | Additional Authenticated Data. A purpose label baked into every ciphertext (`dok.dek.password.v1`, `dok.vault.v1`, `dok.state.v1`) so a ciphertext for one purpose can never be replayed as another. |
-| **Secure store** | iOS Keychain / Android Keystore, accessed through react-native-sensitive-info (RNSI), under our own keychain service `dok.vault`. |
+| **Secure store** | iOS Keychain / Android Keystore, accessed through react-native-sensitive-info 6 (RNSI, a Nitro module), under our own service `dok.vault` (`SECURE_STORE_KEYCHAIN_NAME`). |
 | **MMKV** | A fast key-value file store. We use one instance, `dok.state`, encrypted with AES-256, for the Redux slices. |
 | **Envelope** | The JSON shape a ciphertext is stored in: `{v, cipher, iv, ct, aad}` plus KDF parameters for the password wrap. |
 
@@ -89,7 +89,7 @@ flowchart TB
 | `vault.dek.password` | Envelope with `kdf {alg, iterations, salt}`, `iv`, `ct` (DEK + tag), `createdAt`, `updatedAt` | The app; useful only with the password | Registration, change password, KDF upgrade during login |
 | `vault.dek.biometric` | The raw DEK, base64 | Only after the OS biometric prompt succeeds | Enabled after first password login with the setting on; deleted on disable, on enrolment change, on logout |
 | `vault.blob` | Envelope of the secrets JSON `{v:1, wallets:{<clientId>: {phrase, privateKey, hideSettings, coins, chainExisting, deriveKeys}}}` | The app; useful only with the DEK | Every time wallet key material changes (see §7) |
-| `persist:<slice>` | redux-persist envelope per slice, secrets removed by transforms | The app | Every state change, throttled to once per second |
+| `persist:<slice>` | redux-persist envelope per slice, secrets removed by transforms | The app | On every state change (next tick), and flushed immediately after wallet-creating actions and reset |
 | `storage.schemaVersion` | `0` legacy, `2` migrated, `3` finalized | The app | Migration steps (see §10) |
 
 **For developers**
@@ -260,6 +260,8 @@ flowchart TD
   C --> D[OS prompt on read of vault.dek.biometric]
   D -- success --> E[raw DEK → decrypt vault.blob → completeUnlock]
   D -- "BIOMETRIC_CANCELLED" --> P
+  D -- "wrong finger" --> D
+  D -- "BIOMETRIC_LOCKED_OUT<br/>too many attempts, item kept" --> P
   D -- "BIOMETRIC_INVALIDATED<br/>enrolment changed" --> F[delete vault.dek.biometric] --> N
   P --> G[Password login succeeds]
   G --> H{fingerprint setting on<br/>and sensor enrolled<br/>and no copy yet?}
@@ -267,16 +269,26 @@ flowchart TD
   H -- no --> J[done]
 ```
 
-Two rules that look odd until you know why:
+Three rules that look odd until you know why:
 
-- **Enrolment never happens during migration or at boot.** react-native-sensitive-info evaluates the OS policy on every biometric-protected write, and on iOS falls back to the device passcode when biometrics cannot be evaluated. Writing the copy at boot would pop an OS dialog before the app has drawn anything.
+- **One prompt at a time, and no automatic re-prompt after a cancel or a
+  failure.** `LoginScreen` and `LoginModal` both mount the Login component,
+  and both used to prompt on mount and on every return to the foreground. The
+  OS prompt, and Android's PIN-based sensor recovery after a lockout, pause
+  and resume the app, so each round trip re-triggered a prompt: prompt → PIN →
+  prompt, forever. A shared gate (`security/biometricPromptGate.js`) allows one
+  prompt in flight, debounces re-prompts, and after a cancel or a terminal
+  failure only a fresh Login mount or the "Use fingerprint / face unlock"
+  button prompts again.
+
+- **Enrolment never happens during migration or at boot.** On Android react-native-sensitive-info shows the BiometricPrompt on every biometric-protected write (the Keystore key needs authentication); iOS 6.x writes the Keychain item without a prompt, but its resolver silently downgrades the policy when biometrics are unavailable. Writing the copy at boot would either pop an OS dialog before the app has drawn anything or store the DEK behind a weaker gate.
 - **`enableBiometric` deletes before it writes.** The Keychain keeps an existing item's access policy on update, so overwriting could silently keep an older, weaker policy.
 
 **For developers**
 
 - `vault.js`: `enableBiometric`, `disableBiometric`, `unlockWithBiometric`, `hasBiometric`, `isBiometricAvailable` (adapter: `FingerprintScanner.isSensorAvailable()`), `BIOMETRIC_ACCESS_CONTROL = 'biometryCurrentSet'`.
 - `unlockFlow.js`: `getBiometricUnlockState`, `canUnlockWithBiometric`, `unlockWithBiometric`; prompt copy in `src/security/biometricPrompt.js`.
-- RNSI option names differ: reads take `prompt`, writes take `authenticationPrompt`. `src/security/secureStore.js` maps them.
+- RNSI 6 takes `service` and `authenticationPrompt` on both reads and writes. `src/security/secureStore.js` always sends `accessControl` (the 6.x default is `secureEnclaveBiometry`), rejects a protected write whose returned `metadata.accessControl` is weaker than requested (RNSI 6 never fails a write over an unavailable policy), and rewrites the prompt for iOS (`{title, description}`; RNSI 6 would show `subtitle` on the fallback button). No lockout error code exists in 6.x: an OS lockout reaches Login as a generic failure ("Biometric unlock is not available right now").
 - The iOS simulator does not enforce Keychain access-control flags. Biometric unlock must be tested on a device.
 
 ---
@@ -302,7 +314,7 @@ sequenceDiagram
   participant SS as vault.blob
 
   T->>RS: createWallet/fulfilled → allWallets gains wallet + keys
-  par persist (throttled 1 s)
+  par persist (next tick, plus an immediate flush for this action)
     RS->>RP: serialize allWallets
     RP->>RP: strip SECRET_WALLET_FIELDS · cap 200 tx per coin · drop nft
     RP->>MM: set persist:wallets (no secrets)
@@ -443,7 +455,8 @@ Special cases handled on the way:
 
 - **Wallets from before `clientId` existed.** The runtime used to backfill ids after rehydrate. Migration runs earlier, so it assigns them itself and uses the same id for the stripped slice and the vault entry; `verifyMigration` refuses any wallet still without one.
 - **No password in the old state.** Onboarding was never finished. The secrets are kept in memory for this session as an orphan payload and persisted once Registration creates the vault.
-- **Pre-RNSI-5 Android builds.** The blob may sit in SharedPreferences instead of the Keystore-backed store. A one-time Android step copies it across first.
+- **Pre-RNSI-5 Android builds.** The blob may sit in plain SharedPreferences (`REDUX_SHARED_PREFERENCE_NAME`) instead of the Keystore-backed store. `readLegacyRoot` reads it from there directly (RNSI 6 caps writes at 1 MiB, so it is never copied across) and `removeLegacyRootBlob` clears it at finalisation.
+- **react-native-sensitive-info 5.6.2 Android store.** 6.x uses a different SharedPreferences layout. `android/.../SensitiveInfoV6Migration.kt` re-shapes every unprotected 5.6.2 entry into the 6.x envelope at `Application.onCreate`, before any JS runs, without decrypting anything (same ciphertext, IV and Keystore key). The 5.6.2 file is retained for now; a marker file `rnsi_v6_migration` makes the step idempotent. iOS needs nothing: both versions store the same Keychain item.
 - **Headless launch by a scheduled-payment notification.** There is no time budget for a 600 000-iteration KDF, so only the non-secret slices are written and the state machine stays at 0.
 
 **For developers**
@@ -468,6 +481,8 @@ Special cases handled on the way:
 | App killed mid-upgrade | Nothing; next launch redoes it | `schemaVersion=2` is the last write; leftover vault is destroyed and recreated | Old blob |
 | iOS reinstall with Keychain leftovers | Normal fresh install | MMKV file missing but a vault exists → vault and `storage.mmkvKey` destroyed | Nothing to lose; leftovers were from the removed install |
 | Face/fingerprint enrolment changed | Asked for password once, then biometrics re-enabled | `BIOMETRIC_INVALIDATED`: item deleted, `not_enrolled` state, re-enrol after password login | Everything |
+| Wrong finger, several times | Prompt stays open and retries; after the OS limit, "Biometric unlock is not available right now. Enter your password." | A failed match is not terminal (upstream 6.x behaviour). RNSI 6 has no lockout code, so the OS lockout arrives as an unclassified error: item kept, Sentry warning from Login's default branch | Everything |
+| Android asks for the device PIN inside the prompt to recover a locked-out sensor | Same notice; no new prompt until the user taps "Use fingerprint / face unlock" or types the password | The failed-attempt counter is per sensor, so it can trip after fewer misses than expected. A prompt completed by the PIN fails the biometric-only cipher and lands in the same generic branch; the prompt gate stops the foreground handler from re-prompting during the recovery round trip | Everything |
 | Vault write fails after creating a wallet | Nothing; Sentry warning | Snapshot stays dirty, retried with backoff and on background flush | Keys in memory until written; MMKV has the stripped wallet |
 | Legacy wallet without `clientId` | Nothing | Id assigned during split, same id in slice and vault | Its secrets |
 | Wallet on disk with no key in vault | "N wallets have no keys, restore from seed phrase" | `MISSING_SECRETS`; unlock refused; not counted as an attempt | Public data; keys must be re-imported |
@@ -522,7 +537,7 @@ Not covered yet, stated plainly:
 | Secure store adapter | `src/security/secureStore.js` | `get`, `set`, `remove`, `has`, `getFromService`, `isBiometricAvailable`, `SECURE_STORE_SERVICE` | `src/security/secureStore.test.js` |
 | Crypto adapter | `src/security/vaultCrypto.js` | `randomBytes`, `pbkdf2`, `hkdf`, `aesGcmEncrypt`, `aesGcmDecrypt` | `security/vaultCrypto.contract.test.js` |
 | Unlock orchestration | `src/security/unlockFlow.js` | `unlockWithPassword`, `unlockWithBiometric`, `getBiometricUnlockState`, `findWalletsWithoutKeys`, `isInvalidPassword`, `UNLOCK_ERROR_CODES` | exercised by the migration and store tests; UI in `LoginComponent` |
-| Store wiring | `src/redux/store.js` | one `persistReducer` per slice, `timeout: 0`, `throttle: 1000`, `vaultSync.middleware`, `rejectedActionBreadcrumb` | `src/redux/store.persist.guard.test.js` |
+| Store wiring | `src/redux/store.js` | one `persistReducer` per slice, `timeout: 0`, no throttle, `persistFlush` listener (flush on wallet-creating actions and reset), `vaultSync.middleware`, `rejectedActionBreadcrumb` | `src/redux/store.persist.guard.test.js` |
 | App entry | `App.js`, `index.js`, `src/components/MainApp.js`, `src/components/StorageErrorScreen.js` | foreground vs headless context, `PersistGate`, error screen with retry | `bootstrap.test.js` (headless path) |
 | Runtime hardening | `android/app/src/main/res/xml/backup_rules.xml`, `data_extraction_rules.xml`, `ios/*/…entitlements`, `src/hooks/usePreventScreenshot.js`, `src/services/logger/scrub.js` | backup exclusions, `NSFileProtectionComplete`, screenshot guard, log redaction | manual QA on device |
 

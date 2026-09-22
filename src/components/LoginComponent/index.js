@@ -49,6 +49,7 @@ import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useLocalNotification} from 'providers/hooks/useLocalNotification';
 import {addBreadcrumb, captureError} from 'services/logger';
+import {BIOMETRIC_OUTCOMES, biometricGate} from 'security/biometricPromptGate';
 
 const LoginComponent = ({onClose, visible}) => {
   const navigation = useNavigation();
@@ -64,6 +65,9 @@ const LoginComponent = ({onClose, visible}) => {
   // blocking problem (wallets without keys) that must not be dismissed.
   const [notice, setNotice] = useState(null);
   const [blocked, setBlocked] = useState(null);
+  // True once the vault reports a usable biometric copy: shows the manual
+  // "use fingerprint" affordance for after a cancelled/failed prompt.
+  const [biometricReady, setBiometricReady] = useState(false);
   const fingerprint = useSelector(isFingerprint);
   const allWallets = useSelector(selectAllWallets);
   const isNoAppUpdate = useSelector(isNoUpdateAvailable);
@@ -97,48 +101,77 @@ const LoginComponent = ({onClose, visible}) => {
   // OS shows its own prompt. When the setting is on but the item is missing
   // (Android right after migration, or after an enrollment change) the user
   // types the password once and unlockFlow re-creates it.
+  // One OS prompt at a time, shared across LoginScreen + LoginModal, and no
+  // automatic re-prompt after a cancel or a terminal failure: the OS prompt
+  // (and Android's lockout-recovery PIN screen) pause/resume the activity, so
+  // an unguarded foreground trigger looped prompt → PIN → prompt.
   const handleFingerprintAuth = useCallback(async () => {
     if (!fingerprint || !isNoAppUpdate) {
       return;
     }
-    const biometricState = await getBiometricUnlockState();
-    if (biometricState === 'unavailable') {
-      // No enrolled sensor (or a simulator): password only, no nagging.
+    if (!biometricGate.begin()) {
       return;
     }
-    if (biometricState === 'not_enrolled') {
-      setNotice(
-        `Enter your password once to enable ${WL_APP_NAME} biometric unlock.`,
-      );
-      return;
-    }
+    let outcome = BIOMETRIC_OUTCOMES.SKIPPED;
     try {
-      await dispatch(unlockWithBiometric());
-      dispatch(fingerprintAuthSuccess(true));
-      if (hasWallet()) {
-        redirectSuccess();
-      } else {
-        navigation.reset({
-          index: 0,
-          routes: [{name: 'ResetWallet', params: {isFromOnBoarding: true}}],
-        });
+      const biometricState = await getBiometricUnlockState();
+      if (biometricState === 'unavailable') {
+        // No enrolled sensor (or a simulator): password only, no nagging.
+        return;
       }
-    } catch (error) {
-      switch (error?.code) {
-        case UNLOCK_ERROR_CODES.BIOMETRIC_CANCELLED:
-          break;
-        case UNLOCK_ERROR_CODES.BIOMETRIC_INVALIDATED:
-          setNotice(
-            'Your device biometrics changed. Enter your password once to re-enable biometric unlock.',
-          );
-          break;
-        case UNLOCK_ERROR_CODES.MISSING_SECRETS:
-          setBlocked(error.message);
-          break;
-        default:
-          captureError(error, {tags: {area: 'auth', op: 'unlock_biometric'}});
-          setNotice('Biometric unlock failed. Enter your password.');
+      if (biometricState === 'not_enrolled') {
+        setNotice(
+          `Enter your password once to enable ${WL_APP_NAME} biometric unlock.`,
+        );
+        return;
       }
+      setBiometricReady(true);
+      try {
+        await dispatch(unlockWithBiometric());
+        outcome = BIOMETRIC_OUTCOMES.SUCCESS;
+        dispatch(fingerprintAuthSuccess(true));
+        if (hasWallet()) {
+          redirectSuccess();
+        } else {
+          navigation.reset({
+            index: 0,
+            routes: [{name: 'ResetWallet', params: {isFromOnBoarding: true}}],
+          });
+        }
+      } catch (error) {
+        outcome = BIOMETRIC_OUTCOMES.TERMINAL;
+        switch (error?.code) {
+          case UNLOCK_ERROR_CODES.BIOMETRIC_CANCELLED:
+            outcome = BIOMETRIC_OUTCOMES.CANCELLED;
+            break;
+          case UNLOCK_ERROR_CODES.BIOMETRIC_INVALIDATED:
+            setNotice(
+              'Your device biometrics changed. Enter your password once to re-enable biometric unlock.',
+            );
+            break;
+          case UNLOCK_ERROR_CODES.BIOMETRIC_LOCKED_OUT:
+            // OS lockout after repeated failures: expected user state, not a defect.
+            setNotice(
+              'Too many attempts. Biometric unlock is locked for now, enter your password.',
+            );
+            break;
+          case UNLOCK_ERROR_CODES.MISSING_SECRETS:
+            setBlocked(error.message);
+            break;
+          default:
+            // e.g. the OS completed the prompt with the device PIN during
+            // sensor recovery and the biometric-only key refused the cipher.
+            captureError(error, {
+              level: 'warning',
+              tags: {area: 'auth', op: 'unlock_biometric'},
+            });
+            setNotice(
+              'Biometric unlock is not available right now. Enter your password.',
+            );
+        }
+      }
+    } finally {
+      biometricGate.end(outcome);
     }
   }, [
     fingerprint,
@@ -152,6 +185,9 @@ const LoginComponent = ({onClose, visible}) => {
   useEffect(() => {
     dispatch(loadingOff());
     if (isNoAppUpdate) {
+      // A fresh Login mount is a user-visible moment: lift any suppression
+      // left by an earlier cancel/failure and prompt once.
+      biometricGate.reset();
       handleFingerprintAuth();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -159,7 +195,11 @@ const LoginComponent = ({onClose, visible}) => {
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
-      if (appState.current.match(/background/) && nextAppState === 'active') {
+      if (
+        appState.current.match(/background/) &&
+        nextAppState === 'active' &&
+        biometricGate.shouldAutoPrompt()
+      ) {
         handleFingerprintAuth();
       }
       appState.current = nextAppState;
@@ -300,6 +340,22 @@ const LoginComponent = ({onClose, visible}) => {
                     onPress={handleSubmit}>
                     <Text style={styles.buttonTitle}>Sign in</Text>
                   </TouchableOpacity>
+                  {fingerprint && biometricReady && !blocked ? (
+                    <TouchableOpacity
+                      style={styles.reset}
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        // Explicit user action lifts the post-cancel/failure
+                        // suppression; the gate still refuses a second prompt
+                        // while one is open.
+                        biometricGate.reset();
+                        handleFingerprintAuth();
+                      }}>
+                      <Text style={styles.resetText}>
+                        Use fingerprint / face unlock
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
               )}
             </Formik>
