@@ -8,10 +8,8 @@ import {
   loadingOff,
   loadingOn,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
-import {
-  getUserPassword,
-  getFingerprintAuth,
-} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
+import {getFingerprintAuth} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
+import * as vault from 'dok-wallet-blockchain-networks/security/vault';
 import {validationSchemaLogin} from 'utils/validationSchema';
 import ModalReset from 'components/ModalReset';
 import {isFingerprint} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
@@ -30,7 +28,6 @@ export const VerifyLoginScreen = ({navigation}) => {
   const [hide, setHide] = useState(true);
   const [wrong, setWrong] = useState(false);
   const [modal, setModal] = useState(false);
-  const storePassword = useSelector(getUserPassword);
   const fingerprint = useSelector(isFingerprint);
   const isFinger = useSelector(getFingerprintAuth);
 
@@ -68,10 +65,12 @@ export const VerifyLoginScreen = ({navigation}) => {
     }
   }, [isFinger, handleFingerprintAuth]);
 
-  const handleSubmit = values => {
+  const handleSubmit = async values => {
     dispatch(loadingOn());
     Keyboard.dismiss();
-    if (storePassword === values.password) {
+    // Verified by unwrapping the vault key, not by comparing a stored value.
+    const ok = await vault.verifyPassword(values.password).catch(() => false);
+    if (ok) {
       dispatch(loadingOff());
       dispatch(fingerprintAuthSuccess(true));
       navigation.navigate('VerifyCreate', {isHideNextButton: true});

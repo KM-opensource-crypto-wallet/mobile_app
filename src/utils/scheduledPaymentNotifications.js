@@ -22,6 +22,12 @@ import {
 } from 'utils/scheduledPaymentTriggerPlan';
 
 export const SCHEDULED_PAYMENT_NOTIFICATION_TYPE = 'scheduledPayment';
+// AsyncStorage key under which index.js parks a scheduled-payment PRESS it
+// received while the app was backgrounded (not killed); LocalNotificationProvider
+// consumes it once JS is active. Lives here (not in the provider) so index.js
+// can import it without evaluating redux/store at startup.
+export const SCHEDULED_PAYMENT_BACKGROUND_PRESS_STORAGE_KEY =
+  'scheduledPaymentBackgroundPress';
 const SCHEDULED_PAYMENT_CHANNEL_ID = 'scheduled-payments';
 
 // Pending local notifications the OS will hold for one app: Apple's

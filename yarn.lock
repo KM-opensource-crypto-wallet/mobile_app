@@ -13300,6 +13300,11 @@ react-native-localize@^3.6.0:
   resolved "https://registry.yarnpkg.com/react-native-localize/-/react-native-localize-3.7.0.tgz#4ad7347bf7a1756627f491f48cf7507e7356cf13"
   integrity sha512-6Ohx+zZzycC6zhNVBGM/u1U+O6Ww29YIFseeyXqsKcO/pTfjLcdE40IUJF4SVVwrdh00IMJwy90HjLGUaeqK7Q==
 
+react-native-mmkv@4.3.2:
+  version "4.3.2"
+  resolved "https://registry.yarnpkg.com/react-native-mmkv/-/react-native-mmkv-4.3.2.tgz#522978d2330932c538cce36093040826870ccb49"
+  integrity sha512-49OAyfkg0/TMWiWELZN6VuVQPZPhizwL4DTmp8b7B1md3dB/s3LH3mGfC3T+lp9W0y/rqxZMEnotLFTIbOAenQ==
+
 react-native-nitro-image@^0.15.1:
   version "0.15.1"
   resolved "https://registry.yarnpkg.com/react-native-nitro-image/-/react-native-nitro-image-0.15.1.tgz#afe8aeea82fe763ec5d74467156a4b4a70657042"
@@ -13446,10 +13451,10 @@ react-native-screens@^4.25.2:
     react-freeze "^1.0.0"
     warn-once "^0.1.0"
 
-react-native-sensitive-info@^5.6.2:
-  version "5.6.2"
-  resolved "https://registry.yarnpkg.com/react-native-sensitive-info/-/react-native-sensitive-info-5.6.2.tgz#8f38a2f210f30c4f4204fc561adcf06b5465f98f"
-  integrity sha512-crIx/ptLfk3nszFkfoGhuAqHOJcVYtI8VMIVTdwpcM0Jl0xuvOKVKpP8E+unQB1NC5wtkJbaLP3TP31v7jeZ9w==
+react-native-sensitive-info@6.1.5:
+  version "6.1.5"
+  resolved "https://registry.yarnpkg.com/react-native-sensitive-info/-/react-native-sensitive-info-6.1.5.tgz#0e633bc346290b2655d77fec89d479838858a6e7"
+  integrity sha512-HDeoC8pRb/PnkSGOcq33kKh0TqGhUyYtCNvPdGEov1rdEwjwrC0gzjM3x4ViMd5vQx2jAI46nmIr02W+Is9YKA==
 
 react-native-share@^12.2.1:
   version "12.3.1"
@@ -13737,11 +13742,6 @@ redux-mock-store@^1.5.5:
   integrity sha512-YxX+ofKUTQkZE4HbhYG4kKGr7oCTJfB0GLy7bSeqx86GLpGirrbUWstMnqXkqHNaQpcnbMGbof2dYs5KsPE6Zg==
   dependencies:
     lodash.isplainobject "^4.0.6"
-
-redux-persist-sensitive-storage@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/redux-persist-sensitive-storage/-/redux-persist-sensitive-storage-1.0.0.tgz#19f5e5bd8ce4c4a4bc852eec61d18360abe07b66"
-  integrity sha512-AD8JyDsTpj+H+ZOGcg1qs9MkdcNOmHsBu+QL2kq2aKDB5HaCjy15qP4eryz7RVhWBatu4WC51R//1bfKHNb6yg==
 
 redux-persist@^6.0.0:
   version "6.0.0"

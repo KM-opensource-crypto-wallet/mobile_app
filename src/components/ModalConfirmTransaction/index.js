@@ -10,7 +10,7 @@ import {Modal, Portal, Text, TextInput} from 'react-native-paper';
 import myStyles from './ModalConfirmTransactionStyles';
 import CloseIcon from 'assets/images/icons/close.svg';
 import {Formik} from 'formik';
-import {getUserPassword} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
+import * as vault from 'dok-wallet-blockchain-networks/security/vault';
 import {IS_IOS, useFloatingHeight} from 'utils/dimensions';
 import {validationSchemaFingerprintVerification} from 'utils/validationSchema';
 import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
@@ -41,8 +41,8 @@ const ModalConfirmTransaction = ({visible, hideModal, onSuccess}) => {
 
   const floatingModalHeight = useFloatingHeight();
   const keyboardHeight = useKeyboardHeight();
-  const storePassword = useSelector(getUserPassword);
   const [wrong, setWrong] = useState(false);
+  const [verifying, setVerifying] = useState(false);
 
   const fingerprint = useSelector(isFingerprint);
   const isSubmittingRef = useRef(false);
@@ -88,12 +88,25 @@ const ModalConfirmTransaction = ({visible, hideModal, onSuccess}) => {
     }
   }, [handleFingerprintAuth, visible]);
 
-  const onSubmit = values => {
-    const {currentPassword} = values;
-    if (currentPassword === storePassword) {
-      triggerSuccess();
-    } else {
+  // One PBKDF2 (600k) per confirm: the KDF is the verifier. `verifying`
+  // keeps a double tap from starting a second derivation.
+  const onSubmit = async values => {
+    if (verifying) {
+      return;
+    }
+    setVerifying(true);
+    try {
+      const ok = await vault.verifyPassword(values.currentPassword);
+      if (ok) {
+        triggerSuccess();
+      } else {
+        setWrong(true);
+      }
+    } catch (e) {
+      console.error('Error verifying password', e);
       setWrong(true);
+    } finally {
+      setVerifying(false);
     }
   };
 

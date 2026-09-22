@@ -45,18 +45,22 @@ export const googleDrive = {
         })
         .catch(reject);
     }),
-  googleSignOut: () =>
-    new Promise(async (resolve, reject) => {
-      try {
-        try {
-          await GoogleSignin.revokeAccess();
-        } catch {}
-        await GoogleSignin.signOut();
-        resolve(true);
-      } catch (error) {
-        reject(error);
-      }
-    }),
+  // Self-sufficient: callers outside Backup/Restore (Reset Wallet, Delete
+  // Account, Delete all data) never called configure(), and on Android the
+  // native signOut/revokeAccess reject with "apiClient is null - call
+  // configure() first" (iOS tolerates it). hasPreviousSignIn() needs no
+  // configuration, so skip the whole thing when there is no Google session.
+  googleSignOut: async () => {
+    if (!GoogleSignin.hasPreviousSignIn()) {
+      return false;
+    }
+    GoogleSignin.configure(googleConfigure);
+    try {
+      await GoogleSignin.revokeAccess();
+    } catch {}
+    await GoogleSignin.signOut();
+    return true;
+  },
   googleGetUser: () =>
     new Promise(async (resolve, reject) => {
       try {

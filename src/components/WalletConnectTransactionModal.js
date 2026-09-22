@@ -14,6 +14,7 @@ import {
   BackHandler,
 } from 'react-native';
 import FastImage from '@d11/react-native-fast-image';
+import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
 import {shallowEqual, useDispatch, useSelector} from 'react-redux';
 import Clipboard from '@react-native-clipboard/clipboard';
 import IoniconIcon from 'react-native-vector-icons/Ionicons';
@@ -22,7 +23,10 @@ import {getWalletConnect} from 'dok-wallet-blockchain-networks/service/walletcon
 import {ThemeContext} from 'theme/ThemeContext';
 import {selectWalletConnectTransactionData} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSelectors';
 import {SCREEN_WIDTH} from 'utils/dimensions';
-import {selectWalletConnectData} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
+import {
+  selectLivePrivateKey,
+  selectWalletConnectData,
+} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import WalletConnect from 'assets/images/WalletConnect.png';
 import {
   convertHexToUtf8IfPossible,
@@ -307,6 +311,10 @@ const BatchCallDataView = ({call, styles, theme}) => {
 };
 
 const WalletConnectTransactionModal = props => {
+  // Approving signs with the wallet key: the same password / biometric gate as
+  // every other send applies (D2). approveRequest runs once the confirm modal
+  // succeeds.
+  const [confirmVisible, setConfirmVisible] = useState(false);
   const transactionData = useSelector(selectWalletConnectTransactionData);
   const dispatch = useDispatch();
   const image = transactionData?.peerMeta?.icons[0] || null;
@@ -328,6 +336,17 @@ const WalletConnectTransactionModal = props => {
     const finalChains = Array.isArray(chains) ? chains : [];
     return finalChains.find(item => item.key === chainId);
   }, [chainId, sessionId, walletConnectData]);
+  // Per-session walletData is persisted without its private key; sign with
+  // the live coin that owns the session's address.
+  const selectSessionPrivateKey = useCallback(
+    state =>
+      selectLivePrivateKey(state, {
+        chain_name: walletData?.chain_name,
+        address: walletData?.address,
+      }),
+    [walletData?.chain_name, walletData?.address],
+  );
+  const livePrivateKey = useSelector(selectSessionPrivateKey);
 
   useEffect(() => {
     if (!isFocused) {
@@ -414,7 +433,7 @@ const WalletConnectTransactionModal = props => {
     }
   }, [transactionData, walletData]);
 
-  const onPressApprove = async () => {
+  const approveRequest = async () => {
     try {
       navigation.pop();
       dispatch(
@@ -429,7 +448,7 @@ const WalletConnectTransactionModal = props => {
           // CAIP-2 id of the request; picks the executor for chains that
           // serve more than one namespace (Hedera native vs eip155).
           chainId,
-          privateKey: walletData?.privateKey,
+          privateKey: walletData?.privateKey ?? livePrivateKey,
           walletAddress: walletData?.address,
           expectedSignerAddress:
             getTransactionRequestData?.expectedSignerAddress,
@@ -659,12 +678,20 @@ const WalletConnectTransactionModal = props => {
                 //     : theme.background,
                 // },
               ]}
-              onPress={onPressApprove}>
+              onPress={() => setConfirmVisible(true)}>
               <Text style={styles.buttonTitle}>{'Approve'}</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
+      <ModalConfirmTransaction
+        visible={confirmVisible}
+        hideModal={() => setConfirmVisible(false)}
+        onSuccess={() => {
+          setConfirmVisible(false);
+          approveRequest();
+        }}
+      />
     </DokSafeAreaView>
   );
 };

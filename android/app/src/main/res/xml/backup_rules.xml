@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and below (Auto Backup). Same exclusions as data_extraction_rules.xml. -->
+<full-backup-content>
+    <exclude domain="file" path="mmkv/" />
+    <exclude domain="sharedpref" path="sensitive_info.xml" />
+    <exclude domain="sharedpref" path="." />
+</full-backup-content>

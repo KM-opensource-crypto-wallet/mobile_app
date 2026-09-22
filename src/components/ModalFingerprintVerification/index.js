@@ -4,11 +4,13 @@ import {Modal, Portal, Text, TextInput} from 'react-native-paper';
 import myStyles from './ModalFingerprintVerificationStyles';
 import CloseIcon from 'assets/images/icons/close.svg';
 import {Formik} from 'formik';
-import {getUserPassword} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
+import * as vault from 'dok-wallet-blockchain-networks/security/vault';
+import {BIOMETRIC_PROMPT} from 'security/biometricPrompt';
+import {captureError} from 'services/logger';
 import {useFloatingHeight} from 'utils/dimensions';
 import {validationSchemaFingerprintVerification} from 'utils/validationSchema';
 import {useKeyboardHeight} from 'hooks/useKeyboardHeight';
-import {useSelector, useDispatch} from 'react-redux';
+import {useDispatch} from 'react-redux';
 import {updateFingerprint} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
 import {fingerprintAuthSuccess} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {ThemeContext} from 'theme/ThemeContext';
@@ -40,23 +42,36 @@ const ModalFingerprintVerification = ({
 
   const floatingModalHeight = useFloatingHeight();
   const keyboardHeight = useKeyboardHeight();
-  const storePassword = useSelector(getUserPassword);
   const [wrong, setWrong] = useState(false);
   const dispatch = useDispatch();
 
-  const handleSubmit = values => {
+  // Enabling biometrics = storing the DEK under the biometric-bound secure
+  // item (the OS prompts on Android for that write). Requires the vault to be
+  // unlocked, which it is while the app is signed in.
+  const handleSubmit = async values => {
     const {currentPassword} = values;
-    if (currentPassword === storePassword) {
-      dispatch(fingerprintAuthSuccess(true));
-      dispatch(updateFingerprint(true));
-      hideModal(false);
-      showToast({
-        type: 'successToast',
-        text1: `${getFingerprintName(fingerprintEnabled)} enabled successfully`,
-      });
-    } else {
+    const ok = await vault.verifyPassword(currentPassword).catch(() => false);
+    if (!ok) {
       setWrong(true);
+      return;
     }
+    try {
+      await vault.enableBiometric(BIOMETRIC_PROMPT);
+    } catch (error) {
+      captureError(error, {tags: {area: 'vault', op: 'enable_biometric'}});
+      showToast({
+        type: 'errorToast',
+        text1: `Could not enable ${getFingerprintName(fingerprintEnabled)}`,
+      });
+      return;
+    }
+    dispatch(fingerprintAuthSuccess(true));
+    dispatch(updateFingerprint(true));
+    hideModal(false);
+    showToast({
+      type: 'successToast',
+      text1: `${getFingerprintName(fingerprintEnabled)} enabled successfully`,
+    });
   };
 
   return (

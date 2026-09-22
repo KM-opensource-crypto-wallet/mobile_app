@@ -92,15 +92,16 @@ let iosAttestationAvailable = null;
 
 const storageOptions = {
   accessControl: 'none',
-  keychainService: process.env.REDUX_KEYCHAIN_NAME,
+  service: process.env.REDUX_KEYCHAIN_NAME,
 };
 
-// On Android react-native-sensitive-info throws when a key doesn't exist
-// (rather than returning null like iOS does). Wrapping in try/catch normalises
-// the behaviour across platforms so callers can simply check for null.
+// react-native-sensitive-info 6 returns `{value, metadata}` or null. A failed
+// read (Keystore not ready) is treated as "not registered" so the request
+// path degrades to a fresh registration instead of failing outright.
 const getStorageValue = async key => {
   try {
-    return await getItem(key, storageOptions);
+    const item = await getItem(key, storageOptions);
+    return item?.value ?? null;
   } catch {
     return null;
   }
