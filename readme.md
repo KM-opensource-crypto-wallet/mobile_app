@@ -121,6 +121,10 @@ This wallet handles private keys. If you find a vulnerability, please report it 
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+DOK Wallet is licensed under the **GNU General Public License v3.0 (GPL-3.0-only)** — see the [LICENSE](./LICENSE) file for the full text.
 
-**Trademark notice**: the names "DOK Wallet" and "KIML Wallet" and their logos are not covered by the MIT License. You are free to use, modify and redistribute the code, but forks and derived apps must not use these names or logos, or imply endorsement by the original authors, without written permission. Please rename and rebrand your fork.
+You may use, study, share and modify this software under the terms of the GPL-3.0. Any distributed derivative work (including a modified or rebranded fork) must also be released under the GPL-3.0 and make its complete corresponding source code available.
+
+**Trademark notice**: the names "DOK Wallet" and "KIML Wallet" and their logos are not covered by the GPL. Forks and derived apps must not use these names or logos, or imply endorsement by the original authors, without written permission. Please rename and rebrand your fork.
+
+**Third-party components**: some bundled dependencies ship under their own, non-GPL terms — notably the WalletConnect / Reown SDK (proprietary WalletConnect Community License) and BugfenderSDK (commercial). Combining them with this GPL-licensed program is covered by the GPL-3.0 §7 additional permission at the end of [LICENSE](./LICENSE); each component still remains subject to its own license terms independently of the GPL. See `license-audit/REPORT.md` for the full dependency-license breakdown.

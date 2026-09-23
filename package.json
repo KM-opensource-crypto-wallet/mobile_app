@@ -2,7 +2,7 @@
   "name": "coinswallet",
   "version": "0.0.1",
   "private": true,
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "scripts": {
     "dokwallet:android": "yarn clean:watchman && react-native run-android --mode=dokwalletDebug --appId=com.dok.wallet",
     "dokwallet:ios": "yarn clean:watchman && react-native run-ios --scheme coinswallet",
