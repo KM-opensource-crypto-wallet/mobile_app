@@ -9,22 +9,40 @@
 import * as vault from 'dok-wallet-blockchain-networks/security/vault';
 import {VAULT_ERROR_CODES} from 'dok-wallet-blockchain-networks/security/errors';
 import {
+  clearWalletSecrets,
   hydrateWalletSecrets,
   reassignCurrentWalletIfHidden,
   resetCoinsToDefaultAddressForPrivacyMode,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
-import {vaultUnlocked} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
+import {
+  vaultLocked,
+  vaultUnlocked,
+} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
+import {getHasAccount} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 import {isFingerprint} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {addBreadcrumb, captureError} from 'services/logger';
 import {bootstrapStorage} from 'redux/storage/bootstrap';
-import {finalizeLegacyMigration} from 'redux/storage/migrateLegacyRoot2';
+import {
+  commitOrphanLegacyMigration,
+  consumeOrphanVaultPayload,
+  finalizeLegacyMigration,
+} from 'redux/storage/migrateLegacyRoot2';
 import {vaultSync} from 'redux/store';
 import {BIOMETRIC_PROMPT} from './biometricPrompt';
 
 export const UNLOCK_ERROR_CODES = Object.freeze({
   ...VAULT_ERROR_CODES,
   MISSING_SECRETS: 'missing_secrets',
+  ACCOUNT_EXISTS: 'account_exists',
 });
+
+export class AccountExistsError extends Error {
+  constructor() {
+    super('An account already exists on this device. Log in instead.');
+    this.name = 'AccountExistsError';
+    this.code = UNLOCK_ERROR_CODES.ACCOUNT_EXISTS;
+  }
+}
 
 export class MissingSecretsError extends Error {
   constructor(clientIds) {
@@ -71,15 +89,32 @@ const ensureBiometricEnrolled = async getState => {
   }
 };
 
+// A failed unlock must not leave a half-open session behind (keys hydrated
+// into the store, the vault holding the DEK) while the UI still shows the
+// lock screen.
+const rollbackUnlock = dispatch => {
+  try {
+    dispatch(clearWalletSecrets());
+  } finally {
+    vault.lock();
+    dispatch(vaultLocked());
+  }
+};
+
 const completeUnlock = async (dispatch, getState, payload, via) => {
-  dispatch(hydrateWalletSecrets(payload));
-  const missing = findWalletsWithoutKeys(getState().wallets?.allWallets);
-  if (missing.length) {
-    captureError(new Error('Wallets without secrets after unlock'), {
-      tags: {area: 'vault', op: 'missing_secrets'},
-      extra: {count: missing.length, via},
-    });
-    throw new MissingSecretsError(missing);
+  try {
+    dispatch(hydrateWalletSecrets(payload));
+    const missing = findWalletsWithoutKeys(getState().wallets?.allWallets);
+    if (missing.length) {
+      captureError(new Error('Wallets without secrets after unlock'), {
+        tags: {area: 'vault', op: 'missing_secrets'},
+        extra: {count: missing.length, via},
+      });
+      throw new MissingSecretsError(missing);
+    }
+  } catch (error) {
+    rollbackUnlock(dispatch);
+    throw error;
   }
   vaultSync.markSynced(payload);
   // Wallet housekeeping that needs the keys in place (was pre-unlock in main.js):
@@ -98,6 +133,44 @@ const completeUnlock = async (dispatch, getState, payload, via) => {
     });
   }
   await ensureBiometricEnrolled(getState);
+};
+
+/**
+ * Registration: create the vault for a new account. Refused while an account
+ * exists: an existing vault is only ever replaced through the explicit reset
+ * flow (wipeAllLocalData, Forgot / too many attempts). The one vault this
+ * replaces is a leftover from a wipe whose destroy step failed, where no
+ * account remains. Legacy wallets that were migrated without a password have
+ * their keys parked in memory; they are hydrated and written into the new
+ * vault here, and only then is the migration's schemaVersion advanced, so a
+ * kill before that redoes it.
+ */
+export const createAccount = password => async (dispatch, getState) => {
+  if (getHasAccount(getState())) {
+    throw new AccountExistsError();
+  }
+  if (await vault.hasVault()) {
+    await vault.destroy();
+  }
+  await vault.createVault(password);
+  const orphan = consumeOrphanVaultPayload();
+  if (orphan) {
+    // reset() first: it also drops any pending snapshot, so calling it after
+    // the hydrate would throw away the very write flush() is meant to land.
+    vaultSync.reset();
+    dispatch(hydrateWalletSecrets(orphan));
+  }
+  dispatch(vaultUnlocked());
+  addBreadcrumb('auth', 'vault.created', {});
+  // Same wallet housekeeping as completeUnlock (the master client id is set
+  // at store load in main.js): orphaned legacy wallets need the privacy-mode
+  // / hidden wallet passes that run on every unlock.
+  dispatch(resetCoinsToDefaultAddressForPrivacyMode());
+  dispatch(reassignCurrentWalletIfHidden());
+  if (orphan) {
+    await vaultSync.flush();
+    commitOrphanLegacyMigration(await bootstrapStorage());
+  }
 };
 
 export const unlockWithPassword = password => async (dispatch, getState) => {
