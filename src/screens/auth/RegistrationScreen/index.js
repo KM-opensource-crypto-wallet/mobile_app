@@ -3,9 +3,14 @@ import {TouchableOpacity, View, Text, Keyboard} from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {Formik} from 'formik';
 import {
+  loadingOff,
   loadingOn,
   signUpSuccess,
+  vaultUnlocked,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
+import * as vault from 'dok-wallet-blockchain-networks/security/vault';
+import {captureError} from 'services/logger';
+import {showToast} from 'utils/toast';
 // import styles from './RegistrationScreenStyles';
 import {validationSchemaRegistration} from 'utils/validationSchema';
 import {IS_IOS, useFloatingHeight} from 'utils/dimensions';
@@ -23,13 +28,29 @@ export const RegistrationScreen = ({navigation}) => {
   const [hideConfirm, setHideConfirm] = useState(true);
   const floatingBtnHeight = useFloatingHeight();
 
-  const handleSubmit = values => {
+  // The password never gets stored: it wraps a fresh vault key. Any vault left
+  // from a wiped account (Forgot / too many attempts) is replaced.
+  const handleSubmit = async values => {
     dispatch(loadingOn());
     Keyboard.dismiss();
-    setTimeout(() => {
-      dispatch(signUpSuccess(values.password));
-      navigation.replace('ResetWallet', {isFromOnBoarding: true});
-    }, 200);
+    try {
+      if (await vault.hasVault()) {
+        await vault.destroy();
+      }
+      await vault.createVault(values.password);
+    } catch (error) {
+      captureError(error, {tags: {area: 'vault', op: 'create'}});
+      dispatch(loadingOff());
+      showToast({
+        type: 'errorToast',
+        title: 'Could not create wallet storage',
+        message: 'Secure storage is unavailable. Please try again.',
+      });
+      return;
+    }
+    dispatch(signUpSuccess());
+    dispatch(vaultUnlocked());
+    navigation.replace('ResetWallet', {isFromOnBoarding: true});
   };
 
   return (

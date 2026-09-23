@@ -45,6 +45,7 @@ import {
   SCHEDULED_PAYMENT_NOTIFICATION_TYPE,
   cancelDisplayedRemindersForPayment,
   requestLocalNotificationPermission,
+  SCHEDULED_PAYMENT_BACKGROUND_PRESS_STORAGE_KEY,
 } from 'utils/scheduledPaymentNotifications';
 import {captureError} from 'services/logger';
 
@@ -79,8 +80,7 @@ const landOnHomeThen = (name, params) => {
 // payment PRESS it received while the app was backgrounded (not killed) —
 // there's no safe navigation target from that headless context, so it just
 // persists the payload here for this provider to pick up once JS is active.
-export const SCHEDULED_PAYMENT_BACKGROUND_PRESS_STORAGE_KEY =
-  'scheduledPaymentBackgroundPress';
+export {SCHEDULED_PAYMENT_BACKGROUND_PRESS_STORAGE_KEY} from 'utils/scheduledPaymentNotifications';
 
 export const LocalNotificationContext = createContext();
 

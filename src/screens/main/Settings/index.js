@@ -30,6 +30,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
 import FingerprintScanner from 'react-native-fingerprint-scanner';
 import {fingerprintAuthOut} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
+import * as vault from 'dok-wallet-blockchain-networks/security/vault';
 import {ThemeContext} from 'theme/ThemeContext';
 import InAppReview from 'react-native-in-app-review';
 import AddIcon from 'assets/images/sidebarIcons/Add.svg';
@@ -45,6 +46,7 @@ import {inAppBrowserOptions} from 'utils/common';
 import {openInAppBrowser} from 'utils/inAppBrowser';
 import {URLData} from 'utils/wlData';
 import {addBreadcrumb, captureError, logger} from 'services/logger';
+import {getPersistTimingStats} from 'redux/storage/persistTiming';
 import {showToast} from 'utils/toast';
 
 // Debug-only row for verifying the Sentry pipeline end to end (event, log,
@@ -76,6 +78,12 @@ const Settings = ({navigation}) => {
       } else {
         dispatch(updateFingerprint(!isSwitchOn));
         dispatch(fingerprintAuthOut());
+        // Remove the biometric-bound copy of the vault key.
+        vault
+          .disableBiometric()
+          .catch(e =>
+            captureError(e, {tags: {area: 'vault', op: 'disable_biometric'}}),
+          );
       }
     } else {
       setShowModalVarify(true);
@@ -96,6 +104,21 @@ const Settings = ({navigation}) => {
   const onChangeApplyRateLimit = value => {
     dispatch(setResetWallet(value));
   };
+
+  // Debug only: R9 evidence. Per-slice serialize timings and sizes since
+  // launch (p50/p95/max ms, last/max bytes) go to the console and Sentry logs.
+  const onPressPersistTiming = useCallback(() => {
+    const stats = getPersistTimingStats();
+    console.log('persist.timing', JSON.stringify(stats, null, 2));
+    logger.info('persist.timing', stats);
+    showToast({
+      type: 'successToast',
+      title: 'Persist timing logged',
+      message: `${
+        Object.keys(stats).length
+      } slice(s) recorded; see console / Sentry logs`,
+    });
+  }, []);
 
   const onPressSentryTest = useCallback(() => {
     // Everything below must show up redacted in Sentry: the breadcrumb
@@ -323,6 +346,27 @@ const Settings = ({navigation}) => {
                 <Text style={styles.btnTitle}>Send Sentry test event</Text>
                 <Text style={styles.btnText}>
                   Debug only: verifies error, log and redaction
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          {SHOW_SENTRY_DEV_TOOLS && (
+            <TouchableOpacity
+              onPress={onPressPersistTiming}
+              style={{
+                ...styles.btn,
+                borderBottomWidth: 0.5,
+                borderBottomColor: theme.gray,
+              }}>
+              <MaterialCommunityIcons
+                name={'timer-outline'}
+                size={25}
+                color={theme.font}
+              />
+              <View style={styles.box}>
+                <Text style={styles.btnTitle}>Log persist timing</Text>
+                <Text style={styles.btnText}>
+                  Debug only: per-slice serialize ms and bytes since launch
                 </Text>
               </View>
             </TouchableOpacity>

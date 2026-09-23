@@ -1,10 +1,9 @@
+import {createMigrate, persistReducer, persistStore} from 'redux-persist';
 import {
-  persistStore,
-  persistCombineReducers,
-  createTransform,
-} from 'redux-persist';
-import createSensitiveStorage from 'redux-persist-sensitive-storage';
-import {configureStore} from '@reduxjs/toolkit';
+  combineReducers,
+  configureStore,
+  createListenerMiddleware,
+} from '@reduxjs/toolkit';
 
 import {authSlice} from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {settingsSlice} from 'dok-wallet-blockchain-networks/redux/settings/settingsSlice';
@@ -32,110 +31,99 @@ import {coinSyncSlice} from 'dok-wallet-blockchain-networks/redux/coinSync/coinS
 import {sentAddressHistorySlice} from 'dok-wallet-blockchain-networks/redux/sentAddressHistory/sentAddressHistorySlice';
 import {exchangeHistorySlice} from 'dok-wallet-blockchain-networks/redux/exchangeHistory/exchangeHistorySlice';
 import {schedulePaymentSlice} from 'dok-wallet-blockchain-networks/redux/schedulePayment/schedulePaymentSlice';
+import {
+  AUTH_PERSIST_BLACKLIST,
+  batchTransactionPersistTransform,
+  createMessagePersistTransform,
+  createWalletsPersistTransform,
+  schedulePaymentPersistTransform,
+  sellCryptoPersistTransform,
+} from 'dok-wallet-blockchain-networks/redux/storage/persistTransforms';
+import {
+  IMMEDIATE_VAULT_WRITE_ACTIONS,
+  createVaultSync,
+} from 'dok-wallet-blockchain-networks/security/vaultSync';
 import {addBreadcrumb} from 'services/logger';
+import {mmkvStorage} from './storage/mmkvStorage';
+import {createTimedSerialize} from './storage/persistTiming';
 
-const storage = createSensitiveStorage({
-  keychainService: process.env.REDUX_KEYCHAIN_NAME,
-  /* Don't delete this line in newer react-native-sensitive-info this is deleted,
-   we are doing migration for android so it is for code reference */
-  // sharedPreferencesName: process.env.REDUX_SHARED_PREFERENCE_NAME,
-  accessControl: 'none',
+// Persistence layout (docs/superpowers/specs/2026-09-19-secure-storage-final-plan.md):
+//   - one redux-persist key per slice (`persist:auth`, `persist:wallets`, ...)
+//     in the AES-256 MMKV store, so a balance refresh re-serialises one slice,
+//     not the whole store, and never touches the platform secure store;
+//   - wallet secrets (mnemonics, private keys, xprvs, hidden-wallet hashes)
+//     are stripped on the way out by the wallets transform and live only in
+//     the vault (security/vault.js), kept in step by the vaultSync listener;
+//   - `timeout: 0` is mandatory: the default 5 s timer would rehydrate initial
+//     state after a slow bootstrap and then persist it over the real data;
+//   - no `throttle`: redux-persist serialises ONE top-level field per throttle
+//     tick and writes a slice only once every changed field has been processed,
+//     so `throttle: 1000` made the first wallets write after launch wait ~9 s
+//     (nine fields). A quit inside that window lost a freshly created wallet
+//     from MMKV while its keys sat orphaned in the vault. MMKV writes are
+//     synchronous and cheap, so the per-tick default is what the pre-vault
+//     store used too. `persistFlush` below additionally forces the write on
+//     the wallet-creating actions and on resetWallet.
+export const PERSIST_VERSION = 1;
+
+// Slices that are never persisted (rebuilt from the network / per session).
+const TRANSIENT_SLICES = [
+  currentTransferSlice,
+  exchangeSlice,
+  exchangeHistorySlice,
+  currencySlice,
+  walletConnectSlice,
+  extraDataSlice,
+  cryptoProviderSlice,
+  coinSyncSlice,
+  stakingSlice,
+];
+
+const makePersistConfig = (slice, {blacklist, transforms} = {}) => ({
+  key: slice.name,
+  storage: mmkvStorage,
+  version: PERSIST_VERSION,
+  migrate: createMigrate({}, {debug: false}),
+  timeout: 0,
+  ...(blacklist ? {blacklist} : {}),
+  ...(transforms ? {transforms} : {}),
+  // Dev only: per-slice serialize timing (R9a evidence); read with
+  // getPersistTimingStats() from redux/storage/persistTiming.
+  ...(__DEV__ ? {serialize: createTimedSerialize(slice.name)} : {}),
 });
-const walletsPersistTransform = createTransform(
-  inboundState => ({
-    ...inboundState,
-    allWallets: inboundState?.allWallets?.map(wallet =>
-      wallet?.hideSettings &&
-      wallet.hideSettings.relockOption !== RELOCK_OPTIONS.MANUAL
-        ? {...wallet, hideSettings: {...wallet.hideSettings, isHidden: true}}
-        : wallet,
-    ),
-  }),
-  outboundState => {
-    // In-flight "refresh all wallets" progress is UI state, not data: a
-    // rehydrated `true` (app quit mid-refresh) would leave the button
-    // spinning and disabled with no thunk left to clear it.
-    const refreshReset = {
-      isRefreshingAllWallets: false,
-      refreshingWalletClientId: null,
-      // Per-wallet requestIds of in-flight refreshCoins: none survive a quit.
-      refreshCoinsRequestIds: {},
-    };
-    // One-time migration for users persisted currentWalletIndex
-    if (outboundState?.currentWalletClientId) {
-      return {...outboundState, ...refreshReset};
-    }
-    const allWallets = outboundState?.allWallets?.map(wallet => ({
-      ...wallet,
-      clientId: wallet?.clientId,
-    }));
-    const {currentWalletIndex, ...restState} = outboundState || {};
-    return {
-      ...restState,
-      ...refreshReset,
-      allWallets,
-      currentWalletClientId:
-        allWallets?.[currentWalletIndex]?.clientId ||
-        allWallets?.[0]?.clientId ||
-        null,
-    };
-  },
-  {whitelist: [walletsSlice.name]},
-);
-// isSubmitting is in-flight UI state, not data — a rehydrated `true` (e.g.
-// the app was killed mid-submit) would leave the submit button permanently
-// disabled with no pending thunk left to ever flip it back. scheduledPayments
-// itself must still persist (it's the actual schedule data), so only reset
-// this one field on load rather than blacklisting the whole slice.
-const schedulePaymentPersistTransform = createTransform(
-  inboundState => inboundState,
-  outboundState => ({
-    ...outboundState,
-    isSubmitting: false,
-    pendingSubmitCount: 0,
-  }),
-  {whitelist: [schedulePaymentSlice.name]},
-);
 
-const config = {
-  key: process.env.REDUX_KEY,
-  storage,
-  transforms: [walletsPersistTransform, schedulePaymentPersistTransform],
-  blacklist: [
-    currentTransferSlice.name,
-    exchangeSlice.name,
-    exchangeHistorySlice.name,
-    currencySlice.name,
-    walletConnectSlice.name,
-    extraDataSlice.name,
-    cryptoProviderSlice.name,
-    coinSyncSlice.name,
-    stakingSlice.name,
-  ],
-};
+const persisted = (slice, options) =>
+  persistReducer(makePersistConfig(slice, options), slice.reducer);
 
-const rootReducer = persistCombineReducers(config, {
-  [authSlice.name]: authSlice.reducer,
-  // [coinsSlice.name]: coinsSlice.reducer,
-  [walletsSlice.name]: walletsSlice.reducer,
-  [settingsSlice.name]: settingsSlice.reducer,
-  [currentTransferSlice.name]: currentTransferSlice.reducer,
-  [currencySlice.name]: currencySlice.reducer,
-  [exchangeSlice.name]: exchangeSlice.reducer,
-  [exchangeHistorySlice.name]: exchangeHistorySlice.reducer,
-  [walletConnectSlice.name]: walletConnectSlice.reducer,
-  [stakingSlice.name]: stakingSlice.reducer,
-  [cryptoProviderSlice.name]: cryptoProviderSlice.reducer,
-  [extraDataSlice.name]: extraDataSlice.reducer,
-  [messageSlice.name]: messageSlice.reducer,
-  [sellCryptoSlice.name]: sellCryptoSlice.reducer,
-  [addressBookSlice.name]: addressBookSlice.reducer,
-  [batchTransactionSlice.name]: batchTransactionSlice.reducer,
-  [notificationAlertsSlice.name]: notificationAlertsSlice.reducer,
-  [customRpcSlice.name]: customRpcSlice.reducer,
-  [coinSyncSlice.name]: coinSyncSlice.reducer,
-  [sentAddressHistorySlice.name]: sentAddressHistorySlice.reducer,
-  [schedulePaymentSlice.name]: schedulePaymentSlice.reducer,
+export const rootReducer = combineReducers({
+  [authSlice.name]: persisted(authSlice, {blacklist: AUTH_PERSIST_BLACKLIST}),
+  [walletsSlice.name]: persisted(walletsSlice, {
+    transforms: [
+      createWalletsPersistTransform({
+        manualRelockOption: RELOCK_OPTIONS.MANUAL,
+      }),
+    ],
+  }),
+  [settingsSlice.name]: persisted(settingsSlice),
+  [messageSlice.name]: persisted(messageSlice, {
+    transforms: [createMessagePersistTransform()],
+  }),
+  [sellCryptoSlice.name]: persisted(sellCryptoSlice, {
+    transforms: [sellCryptoPersistTransform],
+  }),
+  [addressBookSlice.name]: persisted(addressBookSlice),
+  [batchTransactionSlice.name]: persisted(batchTransactionSlice, {
+    transforms: [batchTransactionPersistTransform],
+  }),
+  [notificationAlertsSlice.name]: persisted(notificationAlertsSlice),
+  [customRpcSlice.name]: persisted(customRpcSlice),
+  [sentAddressHistorySlice.name]: persisted(sentAddressHistorySlice),
+  [schedulePaymentSlice.name]: persisted(schedulePaymentSlice, {
+    transforms: [schedulePaymentPersistTransform],
+  }),
+  ...Object.fromEntries(
+    TRANSIENT_SLICES.map(slice => [slice.name, slice.reducer]),
+  ),
 });
 
 // Every failed thunk (~40 of them: exchange quotes, staking, currency, batch)
@@ -157,13 +145,34 @@ const rejectedActionBreadcrumb = () => next => action => {
   return next(action);
 };
 
+// Mirrors wallet secrets into the vault (immediately for wallet-creating
+// actions, debounced otherwise) and destroys it on resetWallet. `flush()` is
+// called from the background lifecycle handler next to persistor.flush().
+export const vaultSync = createVaultSync();
+
+// Key material must be on disk before the user can quit: the same actions the
+// vault writes immediately for also flush redux-persist right away (and
+// resetWallet, so an emptied wallet list is never rolled back by a kill).
+// `persistor` is assigned below; the effect only runs after dispatches.
+const persistFlush = createListenerMiddleware();
+persistFlush.startListening({
+  predicate: action =>
+    IMMEDIATE_VAULT_WRITE_ACTIONS.includes(action?.type) ||
+    action?.type === 'wallets/resetWallet',
+  effect: async () => {
+    await persistor.flush();
+  },
+});
+
 const store = configureStore({
   reducer: rootReducer,
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: false,
       immutableCheck: false,
-    }).concat(rejectedActionBreadcrumb),
+    })
+      .prepend(vaultSync.middleware, persistFlush.middleware)
+      .concat(rejectedActionBreadcrumb),
 });
 
 let persistor = persistStore(store, null, () => {

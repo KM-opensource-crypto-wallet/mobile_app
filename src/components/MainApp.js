@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {Provider} from 'react-redux';
-import {store} from 'redux/store';
+import {PersistGate} from 'redux-persist/integration/react';
+import {persistor, store} from 'redux/store';
 import {Provider as PaperProvider} from 'react-native-paper';
 import Main from 'components/main';
 import {ThemeProvider} from 'theme/ThemeContext';
@@ -50,14 +51,18 @@ export default function MainApp() {
     <LocalNotificationProvider>
       <ErrorBoundary onError={onError} FallbackComponent={ErrorComponent}>
         <Provider store={store}>
-          <PaperProvider>
-            <ThemeProvider>
-              <SafeAreaProvider>
-                {integrityReady && <Main />}
-                <Toasts />
-              </SafeAreaProvider>
-            </ThemeProvider>
-          </PaperProvider>
+          {/* Nothing renders until every persisted slice has rehydrated, so
+              routing never sees a pre-rehydration `hasAccount`. */}
+          <PersistGate loading={null} persistor={persistor}>
+            <PaperProvider>
+              <ThemeProvider>
+                <SafeAreaProvider>
+                  {integrityReady && <Main />}
+                  <Toasts />
+                </SafeAreaProvider>
+              </ThemeProvider>
+            </PaperProvider>
+          </PersistGate>
         </Provider>
       </ErrorBoundary>
     </LocalNotificationProvider>
