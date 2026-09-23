@@ -70,6 +70,8 @@ const migrationError = (code, message, cause) =>
 // for this session only; unlockFlow.createAccount hydrates and flushes them
 // into the vault once a password exists, then commits the migration.
 let orphanVaultPayload = null;
+/** Read without clearing: createAccount consumes only after the vault write. */
+export const peekOrphanVaultPayload = () => orphanVaultPayload;
 export const consumeOrphanVaultPayload = () => {
   const payload = orphanVaultPayload;
   orphanVaultPayload = null;
@@ -219,10 +221,14 @@ export const migrateLegacyRoot2 = async ({mmkv, context = 'foreground'}) => {
     // A non-wallet slice held a secret under a shape no sanitizer knows. The
     // data written below is already deep-stripped, so this is a report, never
     // a failure (a hard stop here would strand the user on StorageErrorScreen).
+    // Structure only: slice names, key names, normalized path patterns and
+    // counts, never a value. Keyed `residual`, not `residualSecrets`: the
+    // Sentry scrubber drops any key matching /secret/i, so the old name made
+    // beforeSend strip the whole diagnostic and the warning arrived empty.
     captureError(new Error('Legacy slices carried secrets outside wallets'), {
       level: 'warning',
       tags: {area: 'storage', op: 'migrate', step: 'sanitize_other_slices'},
-      extra: {residualSecrets},
+      extra: {residual: residualSecrets},
     });
   }
 

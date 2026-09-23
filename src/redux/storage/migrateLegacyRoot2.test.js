@@ -406,6 +406,44 @@ describe('migrateLegacyRoot2', () => {
     expect(() => getStateStore()).toThrow();
   });
 
+  it('a secret in a non-wallet slice is reported with diagnostics that survive the Sentry scrubber', async () => {
+    const slices = legacySlices();
+    // A shape no sanitizer knows: stripped and reported, never a failure.
+    slices.settings = {
+      ...slices.settings,
+      paymentUrlCoin: {symbol: 'ETH', privateKey: HEX(5)},
+    };
+    await seedLegacy(slices);
+    await bootstrapStorage();
+
+    const {captureError} = require('services/logger');
+    const call = captureError.mock.calls.find(
+      ([, options]) => options?.tags?.step === 'sanitize_other_slices',
+    );
+    expect(call).toBeDefined();
+    const [, {level, extra}] = call;
+    expect(level).toBe('warning');
+    expect(extra.residual).toEqual({
+      settings: {
+        count: 1,
+        keys: ['privateKey'],
+        pathPatterns: ['paymentUrlCoin.privateKey x1'],
+      },
+    });
+    // What Sentry receives after beforeSend's scrubObject: the key must not
+    // match the scrubber's /secret/i rule or the whole report disappears.
+    const {scrubObject} = require('services/logger/scrub');
+    expect(scrubObject(extra)).toEqual(extra);
+    const text = JSON.stringify(extra);
+    expect(text).not.toContain(HEX(5));
+    expect(text).not.toContain(MNEMONIC);
+    // The persisted slice is stripped.
+    const settings = parsePersistEnvelope(
+      getStateStore().getString('persist:settings'),
+    );
+    expect(settings.paymentUrlCoin).toEqual({symbol: 'ETH'});
+  });
+
   it('fresh install with no legacy blob goes straight to schema 3', async () => {
     const mmkv = await bootstrapStorage();
     expect(mmkv.getNumber(STORAGE_KEYS.schemaVersion)).toBe(

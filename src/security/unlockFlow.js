@@ -26,6 +26,7 @@ import {
   commitOrphanLegacyMigration,
   consumeOrphanVaultPayload,
   finalizeLegacyMigration,
+  peekOrphanVaultPayload,
 } from 'redux/storage/migrateLegacyRoot2';
 import {vaultSync} from 'redux/store';
 import {BIOMETRIC_PROMPT} from './biometricPrompt';
@@ -34,6 +35,7 @@ export const UNLOCK_ERROR_CODES = Object.freeze({
   ...VAULT_ERROR_CODES,
   MISSING_SECRETS: 'missing_secrets',
   ACCOUNT_EXISTS: 'account_exists',
+  VAULT_WRITE_FAILED: 'vault_write_failed',
 });
 
 export class AccountExistsError extends Error {
@@ -41,6 +43,16 @@ export class AccountExistsError extends Error {
     super('An account already exists on this device. Log in instead.');
     this.name = 'AccountExistsError';
     this.code = UNLOCK_ERROR_CODES.ACCOUNT_EXISTS;
+  }
+}
+
+export class VaultWriteError extends Error {
+  constructor() {
+    super(
+      'The wallet keys could not be written to secure storage. Please try again.',
+    );
+    this.name = 'VaultWriteError';
+    this.code = UNLOCK_ERROR_CODES.VAULT_WRITE_FAILED;
   }
 }
 
@@ -143,7 +155,10 @@ const completeUnlock = async (dispatch, getState, payload, via) => {
  * account remains. Legacy wallets that were migrated without a password have
  * their keys parked in memory; they are hydrated and written into the new
  * vault here, and only then is the migration's schemaVersion advanced, so a
- * kill before that redoes it.
+ * kill before that redoes it. The parked keys are released only once both the
+ * vault write and the commit succeeded: a failure keeps them parked for the
+ * next Registration submit and closes the half-open session, exactly like a
+ * failed unlock.
  */
 export const createAccount = password => async (dispatch, getState) => {
   if (getHasAccount(getState())) {
@@ -153,7 +168,9 @@ export const createAccount = password => async (dispatch, getState) => {
     await vault.destroy();
   }
   await vault.createVault(password);
-  const orphan = consumeOrphanVaultPayload();
+  // Peek, never consume here: consuming before the write landed would make a
+  // retry find nothing to migrate and leave the wallets without keys.
+  const orphan = peekOrphanVaultPayload();
   if (orphan) {
     // reset() first: it also drops any pending snapshot, so calling it after
     // the hydrate would throw away the very write flush() is meant to land.
@@ -168,8 +185,23 @@ export const createAccount = password => async (dispatch, getState) => {
   dispatch(resetCoinsToDefaultAddressForPrivacyMode());
   dispatch(reassignCurrentWalletIfHidden());
   if (orphan) {
-    await vaultSync.flush();
-    commitOrphanLegacyMigration(await bootstrapStorage());
+    try {
+      // flush() never rejects; false means a write failed and its snapshot is
+      // still dirty. Committing over that would advance schemaVersion with an
+      // empty vault, and a kill before the retry lands loses the keys for good.
+      if (!(await vaultSync.flush())) {
+        throw new VaultWriteError();
+      }
+      commitOrphanLegacyMigration(await bootstrapStorage());
+      consumeOrphanVaultPayload();
+    } catch (error) {
+      // Drop the dirty snapshot (its retry timer must not write into a vault
+      // the next attempt destroys and recreates) and close the session; the
+      // orphan payload stays parked for the retry.
+      vaultSync.reset();
+      rollbackUnlock(dispatch);
+      throw error;
+    }
   }
 };
 
