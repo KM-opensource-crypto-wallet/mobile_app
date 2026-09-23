@@ -6,9 +6,8 @@ import {
   loadingOff,
   loadingOn,
   signUpSuccess,
-  vaultUnlocked,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
-import * as vault from 'dok-wallet-blockchain-networks/security/vault';
+import {UNLOCK_ERROR_CODES, createAccount} from 'security/unlockFlow';
 import {captureError} from 'services/logger';
 import {showToast} from 'utils/toast';
 // import styles from './RegistrationScreenStyles';
@@ -28,19 +27,27 @@ export const RegistrationScreen = ({navigation}) => {
   const [hideConfirm, setHideConfirm] = useState(true);
   const floatingBtnHeight = useFloatingHeight();
 
-  // The password never gets stored: it wraps a fresh vault key. Any vault left
-  // from a wiped account (Forgot / too many attempts) is replaced.
+  // The password never gets stored: it wraps a fresh vault key (and, for
+  // legacy wallets migrated without one, receives their keys).
   const handleSubmit = async values => {
     dispatch(loadingOn());
     Keyboard.dismiss();
     try {
-      if (await vault.hasVault()) {
-        await vault.destroy();
-      }
-      await vault.createVault(values.password);
+      await dispatch(createAccount(values.password));
     } catch (error) {
-      captureError(error, {tags: {area: 'vault', op: 'create'}});
       dispatch(loadingOff());
+      if (error?.code === UNLOCK_ERROR_CODES.ACCOUNT_EXISTS) {
+        // Never replace an existing account's vault from here; only the
+        // reset flow may. Hand over to Login.
+        showToast({
+          type: 'errorToast',
+          title: 'Account already exists',
+          message: error.message,
+        });
+        navigation.replace('Login');
+        return;
+      }
+      captureError(error, {tags: {area: 'vault', op: 'create'}});
       showToast({
         type: 'errorToast',
         title: 'Could not create wallet storage',
@@ -49,7 +56,6 @@ export const RegistrationScreen = ({navigation}) => {
       return;
     }
     dispatch(signUpSuccess());
-    dispatch(vaultUnlocked());
     navigation.replace('ResetWallet', {isFromOnBoarding: true});
   };
 

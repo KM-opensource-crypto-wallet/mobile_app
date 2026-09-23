@@ -12,6 +12,13 @@
 // In the notifee headless task there is no time budget for a 600k PBKDF2, so
 // only the non-secret slices are written and the state machine stays at 0;
 // the next foreground launch redoes everything (spec §12.3.5).
+//
+// Legacy wallets without a password have no vault to hold their keys. The
+// slices are written but the keys are parked in memory (orphanVaultPayload)
+// and the state machine likewise stays at 0 until Registration has created the
+// vault and flushed them into it (unlockFlow.createAccount →
+// commitOrphanLegacyMigration). Writing 2 any earlier would make a kill before
+// that point skip the migration and leave the wallets without keys for good.
 import * as vault from 'dok-wallet-blockchain-networks/security/vault';
 import {getFromService} from 'security/secureStore';
 import {
@@ -60,9 +67,11 @@ const migrationError = (code, message, cause) =>
 
 // Legacy wallets found next to an empty password (onboarding never finished,
 // which resetWallet should make impossible). Their secrets are kept in memory
-// for this session only; RegistrationScreen's createVault + the vault listener
-// persist them once a password exists.
+// for this session only; unlockFlow.createAccount hydrates and flushes them
+// into the vault once a password exists, then commits the migration.
 let orphanVaultPayload = null;
+/** Read without clearing: createAccount consumes only after the vault write. */
+export const peekOrphanVaultPayload = () => orphanVaultPayload;
 export const consumeOrphanVaultPayload = () => {
   const payload = orphanVaultPayload;
   orphanVaultPayload = null;
@@ -191,6 +200,8 @@ export const migrateLegacyRoot2 = async ({mmkv, context = 'foreground'}) => {
   } catch (error) {
     captureError(error, {
       tags: {area: 'storage', op: 'migrate', step: 'parse'},
+      // Slice name only; the JSON itself never leaves the device.
+      extra: {slice: error?.slice ?? null},
     });
     throw migrationError(
       MIGRATION_ERROR_CODES.PARSE,
@@ -198,8 +209,28 @@ export const migrateLegacyRoot2 = async ({mmkv, context = 'foreground'}) => {
       error,
     );
   }
-  const {slices, vaultPayload, legacyWallets, password, counts} =
-    splitLegacyRoot(parsed.slices);
+  const {
+    slices,
+    vaultPayload,
+    legacyWallets,
+    password,
+    counts,
+    residualSecrets,
+  } = splitLegacyRoot(parsed.slices);
+  if (residualSecrets && Object.keys(residualSecrets).length) {
+    // A non-wallet slice held a secret under a shape no sanitizer knows. The
+    // data written below is already deep-stripped, so this is a report, never
+    // a failure (a hard stop here would strand the user on StorageErrorScreen).
+    // Structure only: slice names, key names, normalized path patterns and
+    // counts, never a value. Keyed `residual`, not `residualSecrets`: the
+    // Sentry scrubber drops any key matching /secret/i, so the old name made
+    // beforeSend strip the whole diagnostic and the warning arrived empty.
+    captureError(new Error('Legacy slices carried secrets outside wallets'), {
+      level: 'warning',
+      tags: {area: 'storage', op: 'migrate', step: 'sanitize_other_slices'},
+      extra: {residual: residualSecrets},
+    });
+  }
 
   if (context === 'headless') {
     writeSlices(mmkv, slices);
@@ -247,8 +278,13 @@ export const migrateLegacyRoot2 = async ({mmkv, context = 'foreground'}) => {
       MIGRATION_ERROR_CODES.VERIFY,
       `Migration self-check failed: ${verification.problems.join('; ')}`,
     );
+    // Structure-only diagnostics (normalized path patterns, field inventory,
+    // shape diffs, counts) so the failing path can be read off the event.
+    // String values under neutral keys: Sentry's scrubObject drops keys that
+    // look sensitive.
     captureError(error, {
       tags: {area: 'storage', op: 'migrate', step: 'verify'},
+      extra: {problems: verification.problems, ...verification.details},
     });
     throw error;
   }
@@ -261,15 +297,44 @@ export const migrateLegacyRoot2 = async ({mmkv, context = 'foreground'}) => {
   // creates the copy after the first password unlock, where a prompt is expected.
   vault.lock();
 
-  const now = Date.now();
-  mmkv.set(STORAGE_KEYS.migratedAt, now);
-  mmkv.set(STORAGE_KEYS.legacyRetainedAt, now);
-  mmkv.set(STORAGE_KEYS.schemaVersion, SCHEMA_VERSION.migrated);
+  if (orphanVaultPayload) {
+    // The keys are only in memory: leave schemaVersion at 0 so a kill before
+    // Registration redoes this from the blob instead of skipping it.
+    const totalMs = Date.now() - startedAt;
+    breadcrumb('pending', {...counts, totalMs, context});
+    logger.info('storage.migration_pending', {...counts, totalMs});
+    return {status: 'pending', counts, kdfMs, totalMs};
+  }
+
+  markMigrated(mmkv);
 
   const totalMs = Date.now() - startedAt;
   breadcrumb('done', {...counts, kdfMs, totalMs, context});
   logger.info('storage.migrated', {...counts, kdfMs, totalMs});
   return {status: 'migrated', counts, kdfMs, totalMs};
+};
+
+const markMigrated = mmkv => {
+  const now = Date.now();
+  mmkv.set(STORAGE_KEYS.migratedAt, now);
+  mmkv.set(STORAGE_KEYS.legacyRetainedAt, now);
+  mmkv.set(STORAGE_KEYS.schemaVersion, SCHEMA_VERSION.migrated);
+};
+
+/**
+ * 0 → 2 for the orphan path. Called by createAccount once the consumed orphan
+ * secrets have been written to the new vault. Returns true when advanced.
+ */
+export const commitOrphanLegacyMigration = mmkv => {
+  if (
+    (mmkv.getNumber(STORAGE_KEYS.schemaVersion) ?? SCHEMA_VERSION.legacy) !==
+    SCHEMA_VERSION.legacy
+  ) {
+    return false;
+  }
+  markMigrated(mmkv);
+  breadcrumb('orphan_committed', {});
+  return true;
 };
 
 /**
@@ -279,6 +344,9 @@ export const migrateLegacyRoot2 = async ({mmkv, context = 'foreground'}) => {
  * hydrated wallets do not match what was persisted (reported, legacy kept).
  */
 export const finalizeLegacyMigration = async ({mmkv, getState}) => {
+  if (orphanVaultPayload) {
+    return false;
+  }
   if (mmkv.getNumber(STORAGE_KEYS.schemaVersion) !== SCHEMA_VERSION.migrated) {
     return false;
   }

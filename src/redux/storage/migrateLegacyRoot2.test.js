@@ -19,6 +19,7 @@ import {
   MIGRATION_ERROR_CODES,
   RNSI_LEGACY_PREFS,
   RNSI_V6_MARKER,
+  commitOrphanLegacyMigration,
   consumeOrphanVaultPayload,
   finalizeLegacyMigration,
   migrateLegacyRoot2,
@@ -293,18 +294,40 @@ describe('migrateLegacyRoot2', () => {
     expect(await vault.hasVault()).toBe(true);
   });
 
-  it('empty password: plain slices, hasAccount=false, no vault, orphan secrets kept for the session', async () => {
+  it('empty password: plain slices, hasAccount=false, no vault, orphan secrets kept for the session, schema stays 0', async () => {
     await seedLegacy(legacySlices({password: ''}));
-    const mmkv = await bootstrapStorage();
-    expect(mmkv.getNumber(STORAGE_KEYS.schemaVersion)).toBe(
-      SCHEMA_VERSION.migrated,
-    );
+    let mmkv = await bootstrapStorage();
+    // The keys are only in memory, so the migration must not be marked done.
+    expect(mmkv.getNumber(STORAGE_KEYS.schemaVersion)).toBeUndefined();
     expect(
       parsePersistEnvelope(mmkv.getString('persist:auth')).hasAccount,
     ).toBe(false);
     expect(await vault.hasVault()).toBe(false);
+    // Finalisation never runs over pending orphan secrets.
+    expect(
+      await finalizeLegacyMigration({
+        mmkv,
+        getState: () => ({wallets: {allWallets: []}}),
+      }),
+    ).toBe(false);
+
+    // A kill before Registration redoes the migration from the blob instead
+    // of skipping it (which would leave the wallets without keys for good).
+    consumeOrphanVaultPayload();
+    resetBootstrap();
+    mmkv = await bootstrapStorage();
     const orphan = consumeOrphanVaultPayload();
     expect(Object.keys(orphan.wallets)).toEqual(['w1', 'w2']);
+    expect(consumeOrphanVaultPayload()).toBeNull();
+
+    // createAccount's last step, after the vault write: now it is migrated.
+    expect(commitOrphanLegacyMigration(mmkv)).toBe(true);
+    expect(mmkv.getNumber(STORAGE_KEYS.schemaVersion)).toBe(
+      SCHEMA_VERSION.migrated,
+    );
+    expect(commitOrphanLegacyMigration(mmkv)).toBe(false);
+    resetBootstrap();
+    await bootstrapStorage();
     expect(consumeOrphanVaultPayload()).toBeNull();
   });
 
@@ -341,6 +364,84 @@ describe('migrateLegacyRoot2', () => {
     expect(await legacyStillThere()).toBe(true);
     expect(await vault.hasVault()).toBe(false);
     expect(() => getStateStore()).toThrow();
+  });
+
+  it('a failed self-check reports structural diagnostics that survive the Sentry scrubber', async () => {
+    const slices = legacySlices();
+    // A secret under a field no stripper knows: the migrator must refuse to
+    // commit, and the report must say exactly where, without the value.
+    slices.wallets.allWallets[0].unknownField = {privateKey: HEX(4)};
+    await seedLegacy(slices);
+    await expect(bootstrapStorage()).rejects.toMatchObject({
+      code: MIGRATION_ERROR_CODES.VERIFY,
+    });
+    const {captureError} = require('services/logger');
+    const call = captureError.mock.calls.find(
+      ([, options]) => options?.tags?.step === 'verify',
+    );
+    expect(call).toBeDefined();
+    const [error, {extra}] = call;
+    expect(error.message).toMatch(/secrets left in migrated wallets: 1 field/);
+    expect(extra.problems).toEqual(
+      expect.arrayContaining([expect.stringMatching(/secrets left/)]),
+    );
+    expect(extra.leakedPathPatterns).toEqual([
+      'allWallets[*].unknownField.privateKey x1',
+    ]);
+    expect(extra.walletFieldInventory).toEqual(
+      expect.arrayContaining(['unknownField', 'coins[*].deriveAddresses']),
+    );
+    // What Sentry receives after beforeSend's scrubObject.
+    const {scrubObject} = require('services/logger/scrub');
+    const scrubbed = scrubObject(extra);
+    expect(scrubbed.leakedPathPatterns).toEqual(extra.leakedPathPatterns);
+    expect(scrubbed.walletFieldInventory).toEqual(extra.walletFieldInventory);
+    const text = JSON.stringify(extra);
+    expect(text).not.toContain(HEX(4));
+    expect(text).not.toContain(HEX(1));
+    expect(text).not.toContain(MNEMONIC);
+    expect(text).not.toContain('0xa0');
+    // Nothing committed.
+    expect(await legacyStillThere()).toBe(true);
+    expect(() => getStateStore()).toThrow();
+  });
+
+  it('a secret in a non-wallet slice is reported with diagnostics that survive the Sentry scrubber', async () => {
+    const slices = legacySlices();
+    // A shape no sanitizer knows: stripped and reported, never a failure.
+    slices.settings = {
+      ...slices.settings,
+      paymentUrlCoin: {symbol: 'ETH', privateKey: HEX(5)},
+    };
+    await seedLegacy(slices);
+    await bootstrapStorage();
+
+    const {captureError} = require('services/logger');
+    const call = captureError.mock.calls.find(
+      ([, options]) => options?.tags?.step === 'sanitize_other_slices',
+    );
+    expect(call).toBeDefined();
+    const [, {level, extra}] = call;
+    expect(level).toBe('warning');
+    expect(extra.residual).toEqual({
+      settings: {
+        count: 1,
+        keys: ['privateKey'],
+        pathPatterns: ['paymentUrlCoin.privateKey x1'],
+      },
+    });
+    // What Sentry receives after beforeSend's scrubObject: the key must not
+    // match the scrubber's /secret/i rule or the whole report disappears.
+    const {scrubObject} = require('services/logger/scrub');
+    expect(scrubObject(extra)).toEqual(extra);
+    const text = JSON.stringify(extra);
+    expect(text).not.toContain(HEX(5));
+    expect(text).not.toContain(MNEMONIC);
+    // The persisted slice is stripped.
+    const settings = parsePersistEnvelope(
+      getStateStore().getString('persist:settings'),
+    );
+    expect(settings.paymentUrlCoin).toEqual({symbol: 'ETH'});
   });
 
   it('fresh install with no legacy blob goes straight to schema 3', async () => {
