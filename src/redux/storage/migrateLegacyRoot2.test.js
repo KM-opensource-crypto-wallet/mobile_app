@@ -381,12 +381,14 @@ describe('migrateLegacyRoot2', () => {
     );
     expect(call).toBeDefined();
     const [error, {extra}] = call;
-    expect(error.message).toMatch(/secrets left in migrated wallets: 1 field/);
+    expect(error.message).toMatch(
+      /plaintext keys left in migrated wallets: 1 field/,
+    );
     expect(extra.problems).toEqual(
-      expect.arrayContaining([expect.stringMatching(/secrets left/)]),
+      expect.arrayContaining([expect.stringMatching(/plaintext keys left/)]),
     );
     expect(extra.leakedPathPatterns).toEqual([
-      'allWallets[*].unknownField.privateKey x1',
+      'allWallets[*].unknownField.PK x1',
     ]);
     expect(extra.walletFieldInventory).toEqual(
       expect.arrayContaining(['unknownField', 'coins[*].deriveAddresses']),
@@ -426,8 +428,8 @@ describe('migrateLegacyRoot2', () => {
     expect(extra.residual).toEqual({
       settings: {
         count: 1,
-        keys: ['privateKey'],
-        pathPatterns: ['paymentUrlCoin.privateKey x1'],
+        keys: ['PK'],
+        pathPatterns: ['paymentUrlCoin.PK x1'],
       },
     });
     // What Sentry receives after beforeSend's scrubObject: the key must not
