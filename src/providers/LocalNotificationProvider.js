@@ -193,9 +193,15 @@ export const LocalNotificationProvider = ({children}) => {
     }
 
     const freshCoin = selectCurrentCoin(store.getState()) || coin;
+    // Balances decide which gas tokens qualify, so re-read the wallet the
+    // refresh just updated rather than the snapshot taken above.
+    const freshWallet =
+      selectAllWallets(store.getState()).find(
+        item => item?.clientId === wallet.clientId,
+      ) || wallet;
 
     const gasToken = payment.payGasWithToken
-      ? getSponsoredGasCoins(freshCoin?.chain_name, wallet?.coins)[0]
+      ? getSponsoredGasCoins(freshCoin?.chain_name, freshWallet?.coins)[0]
       : null;
     store.dispatch(
       updateCurrentTransferData({

@@ -104,7 +104,7 @@ const TransactionDetails = ({route, navigation}) => {
         status: recentTx.status,
         link: recentTx.link,
         url: recentTx.url || initialTransaction.url,
-        totalCourse: recentTx.totalCourse || initialTransaction.totalCourse,
+        totalCourse: recentTx.totalCourse ?? initialTransaction.totalCourse,
         blockNumber: recentTx.blockNumber,
         confirmations: recentTx.confirmations,
         contractAddress:
@@ -155,8 +155,7 @@ const TransactionDetails = ({route, navigation}) => {
       fetchTransaction();
     }, 30000);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchTransaction]);
 
   // ── Transaction type detection ──────────────────────────────────────────────
 

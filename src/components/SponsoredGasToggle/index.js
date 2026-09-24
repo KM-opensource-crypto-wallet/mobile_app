@@ -11,6 +11,7 @@ const SponsoredGasToggle = ({
   checked,
   onToggle,
   maxFeeDisplay,
+  disabled,
 }) => {
   const {theme} = useContext(ThemeContext);
   const styles = myStyles(theme);
@@ -21,11 +22,12 @@ const SponsoredGasToggle = ({
       <View style={styles.sponsoredGasRow}>
         <TouchableOpacity
           activeOpacity={0.6}
+          disabled={disabled}
           onPress={onToggle}
           style={styles.sponsoredGasLabelRow}>
           <Checkbox
             checked={checked}
-            onChange={onToggle}
+            onChange={disabled ? undefined : onToggle}
             size={24}
             customStyle={styles.sponsoredGasCheckbox}
           />

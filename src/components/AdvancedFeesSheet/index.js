@@ -67,7 +67,8 @@ const AdvancedFeesSheet = forwardRef(
       stackBehavior,
       payGasWithToken,
       gasTokenCandidates,
-      selectedGasTokenSymbol,
+      selectedGasTokenAddress,
+      gasTokenSelectDisabled,
       onSelectGasToken,
       // EIP-1559 extras. All optional: legacy chains and the Permit/Allowance
       // sheets omit them and get the single "Gas Price" input as before.
@@ -138,13 +139,14 @@ const AdvancedFeesSheet = forwardRef(
               <View style={styles.feesContainer}>
                 {gasTokenCandidates.map(item => (
                   <TouchableOpacity
-                    key={`gas_token_${item.symbol}`}
+                    key={`gas_token_${item.contractAddress}`}
+                    disabled={gasTokenSelectDisabled}
                     style={[
                       styles.feesItem,
-                      selectedGasTokenSymbol === item.symbol &&
+                      selectedGasTokenAddress === item.contractAddress &&
                         styles.feesItemSelected,
                     ]}
-                    onPress={() => onSelectGasToken(item.symbol)}>
+                    onPress={() => onSelectGasToken(item.contractAddress)}>
                     <Text style={styles.feesTitle}>{item.symbol}</Text>
                   </TouchableOpacity>
                 ))}

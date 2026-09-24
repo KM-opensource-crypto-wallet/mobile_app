@@ -629,12 +629,36 @@ const Transfer = ({navigation, route}) => {
   const activeGasToken = useMemo(
     () =>
       sponsoredGasCoins.find(
-        item => item.symbol === transferData?.gasTokenSymbol,
+        item => item.contractAddress === transferData?.gasTokenContractAddress,
       ) || sponsoredGasCoins[0],
-    [sponsoredGasCoins, transferData?.gasTokenSymbol],
+    [sponsoredGasCoins, transferData?.gasTokenContractAddress],
   );
 
+  // Keep redux aligned when the stored token is no longer available
+  useEffect(() => {
+    if (
+      payGasWithToken &&
+      activeGasToken &&
+      activeGasToken.contractAddress !== transferData?.gasTokenContractAddress
+    ) {
+      dispatch(
+        setCurrentTransferData({
+          gasTokenSymbol: activeGasToken.symbol,
+          gasTokenContractAddress: activeGasToken.contractAddress,
+        }),
+      );
+    }
+  }, [
+    dispatch,
+    payGasWithToken,
+    activeGasToken,
+    transferData?.gasTokenContractAddress,
+  ]);
+
   const requoteSponsoredGas = useCallback(() => {
+    if (isFetchingRef.current) {
+      return;
+    }
     setIsFetchingFeesAgain(true);
     isFetchingRef.current = true;
     dispatch(
@@ -674,8 +698,10 @@ const Transfer = ({navigation, route}) => {
   }, [dispatch, payGasWithToken, activeGasToken, requoteSponsoredGas]);
 
   const onSelectGasToken = useCallback(
-    symbol => {
-      const picked = sponsoredGasCoins.find(item => item.symbol === symbol);
+    contractAddress => {
+      const picked = sponsoredGasCoins.find(
+        item => item.contractAddress === contractAddress,
+      );
       if (!picked) {
         return;
       }
@@ -704,6 +730,7 @@ const Transfer = ({navigation, route}) => {
       tokenSymbol={activeGasToken.symbol}
       checked={payGasWithToken}
       onToggle={onToggleSponsoredGas}
+      disabled={isFetchingFeesAgain}
       maxFeeDisplay={
         payGasWithToken && !isFetchingSponsoredQuote
           ? transferData?.transactionFee
@@ -904,11 +931,26 @@ const Transfer = ({navigation, route}) => {
     setShowConfirmModal(true);
     isPauseCalculateFees.current = true;
   };
+  const gasTokenBalance = useMemo(
+    () =>
+      (currentWallet?.coins ?? []).find(
+        coin =>
+          coin?.chain_name === chainName &&
+          coin?.contractAddress === activeGasToken?.contractAddress,
+      )?.totalAmount,
+    [currentWallet?.coins, chainName, activeGasToken?.contractAddress],
+  );
+  const isGasTokenSameAsSentCoin =
+    activeGasToken?.contractAddress ===
+    transferData?.currentCoin?.contractAddress;
+
   const isDisabled = payGasWithToken
     ? isBalanceNotAvailable(
-        transferData?.currentCoin?.totalAmount,
+        gasTokenBalance,
         transferData?.transactionFee,
-        isSendFundScreen ? transferData?.amount : null,
+        isSendFundScreen && isGasTokenSameAsSentCoin
+          ? transferData?.amount
+          : null,
       )
     : isBalanceNotAvailable(
         transferData?.selectedUTXOsValue || balance,
@@ -1358,13 +1400,6 @@ const Transfer = ({navigation, route}) => {
                   }
                 </Text>
               )}
-              {!isCustomFeesValid && (
-                <Text style={styles.errorText}>
-                  {
-                    'Priority fee cannot be higher than max fee — fix it in Advanced Options.'
-                  }
-                </Text>
-              )}
               <TouchableOpacity
                 disabled={
                   isDisabled ||
@@ -1435,7 +1470,8 @@ const Transfer = ({navigation, route}) => {
         {...advancedFeesSheetProps}
         payGasWithToken={payGasWithToken}
         gasTokenCandidates={sponsoredGasCoins}
-        selectedGasTokenSymbol={activeGasToken?.symbol}
+        selectedGasTokenAddress={activeGasToken?.contractAddress}
+        gasTokenSelectDisabled={isFetchingFeesAgain}
         onSelectGasToken={onSelectGasToken}
       />
     </DokSafeAreaView>

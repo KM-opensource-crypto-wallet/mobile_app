@@ -159,7 +159,10 @@ const SendFunds = ({navigation, route}) => {
         return;
       }
 
-      if (!isNativeCoinAvailable && !values?.payGasWithToken) {
+      if (
+        !isNativeCoinAvailable &&
+        !(sponsoredGasToken && values?.payGasWithToken)
+      ) {
         showToast({
           type: 'errorToast',
           title: `Require ${currentCoin?.chain_display_name} chain`,

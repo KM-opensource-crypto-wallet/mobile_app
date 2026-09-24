@@ -45,7 +45,7 @@ const Drawer = createDrawerNavigator();
 
 const HIDE_SWAP_COUNTRIES = ['US'];
 
-export default function Sidebar({navigation, route}) {
+export default function Sidebar({navigation}) {
   const userWalletName = useSelector(selectCurrentWallet)?.walletName;
   const {theme} = useContext(ThemeContext);
   const [modal, setModal] = useState(false);
@@ -443,7 +443,7 @@ export default function Sidebar({navigation, route}) {
         <Drawer.Screen
           name="ContactUs"
           component={ContactUs}
-          options={({navigation: drawerNavigation}) => ({
+          options={({navigation: drawerNavigation, route: contactUsRoute}) => ({
             headerLeft: () => (
               <TouchableOpacity
                 style={{
@@ -451,7 +451,7 @@ export default function Sidebar({navigation, route}) {
                   paddingLeft: isIpad ? 50 : 11,
                 }}
                 onPress={() =>
-                  route?.params?.canGoBack || route?.params?.params?.canGoBack
+                  contactUsRoute?.params?.canGoBack
                     ? drawerNavigation.getParent()?.goBack()
                     : drawerNavigation.navigate('Home')
                 }>
