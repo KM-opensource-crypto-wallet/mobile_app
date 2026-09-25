@@ -634,27 +634,6 @@ const Transfer = ({navigation, route}) => {
     [sponsoredGasCoins, transferData?.gasTokenContractAddress],
   );
 
-  // Keep redux aligned when the stored token is no longer available
-  useEffect(() => {
-    if (
-      payGasWithToken &&
-      activeGasToken &&
-      activeGasToken.contractAddress !== transferData?.gasTokenContractAddress
-    ) {
-      dispatch(
-        setCurrentTransferData({
-          gasTokenSymbol: activeGasToken.symbol,
-          gasTokenContractAddress: activeGasToken.contractAddress,
-        }),
-      );
-    }
-  }, [
-    dispatch,
-    payGasWithToken,
-    activeGasToken,
-    transferData?.gasTokenContractAddress,
-  ]);
-
   const requoteSponsoredGas = useCallback(() => {
     if (isFetchingRef.current) {
       return;
@@ -680,6 +659,30 @@ const Transfer = ({navigation, route}) => {
         setEstimateStatus('failed');
       });
   }, [dispatch, flags, selectedFeesTypeRef]);
+
+  // Keep redux aligned when the stored token is no longer available
+  useEffect(() => {
+    if (
+      payGasWithToken &&
+      activeGasToken &&
+      activeGasToken.contractAddress !== transferData?.gasTokenContractAddress
+    ) {
+      dispatch(
+        setCurrentTransferData({
+          gasTokenSymbol: activeGasToken.symbol,
+          gasTokenContractAddress: activeGasToken.contractAddress,
+          sponsoredQuote: null,
+        }),
+      );
+      requoteSponsoredGas();
+    }
+  }, [
+    dispatch,
+    payGasWithToken,
+    activeGasToken,
+    transferData?.gasTokenContractAddress,
+    requoteSponsoredGas,
+  ]);
 
   const onToggleSponsoredGas = useCallback(() => {
     const next = !payGasWithToken;
@@ -751,6 +754,24 @@ const Transfer = ({navigation, route}) => {
     }
     return null;
   }, [isBatchTransaction, transferData?.transactionsData]);
+
+  const gasTokenAmountForBatchTransactions = useMemo(() => {
+    if (!isBatchTransaction || !activeGasToken?.contractAddress) {
+      return null;
+    }
+    const totalBN = (transferData?.transactionsData ?? []).reduce(
+      (sum, item) =>
+        item?.coinInfo?.contractAddress === activeGasToken?.contractAddress
+          ? sum.plus(new BigNumber(item.transferData?.amount || '0'))
+          : sum,
+      new BigNumber(0),
+    );
+    return totalBN.isZero() ? null : totalBN.toString();
+  }, [
+    isBatchTransaction,
+    transferData?.transactionsData,
+    activeGasToken?.contractAddress,
+  ]);
 
   const openAdvancedOptionsSheet = useCallback(() => {
     advancedOptionsSheetRef.current?.present();
@@ -950,7 +971,7 @@ const Transfer = ({navigation, route}) => {
         transferData?.transactionFee,
         isSendFundScreen && isGasTokenSameAsSentCoin
           ? transferData?.amount
-          : null,
+          : gasTokenAmountForBatchTransactions,
       )
     : isBalanceNotAvailable(
         transferData?.selectedUTXOsValue || balance,

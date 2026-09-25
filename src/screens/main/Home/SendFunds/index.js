@@ -166,7 +166,9 @@ const SendFunds = ({navigation, route}) => {
         showToast({
           type: 'errorToast',
           title: `Require ${currentCoin?.chain_display_name} chain`,
-          message: `Add ${currentCoin?.chain_display_name} to pay the network fee, or turn on "Pay gas fees with ${sponsoredGasToken?.symbol}".`,
+          message: sponsoredGasToken
+            ? `Add ${currentCoin?.chain_display_name} to pay the network fee, or turn on "Pay gas fees with ${sponsoredGasToken.symbol}".`
+            : `Add ${currentCoin?.chain_display_name} to pay the network fee.`,
         });
         return;
       }
