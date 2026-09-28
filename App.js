@@ -5,6 +5,7 @@ import {
   resetBootstrap,
   setBootstrapContext,
 } from 'redux/storage/bootstrap';
+import BootSplash from 'react-native-bootsplash';
 import StorageErrorScreen from 'components/StorageErrorScreen';
 import {captureError} from 'services/logger';
 
@@ -43,6 +44,16 @@ export default function App() {
     boot();
   }, [boot]);
 
+  // MainApp hides the splash once the store has loaded; on a fatal bootstrap
+  // it never mounts, so hide it here or StorageErrorScreen stays covered.
+  useEffect(() => {
+    if (status === 'fatal') {
+      BootSplash.hide({fade: true}).catch(e =>
+        captureError(e, {tags: {area: 'bootsplash'}}),
+      );
+    }
+  }, [status]);
+
   if (status === 'ready') {
     return <MainApp />;
   }
@@ -57,6 +68,7 @@ export default function App() {
       />
     );
   }
-  // BootSplash stays up until the store reports loaded, so nothing to draw.
+  // BootSplash stays up until the store reports loaded (or the fatal branch
+  // above hides it), so nothing to draw.
   return <View />;
 }

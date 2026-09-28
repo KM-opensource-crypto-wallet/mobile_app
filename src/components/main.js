@@ -35,13 +35,11 @@ import {getLockTime} from 'dok-wallet-blockchain-networks/redux/settings/setting
 import {
   createClientIdIfNotExist,
   createIfNotExistsMasterClientId,
-  hydrateWalletSecrets,
   rehideWalletsOnBackground,
   resetNfts,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {selectCurrentWalletClientId} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {persistor, store, vaultSync} from 'redux/store';
-import {consumeOrphanVaultPayload} from 'redux/storage/migrateLegacyRoot2';
 import {
   setupOneSignal,
   initOneSignal,
@@ -306,11 +304,7 @@ const Main = () => {
       // moved to unlockFlow: the privacy reset must see the hydrated derive keys,
       // otherwise it pairs the default address with a different address's key.
       // Legacy wallets migrated without a password have no vault yet; their
-      // secrets are held for this session until Registration creates one.
-      const orphanSecrets = consumeOrphanVaultPayload();
-      if (orphanSecrets) {
-        dispatch(hydrateWalletSecrets(orphanSecrets));
-      }
+      // keys stay parked until Registration → unlockFlow.createAccount.
       // Cold start's persist-rehydrate transform force-hides every
       // non-MANUAL-relock wallet again - delete the scheduled payments (and
       // reminders) of any wallet that reveals as hidden+locked with "Delete

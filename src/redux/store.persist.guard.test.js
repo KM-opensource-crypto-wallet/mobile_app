@@ -21,6 +21,7 @@ import {
   setWalletHideSettings,
   resetWallet,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {setRequestDetails} from 'dok-wallet-blockchain-networks/redux/sellCrypto/sellCryptoSlice';
 
 jest.mock('dok-wallet-blockchain-networks/cryptoChain', () => ({
   getChain: jest.fn(),
@@ -254,6 +255,71 @@ describe('store persistence guard', () => {
     expect(await vault.readSecrets()).toEqual(
       extractVaultPayload(store.getState().wallets.allWallets),
     );
+  });
+
+  it('strips coin copies held by the sellCrypto and batchTransaction slices', async () => {
+    const coin = {
+      _id: 'c1',
+      chain_name: 'ethereum',
+      symbol: 'ETH',
+      address: '0xa0',
+      privateKey: HEX(1),
+      deriveAddresses: [{address: '0xa1', privateKey: HEX(2)}],
+    };
+    store.dispatch(
+      setRequestDetails({
+        requestId: 'r1',
+        selectedFromAsset: coin,
+        selectedFromWallet: {clientId: 'w1', phrase: MNEMONIC, coins: [coin]},
+      }),
+    );
+    const tx = {
+      transactionId: 't1',
+      transferData: {amount: '1'},
+      coinInfo: coin,
+    };
+    store.dispatch({
+      type: 'batchTransaction/addBatchTransaction/fulfilled',
+      payload: {wallet_id: 'w1', chain_name: 'ethereum', transaction: tx},
+    });
+    store.dispatch({
+      type: 'batchTransaction/initializeFilters/fulfilled',
+      payload: {
+        filteredTransactions: [tx],
+        uniqueChains: ['ethereum'],
+        uniqueAddresses: ['0xa0'],
+        selectedChain: 'ethereum',
+        selectedAddress: '0xa0',
+        isValid: true,
+        invalid_reason: '',
+      },
+    });
+    await persistor.flush();
+
+    // In memory the copies keep their keys for this session.
+    expect(
+      store.getState().batchTransaction.filteredData.filteredTransactions[0]
+        .coinInfo.privateKey,
+    ).toBe(HEX(1));
+
+    const values = persistedValues();
+    expect(() => assertNoSecrets(values['persist:sellCrypto'])).not.toThrow();
+    expect(() =>
+      assertNoSecrets(values['persist:batchTransaction']),
+    ).not.toThrow();
+    expect(
+      values['persist:sellCrypto'].requestDetails.selectedFromAsset,
+    ).toEqual({
+      _id: 'c1',
+      chain_name: 'ethereum',
+      symbol: 'ETH',
+      address: '0xa0',
+      deriveAddresses: [{address: '0xa1'}],
+    });
+    expect(
+      values['persist:batchTransaction'].filteredData.filteredTransactions[0]
+        .coinInfo.address,
+    ).toBe('0xa0');
   });
 
   it('resetWallet empties the vault; logOutSuccess destroys it', async () => {
