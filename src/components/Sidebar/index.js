@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unstable-nested-components */
 import {
   createDrawerNavigator,
   DrawerContentScrollView,
@@ -45,7 +46,7 @@ const Drawer = createDrawerNavigator();
 
 const HIDE_SWAP_COUNTRIES = ['US'];
 
-export default function Sidebar({navigation, route}) {
+export default function Sidebar({navigation}) {
   const userWalletName = useSelector(selectCurrentWallet)?.walletName;
   const {theme} = useContext(ThemeContext);
   const [modal, setModal] = useState(false);
@@ -443,14 +444,18 @@ export default function Sidebar({navigation, route}) {
         <Drawer.Screen
           name="ContactUs"
           component={ContactUs}
-          options={({navigation}) => ({
+          options={({navigation: drawerNavigation, route: contactUsRoute}) => ({
             headerLeft: () => (
               <TouchableOpacity
                 style={{
                   padding: 11,
                   paddingLeft: isIpad ? 50 : 11,
                 }}
-                onPress={() => navigation.navigate('Home')}>
+                onPress={() =>
+                  contactUsRoute?.params?.canGoBack
+                    ? drawerNavigation.getParent()?.goBack()
+                    : drawerNavigation.navigate('Home')
+                }>
                 <BackIcon
                   width="22"
                   height="18"
