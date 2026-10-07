@@ -18,6 +18,7 @@ import ModalConfirmTransaction from 'components/ModalConfirmTransaction';
 import {shallowEqual, useDispatch, useSelector} from 'react-redux';
 import Clipboard from '@react-native-clipboard/clipboard';
 import IoniconIcon from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {getWalletConnect} from 'dok-wallet-blockchain-networks/service/walletconnect';
 
 import {ThemeContext} from 'theme/ThemeContext';
@@ -32,7 +33,6 @@ import {
   convertHexToUtf8IfPossible,
   decodeSolMessage,
   getCustomizePublicAddress,
-  isValidBigInt,
   parseBalance,
   safelyJsonParse,
   safelyJsonStringify,
@@ -40,7 +40,10 @@ import {
 import {currencySymbol} from 'data/currency';
 import BigNumber from 'bignumber.js';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import {setWalletConnectTransactionModal} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSlice';
+import {
+  clearWalletConnectTransactionData,
+  setWalletConnectTransactionModal,
+} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSlice';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {showToast} from 'utils/toast';
@@ -56,6 +59,14 @@ import {
   decodeEvmCalldata,
   UNDECODABLE_CALLDATA_WARNING,
 } from 'dok-wallet-blockchain-networks/helper/evmCalldata';
+import {
+  getEvmTxMaxFeeWei,
+  reviewEvmWalletConnectTx,
+} from 'dok-wallet-blockchain-networks/helper/evmTxReview';
+
+// Danger accent for calls that need an explicit acknowledgement — brand-neutral
+// so it reads the same in both dokwallet and kimlwallet themes.
+const DANGER = '#E5484D';
 
 export const ETH_SEND_TRANSACTION = 'eth_sendTransaction';
 export const ETH_SIGN_TRANSACTION = 'eth_signTransaction';
@@ -310,12 +321,88 @@ const BatchCallDataView = ({call, styles, theme}) => {
   );
 };
 
+// Review section for a single eth_sendTransaction / eth_signTransaction: the
+// risk banner, the decoded approval summary rows, the decoded method +
+// arguments (or selector + calldata when unknown) and the raw calldata, so the
+// user always sees exactly what the signer will sign (KIML-002).
+const TxCalldataView = ({review, styles, theme}) => {
+  if (!review) {
+    return null;
+  }
+  const {tx, risk} = review;
+  const hasData = !!tx?.data && tx.data !== '0x';
+  return (
+    <>
+      {risk.level === 'danger' && (
+        <View style={styles.dangerBanner}>
+          <MaterialCommunityIcons
+            name="shield-alert-outline"
+            size={18}
+            color={DANGER}
+          />
+          <Text style={styles.dangerBannerText}>{risk.reasons.join(' ')}</Text>
+        </View>
+      )}
+      {risk.level === 'warn' && (
+        <View style={styles.calldataWarning}>
+          <IoniconIcon name="warning-outline" size={16} color={theme.warning} />
+          <Text style={styles.calldataWarningText}>
+            {risk.reasons.join(' ')}
+          </Text>
+        </View>
+      )}
+      {risk.rows.map(row => (
+        <MessageValueRow
+          key={row.label}
+          label={row.label}
+          value={row.value}
+          styles={styles}
+          theme={theme}
+        />
+      ))}
+      {review.decoded?.kind === 'decoded' && (
+        <BatchCallDataView call={tx} styles={styles} theme={theme} />
+      )}
+      {hasData && (
+        <MessageValueRow
+          label={review.decoded?.kind === 'decoded' ? 'Raw data' : 'Calldata'}
+          value={tx.data}
+          styles={styles}
+          theme={theme}
+        />
+      )}
+    </>
+  );
+};
+
+const AcknowledgeRow = ({checked, onToggle, styles, theme}) => (
+  <TouchableOpacity
+    style={styles.checkboxRow}
+    onPress={onToggle}
+    activeOpacity={0.7}>
+    <MaterialCommunityIcons
+      name={checked ? 'checkbox-marked' : 'checkbox-blank-outline'}
+      size={24}
+      color={checked ? theme.background : theme.gray}
+    />
+    <Text style={styles.checkboxText}>
+      {'I understand the risk and want to continue'}
+    </Text>
+  </TouchableOpacity>
+);
+
 const WalletConnectTransactionModal = props => {
   // Approving signs with the wallet key: the same password / biometric gate as
   // every other send applies (D2). approveRequest runs once the confirm modal
   // succeeds.
   const [confirmVisible, setConfirmVisible] = useState(false);
-  const transactionData = useSelector(selectWalletConnectTransactionData);
+  // Snapshot of the request this screen was opened for. The screen is pushed
+  // per request and popped on close, so what the user reviews and approves is
+  // frozen here; the WalletConnect service also refuses new requests while
+  // this screen is open, and the thunk re-checks the id and digest.
+  const liveTransactionData = useSelector(selectWalletConnectTransactionData);
+  const [transactionData] = useState(() => liveTransactionData);
+  const [acknowledged, setAcknowledged] = useState(false);
   const dispatch = useDispatch();
   const image = transactionData?.peerMeta?.icons[0] || null;
   const title = transactionData?.peerMeta?.name || '';
@@ -367,6 +454,15 @@ const WalletConnectTransactionModal = props => {
     return () => backHandler.remove();
   }, []);
 
+  // Canonical allow-listed tx + decoded calldata + risk for EVM transactions.
+  const evmReview = useMemo(
+    () =>
+      isWalletConnectTransaction(method) && !isNonEVMChain(chainId)
+        ? reviewEvmWalletConnectTx(transactionData?.params?.[0], {chainId})
+        : null,
+    [method, chainId, transactionData],
+  );
+
   const getTransactionRequestData = useMemo(() => {
     if (isNonEVMChain(transactionData?.chainId)) {
       // Unmapped methods fall through with raw params so the request renders
@@ -393,6 +489,30 @@ const WalletConnectTransactionModal = props => {
           expectedSignerAddress: transactionData?.params?.[0]?.from,
         };
       }
+      if (evmReview) {
+        // eth_sendTransaction / eth_signTransaction: everything shown comes
+        // from the canonical tx the signer will receive. A malformed request
+        // renders with no tx and cannot be approved.
+        const tx = evmReview.tx;
+        if (!tx) {
+          return {finaltransactionData: {}, expectedSignerAddress: undefined};
+        }
+        const etherAmount = parseBalance(tx.value, 18);
+        const maxFeeWei = getEvmTxMaxFeeWei(tx);
+        const transactionFees =
+          maxFeeWei == null ? '0' : parseBalance(maxFeeWei, 18);
+        const fiatTransactionFees = BigNumber(transactionFees)
+          .multipliedBy(BigNumber(walletData?.currencyRate || '0'))
+          .toString();
+        return {
+          finaltransactionData: tx,
+          etherAmount,
+          expectedSignerAddress: tx.from,
+          transactionFees,
+          fiatTransactionFees,
+          toAddress: tx.to,
+        };
+      }
       const finaltransactionData = transactionData?.params?.[0] || {};
       const {signTypeData, expectedSignerAddress} = EVM_SIGN_REQUEST_HANDLERS[
         transactionData?.method
@@ -400,38 +520,13 @@ const WalletConnectTransactionModal = props => {
         signTypeData: transactionData?.params?.[1],
         expectedSignerAddress: undefined,
       };
-      if (finaltransactionData?.value) {
-        const etherAmount = finaltransactionData?.value
-          ? parseBalance(finaltransactionData?.value, 18)
-          : '';
-        const gasPrice =
-          isValidBigInt(finaltransactionData?.gasPrice) || BigInt(0);
-        const gasLimit =
-          isValidBigInt(finaltransactionData?.gasLimit) || BigInt(0);
-        const transactionFees = parseBalance(gasPrice * gasLimit, 18);
-        const transactionFeeBN = BigNumber(transactionFees);
-        const currencyRateBN = BigNumber(walletData?.currencyRate || '0');
-        const fiatTransactionFees = transactionFeeBN
-          .multipliedBy(currencyRateBN)
-          .toString();
-        const toAddress = finaltransactionData?.to;
-        return {
-          finaltransactionData,
-          etherAmount,
-          signTypeData,
-          expectedSignerAddress,
-          transactionFees,
-          fiatTransactionFees,
-          toAddress,
-        };
-      }
       return {
         finaltransactionData,
         signTypeData,
         expectedSignerAddress,
       };
     }
-  }, [transactionData, walletData]);
+  }, [transactionData, walletData, evmReview]);
 
   const onPressReject = useCallback(() => {
     navigation.pop();
@@ -447,7 +542,8 @@ const WalletConnectTransactionModal = props => {
       };
       connector.respondSessionRequest({topic, response});
     }
-  }, [id, navigation, topic]);
+    dispatch(clearWalletConnectTransactionData({id}));
+  }, [dispatch, id, navigation, topic]);
 
   const approveRequest = async () => {
     // walletData is persisted without secrets; the live key is gone after an
@@ -466,14 +562,19 @@ const WalletConnectTransactionModal = props => {
     }
     try {
       navigation.pop();
+      const isBatch = method?.includes('wallet_sendCalls');
       dispatch(
         walletConnect({
-          transactionData: {
-            ...getTransactionRequestData?.finaltransactionData,
-            batchCalls: transactionData?.params?.[0]?.calls,
-            from: transactionData?.from,
-          },
-          isBatchTransaction: transactionData?.isBatchTransaction,
+          transactionData: isBatch
+            ? {
+                ...getTransactionRequestData?.finaltransactionData,
+                batchCalls: transactionData?.params?.[0]?.calls,
+              }
+            : getTransactionRequestData?.finaltransactionData,
+          // Binds this approval to the reviewed request: the thunk rebuilds
+          // the tx from the store and refuses if id or digest differ.
+          reviewedTxDigest: evmReview?.digest,
+          reviewedRequestId: id,
           chain_name: walletData?.chain_name?.toLowerCase(),
           // CAIP-2 id of the request; picks the executor for chains that
           // serve more than one namespace (Hedera native vs eip155).
@@ -607,6 +708,12 @@ const WalletConnectTransactionModal = props => {
     isNaN(transactionFeeNumber) || BigNumber(transactionFeeNumber).lte(0)
       ? 0
       : transactionFee;
+  // Danger-level calls (unlimited approvals, operator grants, opaque or
+  // malformed calldata, contract creation) need an explicit acknowledgement;
+  // a malformed request can never be approved.
+  const needsAcknowledgement = evmReview?.risk?.level === 'danger';
+  const approveDisabled =
+    !!evmReview?.error || (needsAcknowledgement && !acknowledged);
 
   return (
     <DokSafeAreaView style={styles.modalStyle}>
@@ -620,7 +727,9 @@ const WalletConnectTransactionModal = props => {
         {method?.includes('wallet_sendCalls') ? (
           BatchCallsView()
         ) : isWalletConnectTransaction(method) ? (
-          <View style={styles.formInput}>
+          <ScrollView
+            style={styles.formScroll}
+            contentContainerStyle={styles.formInputContent}>
             <Text style={styles.amountTitle}>{`-${amount || 0} ${
               walletData?.symbol || ''
             }`}</Text>
@@ -651,10 +760,23 @@ const WalletConnectTransactionModal = props => {
               </View>
               <View style={styles.transferItemView}>
                 <Text style={styles.transferTitle}>{'To'}</Text>
-                <Text style={styles.boxBalance}>{`${getCustomizePublicAddress(
-                  getTransactionRequestData?.toAddress,
-                )}`}</Text>
+                <Text style={styles.boxBalance}>
+                  {getTransactionRequestData?.toAddress
+                    ? getCustomizePublicAddress(
+                        getTransactionRequestData?.toAddress,
+                      )
+                    : evmReview?.tx
+                    ? 'Contract creation'
+                    : '—'}
+                </Text>
               </View>
+            </View>
+            <View style={styles.box}>
+              <TxCalldataView
+                review={evmReview}
+                styles={styles}
+                theme={theme}
+              />
             </View>
             <View style={styles.box}>
               {!!finalTransactionFee && (
@@ -673,7 +795,15 @@ const WalletConnectTransactionModal = props => {
                 }${totalValue || 0}`}</Text>
               </View>
             </View>
-          </View>
+            {needsAcknowledgement && (
+              <AcknowledgeRow
+                checked={acknowledged}
+                onToggle={() => setAcknowledged(prev => !prev)}
+                styles={styles}
+                theme={theme}
+              />
+            )}
+          </ScrollView>
         ) : (
           MessageView()
         )}
@@ -683,14 +813,10 @@ const WalletConnectTransactionModal = props => {
               <Text style={styles.buttonTitle}>{'Reject'}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              // disabled={!isValidChain}
+              disabled={approveDisabled}
               style={[
                 styles.button,
-                // {
-                //   backgroundColor: !isValidChain
-                //     ? theme.gray
-                //     : theme.background,
-                // },
+                approveDisabled && {backgroundColor: theme.gray},
               ]}
               onPress={() => setConfirmVisible(true)}>
               <Text style={styles.buttonTitle}>{'Approve'}</Text>
@@ -746,7 +872,8 @@ const myStyles = theme =>
       paddingBottom: 20,
       paddingTop: 10,
       width: '100%',
-      height: '100%',
+      // flex: 1 alone fills the safe-area wrapper; a height of 100% also
+      // counted the wrapper's bottom inset and pushed the button row off-screen.
       alignItems: 'center',
       flex: 1,
     },
@@ -773,9 +900,9 @@ const myStyles = theme =>
       fontFamily: 'Roboto-Regular',
     },
     bottomView: {
-      flex: 1,
       justifyContent: 'flex-end',
       paddingHorizontal: '5%',
+      paddingTop: 12,
       width: '100%',
     },
     rowView: {
@@ -886,6 +1013,44 @@ const myStyles = theme =>
     formInput: {
       width: '100%',
       paddingHorizontal: '5%',
+    },
+    formScroll: {
+      flex: 1,
+      width: '100%',
+      paddingHorizontal: '5%',
+    },
+    formInputContent: {
+      paddingBottom: 12,
+    },
+    dangerBanner: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 8,
+      marginVertical: 10,
+      padding: 10,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: DANGER,
+    },
+    dangerBannerText: {
+      flex: 1,
+      fontSize: 13,
+      color: DANGER,
+      fontFamily: 'Roboto-Regular',
+      fontWeight: '600',
+    },
+    checkboxRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      marginTop: 16,
+      paddingVertical: 4,
+    },
+    checkboxText: {
+      flex: 1,
+      fontSize: 14,
+      color: theme.font,
+      fontFamily: 'Roboto-Regular',
     },
     amountTitle: {
       color: theme.font,

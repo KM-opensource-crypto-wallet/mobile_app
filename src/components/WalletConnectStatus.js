@@ -1,29 +1,22 @@
-import React, {useContext, useEffect, useMemo, useRef} from 'react';
+import React, {useContext, useMemo, useRef} from 'react';
 import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
 import {ThemeContext} from 'theme/ThemeContext';
-import {shallowEqual, useDispatch, useSelector} from 'react-redux';
-import {
-  selectAllWalletConnectSessions,
-  selectWalletConnectSessions,
-} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
-import {subscribeWalletConnect} from 'dok-wallet-blockchain-networks/service/walletconnect';
+import {shallowEqual, useSelector} from 'react-redux';
+import {selectWalletConnectSessions} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import WalletConnectList from 'components/WalletConnectList';
+import {useWalletConnectSessionRestore} from 'hooks/useWalletConnectSessionRestore';
 
 const WalletConnectStatus = () => {
   const {theme} = useContext(ThemeContext);
   const sessions = useSelector(selectWalletConnectSessions, shallowEqual);
-  const allSessions = useSelector(selectAllWalletConnectSessions, shallowEqual);
   const allSessionKeys = useMemo(() => {
     return Object.keys(sessions);
   }, [sessions]);
-  const dispatch = useDispatch();
   const walletConnectListRef = useRef();
 
-  useEffect(() => {
-    // dispatch(removeAllWalletConnectSession());
-    subscribeWalletConnect(allSessions).then();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Listeners for sessions restored from the previous run; re-runs once
+  // WalletKit has initialised (which on a cold launch is after this mounts).
+  useWalletConnectSessionRestore();
 
   const styles = MyStyles(theme);
   return allSessionKeys.length ? (
