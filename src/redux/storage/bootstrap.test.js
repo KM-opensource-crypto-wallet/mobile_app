@@ -14,7 +14,7 @@ import {
   resetBootstrap,
   setSchemaVersion,
 } from 'redux/storage/bootstrap';
-import {mmkvStorage} from 'redux/storage/mmkvStorage';
+import {blockWrites, mmkvStorage} from 'redux/storage/mmkvStorage';
 import {Platform} from 'react-native';
 import {
   wipeAllLocalData,
@@ -256,6 +256,15 @@ describe('storage bootstrap (mobile)', () => {
       expect(getStateStore().getString('persist:auth')).toBe('{"a":"1"}');
       await mmkvStorage.removeItem('persist:auth');
       expect(await mmkvStorage.getItem('persist:auth')).toBeNull();
+    });
+
+    it('a key whose stored copy failed to load is never overwritten', async () => {
+      await mmkvStorage.setItem('persist:messages', '{"kept":"1"}');
+      blockWrites('persist:messages');
+      await mmkvStorage.setItem('persist:messages', '{"empty":"1"}');
+      expect(await mmkvStorage.getItem('persist:messages')).toBe(
+        '{"kept":"1"}',
+      );
     });
   });
 

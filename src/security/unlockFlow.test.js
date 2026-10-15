@@ -47,6 +47,7 @@ jest.mock('dok-wallet-blockchain-networks/redux/wallets/walletsSlice', () => ({
   }),
 }));
 jest.mock('dok-wallet-blockchain-networks/redux/auth/authSlice', () => ({
+  resetAttempts: () => ({type: 'auth/resetAttempts'}),
   vaultLocked: () => ({type: 'auth/vaultLocked'}),
   vaultUnlocked: () => ({type: 'auth/vaultUnlocked'}),
 }));

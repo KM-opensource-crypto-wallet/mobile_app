@@ -15,6 +15,7 @@ import {
   resetCoinsToDefaultAddressForPrivacyMode,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {
+  resetAttempts,
   vaultLocked,
   vaultUnlocked,
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
@@ -149,6 +150,9 @@ const completeUnlock = async (dispatch, getState, payload, via) => {
   dispatch(resetCoinsToDefaultAddressForPrivacyMode());
   dispatch(reassignCurrentWalletIfHidden());
   dispatch(vaultUnlocked());
+  // Password and biometric alike: old failures must never add up to the
+  // opt-in "too many attempts" wipe on a later typo.
+  dispatch(resetAttempts());
   addBreadcrumb('auth', 'vault.unlocked', {via});
   try {
     const mmkv = await bootstrapStorage();
