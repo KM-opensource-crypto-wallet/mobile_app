@@ -20,7 +20,7 @@ import {
 } from 'dok-wallet-blockchain-networks/redux/auth/authSlice';
 import {getHasAccount} from 'dok-wallet-blockchain-networks/redux/auth/authSelectors';
 import {isFingerprint} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
-import {addBreadcrumb, captureError} from 'services/logger';
+import {addBreadcrumb, captureError, logger} from 'services/logger';
 import {bootstrapStorage} from 'redux/storage/bootstrap';
 import {
   commitOrphanLegacyMigration,
@@ -35,6 +35,7 @@ export const UNLOCK_ERROR_CODES = Object.freeze({
   ...VAULT_ERROR_CODES,
   MISSING_SECRETS: 'missing_secrets',
   ACCOUNT_EXISTS: 'account_exists',
+  VAULT_EXISTS: 'vault_exists',
   VAULT_WRITE_FAILED: 'vault_write_failed',
 });
 
@@ -43,6 +44,19 @@ export class AccountExistsError extends Error {
     super('An account already exists on this device. Log in instead.');
     this.name = 'AccountExistsError';
     this.code = UNLOCK_ERROR_CODES.ACCOUNT_EXISTS;
+  }
+}
+
+// Registration found a vault from earlier on this device: its wallets can still
+// be restored with the old password, so it is only replaced once the user has
+// chosen to start over (`discardExistingVault`).
+export class VaultExistsError extends Error {
+  constructor() {
+    super(
+      'Wallets from earlier are still saved on this device. Restore them with your old password, or delete them to start over.',
+    );
+    this.name = 'VaultExistsError';
+    this.code = UNLOCK_ERROR_CODES.VAULT_EXISTS;
   }
 }
 
@@ -150,9 +164,11 @@ const completeUnlock = async (dispatch, getState, payload, via) => {
 /**
  * Registration: create the vault for a new account. Refused while an account
  * exists: an existing vault is only ever replaced through the explicit reset
- * flow (wipeAllLocalData, Forgot / too many attempts). The one vault this
- * replaces is a leftover from a wipe whose destroy step failed, where no
- * account remains. Legacy wallets that were migrated without a password have
+ * flow (wipeAllLocalData, Forgot / too many attempts). A vault found without
+ * an account (a reinstall, a state store that came back empty, or a wipe whose
+ * destroy step failed) still holds wallet keys: it is refused with
+ * VaultExistsError until the user picks Restore (vaultRecovery) or confirms
+ * starting over (`discardExistingVault`). Legacy wallets that were migrated without a password have
  * their keys parked in memory; they are hydrated and written into the new
  * vault here, and only then is the migration's schemaVersion advanced, so a
  * kill before that redoes it. The parked keys are released only once both the
@@ -160,50 +176,58 @@ const completeUnlock = async (dispatch, getState, payload, via) => {
  * next Registration submit and closes the half-open session, exactly like a
  * failed unlock.
  */
-export const createAccount = password => async (dispatch, getState) => {
-  if (getHasAccount(getState())) {
-    throw new AccountExistsError();
-  }
-  if (await vault.hasVault()) {
-    await vault.destroy();
-  }
-  await vault.createVault(password);
-  // Peek, never consume here: consuming before the write landed would make a
-  // retry find nothing to migrate and leave the wallets without keys.
-  const orphan = peekOrphanVaultPayload();
-  if (orphan) {
-    // reset() first: it also drops any pending snapshot, so calling it after
-    // the hydrate would throw away the very write flush() is meant to land.
-    vaultSync.reset();
-    dispatch(hydrateWalletSecrets(orphan));
-  }
-  dispatch(vaultUnlocked());
-  addBreadcrumb('auth', 'vault.created', {});
-  // Same wallet housekeeping as completeUnlock (the master client id is set
-  // at store load in main.js): orphaned legacy wallets need the privacy-mode
-  // / hidden wallet passes that run on every unlock.
-  dispatch(resetCoinsToDefaultAddressForPrivacyMode());
-  dispatch(reassignCurrentWalletIfHidden());
-  if (orphan) {
-    try {
-      // flush() never rejects; false means a write failed and its snapshot is
-      // still dirty. Committing over that would advance schemaVersion with an
-      // empty vault, and a kill before the retry lands loses the keys for good.
-      if (!(await vaultSync.flush())) {
-        throw new VaultWriteError();
-      }
-      commitOrphanLegacyMigration(await bootstrapStorage());
-      consumeOrphanVaultPayload();
-    } catch (error) {
-      // Drop the dirty snapshot (its retry timer must not write into a vault
-      // the next attempt destroys and recreates) and close the session; the
-      // orphan payload stays parked for the retry.
-      vaultSync.reset();
-      rollbackUnlock(dispatch);
-      throw error;
+export const createAccount =
+  (password, {discardExistingVault = false} = {}) =>
+  async (dispatch, getState) => {
+    if (getHasAccount(getState())) {
+      throw new AccountExistsError();
     }
-  }
-};
+    if (await vault.hasVault()) {
+      // The orphan legacy path's keys are parked in memory, never in this vault.
+      if (!discardExistingVault && !peekOrphanVaultPayload()) {
+        throw new VaultExistsError();
+      }
+      addBreadcrumb('auth', 'vault.discarded', {by: 'registration'}, 'warning');
+      logger.warn('vault.discarded', {by: 'registration'});
+      await vault.destroy();
+    }
+    await vault.createVault(password);
+    // Peek, never consume here: consuming before the write landed would make a
+    // retry find nothing to migrate and leave the wallets without keys.
+    const orphan = peekOrphanVaultPayload();
+    if (orphan) {
+      // reset() first: it also drops any pending snapshot, so calling it after
+      // the hydrate would throw away the very write flush() is meant to land.
+      vaultSync.reset();
+      dispatch(hydrateWalletSecrets(orphan));
+    }
+    dispatch(vaultUnlocked());
+    addBreadcrumb('auth', 'vault.created', {});
+    // Same wallet housekeeping as completeUnlock (the master client id is set
+    // at store load in main.js): orphaned legacy wallets need the privacy-mode
+    // / hidden wallet passes that run on every unlock.
+    dispatch(resetCoinsToDefaultAddressForPrivacyMode());
+    dispatch(reassignCurrentWalletIfHidden());
+    if (orphan) {
+      try {
+        // flush() never rejects; false means a write failed and its snapshot is
+        // still dirty. Committing over that would advance schemaVersion with an
+        // empty vault, and a kill before the retry lands loses the keys for good.
+        if (!(await vaultSync.flush())) {
+          throw new VaultWriteError();
+        }
+        commitOrphanLegacyMigration(await bootstrapStorage());
+        consumeOrphanVaultPayload();
+      } catch (error) {
+        // Drop the dirty snapshot (its retry timer must not write into a vault
+        // the next attempt destroys and recreates) and close the session; the
+        // orphan payload stays parked for the retry.
+        vaultSync.reset();
+        rollbackUnlock(dispatch);
+        throw error;
+      }
+    }
+  };
 
 export const unlockWithPassword = password => async (dispatch, getState) => {
   const payload = await vault.unlockWithPassword(password);

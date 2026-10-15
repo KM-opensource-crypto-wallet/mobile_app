@@ -1,5 +1,5 @@
 import React, {useContext, useState, useEffect} from 'react';
-import {TouchableOpacity, View, Text, Keyboard} from 'react-native';
+import {Alert, TouchableOpacity, View, Text, Keyboard} from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {Formik} from 'formik';
 import {
@@ -29,13 +29,50 @@ export const RegistrationScreen = ({navigation}) => {
 
   // The password never gets stored: it wraps a fresh vault key (and, for
   // legacy wallets migrated without one, receives their keys).
-  const handleSubmit = async values => {
+  // Wallets from earlier are still saved on this device: restore them, or
+  // replace them only after a second, explicit confirmation.
+  const confirmStartOver = values =>
+    Alert.alert(
+      'Wallets found on this device',
+      'Wallets from earlier are still saved on this device. You can restore them with the password you used before.',
+      [
+        {
+          text: 'Restore wallets',
+          onPress: () => navigation.replace('RestoreFromDevice'),
+        },
+        {
+          text: 'Delete and start over',
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert(
+              'Delete saved wallets?',
+              'The saved wallets will be removed from this device for good. Only continue if you have their recovery phrases or a backup.',
+              [
+                {text: 'Cancel', style: 'cancel'},
+                {
+                  text: 'Delete',
+                  style: 'destructive',
+                  onPress: () =>
+                    handleSubmit(values, {discardExistingVault: true}),
+                },
+              ],
+            ),
+        },
+        {text: 'Cancel', style: 'cancel'},
+      ],
+    );
+
+  const handleSubmit = async (values, options) => {
     dispatch(loadingOn());
     Keyboard.dismiss();
     try {
-      await dispatch(createAccount(values.password));
+      await dispatch(createAccount(values.password, options));
     } catch (error) {
       dispatch(loadingOff());
+      if (error?.code === UNLOCK_ERROR_CODES.VAULT_EXISTS) {
+        confirmStartOver(values);
+        return;
+      }
       if (error?.code === UNLOCK_ERROR_CODES.ACCOUNT_EXISTS) {
         // Never replace an existing account's vault from here; only the
         // reset flow may. Hand over to Login.
@@ -76,7 +113,7 @@ export const RegistrationScreen = ({navigation}) => {
           <Formik
             initialValues={{password: '', passConfirm: ''}}
             validationSchema={validationSchemaRegistration}
-            onSubmit={handleSubmit}>
+            onSubmit={values => handleSubmit(values)}>
             {({
               handleChange,
               handleBlur,

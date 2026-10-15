@@ -6,6 +6,7 @@ import {IS_IOS, SCREEN_WIDTH} from 'utils/dimensions';
 
 const Stack = createStackNavigator();
 import {RegistrationScreen} from 'screens/auth/RegistrationScreen';
+import {RestoreFromDeviceScreen} from 'screens/auth/RestoreFromDeviceScreen';
 import {LoginScreen} from 'screens/auth/LoginScreen';
 import {CarouselCards} from 'components/CarouselCards';
 import {Learn} from 'components/VerifyInfo/Learn';
@@ -128,6 +129,10 @@ export const useRoute = isAuth => {
           <>
             <Stack.Screen name="CarouselCards" component={CarouselCards} />
             <Stack.Screen name="Registration" component={RegistrationScreen} />
+            <Stack.Screen
+              name="RestoreFromDevice"
+              component={RestoreFromDeviceScreen}
+            />
           </>
         )}
         <Stack.Screen name="Login" component={LoginScreen} />

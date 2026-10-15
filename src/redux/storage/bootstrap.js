@@ -4,10 +4,17 @@
 // synchronous exports and none of their import sites change.
 //
 // Order:
-//   1. reinstall detection (stale Keychain items, no MMKV file)
-//   2. MMKV key from the secure store (created on first run)
-//   3. open MMKV
+//   1. reinstall detection (no MMKV file): the stale MMKV key goes, the vault
+//      STAYS so its wallets can be restored with the old password
+//   2. MMKV key from the secure store (created on first run; never created
+//      next to an existing encrypted file, which is set aside instead)
+//   3. open MMKV (recover-on-error: a damaged file is repaired, not emptied)
 //   4. persist:root2 → per-slice + vault migration when schemaVersion is 0
+//   5. report a vault with no account (the store came back empty)
+//
+// Data-loss rule: nothing here ever deletes the vault or an encrypted state
+// file. Every unusual outcome is a Sentry log (`storage.*`), not only a
+// breadcrumb, so it can be traced without an error event.
 //      (the blob is read from the secure store, or on Android from the
 //      pre-RNSI-5 SharedPreferences — see migrateLegacyRoot2.readLegacyRoot)
 //
@@ -16,12 +23,13 @@
 // `unavailable` secure store (Keystore locked before first device unlock, in
 // the headless task) clears the memo so the next call can retry.
 import {createMMKV, existsMMKV} from 'react-native-mmkv';
+import {DocumentDirectoryPath, exists, mkdir, moveFile} from 'react-native-fs';
 import * as secureStore from 'security/secureStore';
 import {randomBytes} from 'security/vaultCrypto';
 import * as vault from 'dok-wallet-blockchain-networks/security/vault';
 import {base64Encode} from 'dok-wallet-blockchain-networks/security/bytes';
 import {SECURE_STORE_ERROR_CODES} from 'dok-wallet-blockchain-networks/security/errors';
-import {addBreadcrumb} from 'services/logger';
+import {addBreadcrumb, captureError, logger} from 'services/logger';
 
 export const STATE_MMKV_ID = 'dok.state';
 
@@ -57,14 +65,37 @@ export const setBootstrapContext = value => {
 };
 export const getBootstrapContext = () => context;
 
+// MMKV's default for a CRC or file-length error is to discard the whole file
+// silently. Recover keeps every entry that still reads back.
+export const STATE_RECOVERY_STRATEGY = 'recover-on-error';
+
 const openStateStore = encryptionKey =>
-  createMMKV({id: STATE_MMKV_ID, encryptionKey, encryptionType: 'AES-256'});
+  createMMKV({
+    id: STATE_MMKV_ID,
+    encryptionKey,
+    encryptionType: 'AES-256',
+    recoveryStrategy: STATE_RECOVERY_STRATEGY,
+  });
+
+// Both platforms keep MMKV files in `<documents>/mmkv/<id>` plus `.crc`.
+const STATE_DIR = `${DocumentDirectoryPath}/mmkv`;
+export const UNREADABLE_STATE_DIR = `${DocumentDirectoryPath}/mmkv-unreadable`;
+
+/**
+ * Logs every storage incident as a Sentry log (searchable without an error
+ * event) and as a breadcrumb for the next error report.
+ */
+const report = (event, data = {}, level = 'warn') => {
+  addBreadcrumb('storage', event, data, level === 'warn' ? 'warning' : level);
+  logger[level](event, {context, ...data});
+};
 
 /**
  * iOS Keychain items survive an uninstall; the MMKV file does not. A missing
- * state file next to existing vault items means the keychain is stale from a
- * previous install: wipe it so the new install starts clean instead of
- * inheriting a wrapped DEK no state refers to (spec §12.3.2).
+ * state file next to existing vault items is a reinstall, or a state file that
+ * disappeared. Only the MMKV key is stale; the vault keeps the wallets' keys
+ * and the onboarding offers to restore them with the old password
+ * (RestoreFromDevice). Registration replaces it only after the user agrees.
  */
 const detectReinstall = async () => {
   if (existsMMKV(STATE_MMKV_ID)) {
@@ -73,19 +104,78 @@ const detectReinstall = async () => {
   if (!(await vault.hasVault())) {
     return false;
   }
-  await vault.destroy();
   await secureStore.remove(STORAGE_KEYS.mmkvKey);
-  addBreadcrumb('storage', 'storage.reinstall_detected', {}, 'warning');
+  report('storage.reinstall_detected', {vaultKept: true});
   return true;
+};
+
+/**
+ * The encrypted state file exists but its key is gone. Opening it with a new
+ * key would read nothing and the next write would overwrite it, so the file
+ * is moved aside (kept, never deleted) before a fresh store is created.
+ */
+const setAsideUnreadableStore = async () => {
+  const stamp = Date.now();
+  await mkdir(UNREADABLE_STATE_DIR);
+  for (const suffix of ['', '.crc']) {
+    const from = `${STATE_DIR}/${STATE_MMKV_ID}${suffix}`;
+    if (await exists(from)) {
+      await moveFile(
+        from,
+        `${UNREADABLE_STATE_DIR}/${STATE_MMKV_ID}-${stamp}${suffix}`,
+      );
+    }
+  }
+  if (existsMMKV(STATE_MMKV_ID)) {
+    throw new Error('The unreadable state store could not be moved aside');
+  }
 };
 
 const getOrCreateMmkvKey = async () => {
   let key = await secureStore.get(STORAGE_KEYS.mmkvKey);
   if (!key) {
+    if (existsMMKV(STATE_MMKV_ID)) {
+      captureError(new Error('State store exists without its key'), {
+        tags: {area: 'storage', op: 'mmkv_key_missing'},
+      });
+      report('storage.key_missing_store_set_aside', {}, 'error');
+      await setAsideUnreadableStore();
+    }
     key = generateMmkvKey();
     await secureStore.set(STORAGE_KEYS.mmkvKey, key);
+    report('storage.key_created', {}, 'info');
   }
   return key;
+};
+
+const persistedHasAccount = mmkv => {
+  try {
+    const raw = mmkv.getString('persist:auth');
+    const value = raw ? JSON.parse(raw).hasAccount : undefined;
+    return value === true || value === 'true';
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * A vault with no account means the state store came back empty while the
+ * keys survived: the case that used to end in onboarding and a new vault over
+ * the old one. Reported as an error so it reaches Sentry with breadcrumbs.
+ */
+const reportVaultWithoutAccount = async (mmkv, reinstalled) => {
+  if (persistedHasAccount(mmkv) || !(await vault.hasVault())) {
+    return;
+  }
+  const data = {
+    reinstalled,
+    slices: mmkv.getAllKeys().filter(key => key.startsWith('persist:')).length,
+  };
+  report('storage.vault_without_account', data, 'error');
+  captureError(new Error('Vault found without an account'), {
+    tags: {area: 'storage', op: 'vault_without_account'},
+    extra: data,
+  });
 };
 
 const readSchemaVersion = mmkv =>
@@ -109,7 +199,7 @@ const runMigrations = async mmkv => {
   // marking it prevents a stray legacy blob from ever overwriting live data.
   mmkv.set(STORAGE_KEYS.schemaVersion, SCHEMA_VERSION.finalized);
   if (hasPersistedSlices(mmkv)) {
-    addBreadcrumb('storage', 'storage.schema_marker_restored', {}, 'warning');
+    report('storage.schema_marker_restored');
   }
 };
 
@@ -120,21 +210,24 @@ const run = async () => {
   const key = await getOrCreateMmkvKey();
   const mmkv = openStateStore(key);
   if (!mmkv.contains(STORAGE_KEYS.installId)) {
+    // A store without an install id is a fresh (or emptied) one.
+    report('storage.new_store', {reinstalled}, 'info');
     mmkv.set(STORAGE_KEYS.installId, base64Encode(randomBytes(12)));
   }
   await runMigrations(mmkv);
+  if (context !== 'headless') {
+    await reportVaultWithoutAccount(mmkv, reinstalled);
+  }
   instance = mmkv;
-  addBreadcrumb(
-    'storage',
-    'storage.bootstrapped',
-    {
-      ms: Date.now() - startedAt,
-      reinstalled,
-      context,
-      schemaVersion: readSchemaVersion(mmkv),
-    },
-    'debug',
-  );
+  const summary = {
+    ms: Date.now() - startedAt,
+    reinstalled,
+    context,
+    schemaVersion: readSchemaVersion(mmkv),
+    hasAccount: persistedHasAccount(mmkv),
+  };
+  addBreadcrumb('storage', 'storage.bootstrapped', summary, 'debug');
+  logger.info('storage.bootstrapped', summary);
   return mmkv;
 };
 

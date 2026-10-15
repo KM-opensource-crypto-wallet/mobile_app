@@ -43,7 +43,8 @@ import {
   IMMEDIATE_VAULT_WRITE_ACTIONS,
   createVaultSync,
 } from 'dok-wallet-blockchain-networks/security/vaultSync';
-import {addBreadcrumb} from 'services/logger';
+import {addBreadcrumb, captureError} from 'services/logger';
+import {isRestoringFromVault} from 'security/restoreState';
 import {mmkvStorage} from './storage/mmkvStorage';
 import {createTimedSerialize} from './storage/persistTiming';
 
@@ -148,7 +149,16 @@ const rejectedActionBreadcrumb = () => next => action => {
 // Mirrors wallet secrets into the vault (immediately for wallet-creating
 // actions, debounced otherwise) and destroys it on resetWallet. `flush()` is
 // called from the background lifecycle handler next to persistor.flush().
-export const vaultSync = createVaultSync();
+// While vaultRecovery rebuilds wallets with the vault locked on purpose, the
+// expected `write_while_locked` reports are dropped; everything else is kept.
+export const vaultSync = createVaultSync({
+  onError: (error, context) => {
+    if (isRestoringFromVault() && context?.tags?.op === 'write_while_locked') {
+      return;
+    }
+    captureError(error, context);
+  },
+});
 
 // Key material must be on disk before the user can quit: the same actions the
 // vault writes immediately for also flush redux-persist right away (and
