@@ -47,7 +47,10 @@ export const RestoreFromDeviceScreen = ({navigation}) => {
     } catch (e) {
       if (isInvalidPassword(e)) {
         setError('Wrong password. Use the password you had before.');
-      } else if (e?.code === RESTORE_ERROR_CODES.NOTHING_TO_RESTORE) {
+      } else if (
+        e?.code === RESTORE_ERROR_CODES.NOTHING_TO_RESTORE ||
+        e?.code === RESTORE_ERROR_CODES.TOO_MANY_ATTEMPTS
+      ) {
         setError(e.message);
       } else {
         setError(

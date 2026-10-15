@@ -10,6 +10,8 @@
 // removes the rebuilt wallets and leaves the old vault exactly as it was, so
 // the restore can be retried.
 import * as vault from 'dok-wallet-blockchain-networks/security/vault';
+import {VAULT_ERROR_CODES} from 'dok-wallet-blockchain-networks/security/errors';
+import * as secureStore from 'security/secureStore';
 import {
   createClientIdIfNotExist,
   createIfNotExistsMasterClientId,
@@ -32,7 +34,70 @@ import {setRestoringFromVault} from './restoreState';
 export const RESTORE_ERROR_CODES = Object.freeze({
   NOTHING_TO_RESTORE: 'restore_nothing',
   FAILED: 'restore_failed',
+  TOO_MANY_ATTEMPTS: 'restore_too_many_attempts',
 });
+
+// Wrong passwords on the restore screen. Kept in the secure store next to the
+// vault, so deleting and reinstalling the app does not reset it (a reinstall
+// is how this screen is reached). Never destroys the vault: that is the loss
+// this screen exists to prevent; guessing is slowed down instead.
+export const RESTORE_ATTEMPT_KEYS = Object.freeze({
+  failures: 'restore.failures',
+  lockedUntil: 'restore.lockedUntil',
+});
+export const RESTORE_FREE_ATTEMPTS = 5;
+const RESTORE_BASE_DELAY_MS = 30 * 1000;
+const RESTORE_MAX_DELAY_MS = 60 * 60 * 1000;
+
+/** Wait after `failures` wrong passwords: none for the first five, then 30 s doubling to 1 h. */
+export const restoreDelayMs = failures =>
+  failures < RESTORE_FREE_ATTEMPTS
+    ? 0
+    : Math.min(
+        RESTORE_BASE_DELAY_MS * 2 ** (failures - RESTORE_FREE_ATTEMPTS),
+        RESTORE_MAX_DELAY_MS,
+      );
+
+export class TooManyAttemptsError extends Error {
+  constructor(retryInMs) {
+    const minutes = Math.max(1, Math.ceil(retryInMs / 60000));
+    super(
+      `Too many wrong passwords. Try again in ${minutes} minute${
+        minutes === 1 ? '' : 's'
+      }.`,
+    );
+    this.name = 'TooManyAttemptsError';
+    this.code = RESTORE_ERROR_CODES.TOO_MANY_ATTEMPTS;
+    this.retryInMs = retryInMs;
+  }
+}
+
+const readNumber = async key => Number((await secureStore.get(key)) || 0) || 0;
+
+const assertNotLockedOut = async now => {
+  const lockedUntil = await readNumber(RESTORE_ATTEMPT_KEYS.lockedUntil);
+  if (lockedUntil > now) {
+    throw new TooManyAttemptsError(lockedUntil - now);
+  }
+};
+
+const recordWrongPassword = async now => {
+  const failures = (await readNumber(RESTORE_ATTEMPT_KEYS.failures)) + 1;
+  await secureStore.set(RESTORE_ATTEMPT_KEYS.failures, String(failures));
+  const delay = restoreDelayMs(failures);
+  if (delay) {
+    await secureStore.set(
+      RESTORE_ATTEMPT_KEYS.lockedUntil,
+      String(now + delay),
+    );
+  }
+  logger.warn('vault.restore_wrong_password', {failures});
+};
+
+const clearAttempts = async () => {
+  await secureStore.remove(RESTORE_ATTEMPT_KEYS.failures);
+  await secureStore.remove(RESTORE_ATTEMPT_KEYS.lockedUntil);
+};
 
 export class NothingToRestoreError extends Error {
   constructor() {
@@ -120,8 +185,19 @@ export const restoreFromVault = password => async (dispatch, getState) => {
   if (getHasAccount(getState())) {
     throw new AccountExistsError();
   }
-  // Throws INVALID_PASSWORD for a wrong password; nothing changes.
-  const payload = await vault.unlockWithPassword(password);
+  const now = Date.now();
+  await assertNotLockedOut(now);
+  // Throws INVALID_PASSWORD for a wrong password; nothing else changes.
+  let payload;
+  try {
+    payload = await vault.unlockWithPassword(password);
+  } catch (error) {
+    if (error?.code === VAULT_ERROR_CODES.INVALID_PASSWORD) {
+      await recordWrongPassword(now);
+    }
+    throw error;
+  }
+  await clearAttempts();
   vault.lock();
   const {plan, skipped} = buildRestorePlan(payload);
   if (!plan.length) {

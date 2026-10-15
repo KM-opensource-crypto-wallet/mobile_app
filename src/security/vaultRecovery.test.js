@@ -16,6 +16,16 @@ jest.mock('security/unlockFlow', () => ({
     code = 'account_exists';
   },
 }));
+const mockSecure = new Map();
+jest.mock('security/secureStore', () => ({
+  get: jest.fn(async key => mockSecure.get(key) ?? null),
+  set: jest.fn(async (key, value) => {
+    mockSecure.set(key, value);
+  }),
+  remove: jest.fn(async key => {
+    mockSecure.delete(key);
+  }),
+}));
 jest.mock('dok-wallet-blockchain-networks/security/vault', () => ({
   hasVault: jest.fn(async () => true),
   unlockWithPassword: jest.fn(),
@@ -56,8 +66,11 @@ jest.mock('dok-wallet-blockchain-networks/redux/wallets/walletSecrets', () => ({
 import * as vault from 'dok-wallet-blockchain-networks/security/vault';
 import {vaultSync} from 'redux/store';
 import {
+  RESTORE_ATTEMPT_KEYS,
   RESTORE_ERROR_CODES,
+  RESTORE_FREE_ATTEMPTS,
   buildRestorePlan,
+  restoreDelayMs,
   restoreFromVault,
 } from 'security/vaultRecovery';
 import {isRestoringFromVault} from 'security/restoreState';
@@ -138,6 +151,7 @@ describe('buildRestorePlan', () => {
 describe('restoreFromVault', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSecure.clear();
     vault.unlockWithPassword.mockResolvedValue(OLD);
     vault.isUnlocked.mockReturnValue(true);
   });
@@ -202,5 +216,52 @@ describe('restoreFromVault', () => {
       store.dispatch(restoreFromVault('old-pw')),
     ).rejects.toMatchObject({code: RESTORE_ERROR_CODES.NOTHING_TO_RESTORE});
     expect(vault.lock).toHaveBeenCalled();
+  });
+});
+
+// Reaching this screen only takes a reinstall, so wrong passwords are slowed
+// down with a counter kept in the Keychain (it survives the reinstall). The
+// vault itself is never destroyed for it.
+describe('restore password attempts', () => {
+  const wrong = () =>
+    vault.unlockWithPassword.mockRejectedValueOnce(
+      Object.assign(new Error('bad'), {code: 'invalid_password'}),
+    );
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSecure.clear();
+    vault.unlockWithPassword.mockResolvedValue(OLD);
+  });
+
+  it('waits 30 s after the fifth wrong password, doubling up to an hour', () => {
+    expect(restoreDelayMs(RESTORE_FREE_ATTEMPTS - 1)).toBe(0);
+    expect(restoreDelayMs(RESTORE_FREE_ATTEMPTS)).toBe(30000);
+    expect(restoreDelayMs(RESTORE_FREE_ATTEMPTS + 1)).toBe(60000);
+    expect(restoreDelayMs(50)).toBe(60 * 60 * 1000);
+  });
+
+  it('locks out after five wrong passwords without trying the vault', async () => {
+    const store = makeStore();
+    for (let i = 0; i < RESTORE_FREE_ATTEMPTS; i++) {
+      wrong();
+      await expect(store.dispatch(restoreFromVault('x'))).rejects.toMatchObject(
+        {code: 'invalid_password'},
+      );
+    }
+    vault.unlockWithPassword.mockClear();
+    await expect(
+      store.dispatch(restoreFromVault('old-pw')),
+    ).rejects.toMatchObject({code: RESTORE_ERROR_CODES.TOO_MANY_ATTEMPTS});
+    expect(vault.unlockWithPassword).not.toHaveBeenCalled();
+    expect(mockSecure.get(RESTORE_ATTEMPT_KEYS.failures)).toBe('5');
+  });
+
+  it('a right password clears the counter', async () => {
+    wrong();
+    const store = makeStore();
+    await expect(store.dispatch(restoreFromVault('x'))).rejects.toBeTruthy();
+    await store.dispatch(restoreFromVault('old-pw'));
+    expect(mockSecure.has(RESTORE_ATTEMPT_KEYS.failures)).toBe(false);
   });
 });
