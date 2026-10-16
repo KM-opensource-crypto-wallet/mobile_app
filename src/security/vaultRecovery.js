@@ -30,6 +30,10 @@ import {addBreadcrumb, captureError, logger} from 'services/logger';
 import {persistor, vaultSync} from 'redux/store';
 import {AccountExistsError} from './unlockFlow';
 import {setRestoringFromVault} from './restoreState';
+import {releaseBlockedWrites} from 'redux/storage/mmkvStorage';
+
+// The slices a restore rebuilds (account flag, wallets).
+const RESTORED_PERSIST_KEYS = ['persist:auth', 'persist:wallets'];
 
 export const RESTORE_ERROR_CODES = Object.freeze({
   NOTHING_TO_RESTORE: 'restore_nothing',
@@ -237,13 +241,32 @@ export const restoreFromVault = password => async (dispatch, getState) => {
         }),
       );
     }
-    vault.lock();
-    await clearWallets(dispatch).catch(() => {});
-    setRestoringFromVault(false);
+    // Cleanup must not replace the restore error or leave the flag set.
+    try {
+      try {
+        vault.lock();
+      } finally {
+        await clearWallets(dispatch);
+      }
+    } catch (cleanupError) {
+      captureError(cleanupError, {
+        tags: {area: 'vault', op: 'restore_cleanup'},
+      });
+    } finally {
+      setRestoringFromVault(false);
+    }
     captureError(error, {tags: {area: 'vault', op: 'restore_from_vault'}});
     throw new RestoreFailedError(error);
   }
   setRestoringFromVault(false);
+
+  // A slice whose stored copy failed to load keeps it until now; the restore
+  // succeeded, so the rebuilt state replaces it. Drain the queued writes
+  // first so the newest rebuilt value is the one released.
+  await persistor.flush();
+  for (const key of RESTORED_PERSIST_KEYS) {
+    await releaseBlockedWrites(key);
+  }
 
   dispatch(signUpSuccess());
   dispatch(resetCoinsToDefaultAddressForPrivacyMode());

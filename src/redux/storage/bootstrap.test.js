@@ -14,7 +14,11 @@ import {
   resetBootstrap,
   setSchemaVersion,
 } from 'redux/storage/bootstrap';
-import {blockWrites, mmkvStorage} from 'redux/storage/mmkvStorage';
+import {
+  blockWrites,
+  mmkvStorage,
+  releaseBlockedWrites,
+} from 'redux/storage/mmkvStorage';
 import {Platform} from 'react-native';
 import {
   wipeAllLocalData,
@@ -261,10 +265,31 @@ describe('storage bootstrap (mobile)', () => {
     it('a key whose stored copy failed to load is never overwritten', async () => {
       await mmkvStorage.setItem('persist:messages', '{"kept":"1"}');
       blockWrites('persist:messages');
-      await mmkvStorage.setItem('persist:messages', '{"empty":"1"}');
+      // Refused, and reported as refused (not as written).
+      await expect(
+        mmkvStorage.setItem('persist:messages', '{"empty":"1"}'),
+      ).rejects.toThrow('blocked');
       expect(await mmkvStorage.getItem('persist:messages')).toBe(
         '{"kept":"1"}',
       );
+    });
+
+    it('releasing a block writes the newest refused value and lifts it', async () => {
+      await mmkvStorage.setItem('persist:auth', '{"kept":"1"}');
+      blockWrites('persist:auth');
+      await mmkvStorage.setItem('persist:auth', '{"r":"1"}').catch(() => {});
+      await mmkvStorage.setItem('persist:auth', '{"r":"2"}').catch(() => {});
+      await releaseBlockedWrites('persist:auth');
+      expect(await mmkvStorage.getItem('persist:auth')).toBe('{"r":"2"}');
+      await mmkvStorage.setItem('persist:auth', '{"r":"3"}');
+      expect(await mmkvStorage.getItem('persist:auth')).toBe('{"r":"3"}');
+    });
+
+    it('releasing a block with nothing refused keeps the stored copy', async () => {
+      await mmkvStorage.setItem('persist:wallets', '{"kept":"1"}');
+      blockWrites('persist:wallets');
+      await releaseBlockedWrites('persist:wallets');
+      expect(await mmkvStorage.getItem('persist:wallets')).toBe('{"kept":"1"}');
     });
   });
 

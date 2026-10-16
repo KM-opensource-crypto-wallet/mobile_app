@@ -11,6 +11,9 @@ jest.mock('redux/store', () => ({
   persistor: {flush: jest.fn(async () => {})},
   vaultSync: {reset: jest.fn(), markSynced: jest.fn()},
 }));
+jest.mock('redux/storage/mmkvStorage', () => ({
+  releaseBlockedWrites: jest.fn(async () => {}),
+}));
 jest.mock('security/unlockFlow', () => ({
   AccountExistsError: class AccountExistsError extends Error {
     code = 'account_exists';
@@ -64,7 +67,7 @@ jest.mock('dok-wallet-blockchain-networks/redux/wallets/walletSecrets', () => ({
 }));
 
 import * as vault from 'dok-wallet-blockchain-networks/security/vault';
-import {vaultSync} from 'redux/store';
+import {persistor, vaultSync} from 'redux/store';
 import {
   RESTORE_ATTEMPT_KEYS,
   RESTORE_ERROR_CODES,
@@ -174,6 +177,20 @@ describe('restoreFromVault', () => {
     expect(isRestoringFromVault()).toBe(false);
   });
 
+  it('releases the blocked auth and wallets keys only once the restore succeeded', async () => {
+    const {releaseBlockedWrites} = require('redux/storage/mmkvStorage');
+    const store = makeStore();
+    await store.dispatch(restoreFromVault('old-pw'));
+    expect(releaseBlockedWrites.mock.calls.map(([key]) => key)).toEqual([
+      'persist:auth',
+      'persist:wallets',
+    ]);
+    // Released before the account flag is set, so that write is not refused.
+    expect(releaseBlockedWrites.mock.invocationCallOrder[1]).toBeLessThan(
+      Math.max(...persistor.flush.mock.invocationCallOrder),
+    );
+  });
+
   it('a wrong password changes nothing', async () => {
     vault.unlockWithPassword.mockRejectedValueOnce(
       Object.assign(new Error('bad'), {code: 'invalid_password'}),
@@ -192,9 +209,27 @@ describe('restoreFromVault', () => {
       store.dispatch(restoreFromVault('old-pw')),
     ).rejects.toMatchObject({code: RESTORE_ERROR_CODES.FAILED});
     expect(vault.saveSecrets).not.toHaveBeenCalled();
+    expect(
+      require('redux/storage/mmkvStorage').releaseBlockedWrites,
+    ).not.toHaveBeenCalled();
     expect(store.state.wallets.allWallets).toEqual([]);
     expect(store.state.auth.hasAccount).toBe(false);
     expect(isRestoringFromVault()).toBe(false);
+  });
+
+  it('a cleanup failure still clears the restore flag and keeps the restore error', async () => {
+    const store = makeStore({failOn: 'pk-b'});
+    vault.lock
+      .mockImplementationOnce(() => {}) // after the first read
+      .mockImplementationOnce(() => {
+        throw new Error('lock failed');
+      });
+    await expect(
+      store.dispatch(restoreFromVault('old-pw')),
+    ).rejects.toMatchObject({code: RESTORE_ERROR_CODES.FAILED});
+    expect(isRestoringFromVault()).toBe(false);
+    // The rebuilt wallets are still removed.
+    expect(store.state.wallets.allWallets).toEqual([]);
   });
 
   it('a failed vault rewrite puts the old keys back', async () => {

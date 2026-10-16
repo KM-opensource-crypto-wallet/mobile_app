@@ -9,11 +9,29 @@ import {bootstrapStorage} from './bootstrap';
 // error) and then persists that empty state over the stored one. The store
 // blocks writes for such a key (see store.js), so the stored data stays for a
 // later launch or a fixed version instead of being overwritten.
-const blockedKeys = new Set();
+// The newest value refused per blocked key: a restore that rebuilds the slice
+// (vaultRecovery) releases the block and this value replaces the stored one.
+// A refused write rejects, so it is never reported as written.
+const blockedKeys = new Map();
 export const blockWrites = key => {
-  blockedKeys.add(key);
+  if (!blockedKeys.has(key)) {
+    blockedKeys.set(key, undefined);
+  }
 };
 export const isWriteBlocked = key => blockedKeys.has(key);
+
+/** Lifts the block on `key` and writes the newest value refused meanwhile. */
+export const releaseBlockedWrites = async key => {
+  if (!blockedKeys.has(key)) {
+    return;
+  }
+  const value = blockedKeys.get(key);
+  if (value !== undefined) {
+    const store = await bootstrapStorage();
+    store.set(key, value);
+  }
+  blockedKeys.delete(key);
+};
 
 export const mmkvStorage = {
   getItem: async key => {
@@ -23,7 +41,10 @@ export const mmkvStorage = {
   },
   setItem: async (key, value) => {
     if (blockedKeys.has(key)) {
-      return;
+      blockedKeys.set(key, value);
+      throw new Error(
+        `Writes to "${key}" are blocked: its stored copy failed to load`,
+      );
     }
     const store = await bootstrapStorage();
     store.set(key, value);
