@@ -25,9 +25,15 @@ export const releaseBlockedWrites = async key => {
   if (!blockedKeys.has(key)) {
     return;
   }
+  const store = await bootstrapStorage();
+  // Read the queued value only after the await and lift the block in the same
+  // synchronous step: a setItem refused while bootstrap was pending queued a
+  // newer value, which must be the one written.
+  if (!blockedKeys.has(key)) {
+    return;
+  }
   const value = blockedKeys.get(key);
   if (value !== undefined) {
-    const store = await bootstrapStorage();
     store.set(key, value);
   }
   blockedKeys.delete(key);

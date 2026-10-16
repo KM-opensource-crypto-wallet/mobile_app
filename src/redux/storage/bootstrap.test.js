@@ -285,6 +285,19 @@ describe('storage bootstrap (mobile)', () => {
       expect(await mmkvStorage.getItem('persist:auth')).toBe('{"r":"3"}');
     });
 
+    it('a write refused while a release awaits bootstrap is the one written', async () => {
+      await mmkvStorage.setItem('persist:auth', '{"kept":"1"}');
+      blockWrites('persist:auth');
+      await mmkvStorage.setItem('persist:auth', '{"r":"1"}').catch(() => {});
+      const release = releaseBlockedWrites('persist:auth');
+      // Still blocked: the release has not resumed from its await yet.
+      await expect(
+        mmkvStorage.setItem('persist:auth', '{"r":"2"}'),
+      ).rejects.toThrow('blocked');
+      await release;
+      expect(await mmkvStorage.getItem('persist:auth')).toBe('{"r":"2"}');
+    });
+
     it('releasing a block with nothing refused keeps the stored copy', async () => {
       await mmkvStorage.setItem('persist:wallets', '{"kept":"1"}');
       blockWrites('persist:wallets');
