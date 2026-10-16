@@ -104,7 +104,7 @@ import {
 // by the click-driven self-initiated-background suppression in the AppState
 // listener instead of a blanket route exclusion, so a genuine background on
 // them still locks the app.
-const unsecureRoute = ['CarouselCards', 'Registration'];
+const unsecureRoute = ['CarouselCards', 'Registration', 'RestoreFromDevice'];
 
 let lastCallTimeStamp;
 

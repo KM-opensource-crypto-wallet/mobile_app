@@ -1,4 +1,5 @@
-import React, {useState, useRef, useContext} from 'react';
+import React, {useState, useRef, useContext, useEffect} from 'react';
+import {useDispatch} from 'react-redux';
 import {View, Image, Text, TouchableOpacity} from 'react-native';
 import Swiper from 'react-native-swiper';
 import data from 'data/data';
@@ -6,6 +7,7 @@ import myStyles from './CarouselCardsStyles';
 import {useFloatingHeight} from 'utils/dimensions';
 import {ThemeContext} from 'theme/ThemeContext';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
+import {canRestoreFromVault} from 'security/vaultRecovery';
 
 export const CarouselCards = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -13,6 +15,15 @@ export const CarouselCards = ({navigation}) => {
   const floatingHeight = useFloatingHeight();
   const [index, setIndex] = useState(0);
   const swiperRef = useRef(null);
+  const dispatch = useDispatch();
+  // Keys from earlier are still on this device (vault without an account).
+  const [canRestore, setCanRestore] = useState(false);
+
+  useEffect(() => {
+    dispatch(canRestoreFromVault())
+      .then(setCanRestore)
+      .catch(() => setCanRestore(false));
+  }, [dispatch]);
 
   const handleSkip = () => {
     swiperRef.current.scrollBy(data.length - 1, true);
@@ -27,6 +38,15 @@ export const CarouselCards = ({navigation}) => {
   return (
     <DokSafeAreaView style={styles.safeAreaView}>
       <View style={styles.container}>
+        {canRestore && (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('RestoreFromDevice')}
+            style={[styles.button, styles.restoreButton]}>
+            <Text style={styles.buttonTitle}>
+              Restore wallets saved on this device
+            </Text>
+          </TouchableOpacity>
+        )}
         <Swiper
           ref={swiperRef}
           loop={false}
