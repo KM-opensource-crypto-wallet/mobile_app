@@ -22,7 +22,7 @@ RCT_EXTERN_METHOD(
                   generateMnemonic: (RCTPromiseResolveBlock) resolve
                   rejecter: (RCTPromiseRejectBlock) reject
                   )
-RCT_EXTERN_METHOD(readKeychainValueUnverified:
+RCT_EXTERN_METHOD(clearKeychainIntegrityTag:
                   (NSString *) service
                   key: (NSString *)key
                   resolver: (RCTPromiseResolveBlock) resolve

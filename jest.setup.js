@@ -45,8 +45,10 @@ jest.mock('react-native-device-info', () =>
 // destroying a key after an enrollment change (E_KEY_INVALIDATED);
 // `__mock.tamper(key)` simulates an item whose metadata HMAC no longer
 // verifies (iOS: moved to a new device without its HMAC key) until a write
-// re-signs it (E_INTEGRITY_VIOLATION). Errors carry `code` like the typed
-// SensitiveInfoError subclasses do.
+// re-signs it (E_INTEGRITY_VIOLATION), and `__mock.clearIntegrityTag(key)`
+// models the app's native repair (CustomMethods.clearKeychainIntegrityTag):
+// the stale tag is dropped in place, value and policy untouched. Errors carry
+// `code` like the typed SensitiveInfoError subclasses do.
 jest.mock('react-native-sensitive-info', () => {
   const items = new Map();
   const state = {
@@ -94,6 +96,22 @@ jest.mock('react-native-sensitive-info', () => {
       },
       tamper(key, options) {
         state.tampered.add(id(key, options));
+      },
+      // Same results as the native method: absent / protected / untagged /
+      // cleared. A protected item (stored policy other than `none`) is left
+      // alone.
+      clearIntegrityTag(key, options) {
+        const item = items.get(id(key, options));
+        if (!item) {
+          return 'absent';
+        }
+        if (isProtected(item.accessControl)) {
+          return 'protected';
+        }
+        if (!state.tampered.delete(id(key, options))) {
+          return 'untagged';
+        }
+        return 'cleared';
       },
     },
     setItem: jest.fn(async (key, value, options) => {

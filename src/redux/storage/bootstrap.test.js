@@ -54,10 +54,10 @@ jest.mock('utils/wlData', () => ({
 jest.mock('myWallet/wallet.service', () => ({
   getLegacySecureValue: jest.fn(async () => null),
   clearLegacySecureStorage: jest.fn(async () => {}),
-  // iOS raw Keychain read (no RNSI metadata HMAC check).
-  readKeychainValueUnverified: jest.fn(async (service, key) => {
+  // iOS native repair: drops RNSI's stale metadata HMAC tag in place.
+  clearKeychainIntegrityTag: jest.fn(async (service, key) => {
     const {__mock} = jest.requireMock('react-native-sensitive-info');
-    return __mock.items.get(`${service}::${key}`)?.value ?? null;
+    return __mock.clearIntegrityTag(key, {service});
   }),
 }));
 // The MMKV mock keeps instances in memory: a "file" exists while its instance

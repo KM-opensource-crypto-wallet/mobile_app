@@ -114,12 +114,16 @@ extension Data {
     }
   }
 
-  // react-native-sensitive-info signs each item's metadata with an HMAC key it
-  // keeps ThisDeviceOnly, so an unprotected item moved to a new iPhone (backup
-  // restore / Quick Start) fails that check and is never returned. This reads
-  // the raw value so JS can write it back under this device's key. Never
-  // prompts: a biometric/passcode-protected item resolves nil.
-  @objc public func readKeychainValueUnverified(
+  // react-native-sensitive-info signs each item's metadata (kSecAttrGeneric,
+  // JSON) with an HMAC key it keeps ThisDeviceOnly, so an unprotected item
+  // moved to a new iPhone (Quick Start / encrypted computer backup) fails that
+  // check and is never returned. RNSI accepts an entry without `integrityTag`
+  // as legacy and stamps it on its next write, so this drops the stale tag
+  // with one SecItemUpdate: the value, its access control and accessibility
+  // stay untouched and the item is never deleted. Never prompts. Resolves
+  // "cleared", "untagged", "absent", or "protected" (stored policy is not
+  // "none": left alone).
+  @objc public func clearKeychainIntegrityTag(
     _ service: String,
     key: String,
     resolver resolve: RCTPromiseResolveBlock,
@@ -127,28 +131,49 @@ extension Data {
   ) -> Void {
     let context = LAContext()
     context.interactionNotAllowed = true
-    let query: [String: Any] = [
+    let item: [String: Any] = [
       kSecClass as String: kSecClassGenericPassword,
       kSecAttrService as String: service,
       kSecAttrAccount as String: key,
-      kSecReturnData as String: true,
-      kSecMatchLimit as String: kSecMatchLimitOne,
       kSecUseAuthenticationContext as String: context,
     ]
+    var lookup = item
+    lookup[kSecReturnAttributes as String] = true
+    lookup[kSecMatchLimit as String] = kSecMatchLimitOne
     var result: CFTypeRef?
-    let status = SecItemCopyMatching(query as CFDictionary, &result)
-    switch status {
-    case errSecSuccess:
-      guard let data = result as? Data,
-            let value = String(data: data, encoding: .utf8) else {
-        reject("E_KEYCHAIN_DECODE", "Keychain value is not UTF-8", nil)
-        return
-      }
-      resolve(value)
-    case errSecItemNotFound, errSecInteractionNotAllowed:
-      resolve(nil)
-    default:
-      reject("E_KEYCHAIN_READ", "Keychain read failed: OSStatus \(status)", nil)
+    let status = SecItemCopyMatching(lookup as CFDictionary, &result)
+    if status == errSecItemNotFound {
+      resolve("absent")
+      return
+    }
+    guard status == errSecSuccess, let attributes = result as? [String: Any] else {
+      reject("E_KEYCHAIN_READ", "Keychain lookup failed: OSStatus \(status)", nil)
+      return
+    }
+    guard let generic = attributes[kSecAttrGeneric as String] as? Data,
+          var metadata = (try? JSONSerialization.jsonObject(with: generic)) as? [String: Any] else {
+      // No readable metadata: RNSI already treats the item as legacy.
+      resolve("untagged")
+      return
+    }
+    guard (metadata["accessControl"] as? String) == "none" else {
+      resolve("protected")
+      return
+    }
+    guard metadata.removeValue(forKey: "integrityTag") != nil else {
+      resolve("untagged")
+      return
+    }
+    guard let updated = try? JSONSerialization.data(withJSONObject: metadata) else {
+      reject("E_KEYCHAIN_METADATA", "Keychain metadata could not be encoded", nil)
+      return
+    }
+    let changes: [String: Any] = [kSecAttrGeneric as String: updated]
+    let updateStatus = SecItemUpdate(item as CFDictionary, changes as CFDictionary)
+    if updateStatus == errSecSuccess {
+      resolve("cleared")
+    } else {
+      reject("E_KEYCHAIN_UPDATE", "Keychain update failed: OSStatus \(updateStatus)", nil)
     }
   }
 

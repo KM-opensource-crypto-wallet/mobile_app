@@ -29,7 +29,8 @@ import {
   SECURE_STORE_ERROR_CODES,
   SecureStoreError,
 } from 'dok-wallet-blockchain-networks/security/errors';
-import {readKeychainValueUnverified} from 'myWallet/wallet.service';
+import {SENTRY_SENSITIVE_VALUE_RE} from 'dok-wallet-blockchain-networks/redux/storage/legacyRootMigration';
+import {clearKeychainIntegrityTag} from 'myWallet/wallet.service';
 import {addBreadcrumb, logger} from 'services/logger';
 
 export const SECURE_STORE_SERVICE =
@@ -64,7 +65,6 @@ export const isBiometricAvailable = async () => {
 const CODE_MAP = {
   E_KEY_INVALIDATED: SECURE_STORE_ERROR_CODES.KEY_INVALIDATED,
   E_AUTH_CANCELED: SECURE_STORE_ERROR_CODES.USER_CANCELLED,
-  E_INTEGRITY_VIOLATION: SECURE_STORE_ERROR_CODES.INTEGRITY_VIOLATION,
 };
 
 // Android 6.1.5 deletes a Keystore key the OS invalidated (enrollment change)
@@ -142,37 +142,64 @@ const buildSetOptions = options =>
 // Reads take the same `authenticationPrompt` key; the stored policy governs.
 const buildGetOptions = options => withPrompt(serviceOnly, options);
 
-// Sentry's server-side scrubber blanks any string value containing
-// "password", which would hide which item was re-signed.
-const logSafeKey = key => key.replace(/password/gi, 'pw');
+const valueOf = item => (item?.value == null ? null : item.value);
+
+// Sentry's server-side scrubber blanks any string value containing one of
+// these words ("vault.dek.password" would arrive as [Filtered]).
+const logSafeKey = key =>
+  key
+    .split('.')
+    .map(part => (SENTRY_SENSITIVE_VALUE_RE.test(part) ? '<sens>' : part))
+    .join('.');
+
+const REPAIRED = ['cleared', 'untagged'];
 
 // iOS: RNSI signs each item's metadata with an HMAC key it keeps
 // `ThisDeviceOnly`, while our unprotected items (`AfterFirstUnlock`) travel
-// with a backup restore or Quick Start transfer. On the new iPhone every
+// with Quick Start or an encrypted computer backup. On the new iPhone every
 // moved item fails that check (E_INTEGRITY_VIOLATION) and RNSI withholds a
 // value that is intact (DOKWALLET-K: the app never got past bootstrap, and a
-// reinstall keeps the Keychain). The values carry their own protection
-// (AES-GCM vault envelopes; a wrong MMKV key cannot open the store), so read
-// the raw bytes and write them back, which re-signs them with this device's
-// key. Never for protected items: those are `ThisDeviceOnly` and never move.
-const restampMovedItem = async (error, key, service) => {
-  let value = null;
+// reinstall keeps the Keychain). RNSI accepts an item without a tag as a
+// legacy entry and stamps it on its next write, so the native repair drops
+// the stale tag with one SecItemUpdate: the value, its policy and its
+// accessibility stay untouched, and the item is never deleted (an RNSI
+// rewrite is delete + add, the window the vault's staged copies guard). The
+// values carry their own protection (AES-GCM vault envelopes; a wrong MMKV key
+// cannot open the store). The native side refuses an item whose stored policy
+// is not `none`. Concurrent repairs are harmless: the second sees `untagged`.
+const repairMovedItem = async (error, key, rnsiOptions) => {
+  const data = {service: rnsiOptions.service, key: logSafeKey(key)};
+  let result;
   try {
-    value = await readKeychainValueUnverified(service, key);
-  } catch {
-    // reported as the original integrity failure below
-  }
-  if (value == null) {
+    result = await clearKeychainIntegrityTag(rnsiOptions.service, key);
+  } catch (repairError) {
+    logger.error('storage.integrity_repair_failed', {
+      ...data,
+      code: repairError?.code,
+      message: repairError?.message,
+    });
     throw translate(error);
   }
-  try {
-    await setItem(key, value, {service, accessControl: 'none'});
-  } catch (writeError) {
-    throw translate(writeError);
+  if (!REPAIRED.includes(result)) {
+    logger.error('storage.integrity_repair_failed', {
+      ...data,
+      result: String(result),
+    });
+    throw translate(error);
   }
-  const data = {service, key: logSafeKey(key)};
-  addBreadcrumb('storage', 'storage.integrity_restamped', data, 'warning');
-  logger.warn('storage.integrity_restamped', data);
+  let value;
+  try {
+    value = valueOf(await getItem(key, rnsiOptions));
+  } catch (retryError) {
+    logger.error('storage.integrity_repair_failed', {
+      ...data,
+      result,
+      message: retryError?.message,
+    });
+    throw translate(retryError);
+  }
+  addBreadcrumb('storage', 'storage.integrity_repaired', data, 'warning');
+  logger.warn('storage.integrity_repaired', {...data, result});
   return value;
 };
 
@@ -191,7 +218,7 @@ const classifyReadError = async (error, key, rnsiOptions, protectedRead) => {
     !protectedRead &&
     isIntegrityViolationError(error)
   ) {
-    return restampMovedItem(error, key, rnsiOptions.service);
+    return repairMovedItem(error, key, rnsiOptions);
   }
   if (!protectedRead && !isClassified(error)) {
     try {
@@ -204,8 +231,6 @@ const classifyReadError = async (error, key, rnsiOptions, protectedRead) => {
   }
   throw translate(error);
 };
-
-const valueOf = item => (item?.value == null ? null : item.value);
 
 export const get = async (key, options) => {
   const rnsiOptions = buildGetOptions(options);
