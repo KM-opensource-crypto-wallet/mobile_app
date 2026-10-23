@@ -106,6 +106,15 @@ export const getLegacySecureValue = async (sharedPreference, key) => {
     throw e;
   }
 };
+// iOS only: the raw Keychain value of an unprotected item, without
+// react-native-sensitive-info's metadata HMAC check. null when the native
+// method is missing (Android) or the item is absent / needs authentication.
+export const readKeychainValueUnverified = async (service, key) => {
+  if (!NativeKeygen?.readKeychainValueUnverified) {
+    return null;
+  }
+  return NativeKeygen.readKeychainValueUnverified(service, key);
+};
 // this method only for android for sensitive-info-migration
 export const clearLegacySecureStorage = async sharedPreference => {
   try {

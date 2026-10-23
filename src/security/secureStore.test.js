@@ -3,6 +3,26 @@ import * as rnsi from 'react-native-sensitive-info';
 import * as fingerprint from 'react-native-fingerprint-scanner';
 import * as secureStore from 'security/secureStore';
 import {SECURE_STORE_ERROR_CODES} from 'dok-wallet-blockchain-networks/security/errors';
+import {readKeychainValueUnverified} from 'myWallet/wallet.service';
+import {logger} from 'services/logger';
+
+jest.mock('services/logger', () => ({
+  addBreadcrumb: jest.fn(),
+  logger: {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+// The iOS raw Keychain read: returns the stored bytes, skipping RNSI's
+// metadata HMAC check.
+jest.mock('myWallet/wallet.service', () => ({
+  readKeychainValueUnverified: jest.fn(async (service, key) => {
+    const {__mock} = jest.requireMock('react-native-sensitive-info');
+    return __mock.items.get(`${service}::${key}`)?.value ?? null;
+  }),
+}));
 
 const service = () => secureStore.SECURE_STORE_SERVICE;
 
@@ -169,5 +189,96 @@ describe('secureStore (react-native-sensitive-info adapter)', () => {
       service: 'myKeychain',
     });
     expect(await secureStore.getFromService('absent', 'myKeychain')).toBeNull();
+  });
+
+  // iOS: RNSI's metadata HMAC key is `ThisDeviceOnly`, our unprotected items
+  // are not. After a backup restore / Quick Start transfer every moved item
+  // fails the check (DOKWALLET-K) although its value is intact.
+  describe('item moved to a new device (E_INTEGRITY_VIOLATION)', () => {
+    beforeEach(() => {
+      readKeychainValueUnverified.mockClear();
+      logger.warn.mockClear();
+    });
+
+    it('returns the stored value on iOS and re-signs the item in place', async () => {
+      await secureStore.set('vault.dek.password', '{"v":1}');
+      rnsi.__mock.tamper('vault.dek.password', {service: service()});
+      rnsi.setItem.mockClear();
+
+      expect(await secureStore.get('vault.dek.password')).toBe('{"v":1}');
+      expect(readKeychainValueUnverified).toHaveBeenCalledWith(
+        service(),
+        'vault.dek.password',
+      );
+      expect(rnsi.setItem).toHaveBeenCalledWith(
+        'vault.dek.password',
+        '{"v":1}',
+        {service: service(), accessControl: 'none'},
+      );
+
+      // Re-signed: the next read verifies without the raw fallback.
+      readKeychainValueUnverified.mockClear();
+      expect(await secureStore.get('vault.dek.password')).toBe('{"v":1}');
+      expect(readKeychainValueUnverified).not.toHaveBeenCalled();
+    });
+
+    it('logs the re-sign without the word Sentry filters out', async () => {
+      await secureStore.set('vault.dek.password', '{"v":1}');
+      rnsi.__mock.tamper('vault.dek.password', {service: service()});
+      await secureStore.get('vault.dek.password');
+      expect(logger.warn).toHaveBeenCalledWith('storage.integrity_restamped', {
+        service: service(),
+        key: 'vault.dek.pw',
+      });
+    });
+
+    it('fails with integrity_violation when the raw value cannot be read', async () => {
+      await secureStore.set('storage.mmkvKey', 'k'.repeat(32));
+      rnsi.__mock.tamper('storage.mmkvKey', {service: service()});
+      readKeychainValueUnverified.mockResolvedValueOnce(null);
+      await expect(secureStore.get('storage.mmkvKey')).rejects.toMatchObject({
+        name: 'SecureStoreError',
+        code: SECURE_STORE_ERROR_CODES.INTEGRITY_VIOLATION,
+      });
+    });
+
+    it('never bypasses the check for a protected item', async () => {
+      await secureStore.set('bio', 'dek', {
+        accessControl: 'biometryCurrentSet',
+      });
+      rnsi.__mock.tamper('bio', {service: service()});
+      await expect(
+        secureStore.get('bio', {accessControl: 'biometryCurrentSet'}),
+      ).rejects.toMatchObject({
+        code: SECURE_STORE_ERROR_CODES.INTEGRITY_VIOLATION,
+      });
+      expect(readKeychainValueUnverified).not.toHaveBeenCalled();
+    });
+
+    it('does not use the iOS reader on Android', async () => {
+      Platform.OS = 'android';
+      await secureStore.set('k', 'v');
+      rnsi.__mock.tamper('k', {service: service()});
+      await expect(secureStore.get('k')).rejects.toMatchObject({
+        code: SECURE_STORE_ERROR_CODES.INTEGRITY_VIOLATION,
+      });
+      expect(readKeychainValueUnverified).not.toHaveBeenCalled();
+    });
+
+    it('getFromService re-signs under the service it read from', async () => {
+      await rnsi.setItem('persist:root2', '{"legacy":true}', {
+        service: 'myKeychain',
+        accessControl: 'none',
+      });
+      rnsi.__mock.tamper('persist:root2', {service: 'myKeychain'});
+      expect(
+        await secureStore.getFromService('persist:root2', 'myKeychain'),
+      ).toBe('{"legacy":true}');
+      expect(rnsi.setItem).toHaveBeenLastCalledWith(
+        'persist:root2',
+        '{"legacy":true}',
+        {service: 'myKeychain', accessControl: 'none'},
+      );
+    });
   });
 });

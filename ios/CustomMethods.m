@@ -22,6 +22,12 @@ RCT_EXTERN_METHOD(
                   generateMnemonic: (RCTPromiseResolveBlock) resolve
                   rejecter: (RCTPromiseRejectBlock) reject
                   )
+RCT_EXTERN_METHOD(readKeychainValueUnverified:
+                  (NSString *) service
+                  key: (NSString *)key
+                  resolver: (RCTPromiseResolveBlock) resolve
+                  rejecter: (RCTPromiseRejectBlock) reject
+                  )
 
 RCT_EXTERN_METHOD(getWallet:
                   (NSString *) coinName

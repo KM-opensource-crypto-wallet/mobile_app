@@ -19,6 +19,7 @@ import {
 } from 'react-native-sensitive-info';
 import {
   isAuthenticationCanceledError,
+  isIntegrityViolationError,
   isInvalidArgumentError,
   isKeyInvalidatedError,
   isNotFoundError,
@@ -28,6 +29,8 @@ import {
   SECURE_STORE_ERROR_CODES,
   SecureStoreError,
 } from 'dok-wallet-blockchain-networks/security/errors';
+import {readKeychainValueUnverified} from 'myWallet/wallet.service';
+import {addBreadcrumb, logger} from 'services/logger';
 
 export const SECURE_STORE_SERVICE =
   process.env.SECURE_STORE_KEYCHAIN_NAME || 'dok.vault';
@@ -61,6 +64,7 @@ export const isBiometricAvailable = async () => {
 const CODE_MAP = {
   E_KEY_INVALIDATED: SECURE_STORE_ERROR_CODES.KEY_INVALIDATED,
   E_AUTH_CANCELED: SECURE_STORE_ERROR_CODES.USER_CANCELLED,
+  E_INTEGRITY_VIOLATION: SECURE_STORE_ERROR_CODES.INTEGRITY_VIOLATION,
 };
 
 // Android 6.1.5 deletes a Keystore key the OS invalidated (enrollment change)
@@ -77,6 +81,9 @@ const codeOf = error => {
   }
   if (isAuthenticationCanceledError(error)) {
     return SECURE_STORE_ERROR_CODES.USER_CANCELLED;
+  }
+  if (isIntegrityViolationError(error)) {
+    return SECURE_STORE_ERROR_CODES.INTEGRITY_VIOLATION;
   }
   if (CODE_MAP[error?.code]) {
     return CODE_MAP[error.code];
@@ -135,6 +142,40 @@ const buildSetOptions = options =>
 // Reads take the same `authenticationPrompt` key; the stored policy governs.
 const buildGetOptions = options => withPrompt(serviceOnly, options);
 
+// Sentry's server-side scrubber blanks any string value containing
+// "password", which would hide which item was re-signed.
+const logSafeKey = key => key.replace(/password/gi, 'pw');
+
+// iOS: RNSI signs each item's metadata with an HMAC key it keeps
+// `ThisDeviceOnly`, while our unprotected items (`AfterFirstUnlock`) travel
+// with a backup restore or Quick Start transfer. On the new iPhone every
+// moved item fails that check (E_INTEGRITY_VIOLATION) and RNSI withholds a
+// value that is intact (DOKWALLET-K: the app never got past bootstrap, and a
+// reinstall keeps the Keychain). The values carry their own protection
+// (AES-GCM vault envelopes; a wrong MMKV key cannot open the store), so read
+// the raw bytes and write them back, which re-signs them with this device's
+// key. Never for protected items: those are `ThisDeviceOnly` and never move.
+const restampMovedItem = async (error, key, service) => {
+  let value = null;
+  try {
+    value = await readKeychainValueUnverified(service, key);
+  } catch {
+    // reported as the original integrity failure below
+  }
+  if (value == null) {
+    throw translate(error);
+  }
+  try {
+    await setItem(key, value, {service, accessControl: 'none'});
+  } catch (writeError) {
+    throw translate(writeError);
+  }
+  const data = {service, key: logSafeKey(key)};
+  addBreadcrumb('storage', 'storage.integrity_restamped', data, 'warning');
+  logger.warn('storage.integrity_restamped', data);
+  return value;
+};
+
 // "Missing" vs "failed" for a read. RNSI 6 returns null for an absent key on
 // both platforms, so an error means the read itself failed. Only for
 // unprotected items and only for unclassified errors: confirm absence with
@@ -144,6 +185,13 @@ const buildGetOptions = options => withPrompt(serviceOnly, options);
 const classifyReadError = async (error, key, rnsiOptions, protectedRead) => {
   if (isNotFoundError(error)) {
     return null;
+  }
+  if (
+    Platform.OS === 'ios' &&
+    !protectedRead &&
+    isIntegrityViolationError(error)
+  ) {
+    return restampMovedItem(error, key, rnsiOptions.service);
   }
   if (!protectedRead && !isClassified(error)) {
     try {

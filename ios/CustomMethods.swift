@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import LocalAuthentication
 import WalletCore
 
 extension Data {
@@ -110,6 +111,44 @@ extension Data {
       resolve(mnemonic)
     } else {
       reject("E_INVALID_WALLET", "Failed to create HDWallet", nil)
+    }
+  }
+
+  // react-native-sensitive-info signs each item's metadata with an HMAC key it
+  // keeps ThisDeviceOnly, so an unprotected item moved to a new iPhone (backup
+  // restore / Quick Start) fails that check and is never returned. This reads
+  // the raw value so JS can write it back under this device's key. Never
+  // prompts: a biometric/passcode-protected item resolves nil.
+  @objc public func readKeychainValueUnverified(
+    _ service: String,
+    key: String,
+    resolver resolve: RCTPromiseResolveBlock,
+    rejecter reject: RCTPromiseRejectBlock
+  ) -> Void {
+    let context = LAContext()
+    context.interactionNotAllowed = true
+    let query: [String: Any] = [
+      kSecClass as String: kSecClassGenericPassword,
+      kSecAttrService as String: service,
+      kSecAttrAccount as String: key,
+      kSecReturnData as String: true,
+      kSecMatchLimit as String: kSecMatchLimitOne,
+      kSecUseAuthenticationContext as String: context,
+    ]
+    var result: CFTypeRef?
+    let status = SecItemCopyMatching(query as CFDictionary, &result)
+    switch status {
+    case errSecSuccess:
+      guard let data = result as? Data,
+            let value = String(data: data, encoding: .utf8) else {
+        reject("E_KEYCHAIN_DECODE", "Keychain value is not UTF-8", nil)
+        return
+      }
+      resolve(value)
+    case errSecItemNotFound, errSecInteractionNotAllowed:
+      resolve(nil)
+    default:
+      reject("E_KEYCHAIN_READ", "Keychain read failed: OSStatus \(status)", nil)
     }
   }
 
