@@ -3,6 +3,25 @@ import * as rnsi from 'react-native-sensitive-info';
 import * as fingerprint from 'react-native-fingerprint-scanner';
 import * as secureStore from 'security/secureStore';
 import {SECURE_STORE_ERROR_CODES} from 'dok-wallet-blockchain-networks/security/errors';
+import {clearKeychainIntegrityTag} from 'myWallet/wallet.service';
+import {logger} from 'services/logger';
+
+jest.mock('services/logger', () => ({
+  addBreadcrumb: jest.fn(),
+  logger: {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+// The iOS native repair: drops RNSI's stale metadata HMAC tag in place.
+jest.mock('myWallet/wallet.service', () => ({
+  clearKeychainIntegrityTag: jest.fn(async (service, key) => {
+    const {__mock} = jest.requireMock('react-native-sensitive-info');
+    return __mock.clearIntegrityTag(key, {service});
+  }),
+}));
 
 const service = () => secureStore.SECURE_STORE_SERVICE;
 
@@ -169,5 +188,149 @@ describe('secureStore (react-native-sensitive-info adapter)', () => {
       service: 'myKeychain',
     });
     expect(await secureStore.getFromService('absent', 'myKeychain')).toBeNull();
+  });
+
+  // iOS: RNSI's metadata HMAC key is `ThisDeviceOnly`, our unprotected items
+  // are not. After Quick Start / an encrypted computer backup every moved
+  // item fails the check (DOKWALLET-K) although its value is intact. The
+  // repair drops the stale tag in place; the item is never rewritten.
+  describe('item moved to a new device (E_INTEGRITY_VIOLATION)', () => {
+    const moved = (key, options = {service: service()}) =>
+      rnsi.__mock.tamper(key, options);
+
+    beforeEach(() => {
+      clearKeychainIntegrityTag.mockClear();
+      logger.warn.mockClear();
+      logger.error.mockClear();
+    });
+
+    it('repairs the item in place on iOS and returns its value', async () => {
+      await secureStore.set('vault.dek.password', '{"v":1}');
+      moved('vault.dek.password');
+      rnsi.setItem.mockClear();
+
+      expect(await secureStore.get('vault.dek.password')).toBe('{"v":1}');
+      expect(clearKeychainIntegrityTag).toHaveBeenCalledWith(
+        service(),
+        'vault.dek.password',
+      );
+      // Never rewritten: no delete + add window for the wallet key.
+      expect(rnsi.setItem).not.toHaveBeenCalled();
+      expect(rnsi.deleteItem).not.toHaveBeenCalled();
+
+      // Repaired: the next read succeeds without another repair.
+      clearKeychainIntegrityTag.mockClear();
+      expect(await secureStore.get('vault.dek.password')).toBe('{"v":1}');
+      expect(clearKeychainIntegrityTag).not.toHaveBeenCalled();
+    });
+
+    it('logs the repair with key names Sentry does not filter out', async () => {
+      await secureStore.set('vault.dek.password', '{"v":1}');
+      moved('vault.dek.password');
+      await secureStore.get('vault.dek.password');
+      expect(logger.warn).toHaveBeenCalledWith('storage.integrity_repaired', {
+        service: service(),
+        key: 'vault.dek.<sens>',
+        result: 'cleared',
+      });
+    });
+
+    it('fails with integrity_violation and logs the native reason when the repair fails', async () => {
+      await secureStore.set('storage.mmkvKey', 'k'.repeat(32));
+      moved('storage.mmkvKey');
+      clearKeychainIntegrityTag.mockRejectedValueOnce(
+        Object.assign(new Error('Keychain update failed: OSStatus -25300'), {
+          code: 'E_KEYCHAIN_UPDATE',
+        }),
+      );
+      await expect(secureStore.get('storage.mmkvKey')).rejects.toMatchObject({
+        name: 'SecureStoreError',
+        code: SECURE_STORE_ERROR_CODES.INTEGRITY_VIOLATION,
+      });
+      expect(logger.error).toHaveBeenCalledWith(
+        'storage.integrity_repair_failed',
+        expect.objectContaining({
+          key: 'storage.mmkvKey',
+          code: 'E_KEYCHAIN_UPDATE',
+          message: 'Keychain update failed: OSStatus -25300',
+        }),
+      );
+      // The value is still there for the next attempt.
+      expect(rnsi.__mock.items.get(`${service()}::storage.mmkvKey`)).toEqual(
+        expect.objectContaining({value: 'k'.repeat(32)}),
+      );
+    });
+
+    it('leaves an item stored behind biometrics alone, even on an unprotected read', async () => {
+      // The simulator does not enforce Keychain access control, so the
+      // stored policy, not the caller's options, decides.
+      await secureStore.set('bio', 'dek', {
+        accessControl: 'biometryCurrentSet',
+      });
+      moved('bio');
+      rnsi.setItem.mockClear();
+      await expect(secureStore.get('bio')).rejects.toMatchObject({
+        code: SECURE_STORE_ERROR_CODES.INTEGRITY_VIOLATION,
+      });
+      expect(logger.error).toHaveBeenCalledWith(
+        'storage.integrity_repair_failed',
+        expect.objectContaining({key: 'bio', result: 'protected'}),
+      );
+      expect(rnsi.setItem).not.toHaveBeenCalled();
+      expect(rnsi.__mock.items.get(`${service()}::bio`).accessControl).toBe(
+        'biometryCurrentSet',
+      );
+    });
+
+    it('never attempts a repair on a protected read', async () => {
+      await secureStore.set('bio', 'dek', {
+        accessControl: 'biometryCurrentSet',
+      });
+      moved('bio');
+      await expect(
+        secureStore.get('bio', {accessControl: 'biometryCurrentSet'}),
+      ).rejects.toMatchObject({
+        code: SECURE_STORE_ERROR_CODES.INTEGRITY_VIOLATION,
+      });
+      expect(clearKeychainIntegrityTag).not.toHaveBeenCalled();
+    });
+
+    it('does not attempt the iOS repair on Android', async () => {
+      Platform.OS = 'android';
+      await secureStore.set('k', 'v');
+      moved('k');
+      await expect(secureStore.get('k')).rejects.toMatchObject({
+        code: SECURE_STORE_ERROR_CODES.INTEGRITY_VIOLATION,
+      });
+      expect(clearKeychainIntegrityTag).not.toHaveBeenCalled();
+    });
+
+    it('two overlapping reads of a moved item both get its value', async () => {
+      await secureStore.set('vault.dek.password', '{"v":1}');
+      moved('vault.dek.password');
+      const [a, b] = await Promise.all([
+        secureStore.get('vault.dek.password'),
+        secureStore.get('vault.dek.password'),
+      ]);
+      expect(a).toBe('{"v":1}');
+      expect(b).toBe('{"v":1}');
+    });
+
+    it('getFromService repairs the legacy blob without writing it back', async () => {
+      await rnsi.setItem('persist:root2', '{"legacy":true}', {
+        service: 'myKeychain',
+        accessControl: 'none',
+      });
+      moved('persist:root2', {service: 'myKeychain'});
+      rnsi.setItem.mockClear();
+      expect(
+        await secureStore.getFromService('persist:root2', 'myKeychain'),
+      ).toBe('{"legacy":true}');
+      expect(clearKeychainIntegrityTag).toHaveBeenCalledWith(
+        'myKeychain',
+        'persist:root2',
+      );
+      expect(rnsi.setItem).not.toHaveBeenCalled();
+    });
   });
 });

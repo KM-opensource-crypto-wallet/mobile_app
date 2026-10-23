@@ -19,6 +19,7 @@ import {
 } from 'react-native-sensitive-info';
 import {
   isAuthenticationCanceledError,
+  isIntegrityViolationError,
   isInvalidArgumentError,
   isKeyInvalidatedError,
   isNotFoundError,
@@ -28,6 +29,9 @@ import {
   SECURE_STORE_ERROR_CODES,
   SecureStoreError,
 } from 'dok-wallet-blockchain-networks/security/errors';
+import {SENTRY_SENSITIVE_VALUE_RE} from 'dok-wallet-blockchain-networks/redux/storage/legacyRootMigration';
+import {clearKeychainIntegrityTag} from 'myWallet/wallet.service';
+import {addBreadcrumb, logger} from 'services/logger';
 
 export const SECURE_STORE_SERVICE =
   process.env.SECURE_STORE_KEYCHAIN_NAME || 'dok.vault';
@@ -77,6 +81,9 @@ const codeOf = error => {
   }
   if (isAuthenticationCanceledError(error)) {
     return SECURE_STORE_ERROR_CODES.USER_CANCELLED;
+  }
+  if (isIntegrityViolationError(error)) {
+    return SECURE_STORE_ERROR_CODES.INTEGRITY_VIOLATION;
   }
   if (CODE_MAP[error?.code]) {
     return CODE_MAP[error.code];
@@ -135,6 +142,67 @@ const buildSetOptions = options =>
 // Reads take the same `authenticationPrompt` key; the stored policy governs.
 const buildGetOptions = options => withPrompt(serviceOnly, options);
 
+const valueOf = item => (item?.value == null ? null : item.value);
+
+// Sentry's server-side scrubber blanks any string value containing one of
+// these words ("vault.dek.password" would arrive as [Filtered]).
+const logSafeKey = key =>
+  key
+    .split('.')
+    .map(part => (SENTRY_SENSITIVE_VALUE_RE.test(part) ? '<sens>' : part))
+    .join('.');
+
+const REPAIRED = ['cleared', 'untagged'];
+
+// iOS: RNSI signs each item's metadata with an HMAC key it keeps
+// `ThisDeviceOnly`, while our unprotected items (`AfterFirstUnlock`) travel
+// with Quick Start or an encrypted computer backup. On the new iPhone every
+// moved item fails that check (E_INTEGRITY_VIOLATION) and RNSI withholds a
+// value that is intact (DOKWALLET-K: the app never got past bootstrap, and a
+// reinstall keeps the Keychain). RNSI accepts an item without a tag as a
+// legacy entry and stamps it on its next write, so the native repair drops
+// the stale tag with one SecItemUpdate: the value, its policy and its
+// accessibility stay untouched, and the item is never deleted (an RNSI
+// rewrite is delete + add, the window the vault's staged copies guard). The
+// values carry their own protection (AES-GCM vault envelopes; a wrong MMKV key
+// cannot open the store). The native side refuses an item whose stored policy
+// is not `none`. Concurrent repairs are harmless: the second sees `untagged`.
+const repairMovedItem = async (error, key, rnsiOptions) => {
+  const data = {service: rnsiOptions.service, key: logSafeKey(key)};
+  let result;
+  try {
+    result = await clearKeychainIntegrityTag(rnsiOptions.service, key);
+  } catch (repairError) {
+    logger.error('storage.integrity_repair_failed', {
+      ...data,
+      code: repairError?.code,
+      message: repairError?.message,
+    });
+    throw translate(error);
+  }
+  if (!REPAIRED.includes(result)) {
+    logger.error('storage.integrity_repair_failed', {
+      ...data,
+      result: String(result),
+    });
+    throw translate(error);
+  }
+  let value;
+  try {
+    value = valueOf(await getItem(key, rnsiOptions));
+  } catch (retryError) {
+    logger.error('storage.integrity_repair_failed', {
+      ...data,
+      result,
+      message: retryError?.message,
+    });
+    throw translate(retryError);
+  }
+  addBreadcrumb('storage', 'storage.integrity_repaired', data, 'warning');
+  logger.warn('storage.integrity_repaired', {...data, result});
+  return value;
+};
+
 // "Missing" vs "failed" for a read. RNSI 6 returns null for an absent key on
 // both platforms, so an error means the read itself failed. Only for
 // unprotected items and only for unclassified errors: confirm absence with
@@ -144,6 +212,13 @@ const buildGetOptions = options => withPrompt(serviceOnly, options);
 const classifyReadError = async (error, key, rnsiOptions, protectedRead) => {
   if (isNotFoundError(error)) {
     return null;
+  }
+  if (
+    Platform.OS === 'ios' &&
+    !protectedRead &&
+    isIntegrityViolationError(error)
+  ) {
+    return repairMovedItem(error, key, rnsiOptions);
   }
   if (!protectedRead && !isClassified(error)) {
     try {
@@ -156,8 +231,6 @@ const classifyReadError = async (error, key, rnsiOptions, protectedRead) => {
   }
   throw translate(error);
 };
-
-const valueOf = item => (item?.value == null ? null : item.value);
 
 export const get = async (key, options) => {
   const rnsiOptions = buildGetOptions(options);

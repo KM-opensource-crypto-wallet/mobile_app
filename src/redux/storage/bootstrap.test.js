@@ -54,6 +54,11 @@ jest.mock('utils/wlData', () => ({
 jest.mock('myWallet/wallet.service', () => ({
   getLegacySecureValue: jest.fn(async () => null),
   clearLegacySecureStorage: jest.fn(async () => {}),
+  // iOS native repair: drops RNSI's stale metadata HMAC tag in place.
+  clearKeychainIntegrityTag: jest.fn(async (service, key) => {
+    const {__mock} = jest.requireMock('react-native-sensitive-info');
+    return __mock.clearIntegrityTag(key, {service});
+  }),
 }));
 // The MMKV mock keeps instances in memory: a "file" exists while its instance
 // is registered, and moving it aside unregisters it.
@@ -245,6 +250,51 @@ describe('storage bootstrap (mobile)', () => {
     });
     // The stored key was not replaced by a fresh one.
     expect(await secureStore.get(STORAGE_KEYS.mmkvKey)).toBe(key);
+  });
+
+  // DOKWALLET-K: after a backup restore / Quick Start transfer to a new
+  // iPhone, RNSI refuses every moved unprotected item (E_INTEGRITY_VIOLATION)
+  // and the app never got past the storage error screen.
+  describe('items moved to a new iPhone', () => {
+    const service = {service: secureStore.SECURE_STORE_SERVICE};
+
+    beforeEach(() => {
+      Platform.OS = 'ios';
+    });
+
+    it('opens the transferred store with its original key', async () => {
+      const first = await bootstrapStorage();
+      first.set('persist:auth', JSON.stringify({hasAccount: 'true'}));
+      const key = await secureStore.get(STORAGE_KEYS.mmkvKey);
+      rnsi.__mock.tamper(STORAGE_KEYS.mmkvKey, service);
+      resetBootstrap();
+
+      const second = await bootstrapStorage();
+
+      expect(mmkvModule.createMMKV).toHaveBeenLastCalledWith(
+        expect.objectContaining({encryptionKey: key}),
+      );
+      expect(moveFile).not.toHaveBeenCalled();
+      expect(second.getString('persist:auth')).toBe('{"hasAccount":"true"}');
+    });
+
+    it('after a reinstall there, keeps the vault and its password still unlocks it', async () => {
+      await vault.createVault('pw');
+      await vault.saveSecrets({wallets: ['w1']});
+      vault.lock();
+      rnsi.__mock.tamper('vault.dek.password', service);
+      rnsi.__mock.tamper('vault.blob', service);
+      expect(mmkvModule.existsMMKV(STATE_MMKV_ID)).toBe(false);
+
+      await bootstrapStorage();
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        'storage.reinstall_detected',
+        expect.objectContaining({vaultKept: true}),
+      );
+      await vault.unlockWithPassword('pw');
+      expect(await vault.readSecrets()).toEqual({wallets: ['w1']});
+    });
   });
 
   it('schema version round-trips as a number', async () => {

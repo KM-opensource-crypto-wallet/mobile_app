@@ -106,6 +106,16 @@ export const getLegacySecureValue = async (sharedPreference, key) => {
     throw e;
   }
 };
+// iOS only: drops react-native-sensitive-info's stale metadata HMAC tag from
+// an unprotected Keychain item in place (value, policy, accessibility kept).
+// Resolves 'cleared' | 'untagged' | 'absent' | 'protected'; null when the
+// native method is missing (Android).
+export const clearKeychainIntegrityTag = async (service, key) => {
+  if (!NativeKeygen?.clearKeychainIntegrityTag) {
+    return null;
+  }
+  return NativeKeygen.clearKeychainIntegrityTag(service, key);
+};
 // this method only for android for sensitive-info-migration
 export const clearLegacySecureStorage = async sharedPreference => {
   try {
