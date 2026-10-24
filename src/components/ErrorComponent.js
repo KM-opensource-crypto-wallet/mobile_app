@@ -1,7 +1,6 @@
 // Delete.js
 import React, {useCallback, useState} from 'react';
 import {
-  Linking,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -9,9 +8,9 @@ import {
   View,
 } from 'react-native';
 import ModalDeleteData from 'components/ModalDeteletData';
-import {CONTACT_DETAILS} from 'utils/wlData';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {markExpectedBackground} from 'utils/expectedBackground';
+import {openSupportEmail, openSupportTelegram} from 'utils/contactSupport';
+import {getSupportId} from 'services/logger';
 
 const ErrorComponent = () => {
   const [count, setCount] = useState(0);
@@ -20,25 +19,7 @@ const ErrorComponent = () => {
     setCount(prevState => prevState + 1);
   }, []);
 
-  const onPressContactViaEmail = useCallback(async () => {
-    try {
-      markExpectedBackground();
-      await Linking.openURL(`mailto:${CONTACT_DETAILS.email}`);
-    } catch (e) {
-      console.error('error in open emails', e);
-    }
-  }, []);
-
-  const onPressContactViaTelegram = useCallback(async () => {
-    try {
-      if (CONTACT_DETAILS.telegram) {
-        markExpectedBackground();
-        await Linking.openURL(CONTACT_DETAILS.telegram);
-      }
-    } catch (e) {
-      console.error('error in open Telegram', e);
-    }
-  }, []);
+  const supportId = getSupportId();
 
   return (
     <SafeAreaView style={styles.safeAreaView}>
@@ -50,16 +31,21 @@ const ErrorComponent = () => {
           <Text style={styles.description}>
             This crash report is already submitted. Try to close and reopen the
             app. Please contact us on via{' '}
-            <Text style={styles.link} onPress={onPressContactViaEmail}>
+            <Text style={styles.link} onPress={openSupportEmail}>
               {'Email'}
             </Text>{' '}
             or{' '}
-            <Text style={styles.link} onPress={onPressContactViaTelegram}>
+            <Text style={styles.link} onPress={openSupportTelegram}>
               {'Telegram'}
             </Text>{' '}
             for additional support.
           </Text>
         </TouchableWithoutFeedback>
+        {!!supportId && (
+          <Text style={styles.supportId} selectable>
+            {`Support ID: ${supportId}`}
+          </Text>
+        )}
         {count >= 5 && (
           <TouchableOpacity
             style={styles.deleteButton}
@@ -108,6 +94,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'blue',
     textDecorationLine: 'underline',
+  },
+  supportId: {
+    fontSize: 14,
+    color: 'black',
+    marginTop: 12,
   },
   deleteButton: {
     width: '100%',

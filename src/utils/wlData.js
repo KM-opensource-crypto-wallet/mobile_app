@@ -112,11 +112,11 @@ export const WL_APP_NAME = AppNameObj[wlName];
 const ContactDetailsObj = {
   dokwallet: {
     email: 'support@dokwallet.com',
-    telegram: 't.me/dokwallet',
+    telegram: 'https://t.me/dokwallet',
   },
   kimlwallet: {
     email: 'contact@kimlview.com',
-    telegram: 't.me/kimlwallet',
+    telegram: 'https://t.me/kimlwallet',
   },
 };
 

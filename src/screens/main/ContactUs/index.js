@@ -4,9 +4,10 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Linking,
   ImageBackground,
 } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
+import Toast from 'react-native-toast-message';
 import myStyles from './ContactUsStyles';
 import {ThemeContext} from 'theme/ThemeContext';
 import WalletConnectItem from 'components/WalletConnectItem';
@@ -16,7 +17,8 @@ import {useSelector} from 'react-redux';
 import {getCryptoProvidersOTC} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {currencySymbol} from 'data/currency';
-import {markExpectedBackground} from 'utils/expectedBackground';
+import {openSupportEmail, openSupportTelegram} from 'utils/contactSupport';
+import {getSupportId} from 'services/logger';
 
 const ContactUs = ({navigation}) => {
   const {theme} = useContext(ThemeContext);
@@ -24,25 +26,15 @@ const ContactUs = ({navigation}) => {
   const shownOTC = useSelector(getCryptoProvidersOTC);
   const localCurrency = useSelector(getLocalCurrency);
 
-  const onPressContactViaEmail = useCallback(async () => {
-    try {
-      markExpectedBackground();
-      await Linking.openURL(`mailto:${CONTACT_DETAILS.email}`);
-    } catch (e) {
-      console.error('error in open emails', e);
-    }
-  }, []);
+  const supportId = getSupportId();
 
-  const onPressContactViaTelegram = useCallback(async () => {
-    try {
-      if (CONTACT_DETAILS.telegram) {
-        markExpectedBackground();
-        await Linking.openURL(CONTACT_DETAILS.telegram);
-      }
-    } catch (e) {
-      console.error('error in open Telegram', e);
-    }
-  }, []);
+  const onPressSupportId = useCallback(() => {
+    Clipboard.setString(supportId);
+    Toast.show({
+      type: 'successToast',
+      text1: 'Support ID copied',
+    });
+  }, [supportId]);
 
   return (
     <DokSafeAreaView style={styles.container}>
@@ -55,9 +47,7 @@ const ContactUs = ({navigation}) => {
               "Have questions or feedback? Reach out to us! Our team is here to assist you with any inquiries. Contact us today, and we'll be in touch shortly."
             }
           </Text>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={onPressContactViaEmail}>
+          <TouchableOpacity style={styles.button} onPress={openSupportEmail}>
             <Text style={styles.buttonTitle}>{'Contact via Email'}</Text>
           </TouchableOpacity>
           {!!CONTACT_DETAILS.telegram && (
@@ -65,10 +55,17 @@ const ContactUs = ({navigation}) => {
               <Text style={styles.descriptions}>{'OR'}</Text>
               <TouchableOpacity
                 style={styles.button}
-                onPress={onPressContactViaTelegram}>
+                onPress={openSupportTelegram}>
                 <Text style={styles.buttonTitle}>{'Contact via Telegram'}</Text>
               </TouchableOpacity>
             </>
+          )}
+          {!!supportId && (
+            <TouchableOpacity onPress={onPressSupportId}>
+              <Text style={styles.descriptions}>
+                {`Support ID: ${supportId} (tap to copy)`}
+              </Text>
+            </TouchableOpacity>
           )}
           <View style={styles.borderView} />
           <WalletConnectItem />
