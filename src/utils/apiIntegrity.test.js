@@ -98,7 +98,7 @@ afterEach(() => {
 
 it('discards a refused key, backs off, then registers a fresh key', async () => {
   attest.getAttestation.mockRejectedValueOnce(
-    appAttestError('ATTESTATION_ERROR', 2),
+    appAttestError('ATTESTATION_ERROR', 3),
   );
 
   const failed = await sendRequest();
@@ -108,7 +108,7 @@ it('discards a refused key, backs off, then registers a fresh key', async () => 
   // Apple's reason is in the log, not just the library's code.
   expect(console.error).toHaveBeenCalledWith(
     expect.stringContaining('retry in 30s'),
-    expect.stringContaining('com.apple.devicecheck.error error 2'),
+    expect.stringContaining('com.apple.devicecheck.error error 3'),
   );
 
   // Inside the backoff: no new challenge, still no proof.
@@ -127,7 +127,7 @@ it('discards a refused key, backs off, then registers a fresh key', async () => 
 
 it("keeps the key when Apple's server is unavailable", async () => {
   attest.getAttestation.mockRejectedValueOnce(
-    appAttestError('ATTESTATION_ERROR', 3),
+    appAttestError('ATTESTATION_ERROR', 4),
   );
 
   await sendRequest();

@@ -126,10 +126,12 @@ const describeIntegrityError = err => {
   return detail ? `${err?.message} (${detail})` : err?.message;
 };
 
-// DCError.serverUnavailable (code 3). Apple: retry attestKey later with the
-// same key; for any other error, discard the key and create a new one.
+// DCError.serverUnavailable (code 4; DCError.h: unknownSystemFailure 0,
+// featureUnsupported 1, invalidInput 2, invalidKey 3, serverUnavailable 4).
+// Apple: retry attestKey later with the same key; for any other error,
+// discard the key and create a new one.
 const isAppAttestServerUnavailable = err =>
-  /devicecheck\.error error 3\b|serverUnavailable/i.test(
+  /devicecheck\.error error 4\b|serverUnavailable/i.test(
     String(err?.userInfo?.error ?? ''),
   );
 
