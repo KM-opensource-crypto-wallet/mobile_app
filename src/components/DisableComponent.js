@@ -1,32 +1,14 @@
-import React, {useCallback} from 'react';
-import {Linking, ScrollView, StyleSheet, Text, View} from 'react-native';
+import React from 'react';
+import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useSelector} from 'react-redux';
 import {getDisableMessage} from 'dok-wallet-blockchain-networks/redux/cryptoProviders/cryptoProvidersSelectors';
-import {CONTACT_DETAILS} from 'utils/wlData';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {markExpectedBackground} from 'utils/expectedBackground';
+import {openSupportEmail, openSupportTelegram} from 'utils/contactSupport';
+import {getSupportId} from 'services/logger';
 
 const DisableComponent = () => {
   const disableMessage = useSelector(getDisableMessage);
-  const onPressContactViaEmail = useCallback(async () => {
-    try {
-      markExpectedBackground();
-      await Linking.openURL(`mailto:${CONTACT_DETAILS.email}`);
-    } catch (e) {
-      console.error('error in open emails', e);
-    }
-  }, []);
-
-  const onPressContactViaTelegram = useCallback(async () => {
-    try {
-      if (CONTACT_DETAILS.telegram) {
-        markExpectedBackground();
-        await Linking.openURL(CONTACT_DETAILS.telegram);
-      }
-    } catch (e) {
-      console.error('error in open Telegram', e);
-    }
-  }, []);
+  const supportId = getSupportId();
 
   return (
     <>
@@ -39,15 +21,20 @@ const DisableComponent = () => {
           <View>
             <Text style={styles.description}>
               For more information. Please contact us on via{' '}
-              <Text style={styles.link} onPress={onPressContactViaEmail}>
+              <Text style={styles.link} onPress={openSupportEmail}>
                 {'Email'}
               </Text>{' '}
               or{' '}
-              <Text style={styles.link} onPress={onPressContactViaTelegram}>
+              <Text style={styles.link} onPress={openSupportTelegram}>
                 {'Telegram'}
               </Text>{' '}
               for additional support.
             </Text>
+            {!!supportId && (
+              <Text style={styles.supportId} selectable>
+                {`Support ID: ${supportId}`}
+              </Text>
+            )}
           </View>
         </View>
       </SafeAreaView>
@@ -86,6 +73,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'blue',
     textDecorationLine: 'underline',
+  },
+  supportId: {
+    fontSize: 14,
+    color: 'black',
+    marginTop: 12,
   },
   deleteButton: {
     width: '100%',

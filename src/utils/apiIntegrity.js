@@ -70,10 +70,16 @@ let iosAssertionChain = Promise.resolve();
 // for the full initialization (iOS registration / Android prepare) before
 // the request interceptor tries to attach integrity headers.
 let integrityInitPromise = null;
-// Per-platform permanent failure flags.
-// Keeps iOS and Android failures isolated so one platform's failure
-// doesn't block the other platform's registration in the same session.
-let iosRegistrationPermanentlyFailed = false;
+// iOS registration retry backoff. A failed registration used to latch for the
+// whole session, so one network blip or one App Attest failure (App Review
+// devices hit this on every new build) left every request without a proof —
+// 403 PROOF_MISSING until the app was restarted. Now the next attempt waits
+// 30 s, doubling up to 5 min, so the challenge endpoint is still not hammered.
+const IOS_REGISTRATION_RETRY_BASE_MS = 30 * 1000;
+const IOS_REGISTRATION_RETRY_MAX_MS = 5 * 60 * 1000;
+let iosRegistrationFailures = 0;
+let iosRegistrationRetryAt = 0;
+// Android keeps its per-session permanent failure flag.
 let androidRegistrationPermanentlyFailed = false;
 
 // ─── In-memory key ID caches ──────────────────────────────────────────────────
@@ -111,6 +117,39 @@ const removeStorageValue = key => deleteItem(key, storageOptions);
 
 // Returns e.g. 'dokwallet-ios', 'kimlwallet-android'
 const getAppName = () => `${wlName}-${Platform.OS}`;
+
+// @pagopa/io-react-native-integrity rejects with its own code as the message
+// (ATTESTATION_ERROR, GENERATION_ASSERTION_FAILED) and puts Apple's DCError
+// description in userInfo.error; without it the logs never say why.
+const describeIntegrityError = err => {
+  const detail = err?.userInfo?.error;
+  return detail ? `${err?.message} (${detail})` : err?.message;
+};
+
+// DCError.serverUnavailable (code 3). Apple: retry attestKey later with the
+// same key; for any other error, discard the key and create a new one.
+const isAppAttestServerUnavailable = err =>
+  /devicecheck\.error error 3\b|serverUnavailable/i.test(
+    String(err?.userInfo?.error ?? ''),
+  );
+
+const isIOSRegistrationBackingOff = () => Date.now() < iosRegistrationRetryAt;
+
+// Returns the delay before the next attempt.
+const recordIOSRegistrationFailure = () => {
+  iosRegistrationFailures += 1;
+  const delay = Math.min(
+    IOS_REGISTRATION_RETRY_BASE_MS * 2 ** (iosRegistrationFailures - 1),
+    IOS_REGISTRATION_RETRY_MAX_MS,
+  );
+  iosRegistrationRetryAt = Date.now() + delay;
+  return delay;
+};
+
+const resetIOSRegistrationBackoff = () => {
+  iosRegistrationFailures = 0;
+  iosRegistrationRetryAt = 0;
+};
 
 // SHA256(METHOD\nPATH\nRAW_BODY) — must match CF Worker's createRequestHash.
 // PATH = requestConfig.url = Axios relative path (e.g. '/list-crypto')
@@ -178,30 +217,41 @@ const registerIOSDevice = async () => {
   // 2. Get or generate the hardware key
   const keyId = await getOrCreateKeyId();
 
-  // 3. Apple attestation — challenge is passed as the base64 string from the server.
-  // @pagopa/io-react-native-integrity's getAttestation(nonce, keyId) accepts a string.
-  // The CF Worker verifies with Buffer.from(challenge, 'base64') — encoding is consistent.
-  const attestation = await getAttestation(challenge, keyId);
+  try {
+    // 3. Apple attestation — challenge is passed as the base64 string from the server.
+    // @pagopa/io-react-native-integrity's getAttestation(nonce, keyId) accepts a string.
+    // The CF Worker verifies with Buffer.from(challenge, 'base64') — encoding is consistent.
+    const attestation = await getAttestation(challenge, keyId);
 
-  // 4. Register with CF Worker
-  const registerResp = await fetch(`${ATTEST_WORKER_URL}/attest/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-app-name': appName,
-    },
-    body: JSON.stringify({keyId, attestation, challengeId}),
-  });
+    // 4. Register with CF Worker
+    const registerResp = await fetch(`${ATTEST_WORKER_URL}/attest/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-app-name': appName,
+      },
+      body: JSON.stringify({keyId, attestation, challengeId}),
+    });
 
-  if (!registerResp.ok) {
-    let detail = '';
-    try {
-      const err = await registerResp.json();
-      detail = err?.detail ?? err?.error ?? '';
-    } catch {
-      // ignore parse error
+    if (!registerResp.ok) {
+      let detail = '';
+      try {
+        const err = await registerResp.json();
+        detail = err?.detail ?? err?.error ?? '';
+      } catch {
+        // ignore parse error
+      }
+      throw new Error(
+        `Registration failed (${registerResp.status}): ${detail}`,
+      );
     }
-    throw new Error(`Registration failed (${registerResp.status}): ${detail}`);
+  } catch (err) {
+    // getOrCreateKeyId stored the key before attesting it, so without this
+    // every later attempt reused a key Apple had already refused.
+    if (!isAppAttestServerUnavailable(err)) {
+      await clearIOSRegistration().catch(() => {});
+    }
+    throw err;
   }
 
   // 5. Persist the registration flag
@@ -213,13 +263,10 @@ const registerIOSDevice = async () => {
 // Ensures iOS registration is done exactly once.
 // Concurrent calls share a single in-flight promise.
 const ensureIOSRegistered = async () => {
-  // Permanent failure: registration was attempted and failed this session.
-  // Don't retry — prevents hammering the challenge/register endpoints.
-  if (iosRegistrationPermanentlyFailed) {
-    console.warn(
-      '[integrity] ensureIOSRegistered: permanently failed this session, skipping',
-    );
-    throw new Error('iOS registration permanently failed this session');
+  // A registration failed recently: wait out the backoff before trying again
+  // so the challenge/register endpoints are not hammered.
+  if (isIOSRegistrationBackingOff()) {
+    throw new Error('iOS registration failed recently, waiting to retry');
   }
 
   // Fast path: if re-registration is already in progress (set synchronously by
@@ -253,15 +300,17 @@ const ensureIOSRegistered = async () => {
   iosRegistrationPromise = registerIOSDevice()
     .then(keyId => {
       cachedIosKeyId = keyId;
+      resetIOSRegistrationBackoff();
       return keyId;
     })
     .catch(err => {
-      // Mark permanently failed so future calls skip registration entirely.
       // .catch before .finally ensures the rejection re-propagates to callers.
-      iosRegistrationPermanentlyFailed = true;
+      const delay = recordIOSRegistrationFailure();
       console.error(
-        '[integrity] ensureIOSRegistered: registration failed, marked permanent:',
-        err?.message,
+        `[integrity] ensureIOSRegistered: registration failed, retry in ${
+          delay / 1000
+        }s:`,
+        describeIntegrityError(err),
       );
       throw err;
     })
@@ -312,7 +361,7 @@ const createIOSIntegrityHeaders = async requestConfig => {
   } catch (registrationError) {
     console.warn(
       '[integrity] iOS registration failed:',
-      registrationError?.message,
+      describeIntegrityError(registrationError),
     );
     return {};
   }
@@ -329,7 +378,7 @@ const createIOSIntegrityHeaders = async requestConfig => {
   } catch (firstError) {
     console.warn(
       '[integrity] iOS assertion failed, re-registering:',
-      firstError?.message,
+      describeIntegrityError(firstError),
     );
 
     // Rotate: clear stored registration so the next request triggers fresh
@@ -693,10 +742,15 @@ export const setupDokApiIntegrity = dokApi => {
             console.warn(
               '[integrity] SIGN_COUNT_CONFLICT — retrying without re-registration',
             );
-          } else if (
-            !iosRegistrationPromise &&
-            !iosRegistrationPermanentlyFailed
-          ) {
+          } else if (iosRegistrationPromise) {
+            console.warn(
+              '[integrity] integrity rejected — re-registration already in progress, joining',
+            );
+          } else if (isIOSRegistrationBackingOff()) {
+            console.warn(
+              '[integrity] integrity rejected but registration failed recently — skipping re-registration',
+            );
+          } else {
             // DEVICE_NOT_FOUND / ASSERTION_FAILED: re-register.
             // Set iosRegistrationPromise SYNCHRONOUSLY before any await so that
             // concurrent response interceptors see it as non-null and skip —
@@ -706,25 +760,23 @@ export const setupDokApiIntegrity = dokApi => {
             );
             iosRegistrationPromise = clearIOSRegistration()
               .then(() => registerIOSDevice())
+              .then(keyId => {
+                resetIOSRegistrationBackoff();
+                return keyId;
+              })
               .catch(err => {
-                iosRegistrationPermanentlyFailed = true;
+                const delay = recordIOSRegistrationFailure();
                 console.error(
-                  '[integrity] re-registration failed, marked permanent:',
-                  err?.message,
+                  `[integrity] re-registration failed, retry in ${
+                    delay / 1000
+                  }s:`,
+                  describeIntegrityError(err),
                 );
                 throw err;
               })
               .finally(() => {
                 iosRegistrationPromise = null;
               });
-          } else if (iosRegistrationPermanentlyFailed) {
-            console.warn(
-              '[integrity] integrity rejected but registration permanently failed — skipping re-registration',
-            );
-          } else {
-            console.warn(
-              '[integrity] integrity rejected — re-registration already in progress, joining',
-            );
           }
         } else if (Platform.OS === 'android') {
           if (getAppName() === 'kimlwallet-android') {
@@ -795,8 +847,11 @@ const _doInitialize = async () => {
       }
     } catch (err) {
       // Registration failed — app continues without integrity headers.
-      // The request interceptor will retry registration on first use.
-      console.error('[integrity] iOS pre-registration failed:', err?.message);
+      // The request interceptor retries it once the backoff has passed.
+      console.error(
+        '[integrity] iOS pre-registration failed:',
+        describeIntegrityError(err),
+      );
     }
   }
 };
