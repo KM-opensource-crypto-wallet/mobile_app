@@ -7,6 +7,7 @@ import {
   STORAGE_KEYS,
   SCHEMA_VERSION,
   bootstrapStorage,
+  confirmAccountStored,
   generateMmkvKey,
   getSchemaVersion,
   getStateStore,
@@ -241,6 +242,37 @@ describe('storage bootstrap (mobile)', () => {
         expect.objectContaining({message: 'Vault found without an account'}),
         expect.anything(),
       );
+    });
+
+    it('a restore clears the marker as soon as its account write is confirmed, not at the next launch', async () => {
+      await reinstall();
+      // restoreFromVault's flushed signUpSuccess write.
+      getStateStore().set('persist:auth', JSON.stringify({hasAccount: true}));
+
+      await confirmAccountStored();
+
+      expect(getStateStore().contains(STORAGE_KEYS.reinstalledAt)).toBe(false);
+
+      // The account is lost before the next bootstrap: an error, not
+      // explained away by the reinstall that came before the restore.
+      getStateStore().remove('persist:auth');
+      jest.clearAllMocks();
+      resetBootstrap();
+      await bootstrapStorage();
+      expect(captureError).toHaveBeenCalledWith(
+        expect.objectContaining({message: 'Vault found without an account'}),
+        expect.objectContaining({
+          extra: expect.objectContaining({afterReinstall: false}),
+        }),
+      );
+    });
+
+    it('keeps the marker when the account write did not land', async () => {
+      await reinstall();
+
+      await confirmAccountStored();
+
+      expect(getStateStore().contains(STORAGE_KEYS.reinstalledAt)).toBe(true);
     });
   });
 

@@ -14,6 +14,9 @@ jest.mock('redux/store', () => ({
 jest.mock('redux/storage/mmkvStorage', () => ({
   releaseBlockedWrites: jest.fn(async () => {}),
 }));
+jest.mock('redux/storage/bootstrap', () => ({
+  confirmAccountStored: jest.fn(async () => {}),
+}));
 jest.mock('security/unlockFlow', () => ({
   AccountExistsError: class AccountExistsError extends Error {
     code = 'account_exists';
@@ -68,6 +71,7 @@ jest.mock('dok-wallet-blockchain-networks/redux/wallets/walletSecrets', () => ({
 
 import * as vault from 'dok-wallet-blockchain-networks/security/vault';
 import {persistor, vaultSync} from 'redux/store';
+import {confirmAccountStored} from 'redux/storage/bootstrap';
 import {
   RESTORE_ATTEMPT_KEYS,
   RESTORE_ERROR_CODES,
@@ -191,6 +195,31 @@ describe('restoreFromVault', () => {
     );
   });
 
+  it('clears the reinstall marker once the account write is flushed', async () => {
+    const store = makeStore();
+    await store.dispatch(restoreFromVault('old-pw'));
+    expect(confirmAccountStored).toHaveBeenCalledTimes(1);
+    expect(confirmAccountStored.mock.invocationCallOrder[0]).toBeGreaterThan(
+      Math.max(...persistor.flush.mock.invocationCallOrder),
+    );
+  });
+
+  it('a failure to clear the marker does not fail a restore that succeeded', async () => {
+    const {captureError} = require('services/logger');
+    confirmAccountStored.mockRejectedValueOnce(new Error('mmkv'));
+    const store = makeStore();
+    await expect(store.dispatch(restoreFromVault('old-pw'))).resolves.toEqual({
+      wallets: 2,
+      skipped: 1,
+    });
+    expect(captureError).toHaveBeenCalledWith(
+      expect.objectContaining({message: 'mmkv'}),
+      expect.objectContaining({
+        tags: expect.objectContaining({op: 'reinstall_marker'}),
+      }),
+    );
+  });
+
   it('a wrong password changes nothing', async () => {
     vault.unlockWithPassword.mockRejectedValueOnce(
       Object.assign(new Error('bad'), {code: 'invalid_password'}),
@@ -215,6 +244,7 @@ describe('restoreFromVault', () => {
     expect(store.state.wallets.allWallets).toEqual([]);
     expect(store.state.auth.hasAccount).toBe(false);
     expect(isRestoringFromVault()).toBe(false);
+    expect(confirmAccountStored).not.toHaveBeenCalled();
   });
 
   it('a cleanup failure still clears the restore flag and keeps the restore error', async () => {

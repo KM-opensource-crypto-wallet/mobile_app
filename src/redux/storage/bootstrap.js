@@ -160,6 +160,12 @@ const persistedHasAccount = mmkv => {
   }
 };
 
+const clearReinstallMarkerIfAccountStored = mmkv => {
+  if (mmkv.contains(STORAGE_KEYS.reinstalledAt) && persistedHasAccount(mmkv)) {
+    mmkv.remove(STORAGE_KEYS.reinstalledAt);
+  }
+};
+
 /**
  * Marks a store that started empty because of a reinstall, so later launches
  * (before the user restores or discards the kept vault) still know why. The
@@ -168,12 +174,19 @@ const persistedHasAccount = mmkv => {
 const trackReinstall = (mmkv, reinstalled) => {
   if (reinstalled) {
     mmkv.set(STORAGE_KEYS.reinstalledAt, Date.now());
-  } else if (
-    mmkv.contains(STORAGE_KEYS.reinstalledAt) &&
-    persistedHasAccount(mmkv)
-  ) {
-    mmkv.remove(STORAGE_KEYS.reinstalledAt);
+  } else {
+    clearReinstallMarkerIfAccountStored(mmkv);
   }
+};
+
+/**
+ * Called once a restore has flushed its account write: the reinstall marker
+ * goes right away, only if the account really is in the store, so a loss
+ * before the next launch is reported as an error instead of being explained
+ * away by that reinstall.
+ */
+export const confirmAccountStored = async () => {
+  clearReinstallMarkerIfAccountStored(await bootstrapStorage());
 };
 
 /**
