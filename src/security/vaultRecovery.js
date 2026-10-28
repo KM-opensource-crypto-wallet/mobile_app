@@ -31,6 +31,7 @@ import {persistor, vaultSync} from 'redux/store';
 import {AccountExistsError} from './unlockFlow';
 import {setRestoringFromVault} from './restoreState';
 import {releaseBlockedWrites} from 'redux/storage/mmkvStorage';
+import {confirmAccountStored} from 'redux/storage/bootstrap';
 
 // The slices a restore rebuilds (account flag, wallets).
 const RESTORED_PERSIST_KEYS = ['persist:auth', 'persist:wallets'];
@@ -273,6 +274,11 @@ export const restoreFromVault = password => async (dispatch, getState) => {
   dispatch(reassignCurrentWalletIfHidden());
   dispatch(vaultUnlocked());
   await persistor.flush();
+  // The restore already succeeded; on a failure the next launch clears the
+  // reinstall marker instead.
+  await confirmAccountStored().catch(error =>
+    captureError(error, {tags: {area: 'storage', op: 'reinstall_marker'}}),
+  );
   const counts = {wallets: plan.length, skipped};
   addBreadcrumb('auth', 'vault.restored', counts);
   logger.info('vault.restored', counts);

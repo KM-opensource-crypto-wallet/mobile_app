@@ -7,6 +7,7 @@ import {
   STORAGE_KEYS,
   SCHEMA_VERSION,
   bootstrapStorage,
+  confirmAccountStored,
   generateMmkvKey,
   getSchemaVersion,
   getStateStore,
@@ -174,11 +175,105 @@ describe('storage bootstrap (mobile)', () => {
       'storage.reinstall_detected',
       expect.objectContaining({vaultKept: true}),
     );
-    // No account in the fresh store next to that vault: reported.
-    expect(captureError).toHaveBeenCalledWith(
+    // No account in the fresh store next to that vault: the expected
+    // reinstall case (RestoreFromDevice offers it), a warning, not an error.
+    expect(logger.warn).toHaveBeenCalledWith(
+      'storage.vault_without_account',
+      expect.objectContaining({reinstalled: true, afterReinstall: true}),
+    );
+    expect(captureError).not.toHaveBeenCalledWith(
       expect.objectContaining({message: 'Vault found without an account'}),
       expect.anything(),
     );
+  });
+
+  describe('vault without an account', () => {
+    const reinstall = async () => {
+      await vault.createVault('pw');
+      vault.lock();
+      await bootstrapStorage();
+    };
+
+    it('a relaunch before the restore is still the reinstall case', async () => {
+      await reinstall();
+      jest.clearAllMocks();
+      resetBootstrap();
+
+      await bootstrapStorage();
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        'storage.vault_without_account',
+        expect.objectContaining({reinstalled: false, afterReinstall: true}),
+      );
+      expect(captureError).not.toHaveBeenCalled();
+    });
+
+    it('a store that lost its account without a reinstall is an error', async () => {
+      await bootstrapStorage();
+      await vault.createVault('pw');
+      resetBootstrap();
+
+      await bootstrapStorage();
+
+      expect(captureError).toHaveBeenCalledWith(
+        expect.objectContaining({message: 'Vault found without an account'}),
+        expect.objectContaining({
+          extra: expect.objectContaining({afterReinstall: false}),
+        }),
+      );
+    });
+
+    it('the reinstall marker goes once an account is stored', async () => {
+      await reinstall();
+      expect(getStateStore().contains(STORAGE_KEYS.reinstalledAt)).toBe(true);
+      getStateStore().set('persist:auth', JSON.stringify({hasAccount: 'true'}));
+      resetBootstrap();
+
+      const store = await bootstrapStorage();
+
+      expect(store.contains(STORAGE_KEYS.reinstalledAt)).toBe(false);
+
+      // A later loss of that account is reported again.
+      store.remove('persist:auth');
+      jest.clearAllMocks();
+      resetBootstrap();
+      await bootstrapStorage();
+      expect(captureError).toHaveBeenCalledWith(
+        expect.objectContaining({message: 'Vault found without an account'}),
+        expect.anything(),
+      );
+    });
+
+    it('a restore clears the marker as soon as its account write is confirmed, not at the next launch', async () => {
+      await reinstall();
+      // restoreFromVault's flushed signUpSuccess write.
+      getStateStore().set('persist:auth', JSON.stringify({hasAccount: true}));
+
+      await confirmAccountStored();
+
+      expect(getStateStore().contains(STORAGE_KEYS.reinstalledAt)).toBe(false);
+
+      // The account is lost before the next bootstrap: an error, not
+      // explained away by the reinstall that came before the restore.
+      getStateStore().remove('persist:auth');
+      jest.clearAllMocks();
+      resetBootstrap();
+      await bootstrapStorage();
+      expect(captureError).toHaveBeenCalledWith(
+        expect.objectContaining({message: 'Vault found without an account'}),
+        expect.objectContaining({
+          extra: expect.objectContaining({afterReinstall: false}),
+        }),
+      );
+    });
+
+    it('keeps the marker when the account write did not land', async () => {
+      await reinstall();
+
+      await confirmAccountStored();
+
+      expect(getStateStore().contains(STORAGE_KEYS.reinstalledAt)).toBe(true);
+    });
   });
 
   it('never opens an existing store with a new key: the file is moved aside first', async () => {

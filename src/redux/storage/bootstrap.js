@@ -10,7 +10,8 @@
 //      next to an existing encrypted file, which is set aside instead)
 //   3. open MMKV (recover-on-error: a damaged file is repaired, not emptied)
 //   4. persist:root2 → per-slice + vault migration when schemaVersion is 0
-//   5. report a vault with no account (the store came back empty)
+//   5. report a vault with no account (the store came back empty): an error
+//      only when no reinstall explains it
 //
 // Data-loss rule: nothing here ever deletes the vault or an encrypted state
 // file. Every unusual outcome is a Sentry log (`storage.*`), not only a
@@ -41,6 +42,7 @@ export const STORAGE_KEYS = Object.freeze({
   schemaVersion: 'storage.schemaVersion',
   migratedAt: 'storage.migratedAt',
   legacyRetainedAt: 'storage.legacyRetainedAt',
+  reinstalledAt: 'storage.reinstalledAt',
 });
 
 export const SCHEMA_VERSION = Object.freeze({
@@ -158,10 +160,41 @@ const persistedHasAccount = mmkv => {
   }
 };
 
+const clearReinstallMarkerIfAccountStored = mmkv => {
+  if (mmkv.contains(STORAGE_KEYS.reinstalledAt) && persistedHasAccount(mmkv)) {
+    mmkv.remove(STORAGE_KEYS.reinstalledAt);
+  }
+};
+
+/**
+ * Marks a store that started empty because of a reinstall, so later launches
+ * (before the user restores or discards the kept vault) still know why. The
+ * marker goes once an account is stored: a later loss is reported again.
+ */
+const trackReinstall = (mmkv, reinstalled) => {
+  if (reinstalled) {
+    mmkv.set(STORAGE_KEYS.reinstalledAt, Date.now());
+  } else {
+    clearReinstallMarkerIfAccountStored(mmkv);
+  }
+};
+
+/**
+ * Called once a restore has flushed its account write: the reinstall marker
+ * goes right away, only if the account really is in the store, so a loss
+ * before the next launch is reported as an error instead of being explained
+ * away by that reinstall.
+ */
+export const confirmAccountStored = async () => {
+  clearReinstallMarkerIfAccountStored(await bootstrapStorage());
+};
+
 /**
  * A vault with no account means the state store came back empty while the
- * keys survived: the case that used to end in onboarding and a new vault over
- * the old one. Reported as an error so it reaches Sentry with breadcrumbs.
+ * keys survived. After a reinstall that is expected (RestoreFromDevice offers
+ * the kept vault) and only logged. Without one it is the case that used to end
+ * in onboarding and a new vault over the old one: reported as an error so it
+ * reaches Sentry with breadcrumbs (DOKWALLET-Q was reinstalls only).
  */
 const reportVaultWithoutAccount = async (mmkv, reinstalled) => {
   if (persistedHasAccount(mmkv) || !(await vault.hasVault())) {
@@ -169,8 +202,13 @@ const reportVaultWithoutAccount = async (mmkv, reinstalled) => {
   }
   const data = {
     reinstalled,
+    afterReinstall: mmkv.contains(STORAGE_KEYS.reinstalledAt),
     slices: mmkv.getAllKeys().filter(key => key.startsWith('persist:')).length,
   };
+  if (data.afterReinstall) {
+    report('storage.vault_without_account', data);
+    return;
+  }
   report('storage.vault_without_account', data, 'error');
   captureError(new Error('Vault found without an account'), {
     tags: {area: 'storage', op: 'vault_without_account'},
@@ -214,6 +252,7 @@ const run = async () => {
     report('storage.new_store', {reinstalled}, 'info');
     mmkv.set(STORAGE_KEYS.installId, base64Encode(randomBytes(12)));
   }
+  trackReinstall(mmkv, reinstalled);
   await runMigrations(mmkv);
   if (context !== 'headless') {
     await reportVaultWithoutAccount(mmkv, reinstalled);
