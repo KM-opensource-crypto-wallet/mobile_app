@@ -14,6 +14,7 @@
 // bodies/headers. `scrub.js` enforces this in beforeSend / beforeBreadcrumb /
 // beforeSendLog, and call sites must still not pass addresses or amounts.
 import * as Sentry from '@sentry/react-native';
+import DeviceInfo from 'react-native-device-info';
 import {IS_SANDBOX} from 'dok-wallet-blockchain-networks/config/config';
 import {scrubObject, scrubString, stripQuery} from './scrub';
 import {ignoreErrors} from './ignoreErrors';
@@ -151,9 +152,14 @@ export const initSentry = () => {
     beforeSendLog,
   });
   // Tags reach events; attributes reach logs. Set both so either view can be
-  // filtered by variant.
+  // filtered by variant. `device_model` is the marketing name ("iPhone Air");
+  // the SDK only sends the identifier ("iPhone18,4"). The user-assigned device
+  // name is not an option: iOS 16+ returns "iPhone" without an entitlement
+  // Apple forbids passing on to third-party SDKs.
+  const deviceModel = DeviceInfo.getModel();
   Sentry.setTag('variant', wlName);
-  Sentry.setAttributes({variant: wlName});
+  Sentry.setTag('device_model', deviceModel);
+  Sentry.setAttributes({variant: wlName, device_model: deviceModel});
 };
 
 const emitLog = level => (message, attrs) => {
@@ -203,9 +209,12 @@ export const addBreadcrumb = (category, message, data, level = 'info') => {
   }
 };
 
+let supportUserId = '';
+
 // The wallet's persisted masterClientId: stable per install, not tied to any
 // address. Support can look up a user's events once they share it.
 export const setUserContext = masterClientId => {
+  supportUserId = masterClientId ? String(masterClientId) : '';
   try {
     // Reaches both events and logs as `user.id`.
     Sentry.setUser(masterClientId ? {id: String(masterClientId)} : null);
@@ -213,6 +222,12 @@ export const setUserContext = masterClientId => {
     // Never let observability break the app.
   }
 };
+
+// What the user gives support: the full `user.id`, found in Sentry with
+// `user.id:<id>`. It is a random per-install id the backend only stores, never
+// looks anything up by. Kept here rather than read from the store because the
+// crash screen renders outside the redux Provider.
+export const getSupportId = () => supportUserId;
 
 // One structured log per failed backend call: method, path, status. No body,
 // no headers, no query string.

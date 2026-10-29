@@ -7,6 +7,7 @@ import {
   STORAGE_KEYS,
   SCHEMA_VERSION,
   bootstrapStorage,
+  confirmAccountStored,
   generateMmkvKey,
   getSchemaVersion,
   getStateStore,
@@ -14,7 +15,11 @@ import {
   resetBootstrap,
   setSchemaVersion,
 } from 'redux/storage/bootstrap';
-import {mmkvStorage} from 'redux/storage/mmkvStorage';
+import {
+  blockWrites,
+  mmkvStorage,
+  releaseBlockedWrites,
+} from 'redux/storage/mmkvStorage';
 import {Platform} from 'react-native';
 import {
   wipeAllLocalData,
@@ -28,6 +33,8 @@ import {
   SECURE_STORE_ERROR_CODES,
   SecureStoreError,
 } from 'dok-wallet-blockchain-networks/security/errors';
+import {captureError, logger} from 'services/logger';
+import {moveFile} from 'react-native-fs';
 
 jest.mock('services/logger', () => ({
   addBreadcrumb: jest.fn(),
@@ -48,7 +55,28 @@ jest.mock('utils/wlData', () => ({
 jest.mock('myWallet/wallet.service', () => ({
   getLegacySecureValue: jest.fn(async () => null),
   clearLegacySecureStorage: jest.fn(async () => {}),
+  // iOS native repair: drops RNSI's stale metadata HMAC tag in place.
+  clearKeychainIntegrityTag: jest.fn(async (service, key) => {
+    const {__mock} = jest.requireMock('react-native-sensitive-info');
+    return __mock.clearIntegrityTag(key, {service});
+  }),
 }));
+// The MMKV mock keeps instances in memory: a "file" exists while its instance
+// is registered, and moving it aside unregisters it.
+jest.mock('react-native-fs', () => {
+  const mmkv = jest.requireMock('react-native-mmkv');
+  const idOf = path => path.split('/').pop();
+  return {
+    DocumentDirectoryPath: '/docs',
+    mkdir: jest.fn(async () => {}),
+    exists: jest.fn(async path =>
+      path.endsWith('.crc') ? false : mmkv.__mock.instances.has(idOf(path)),
+    ),
+    moveFile: jest.fn(async from => {
+      mmkv.__mock.instances.delete(idOf(from));
+    }),
+  };
+});
 jest.mock('utils/asyncStorage', () => ({
   getAsyncStorageData: jest.fn(async () => 'true'),
   storeAsyncStorageData: jest.fn(async () => {}),
@@ -73,6 +101,7 @@ describe('storage bootstrap (mobile)', () => {
     rnsi.__mock.reset();
     mmkvModule.__mock.reset();
     mmkvModule.createMMKV.mockClear();
+    jest.clearAllMocks();
   });
 
   it('generates a 32-char key, stores it in the secure store and opens MMKV with it', async () => {
@@ -87,6 +116,7 @@ describe('storage bootstrap (mobile)', () => {
       id: STATE_MMKV_ID,
       encryptionKey: key,
       encryptionType: 'AES-256',
+      recoveryStrategy: 'recover-on-error',
     });
     expect(store.getString(STORAGE_KEYS.installId)).toEqual(expect.any(String));
     expect(isStorageReady()).toBe(true);
@@ -108,6 +138,7 @@ describe('storage bootstrap (mobile)', () => {
       id: STATE_MMKV_ID,
       encryptionKey: key,
       encryptionType: 'AES-256',
+      recoveryStrategy: 'recover-on-error',
     });
     expect(second.getString(STORAGE_KEYS.installId)).toBe(installId);
   });
@@ -121,9 +152,10 @@ describe('storage bootstrap (mobile)', () => {
     ).toThrow(/32 bytes/);
   });
 
-  it('detects a reinstall (vault items present, no MMKV file) and wipes the stale keychain', async () => {
+  it('detects a reinstall (vault present, no MMKV file): replaces the stale key, keeps the vault', async () => {
     // Previous install: vault + key exist in the Keychain, MMKV file gone.
     await vault.createVault('pw');
+    const wrap = await secureStore.get('vault.dek.password');
     await secureStore.set(
       STORAGE_KEYS.mmkvKey,
       'stale-key-stale-key-stale-key-12',
@@ -133,9 +165,145 @@ describe('storage bootstrap (mobile)', () => {
 
     await bootstrapStorage();
 
-    expect(await vault.hasVault()).toBe(false);
+    // The wallets' keys stay for "Restore wallets saved on this device".
+    expect(await vault.hasVault()).toBe(true);
+    expect(await secureStore.get('vault.dek.password')).toBe(wrap);
     expect(await secureStore.get(STORAGE_KEYS.mmkvKey)).not.toBe(
       'stale-key-stale-key-stale-key-12',
+    );
+    expect(logger.warn).toHaveBeenCalledWith(
+      'storage.reinstall_detected',
+      expect.objectContaining({vaultKept: true}),
+    );
+    // No account in the fresh store next to that vault: the expected
+    // reinstall case (RestoreFromDevice offers it), a warning, not an error.
+    expect(logger.warn).toHaveBeenCalledWith(
+      'storage.vault_without_account',
+      expect.objectContaining({reinstalled: true, afterReinstall: true}),
+    );
+    expect(captureError).not.toHaveBeenCalledWith(
+      expect.objectContaining({message: 'Vault found without an account'}),
+      expect.anything(),
+    );
+  });
+
+  describe('vault without an account', () => {
+    const reinstall = async () => {
+      await vault.createVault('pw');
+      vault.lock();
+      await bootstrapStorage();
+    };
+
+    it('a relaunch before the restore is still the reinstall case', async () => {
+      await reinstall();
+      jest.clearAllMocks();
+      resetBootstrap();
+
+      await bootstrapStorage();
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        'storage.vault_without_account',
+        expect.objectContaining({reinstalled: false, afterReinstall: true}),
+      );
+      expect(captureError).not.toHaveBeenCalled();
+    });
+
+    it('a store that lost its account without a reinstall is an error', async () => {
+      await bootstrapStorage();
+      await vault.createVault('pw');
+      resetBootstrap();
+
+      await bootstrapStorage();
+
+      expect(captureError).toHaveBeenCalledWith(
+        expect.objectContaining({message: 'Vault found without an account'}),
+        expect.objectContaining({
+          extra: expect.objectContaining({afterReinstall: false}),
+        }),
+      );
+    });
+
+    it('the reinstall marker goes once an account is stored', async () => {
+      await reinstall();
+      expect(getStateStore().contains(STORAGE_KEYS.reinstalledAt)).toBe(true);
+      getStateStore().set('persist:auth', JSON.stringify({hasAccount: 'true'}));
+      resetBootstrap();
+
+      const store = await bootstrapStorage();
+
+      expect(store.contains(STORAGE_KEYS.reinstalledAt)).toBe(false);
+
+      // A later loss of that account is reported again.
+      store.remove('persist:auth');
+      jest.clearAllMocks();
+      resetBootstrap();
+      await bootstrapStorage();
+      expect(captureError).toHaveBeenCalledWith(
+        expect.objectContaining({message: 'Vault found without an account'}),
+        expect.anything(),
+      );
+    });
+
+    it('a restore clears the marker as soon as its account write is confirmed, not at the next launch', async () => {
+      await reinstall();
+      // restoreFromVault's flushed signUpSuccess write.
+      getStateStore().set('persist:auth', JSON.stringify({hasAccount: true}));
+
+      await confirmAccountStored();
+
+      expect(getStateStore().contains(STORAGE_KEYS.reinstalledAt)).toBe(false);
+
+      // The account is lost before the next bootstrap: an error, not
+      // explained away by the reinstall that came before the restore.
+      getStateStore().remove('persist:auth');
+      jest.clearAllMocks();
+      resetBootstrap();
+      await bootstrapStorage();
+      expect(captureError).toHaveBeenCalledWith(
+        expect.objectContaining({message: 'Vault found without an account'}),
+        expect.objectContaining({
+          extra: expect.objectContaining({afterReinstall: false}),
+        }),
+      );
+    });
+
+    it('keeps the marker when the account write did not land', async () => {
+      await reinstall();
+
+      await confirmAccountStored();
+
+      expect(getStateStore().contains(STORAGE_KEYS.reinstalledAt)).toBe(true);
+    });
+  });
+
+  it('never opens an existing store with a new key: the file is moved aside first', async () => {
+    const first = await bootstrapStorage();
+    first.set('persist:auth', JSON.stringify({hasAccount: 'true'}));
+    // The key disappears from the Keychain while the encrypted file stays.
+    await secureStore.remove(STORAGE_KEYS.mmkvKey);
+    resetBootstrap();
+
+    const second = await bootstrapStorage();
+
+    expect(moveFile).toHaveBeenCalledWith(
+      `/docs/mmkv/${STATE_MMKV_ID}`,
+      expect.stringMatching(/^\/docs\/mmkv-unreadable\/dok\.state-\d+$/),
+    );
+    expect(second).not.toBe(first);
+    expect(logger.error).toHaveBeenCalledWith(
+      'storage.key_missing_store_set_aside',
+      expect.anything(),
+    );
+  });
+
+  it('logs every launch with whether an account is stored', async () => {
+    const store = await bootstrapStorage();
+    store.set('persist:auth', JSON.stringify({hasAccount: 'true'}));
+    resetBootstrap();
+    await bootstrapStorage();
+    expect(logger.info).toHaveBeenLastCalledWith(
+      'storage.bootstrapped',
+      expect.objectContaining({hasAccount: true, reinstalled: false}),
     );
   });
 
@@ -179,6 +347,51 @@ describe('storage bootstrap (mobile)', () => {
     expect(await secureStore.get(STORAGE_KEYS.mmkvKey)).toBe(key);
   });
 
+  // DOKWALLET-K: after a backup restore / Quick Start transfer to a new
+  // iPhone, RNSI refuses every moved unprotected item (E_INTEGRITY_VIOLATION)
+  // and the app never got past the storage error screen.
+  describe('items moved to a new iPhone', () => {
+    const service = {service: secureStore.SECURE_STORE_SERVICE};
+
+    beforeEach(() => {
+      Platform.OS = 'ios';
+    });
+
+    it('opens the transferred store with its original key', async () => {
+      const first = await bootstrapStorage();
+      first.set('persist:auth', JSON.stringify({hasAccount: 'true'}));
+      const key = await secureStore.get(STORAGE_KEYS.mmkvKey);
+      rnsi.__mock.tamper(STORAGE_KEYS.mmkvKey, service);
+      resetBootstrap();
+
+      const second = await bootstrapStorage();
+
+      expect(mmkvModule.createMMKV).toHaveBeenLastCalledWith(
+        expect.objectContaining({encryptionKey: key}),
+      );
+      expect(moveFile).not.toHaveBeenCalled();
+      expect(second.getString('persist:auth')).toBe('{"hasAccount":"true"}');
+    });
+
+    it('after a reinstall there, keeps the vault and its password still unlocks it', async () => {
+      await vault.createVault('pw');
+      await vault.saveSecrets({wallets: ['w1']});
+      vault.lock();
+      rnsi.__mock.tamper('vault.dek.password', service);
+      rnsi.__mock.tamper('vault.blob', service);
+      expect(mmkvModule.existsMMKV(STATE_MMKV_ID)).toBe(false);
+
+      await bootstrapStorage();
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        'storage.reinstall_detected',
+        expect.objectContaining({vaultKept: true}),
+      );
+      await vault.unlockWithPassword('pw');
+      expect(await vault.readSecrets()).toEqual({wallets: ['w1']});
+    });
+  });
+
   it('schema version round-trips as a number', async () => {
     await setSchemaVersion(SCHEMA_VERSION.migrated);
     expect(await getSchemaVersion()).toBe(2);
@@ -192,6 +405,49 @@ describe('storage bootstrap (mobile)', () => {
       expect(getStateStore().getString('persist:auth')).toBe('{"a":"1"}');
       await mmkvStorage.removeItem('persist:auth');
       expect(await mmkvStorage.getItem('persist:auth')).toBeNull();
+    });
+
+    it('a key whose stored copy failed to load is never overwritten', async () => {
+      await mmkvStorage.setItem('persist:messages', '{"kept":"1"}');
+      blockWrites('persist:messages');
+      // Refused, and reported as refused (not as written).
+      await expect(
+        mmkvStorage.setItem('persist:messages', '{"empty":"1"}'),
+      ).rejects.toThrow('blocked');
+      expect(await mmkvStorage.getItem('persist:messages')).toBe(
+        '{"kept":"1"}',
+      );
+    });
+
+    it('releasing a block writes the newest refused value and lifts it', async () => {
+      await mmkvStorage.setItem('persist:auth', '{"kept":"1"}');
+      blockWrites('persist:auth');
+      await mmkvStorage.setItem('persist:auth', '{"r":"1"}').catch(() => {});
+      await mmkvStorage.setItem('persist:auth', '{"r":"2"}').catch(() => {});
+      await releaseBlockedWrites('persist:auth');
+      expect(await mmkvStorage.getItem('persist:auth')).toBe('{"r":"2"}');
+      await mmkvStorage.setItem('persist:auth', '{"r":"3"}');
+      expect(await mmkvStorage.getItem('persist:auth')).toBe('{"r":"3"}');
+    });
+
+    it('a write refused while a release awaits bootstrap is the one written', async () => {
+      await mmkvStorage.setItem('persist:auth', '{"kept":"1"}');
+      blockWrites('persist:auth');
+      await mmkvStorage.setItem('persist:auth', '{"r":"1"}').catch(() => {});
+      const release = releaseBlockedWrites('persist:auth');
+      // Still blocked: the release has not resumed from its await yet.
+      await expect(
+        mmkvStorage.setItem('persist:auth', '{"r":"2"}'),
+      ).rejects.toThrow('blocked');
+      await release;
+      expect(await mmkvStorage.getItem('persist:auth')).toBe('{"r":"2"}');
+    });
+
+    it('releasing a block with nothing refused keeps the stored copy', async () => {
+      await mmkvStorage.setItem('persist:wallets', '{"kept":"1"}');
+      blockWrites('persist:wallets');
+      await releaseBlockedWrites('persist:wallets');
+      expect(await mmkvStorage.getItem('persist:wallets')).toBe('{"kept":"1"}');
     });
   });
 

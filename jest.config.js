@@ -9,5 +9,8 @@ module.exports = {
   moduleNameMapper: {
     // uuid v13 ships an ESM "exports" map; pin Jest to the CJS node build.
     '^uuid$': require.resolve('uuid'),
+    // The RN preset resolves react-redux through its "react-native" export
+    // condition, which is the untransformed ESM build; use the CJS one.
+    '^react-redux$': '<rootDir>/node_modules/react-redux/dist/cjs/index.js',
   },
 };

@@ -77,6 +77,10 @@ const myStyles = theme =>
       borderColor: theme.background,
       width: ITEM_WIDTH,
     },
+    restoreButton: {
+      marginTop: 12,
+      alignSelf: 'center',
+    },
     buttonTitle: {
       color: theme.title,
       fontSize: 16,

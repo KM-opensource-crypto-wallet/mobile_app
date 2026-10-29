@@ -5,6 +5,7 @@
 jest.mock('services/logger', () => ({
   addBreadcrumb: jest.fn(),
   captureError: jest.fn(),
+  logger: {info: jest.fn(), warn: jest.fn(), error: jest.fn()},
 }));
 jest.mock('utils/wlData', () => ({WL_APP_NAME: 'Dok Wallet'}));
 jest.mock('redux/store', () => ({
@@ -46,6 +47,7 @@ jest.mock('dok-wallet-blockchain-networks/redux/wallets/walletsSlice', () => ({
   }),
 }));
 jest.mock('dok-wallet-blockchain-networks/redux/auth/authSlice', () => ({
+  resetAttempts: () => ({type: 'auth/resetAttempts'}),
   vaultLocked: () => ({type: 'auth/vaultLocked'}),
   vaultUnlocked: () => ({type: 'auth/vaultUnlocked'}),
 }));
@@ -65,7 +67,7 @@ import {UNLOCK_ERROR_CODES, createAccount} from 'security/unlockFlow';
 
 const ORPHAN = {v: 1, wallets: {w1: {phrase: 'm'}}};
 
-const run = () => {
+const run = options => {
   const dispatched = [];
   const dispatch = action => {
     dispatched.push(action);
@@ -76,7 +78,7 @@ const run = () => {
     wallets: {allWallets: []},
     settings: {},
   });
-  return {dispatched, result: createAccount('pw')(dispatch, getState)};
+  return {dispatched, result: createAccount('pw', options)(dispatch, getState)};
 };
 const types = dispatched => dispatched.map(a => a.type);
 
@@ -145,5 +147,36 @@ describe('createAccount (orphan legacy keys)', () => {
     expect(consumeOrphanVaultPayload).not.toHaveBeenCalled();
     expect(vault.lock).toHaveBeenCalledTimes(1);
     expect(types(dispatched)).toContain('auth/vaultLocked');
+  });
+});
+
+// A vault without an account still holds wallet keys (a reinstall, or a state
+// store that came back empty). Registration must never replace it silently.
+describe('createAccount (vault from earlier)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    peekOrphanVaultPayload.mockReturnValue(null);
+    vault.hasVault.mockResolvedValue(true);
+  });
+
+  afterAll(() => {
+    vault.hasVault.mockResolvedValue(false);
+  });
+
+  it('refuses with VAULT_EXISTS and leaves the vault alone', async () => {
+    const {dispatched, result} = run();
+    await expect(result).rejects.toMatchObject({
+      code: UNLOCK_ERROR_CODES.VAULT_EXISTS,
+    });
+    expect(vault.destroy).not.toHaveBeenCalled();
+    expect(vault.createVault).not.toHaveBeenCalled();
+    expect(types(dispatched)).not.toContain('auth/vaultUnlocked');
+  });
+
+  it('replaces it only when the user chose to start over', async () => {
+    const {result} = run({discardExistingVault: true});
+    await result;
+    expect(vault.destroy).toHaveBeenCalledTimes(1);
+    expect(vault.createVault).toHaveBeenCalledWith('pw');
   });
 });

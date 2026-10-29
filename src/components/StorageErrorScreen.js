@@ -26,6 +26,12 @@ const messageFor = error => {
         'Secure storage is not available right now. Unlock your device and ' +
         'try again.'
       );
+    case 'integrity_violation':
+      return (
+        'Secure storage on this device could not be verified. Nothing has ' +
+        'been changed or deleted. Please contact support before resetting ' +
+        'or reinstalling.'
+      );
     default:
       return 'Local storage could not be opened. Please try again.';
   }

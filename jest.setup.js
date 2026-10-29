@@ -42,13 +42,19 @@ jest.mock('react-native-device-info', () =>
 // resolver falling back to a weaker policy); deleteItem returns whether an
 // item was removed; biometric-protected items count an OS prompt on every
 // protected read/write; `__mock.invalidate(key)` simulates the Keystore
-// destroying a key after an enrollment change (E_KEY_INVALIDATED). Errors
-// carry `code` like the typed SensitiveInfoError subclasses do.
+// destroying a key after an enrollment change (E_KEY_INVALIDATED);
+// `__mock.tamper(key)` simulates an item whose metadata HMAC no longer
+// verifies (iOS: moved to a new device without its HMAC key) until a write
+// re-signs it (E_INTEGRITY_VIOLATION), and `__mock.clearIntegrityTag(key)`
+// models the app's native repair (CustomMethods.clearKeychainIntegrityTag):
+// the stale tag is dropped in place, value and policy untouched. Errors carry
+// `code` like the typed SensitiveInfoError subclasses do.
 jest.mock('react-native-sensitive-info', () => {
   const items = new Map();
   const state = {
     prompts: 0,
     invalidated: new Set(),
+    tampered: new Set(),
     cancelNext: false,
     downgradeTo: null,
   };
@@ -73,6 +79,7 @@ jest.mock('react-native-sensitive-info', () => {
         items.clear();
         state.prompts = 0;
         state.invalidated.clear();
+        state.tampered.clear();
         state.cancelNext = false;
         state.downgradeTo = null;
         for (const fn of [
@@ -87,6 +94,25 @@ jest.mock('react-native-sensitive-info', () => {
       invalidate(key, options) {
         state.invalidated.add(id(key, options));
       },
+      tamper(key, options) {
+        state.tampered.add(id(key, options));
+      },
+      // Same results as the native method: absent / protected / untagged /
+      // cleared. A protected item (stored policy other than `none`) is left
+      // alone.
+      clearIntegrityTag(key, options) {
+        const item = items.get(id(key, options));
+        if (!item) {
+          return 'absent';
+        }
+        if (isProtected(item.accessControl)) {
+          return 'protected';
+        }
+        if (!state.tampered.delete(id(key, options))) {
+          return 'untagged';
+        }
+        return 'cleared';
+      },
     },
     setItem: jest.fn(async (key, value, options) => {
       const requested = options?.accessControl || 'secureEnclaveBiometry';
@@ -98,6 +124,7 @@ jest.mock('react-native-sensitive-info', () => {
         state.prompts += 1;
       }
       items.set(id(key, options), {value, accessControl: applied});
+      state.tampered.delete(id(key, options));
       return {metadata: metadataFor(applied)};
     }),
     getItem: jest.fn(async (key, options) => {
@@ -121,6 +148,14 @@ jest.mock('react-native-sensitive-info', () => {
           );
         }
       }
+      if (state.tampered.has(id(key, options))) {
+        throw err(
+          'E_INTEGRITY_VIOLATION',
+          `[E_INTEGRITY_VIOLATION] Tampering detected for key "${key}" in service "${
+            options?.service || 'default'
+          }".`,
+        );
+      }
       return {
         key,
         service: options?.service || 'default',
@@ -129,7 +164,10 @@ jest.mock('react-native-sensitive-info', () => {
       };
     }),
     hasItem: jest.fn(async (key, options) => items.has(id(key, options))),
-    deleteItem: jest.fn(async (key, options) => items.delete(id(key, options))),
+    deleteItem: jest.fn(async (key, options) => {
+      state.tampered.delete(id(key, options));
+      return items.delete(id(key, options));
+    }),
   };
   return api;
 });
