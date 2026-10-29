@@ -2,6 +2,7 @@ import React, {useCallback, useContext} from 'react';
 import {Keyboard, Text, View} from 'react-native';
 import {ThemeContext} from 'theme/ThemeContext';
 import RecipientAddressInput from 'components/RecipientAddressInput';
+import SponsoredGasToggle from 'components/SponsoredGasToggle';
 import AvailableBalanceHeader from './AvailableBalanceHeader';
 import AmountInputGroup from './AmountInputGroup';
 import MemoInput from './MemoInput';
@@ -95,6 +96,15 @@ const SendFundsForm = ({
           onPressScan={() => {
             navigation.navigate('Scanner', {page: `${scannerPage}Memo`});
           }}
+        />
+      )}
+      {!!form.sponsoredGasToken && (
+        <SponsoredGasToggle
+          tokenSymbol={form.sponsoredGasToken.symbol}
+          checked={!!values.payGasWithToken}
+          onToggle={() =>
+            setFieldValue('payGasWithToken', !values.payGasWithToken)
+          }
         />
       )}
       {children}

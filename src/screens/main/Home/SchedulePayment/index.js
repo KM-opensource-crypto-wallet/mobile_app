@@ -75,6 +75,7 @@ const getInitialValues = (editingPayment, currencyRate) => {
       repeatInterval: '1',
       repeatUnit: CUSTOM_UNIT.DAY,
       weeklyDays: [],
+      payGasWithToken: false,
     };
   }
   const recurrence = editingPayment.recurrence || {type: REPEAT_TYPE.NONE};
@@ -98,6 +99,7 @@ const getInitialValues = (editingPayment, currencyRate) => {
     weeklyDays: Array.isArray(recurrence.weeklyDays)
       ? recurrence.weeklyDays
       : [],
+    payGasWithToken: !!editingPayment.payGasWithToken,
   };
 };
 
