@@ -5,7 +5,8 @@ import React, {
   useRef,
   useCallback,
 } from 'react';
-import {TouchableOpacity, View, Text} from 'react-native';
+import {AppState, TouchableOpacity, View, Text} from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
 import myStyles from './HomeScreenStyles';
 import {Portal, Provider} from 'react-native-paper';
 import {ModalQR} from 'components/ModalQR';
@@ -24,10 +25,12 @@ import {
   selectCurrentWalletSortOption,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
+  checkBatchDelegation,
   setCurrentCoin,
   sortCurrentWalletCoins,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {VerifyInfoModal} from 'components/VerifyInfo';
+import ModalBatchDelegation from 'components/ModalBatchDelegation';
 import {
   getNewsMessage,
   isAskedBackedUpModal,
@@ -156,6 +159,7 @@ const HomeScreen = ({navigation, route}) => {
   const wcUri = useSelector(getWCUri);
   const routeStateData = useSelector(getRouteStateData);
   const conversationName = useSelector(getConversationName);
+  const [batchDelegationNotice, setBatchDelegationNotice] = useState(null);
 
   const newsBottomSheetRef = useRef();
   const selectedTopicRef = useRef();
@@ -165,6 +169,42 @@ const HomeScreen = ({navigation, route}) => {
   const qrScheme = route.params?.qrScheme;
   const qrAmount = route.params?.qrAmount;
   const newDateToString = route.params?.newDateToString;
+
+  // App launch, wallet or Ethereum address switch, return to the foreground and
+  // network recovery. The thunk throttles (10 min per wallet address; a failed
+  // read does not count) and skips unlisted addresses without any network call.
+  useEffect(() => {
+    let active = true;
+    const runCheck = () => {
+      dispatch(checkBatchDelegation())
+        .unwrap()
+        .then(notice => {
+          if (active && notice) {
+            setBatchDelegationNotice(notice);
+          }
+        })
+        .catch(() => {});
+    };
+    runCheck();
+    const appStateSubscription = AppState.addEventListener('change', state => {
+      if (state === 'active') {
+        runCheck();
+      }
+    });
+    let wasConnected = true;
+    const unsubscribeNetInfo = NetInfo.addEventListener(state => {
+      const isConnected = !!state?.isConnected;
+      if (isConnected && !wasConnected) {
+        runCheck();
+      }
+      wasConnected = isConnected;
+    });
+    return () => {
+      active = false;
+      appStateSubscription.remove();
+      unsubscribeNetInfo();
+    };
+  }, [currentWallet?.clientId, ethereumCoin?.address, dispatch]);
 
   useEffect(() => {
     if (routeStateData?.navigateToTransactionList) {
@@ -565,6 +605,10 @@ const HomeScreen = ({navigation, route}) => {
           </Portal>
         </Provider>
       </ErrorBoundary>
+      <ModalBatchDelegation
+        notice={batchDelegationNotice}
+        onClose={() => setBatchDelegationNotice(null)}
+      />
       {!requestedModalVisible && !transactionModalVisible && (
         <VerifyInfoModal
           visible={backupModalVisible}

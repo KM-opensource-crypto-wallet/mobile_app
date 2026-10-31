@@ -38,6 +38,11 @@ import WalletConnect from 'assets/images/WalletConnect.png';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {chainLogoMap} from 'assets/chain_logo';
+import WalletConnectVerifyBadge from 'components/WalletConnectVerifyBadge';
+import {
+  getWalletConnectVerifyStatus,
+  isRiskyVerifyStatus,
+} from 'dok-wallet-blockchain-networks/helper/walletConnectVerify';
 import {
   getCustomizePublicAddress,
   isHederaUnactivated,
@@ -88,11 +93,14 @@ const WalletConnectRequestModal = props => {
     [],
   );
   const [bitcoinAddressType, setBitcoinAddressType] = useState('bitcoin');
+  // The tick belongs to one proposal: a different proposal starts unticked.
+  const [acknowledgedProposalId, setAcknowledgedProposalId] = useState(null);
   const dispatch = useDispatch();
   const image = requestData?.icons?.[0] || null;
   const title = requestData?.name || '';
   const url = requestData?.url || '';
   const id = requestData?.id || '';
+  const verifyAcknowledged = !!id && acknowledgedProposalId === id;
   const sessionId = requestData?.sessionId || '';
   const relays = requestData?.relays || {};
   const navigation = useNavigation();
@@ -159,6 +167,11 @@ const WalletConnectRequestModal = props => {
     unsupportedRequiredChains.length === 0 &&
     missingRequired.length === 0 &&
     Object.keys(namespaces).length > 0;
+  // A flagged or mismatched domain needs an explicit acknowledgement.
+  const isVerifyRisky = isRiskyVerifyStatus(
+    getWalletConnectVerifyStatus(requestData?.verifyContext).status,
+  );
+  const approveDisabled = !canApprove || (isVerifyRisky && !verifyAcknowledged);
   let errorText = '';
   if (unsupportedRequiredChains.length) {
     errorText = `The dApp requires ${unsupportedRequiredChains.join(
@@ -291,6 +304,14 @@ const WalletConnectRequestModal = props => {
         {image && <FastImage source={{uri: image}} style={styles.imageStyle} />}
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.url}>{url}</Text>
+        <WalletConnectVerifyBadge
+          verifyContext={requestData?.verifyContext}
+          appUrl={url}
+          acknowledged={verifyAcknowledged}
+          onToggleAcknowledged={() =>
+            setAcknowledgedProposalId(prev => (prev === id ? null : id))
+          }
+        />
         <View style={[styles.borderView, {marginTop: 12}]} />
         <Text style={styles.chainTitle}>{'Chains'}</Text>
         {chainData.map((item, index) => renderItem(item, index))}
@@ -341,11 +362,13 @@ const WalletConnectRequestModal = props => {
               <Text style={styles.buttonTitle}>{'Reject'}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              disabled={!canApprove}
+              disabled={approveDisabled}
               style={[
                 styles.button,
                 {
-                  backgroundColor: !canApprove ? theme.gray : theme.background,
+                  backgroundColor: approveDisabled
+                    ? theme.gray
+                    : theme.background,
                 },
               ]}
               onPress={onPressApprove}>
