@@ -20,6 +20,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 import {
   foundCoinInCurrentWallet,
   getEthereumCoin,
+  isBatchDelegationExposed,
   selectCurrentWallet,
   selectIsBackedUp,
   selectCurrentWalletSortOption,
@@ -160,6 +161,12 @@ const HomeScreen = ({navigation, route}) => {
   const routeStateData = useSelector(getRouteStateData);
   const conversationName = useSelector(getConversationName);
   const [batchDelegationNotice, setBatchDelegationNotice] = useState(null);
+  // A null check result (throttled, failed read) keeps the notice; it hides
+  // only once its address is marked cleared (e.g. by the post-revoke checks).
+  // eslint-disable-next-line react-redux/useSelector-prefer-selectors
+  const isNoticeAddressExposed = useSelector(state =>
+    isBatchDelegationExposed(state, batchDelegationNotice?.address),
+  );
 
   const newsBottomSheetRef = useRef();
   const selectedTopicRef = useRef();
@@ -606,7 +613,7 @@ const HomeScreen = ({navigation, route}) => {
         </Provider>
       </ErrorBoundary>
       <ModalBatchDelegation
-        notice={batchDelegationNotice}
+        notice={isNoticeAddressExposed ? batchDelegationNotice : null}
         onClose={() => setBatchDelegationNotice(null)}
       />
       {!requestedModalVisible && !transactionModalVisible && (
