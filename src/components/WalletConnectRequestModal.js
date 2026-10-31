@@ -93,12 +93,14 @@ const WalletConnectRequestModal = props => {
     [],
   );
   const [bitcoinAddressType, setBitcoinAddressType] = useState('bitcoin');
-  const [verifyAcknowledged, setVerifyAcknowledged] = useState(false);
+  // The tick belongs to one proposal: a different proposal starts unticked.
+  const [acknowledgedProposalId, setAcknowledgedProposalId] = useState(null);
   const dispatch = useDispatch();
   const image = requestData?.icons?.[0] || null;
   const title = requestData?.name || '';
   const url = requestData?.url || '';
   const id = requestData?.id || '';
+  const verifyAcknowledged = !!id && acknowledgedProposalId === id;
   const sessionId = requestData?.sessionId || '';
   const relays = requestData?.relays || {};
   const navigation = useNavigation();
@@ -306,7 +308,9 @@ const WalletConnectRequestModal = props => {
           verifyContext={requestData?.verifyContext}
           appUrl={url}
           acknowledged={verifyAcknowledged}
-          onToggleAcknowledged={() => setVerifyAcknowledged(prev => !prev)}
+          onToggleAcknowledged={() =>
+            setAcknowledgedProposalId(prev => (prev === id ? null : id))
+          }
         />
         <View style={[styles.borderView, {marginTop: 12}]} />
         <Text style={styles.chainTitle}>{'Chains'}</Text>

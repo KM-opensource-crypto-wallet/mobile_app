@@ -76,6 +76,8 @@ const WalletConnectVerifyBadge = ({
         <TouchableOpacity
           style={styles.checkboxRow}
           onPress={onToggleAcknowledged}
+          accessibilityRole="checkbox"
+          accessibilityState={{checked: !!acknowledged}}
           activeOpacity={0.7}>
           <MaterialCommunityIcons
             name={acknowledged ? 'checkbox-marked' : 'checkbox-blank-outline'}

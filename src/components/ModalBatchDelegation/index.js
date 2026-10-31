@@ -1,5 +1,5 @@
 import React, {useContext, useState} from 'react';
-import {Modal, View, Text, TouchableOpacity} from 'react-native';
+import {Modal, View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import BigNumber from 'bignumber.js';
 import Toast from 'react-native-toast-message';
@@ -7,7 +7,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 import {currencySymbol} from 'data/currency';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {
-  checkBatchDelegation,
+  confirmBatchDelegationRemoved,
   revokeDelegation,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import myStyles from 'components/ModalDelegation/ModalDelegationStyles';
@@ -40,9 +40,17 @@ const ModalBatchDelegation = ({notice, onClose}) => {
   const dispatch = useDispatch();
   const localCurrency = useSelector(getLocalCurrency);
   const [isRemoving, setIsRemoving] = useState(false);
+  // Shown in the card: the app-level toast renders behind this native Modal.
+  const [error, setError] = useState('');
+
+  const handleClose = () => {
+    setError('');
+    onClose();
+  };
 
   const onTurnOff = async () => {
     setIsRemoving(true);
+    setError('');
     try {
       const {status} = await dispatch(
         revokeDelegation({coinId: notice.coinId}),
@@ -57,14 +65,15 @@ const ModalBatchDelegation = ({notice, onClose}) => {
           : {type: 'successToast', text1: 'Batch sending switched off'},
       );
       onClose();
-      // Marks the address as done once the chain shows the delegation gone.
-      dispatch(checkBatchDelegation({force: true}));
+      // Keeps re-checking (a pending revoke still reads as delegated) and
+      // marks the address as done once the chain shows the delegation gone.
+      dispatch(confirmBatchDelegationRemoved({address: notice.address}));
     } catch (e) {
-      Toast.show({
-        type: 'errorToast',
-        text1: 'Failed to switch off batch sending',
-        text2: e?.message,
-      });
+      setError(
+        e?.message
+          ? `Failed to switch off batch sending: ${e.message}`
+          : 'Failed to switch off batch sending',
+      );
     } finally {
       setIsRemoving(false);
     }
@@ -75,7 +84,7 @@ const ModalBatchDelegation = ({notice, onClose}) => {
       visible={!!notice}
       transparent
       animationType="fade"
-      onRequestClose={onClose}>
+      onRequestClose={handleClose}>
       <View style={styles.overlay}>
         <View style={styles.card}>
           <Text style={styles.title}>
@@ -87,10 +96,11 @@ const ModalBatchDelegation = ({notice, onClose}) => {
             }
           </Text>
           <Text style={styles.message}>{feeText(notice, localCurrency)}</Text>
+          {!!error && <Text style={localStyles.errorText}>{error}</Text>}
           <View style={styles.btnRow}>
             <TouchableOpacity
               style={styles.secondaryBtn}
-              onPress={onClose}
+              onPress={handleClose}
               disabled={isRemoving}>
               <Text style={styles.secondaryBtnText}>Later</Text>
             </TouchableOpacity>
@@ -108,5 +118,14 @@ const ModalBatchDelegation = ({notice, onClose}) => {
     </Modal>
   );
 };
+
+const localStyles = StyleSheet.create({
+  errorText: {
+    color: '#E5484D',
+    fontSize: 13,
+    fontFamily: 'Roboto-Regular',
+    marginBottom: 16,
+  },
+});
 
 export default ModalBatchDelegation;
