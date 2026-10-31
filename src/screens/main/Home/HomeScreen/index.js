@@ -24,10 +24,12 @@ import {
   selectCurrentWalletSortOption,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
+  checkBatchDelegation,
   setCurrentCoin,
   sortCurrentWalletCoins,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {VerifyInfoModal} from 'components/VerifyInfo';
+import ModalBatchDelegation from 'components/ModalBatchDelegation';
 import {
   getNewsMessage,
   isAskedBackedUpModal,
@@ -156,6 +158,7 @@ const HomeScreen = ({navigation, route}) => {
   const wcUri = useSelector(getWCUri);
   const routeStateData = useSelector(getRouteStateData);
   const conversationName = useSelector(getConversationName);
+  const [batchDelegationNotice, setBatchDelegationNotice] = useState(null);
 
   const newsBottomSheetRef = useRef();
   const selectedTopicRef = useRef();
@@ -165,6 +168,23 @@ const HomeScreen = ({navigation, route}) => {
   const qrScheme = route.params?.qrScheme;
   const qrAmount = route.params?.qrAmount;
   const newDateToString = route.params?.newDateToString;
+
+  // App launch and wallet switch; the thunk throttles and skips unlisted
+  // addresses without any network call.
+  useEffect(() => {
+    let active = true;
+    dispatch(checkBatchDelegation())
+      .unwrap()
+      .then(notice => {
+        if (active && notice) {
+          setBatchDelegationNotice(notice);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [currentWallet?.clientId, dispatch]);
 
   useEffect(() => {
     if (routeStateData?.navigateToTransactionList) {
@@ -565,6 +585,10 @@ const HomeScreen = ({navigation, route}) => {
           </Portal>
         </Provider>
       </ErrorBoundary>
+      <ModalBatchDelegation
+        notice={batchDelegationNotice}
+        onClose={() => setBatchDelegationNotice(null)}
+      />
       {!requestedModalVisible && !transactionModalVisible && (
         <VerifyInfoModal
           visible={backupModalVisible}

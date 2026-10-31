@@ -25,6 +25,7 @@ import {ThemeContext} from 'theme/ThemeContext';
 import {selectWalletConnectTransactionData} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSelectors';
 import {SCREEN_WIDTH} from 'utils/dimensions';
 import {
+  isBatchDelegationExposed,
   selectLivePrivateKey,
   selectWalletConnectData,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
@@ -63,6 +64,15 @@ import {
   getEvmTxMaxFeeWei,
   reviewEvmWalletConnectTx,
 } from 'dok-wallet-blockchain-networks/helper/evmTxReview';
+import WalletConnectVerifyBadge from 'components/WalletConnectVerifyBadge';
+import {
+  EVM_MESSAGE_SIGN_METHODS,
+  reviewEvmSignMessage,
+} from 'dok-wallet-blockchain-networks/helper/evmSignReview';
+import {
+  getWalletConnectVerifyStatus,
+  isRiskyVerifyStatus,
+} from 'dok-wallet-blockchain-networks/helper/walletConnectVerify';
 
 // Danger accent for calls that need an explicit acknowledgement — brand-neutral
 // so it reads the same in both dokwallet and kimlwallet themes.
@@ -528,6 +538,27 @@ const WalletConnectTransactionModal = props => {
     }
   }, [transactionData, walletData, evmReview]);
 
+  // personal_sign / eth_sign of a 32-byte message: unreadable ones need an
+  // acknowledgement; a listed account that still has batch sending set up is
+  // not offered the signature at all (the walletConnect thunk refuses too).
+  const signReview = useMemo(
+    () =>
+      EVM_MESSAGE_SIGN_METHODS.includes(method) && !isNonEVMChain(chainId)
+        ? reviewEvmSignMessage(getTransactionRequestData?.signTypeData)
+        : null,
+    [method, chainId, getTransactionRequestData],
+  );
+  const signerAddress =
+    getTransactionRequestData?.expectedSignerAddress || walletData?.address;
+  const selectIsSignerExposed = useCallback(
+    state => isBatchDelegationExposed(state, signerAddress),
+    [signerAddress],
+  );
+  const isSignerExposed = useSelector(selectIsSignerExposed);
+  const isSignBlocked = !!signReview?.digestSized && isSignerExposed;
+  const isOpaqueSign =
+    !!signReview?.digestSized && !signReview.readable && !isSignBlocked;
+
   const onPressReject = useCallback(() => {
     navigation.pop();
     const connector = getWalletConnect();
@@ -658,6 +689,20 @@ const WalletConnectTransactionModal = props => {
 
     return (
       <View style={{flex: 1, width: '100%', paddingHorizontal: '5%'}}>
+        {(isSignBlocked || isOpaqueSign) && (
+          <View style={styles.dangerBanner}>
+            <MaterialCommunityIcons
+              name="shield-alert-outline"
+              size={18}
+              color={DANGER}
+            />
+            <Text style={styles.dangerBannerText}>
+              {isSignBlocked
+                ? 'This account needs a quick update before it can sign this kind of request. Switch off batch sending from the Home screen, then try again.'
+                : 'This request asks you to sign an unreadable code, not a message. It could approve something you cannot see here. Only continue if you trust this site and know why it needs this.'}
+            </Text>
+          </View>
+        )}
         <View style={styles.msgHeaderRow}>
           <Text style={[styles.chainTitle, {marginLeft: 0, marginTop: 0}]}>
             {'Message'}
@@ -711,9 +756,17 @@ const WalletConnectTransactionModal = props => {
   // Danger-level calls (unlimited approvals, operator grants, opaque or
   // malformed calldata, contract creation) need an explicit acknowledgement;
   // a malformed request can never be approved.
-  const needsAcknowledgement = evmReview?.risk?.level === 'danger';
+  // Each request carries its own Verify result; a flagged or mismatched
+  // domain needs the same acknowledgement as a dangerous call.
+  const isVerifyRisky = isRiskyVerifyStatus(
+    getWalletConnectVerifyStatus(transactionData?.verifyContext).status,
+  );
+  const needsAcknowledgement =
+    evmReview?.risk?.level === 'danger' || isVerifyRisky || isOpaqueSign;
   const approveDisabled =
-    !!evmReview?.error || (needsAcknowledgement && !acknowledged);
+    !!evmReview?.error ||
+    isSignBlocked ||
+    (needsAcknowledgement && !acknowledged);
 
   return (
     <DokSafeAreaView style={styles.modalStyle}>
@@ -723,6 +776,10 @@ const WalletConnectTransactionModal = props => {
         {image && <FastImage source={{uri: image}} style={styles.imageStyle} />}
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.url}>{url}</Text>
+        <WalletConnectVerifyBadge
+          verifyContext={transactionData?.verifyContext}
+          appUrl={url}
+        />
         <View style={[styles.borderView, {marginTop: 12}]} />
         {method?.includes('wallet_sendCalls') ? (
           BatchCallsView()
@@ -806,6 +863,16 @@ const WalletConnectTransactionModal = props => {
           </ScrollView>
         ) : (
           MessageView()
+        )}
+        {needsAcknowledgement && !isWalletConnectTransaction(method) && (
+          <View style={styles.verifyAcknowledgeRow}>
+            <AcknowledgeRow
+              checked={acknowledged}
+              onToggle={() => setAcknowledged(prev => !prev)}
+              styles={styles}
+              theme={theme}
+            />
+          </View>
         )}
         <View style={styles.bottomView}>
           <View style={styles.rowView}>
@@ -1021,6 +1088,10 @@ const myStyles = theme =>
     },
     formInputContent: {
       paddingBottom: 12,
+    },
+    verifyAcknowledgeRow: {
+      alignSelf: 'stretch',
+      paddingHorizontal: '5%',
     },
     dangerBanner: {
       flexDirection: 'row',
