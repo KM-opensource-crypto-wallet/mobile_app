@@ -63,6 +63,7 @@ import {
 import {
   getEvmTxMaxFeeWei,
   reviewEvmWalletConnectTx,
+  reviewWalletSendCalls,
 } from 'dok-wallet-blockchain-networks/helper/evmTxReview';
 import WalletConnectVerifyBadge from 'components/WalletConnectVerifyBadge';
 import {
@@ -80,6 +81,7 @@ const DANGER = '#E5484D';
 
 export const ETH_SEND_TRANSACTION = 'eth_sendTransaction';
 export const ETH_SIGN_TRANSACTION = 'eth_signTransaction';
+const WALLET_SEND_CALLS = 'wallet_sendCalls';
 const transactionType = [ETH_SEND_TRANSACTION, ETH_SIGN_TRANSACTION];
 const isWalletConnectTransaction = method => transactionType.includes(method);
 function parseSolanaSignTransaction(txData) {
@@ -474,6 +476,17 @@ const WalletConnectTransactionModal = props => {
         : null,
     [method, chainId, transactionData],
   );
+  // wallet_sendCalls: the canonical batch, each call reviewed like a single tx.
+  const batchReview = useMemo(
+    () =>
+      method === WALLET_SEND_CALLS && !isNonEVMChain(chainId)
+        ? reviewWalletSendCalls(transactionData?.params?.[0], {
+            chainId,
+            account: walletData?.address,
+          })
+        : null,
+    [method, chainId, transactionData, walletData?.address],
+  );
 
   const getTransactionRequestData = useMemo(() => {
     if (isNonEVMChain(transactionData?.chainId)) {
@@ -486,19 +499,10 @@ const WalletConnectTransactionModal = props => {
         handler(transactionData?.params);
       return {finaltransactionData, signTypeData, expectedSignerAddress};
     } else {
-      if (transactionData?.method?.includes('wallet_sendCalls')) {
-        const batchCalls = (transactionData?.params?.[0]?.calls || []).map(
-          call => ({
-            ...call,
-            etherValue: call?.value ? parseBalance(call.value, 18) : '',
-          }),
-        );
+      if (batchReview) {
         return {
-          finaltransactionData: {
-            batchCalls,
-            from: transactionData?.from,
-          },
-          expectedSignerAddress: transactionData?.params?.[0]?.from,
+          finaltransactionData: batchReview.batch || {},
+          expectedSignerAddress: batchReview.batch?.from,
         };
       }
       if (evmReview) {
@@ -538,7 +542,7 @@ const WalletConnectTransactionModal = props => {
         expectedSignerAddress,
       };
     }
-  }, [transactionData, walletData, evmReview]);
+  }, [transactionData, walletData, evmReview, batchReview]);
 
   // personal_sign / eth_sign: any unreadable message (blind signing) needs an
   // acknowledgement; a 32-byte one from a listed account that still has batch
@@ -594,18 +598,12 @@ const WalletConnectTransactionModal = props => {
     }
     try {
       navigation.pop();
-      const isBatch = method?.includes('wallet_sendCalls');
       dispatch(
         walletConnect({
-          transactionData: isBatch
-            ? {
-                ...getTransactionRequestData?.finaltransactionData,
-                batchCalls: transactionData?.params?.[0]?.calls,
-              }
-            : getTransactionRequestData?.finaltransactionData,
+          transactionData: getTransactionRequestData?.finaltransactionData,
           // Binds this approval to the reviewed request: the thunk rebuilds
           // the tx from the store and refuses if id or digest differ.
-          reviewedTxDigest: evmReview?.digest,
+          reviewedTxDigest: evmReview?.digest ?? batchReview?.digest,
           reviewedRequestId: id,
           chain_name: walletData?.chain_name?.toLowerCase(),
           // CAIP-2 id of the request; picks the executor for chains that
@@ -632,8 +630,7 @@ const WalletConnectTransactionModal = props => {
   const styles = myStyles(theme);
 
   const BatchCallsView = () => {
-    const calls =
-      getTransactionRequestData?.finaltransactionData?.batchCalls || [];
+    const calls = batchReview?.calls || [];
     return (
       <View style={{flex: 1, width: '100%', paddingHorizontal: '5%'}}>
         <Text style={[styles.chainTitle, {marginLeft: 0}]}>
@@ -653,18 +650,18 @@ const WalletConnectTransactionModal = props => {
               <View style={styles.transferItemView}>
                 <Text style={styles.transferTitle}>{'To'}</Text>
                 <Text style={styles.boxBalance}>
-                  {getCustomizePublicAddress(call?.to)}
+                  {getCustomizePublicAddress(call.tx.to)}
                 </Text>
               </View>
-              {!!call?.etherValue && (
+              {BigInt(call.tx.value) > 0n && (
                 <View style={styles.transferItemView}>
                   <Text style={styles.transferTitle}>{'Value'}</Text>
                   <Text style={styles.boxBalance}>
-                    {call.etherValue} {walletData?.symbol}
+                    {parseBalance(call.tx.value, 18)} {walletData?.symbol}
                   </Text>
                 </View>
               )}
-              <BatchCallDataView call={call} styles={styles} theme={theme} />
+              <TxCalldataView review={call} styles={styles} theme={theme} />
             </View>
           ))}
         </ScrollView>
@@ -763,9 +760,13 @@ const WalletConnectTransactionModal = props => {
     getWalletConnectVerifyStatus(transactionData?.verifyContext).status,
   );
   const needsAcknowledgement =
-    evmReview?.risk?.level === 'danger' || isVerifyRisky || isOpaqueSign;
+    evmReview?.risk?.level === 'danger' ||
+    batchReview?.level === 'danger' ||
+    isVerifyRisky ||
+    isOpaqueSign;
   const approveDisabled =
     !!evmReview?.error ||
+    !!batchReview?.error ||
     isSignBlocked ||
     (needsAcknowledgement && !acknowledged);
 
@@ -782,7 +783,7 @@ const WalletConnectTransactionModal = props => {
           appUrl={url}
         />
         <View style={[styles.borderView, {marginTop: 12}]} />
-        {method?.includes('wallet_sendCalls') ? (
+        {batchReview ? (
           BatchCallsView()
         ) : isWalletConnectTransaction(method) ? (
           <ScrollView
