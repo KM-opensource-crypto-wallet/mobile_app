@@ -262,6 +262,7 @@ const SendFunds = ({navigation, route}) => {
                     fieldDisable={fieldDisable}
                   />
                 </View>
+                {/* Batch sending is paused.
                 {isEip7702SupportedChain(currentCoin?.chain_name) && (
                   <TouchableOpacity
                     disabled={!isValid}
@@ -281,6 +282,7 @@ const SendFunds = ({navigation, route}) => {
                     </Text>
                   </TouchableOpacity>
                 )}
+                */}
                 <TouchableOpacity
                   disabled={!isValid}
                   style={{
