@@ -2,6 +2,7 @@ import {useCallback, useMemo, useState} from 'react';
 import {useSelector} from 'react-redux';
 import {getChain} from 'dok-wallet-blockchain-networks/cryptoChain';
 import {
+  getSponsoredGasCoins,
   isBitcoinChain,
   isMemoSupportChain,
   multiplyBNWithFixed,
@@ -48,6 +49,16 @@ const useSendFundsForm = ({coin, wallet}) => {
   const {availableAmount, availableAmountCurrency} = useAvailableAmount(coin, {
     selectedUTXOsValue: transferData?.selectedUTXOsValue,
   });
+
+  // Only a token send can be sponsored, and only when the wallet already holds
+  // an allowlisted gas token on the same chain.
+  const sponsoredGasToken = useMemo(
+    () =>
+      coin?.contractAddress
+        ? getSponsoredGasCoins(chain_name, wallet?.coins)[0] ?? null
+        : null,
+    [chain_name, coin?.contractAddress, wallet?.coins],
+  );
 
   const validationSchema = useMemo(
     () => validationSchemaSendFunds({balanceAmount: availableAmount}),
@@ -164,6 +175,7 @@ const useSendFundsForm = ({coin, wallet}) => {
   return {
     availableAmount,
     availableAmountCurrency,
+    sponsoredGasToken,
     validationSchema,
     isBitcoin,
     isLightning,
