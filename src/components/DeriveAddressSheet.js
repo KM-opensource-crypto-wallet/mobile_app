@@ -8,8 +8,8 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   refreshCurrentCoin,
   setSelectedDeriveAddress,
-  updateCurrentCoin,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
+import {delay} from 'dok-wallet-blockchain-networks/helper';
 import {useDispatch, useSelector} from 'react-redux';
 import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -31,31 +31,20 @@ const DeriveAddressSheet = ({
 
   const onSelectAddress = useCallback(async () => {
     bottomRef.current?.close();
-    setTimeout(() => {
-      onItemPress && onItemPress('select_address');
-      dispatch(
-        setSelectedDeriveAddress({
-          address: selectedItem?.address,
-          chain_name: currentCoin?.chain_name,
-        }),
-      );
-    }, 400);
-    await dispatch(
-      refreshCurrentCoin({
-        currentCoin: {
-          ...currentCoin,
-          address: selectedItem?.address,
-          privateKey: selectedItem?.privateKey,
-        },
+    // Let the close animation finish, then select first and refresh from the
+    // store. Refreshing before the selection (it used to run 400 ms later in
+    // a setTimeout) snapshotted the native coin on its old address and wrote
+    // it back afterwards, silently reverting the selection.
+    await delay(400);
+    onItemPress && onItemPress('select_address');
+    dispatch(
+      setSelectedDeriveAddress({
+        address: selectedItem?.address,
+        chain_name: currentCoin?.chain_name,
       }),
-    ).unwrap();
-  }, [
-    currentCoin,
-    dispatch,
-    onItemPress,
-    selectedItem?.address,
-    selectedItem?.privateKey,
-  ]);
+    );
+    await dispatch(refreshCurrentCoin({})).unwrap();
+  }, [currentCoin?.chain_name, dispatch, onItemPress, selectedItem?.address]);
 
   const onPressCopyAddress = useCallback(() => {
     onItemPress && onItemPress('copy_address');
