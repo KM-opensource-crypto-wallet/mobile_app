@@ -45,6 +45,7 @@ jest.mock('dok-wallet-blockchain-networks/redux/wallets/walletsSlice', () => ({
   resetCoinsToDefaultAddressForPrivacyMode: () => ({
     type: 'wallets/resetCoinsToDefaultAddressForPrivacyMode',
   }),
+  repairWalletContracts: () => ({type: 'wallets/repairWalletContracts'}),
 }));
 jest.mock('dok-wallet-blockchain-networks/redux/auth/authSlice', () => ({
   resetAttempts: () => ({type: 'auth/resetAttempts'}),
@@ -88,6 +89,16 @@ describe('createAccount (orphan legacy keys)', () => {
     peekOrphanVaultPayload.mockReturnValue(ORPHAN);
     vaultSync.flush.mockResolvedValue(true);
     commitOrphanLegacyMigration.mockImplementation(() => true);
+  });
+
+  it('repairs tampered catalog contracts after the keys are back', async () => {
+    const {dispatched, result} = run();
+    await result;
+    const order = types(dispatched);
+    expect(order).toContain('wallets/repairWalletContracts');
+    expect(order.indexOf('wallets/repairWalletContracts')).toBeGreaterThan(
+      order.indexOf('wallets/hydrateWalletSecrets'),
+    );
   });
 
   it('without parked keys neither flushes nor commits', async () => {
