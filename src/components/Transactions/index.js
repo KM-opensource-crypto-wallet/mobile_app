@@ -15,6 +15,7 @@ import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/se
 import {currencySymbol} from 'data/currency';
 import {selectCurrentCoin} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import dayjs from 'dayjs';
+import BigNumber from 'bignumber.js';
 import {
   isPendingTransactionSupportedChain,
   isTransactionListNotSupported,
@@ -88,7 +89,7 @@ const truncateAmount = amount => {
   }
   const abs = Math.abs(num);
   if (abs < 0.000001) {
-    return num.toExponential(2);
+    return new BigNumber(abs).precision(2).toFixed();
   }
   if (abs < 1) {
     return parseFloat(num.toFixed(6)).toString();
