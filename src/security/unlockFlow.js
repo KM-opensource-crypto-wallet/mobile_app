@@ -12,6 +12,7 @@ import {
   clearWalletSecrets,
   hydrateWalletSecrets,
   reassignCurrentWalletIfHidden,
+  repairWalletContracts,
   resetCoinsToDefaultAddressForPrivacyMode,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
 import {
@@ -149,6 +150,9 @@ const completeUnlock = async (dispatch, getState, payload, via) => {
   // address's key; hidden-wallet reassignment follows in the same tick.
   dispatch(resetCoinsToDefaultAddressForPrivacyMode());
   dispatch(reassignCurrentWalletIfHidden());
+  // Coins that stored a tampered catalog contract (helper/contractRepairs.js);
+  // a no-op once repaired.
+  dispatch(repairWalletContracts());
   dispatch(vaultUnlocked());
   // Password and biometric alike: old failures must never add up to the
   // opt-in "too many attempts" wipe on a later typo.
@@ -212,6 +216,7 @@ export const createAccount =
     // / hidden wallet passes that run on every unlock.
     dispatch(resetCoinsToDefaultAddressForPrivacyMode());
     dispatch(reassignCurrentWalletIfHidden());
+    dispatch(repairWalletContracts());
     if (orphan) {
       try {
         // flush() never rejects; false means a write failed and its snapshot is
