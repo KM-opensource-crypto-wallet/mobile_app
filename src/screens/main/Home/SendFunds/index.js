@@ -33,7 +33,7 @@ import {
   selectCurrentWallet,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {
-  isEip7702SupportedChain,
+  isBatchSupportedChain,
   multiplyBNWithFixed,
   validateBigNumberStr,
 } from 'dok-wallet-blockchain-networks/helper';
@@ -241,8 +241,7 @@ const SendFunds = ({navigation, route}) => {
                     fieldDisable={fieldDisable}
                   />
                 </View>
-                {/* Batch sending is paused.
-                {isEip7702SupportedChain(currentCoin?.chain_name) && (
+                {isBatchSupportedChain(currentCoin?.chain_name) && (
                   <TouchableOpacity
                     disabled={!isValid}
                     style={{
@@ -261,7 +260,6 @@ const SendFunds = ({navigation, route}) => {
                     </Text>
                   </TouchableOpacity>
                 )}
-                */}
                 <TouchableOpacity
                   disabled={!isValid}
                   style={{
