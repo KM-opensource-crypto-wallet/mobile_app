@@ -52,6 +52,7 @@ jest.mock('dok-wallet-blockchain-networks/redux/wallets/walletsSlice', () => ({
   resetCoinsToDefaultAddressForPrivacyMode: () => ({
     type: 'wallets/resetCoinsToDefaultAddressForPrivacyMode',
   }),
+  repairWalletContracts: () => ({type: 'wallets/repairWalletContracts'}),
 }));
 jest.mock('dok-wallet-blockchain-networks/redux/auth/authSlice', () => ({
   signUpSuccess: () => ({type: 'auth/signUpSuccess'}),
