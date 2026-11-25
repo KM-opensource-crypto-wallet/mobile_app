@@ -633,6 +633,7 @@ const Transfer = ({navigation, route}) => {
   ]);
 
   const payGasWithToken = !!transferData?.payGasWithToken;
+  const isFeesValid = payGasWithToken || isCustomFeesValid;
   const payGasWithTokenRef = useRef(payGasWithToken);
   payGasWithTokenRef.current = payGasWithToken;
   const activeGasToken = useMemo(
@@ -950,7 +951,7 @@ const Transfer = ({navigation, route}) => {
 
   const handleSubmitForm = () => {
     // The sheet can be swipe-dismissed with an invalid tip, so re-check here.
-    if (!isCustomFeesValid) {
+    if (!isFeesValid) {
       return;
     }
     if (quoteExpiresAt && Date.now() >= quoteExpiresAt) {
@@ -1423,7 +1424,7 @@ const Transfer = ({navigation, route}) => {
                     : 'Quote expired — go back and refresh the quote.'}
                 </Text>
               )}
-              {!isCustomFeesValid && (
+              {!isFeesValid && (
                 <Text style={styles.errorText}>
                   {
                     'Priority fee cannot be higher than max fee — fix it in Advanced Options.'
@@ -1435,7 +1436,7 @@ const Transfer = ({navigation, route}) => {
                   isDisabled ||
                   isFetchingFeesAgain ||
                   isQuoteExpired ||
-                  !isCustomFeesValid ||
+                  !isFeesValid ||
                   isFetchingSponsoredQuote
                 }
                 style={{
@@ -1444,7 +1445,7 @@ const Transfer = ({navigation, route}) => {
                     isDisabled ||
                     isFetchingFeesAgain ||
                     isQuoteExpired ||
-                    !isCustomFeesValid ||
+                    !isFeesValid ||
                     isFetchingSponsoredQuote
                       ? '#708090'
                       : theme.background,
