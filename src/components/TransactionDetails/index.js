@@ -19,6 +19,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {
   selectCurrentCoin,
   selectCurrentCoinRecentTransaction,
+  selectUserCoins,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {fetchTransactionByHash} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
@@ -33,7 +34,11 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import FastImage from '@d11/react-native-fast-image';
 import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
 import myStyles from './TransactionDetailsStyles';
-import {getCustomizePublicAddress} from 'dok-wallet-blockchain-networks/helper';
+import {
+  getBatchTransferItems,
+  getCustomizePublicAddress,
+} from 'dok-wallet-blockchain-networks/helper';
+import {decodeEvmCalldata} from 'dok-wallet-blockchain-networks/helper/evmCalldata';
 
 const STATUS_CONFIG = {
   SUCCESS: {label: 'Success', color: '#71C441'},
@@ -77,6 +82,7 @@ const TransactionDetails = ({route, navigation}) => {
   const reduxRecentTransaction = useSelector(
     selectCurrentCoinRecentTransaction,
   );
+  const userCoins = useSelector(selectUserCoins);
   const [refreshing, setRefreshing] = useState(false);
   const [nftImageError, setNftImageError] = useState(false);
   const statusRef = useRef(initialTransaction?.status);
@@ -95,20 +101,21 @@ const TransactionDetails = ({route, navigation}) => {
   const transaction = recentTx
     ? {
         ...initialTransaction,
-        from: recentTx.from,
-        to: recentTx.to,
-        amount: recentTx.amount,
+        from: recentTx.from || initialTransaction.from,
+        to: recentTx.to || initialTransaction.to,
+        amount: recentTx.amount || initialTransaction.amount,
         date: recentTx.blockTimestamp
           ? new Date(parseInt(recentTx.blockTimestamp, 16) * 1000).toISOString()
           : initialTransaction.date,
         status: recentTx.status,
         link: recentTx.link,
         url: recentTx.url || initialTransaction.url,
-        totalCourse: recentTx.totalCourse,
+        totalCourse: recentTx.totalCourse ?? initialTransaction.totalCourse,
         blockNumber: recentTx.blockNumber,
         confirmations: recentTx.confirmations,
         contractAddress:
           recentTx.contractAddress ?? initialTransaction.contractAddress,
+        input: recentTx.input,
         ...(recentTx.transactionType != null &&
           initialTransaction.transactionType != null && {
             transactionType: recentTx.transactionType,
@@ -134,6 +141,7 @@ const TransactionDetails = ({route, navigation}) => {
         fetchTransactionByHash({
           txHash,
           currentCoin: currentCoinRef.current,
+          toAddress: initialTransaction?.to,
         }),
       ).unwrap();
     } catch (e) {
@@ -141,7 +149,7 @@ const TransactionDetails = ({route, navigation}) => {
     } finally {
       setRefreshing(false);
     }
-  }, [dispatch, txHash]);
+  }, [dispatch, txHash, initialTransaction?.to]);
 
   useEffect(() => {
     fetchTransaction();
@@ -154,8 +162,7 @@ const TransactionDetails = ({route, navigation}) => {
       fetchTransaction();
     }, 30000);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchTransaction]);
 
   // ── Transaction type detection ──────────────────────────────────────────────
 
@@ -525,9 +532,12 @@ const TransactionDetails = ({route, navigation}) => {
   // ── Batch Transaction ────────────────────────────────────────────────────────
 
   if (isBatchTx) {
-    const batchItems = Array.isArray(transaction.transactionsData)
+    const batchItems = transaction.transactionsData?.length
       ? transaction.transactionsData
-      : [];
+      : getBatchTransferItems(transaction.input, {
+          coins: userCoins,
+          nativeSymbol: currentCoin?.chain_symbol || currentCoin?.symbol,
+        });
 
     return (
       <DokSafeAreaView style={styles.container}>
@@ -825,6 +835,8 @@ const TransactionDetails = ({route, navigation}) => {
   // ── Smart Contract Call ──────────────────────────────────────────────────────
 
   if (isSmartContractTx) {
+    const contractCall = decodeEvmCalldata(transaction.input);
+    const hasValue = Number(transaction.amount) > 0;
     return (
       <DokSafeAreaView style={styles.container}>
         <ScrollView
@@ -847,6 +859,28 @@ const TransactionDetails = ({route, navigation}) => {
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Transaction Details</Text>
+            {contractCall.kind === 'decoded' && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Method</Text>
+                  <Text style={styles.rowValue}>
+                    {`${contractCall.method} (${contractCall.standard})`}
+                  </Text>
+                </View>
+              </>
+            )}
+            {hasValue && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Value</Text>
+                  <Text style={styles.rowValue}>
+                    {`${transaction.amount} ${currentCoin?.symbol || ''}`}
+                  </Text>
+                </View>
+              </>
+            )}
             {!!transaction.contractAddress && (
               <>
                 <View style={styles.divider} />
