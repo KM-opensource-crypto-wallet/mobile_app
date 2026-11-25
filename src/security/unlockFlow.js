@@ -98,6 +98,25 @@ export const findWalletsWithoutKeys = allWallets =>
     .filter(w => w?.clientId && !hasAnyKey(w))
     .map(w => w.clientId);
 
+// Counts for the missing_secrets event, never ids or secrets (same report as
+// web). A keyless wallet the vault has no entry for points at a vault write
+// that never landed; one the vault does hold points at hydrate failing to
+// restore it.
+const describeMissingSecrets = (missing, payload, allWallets) => {
+  const vaultWallets = payload?.wallets || {};
+  const missingIds = new Set(missing);
+  return {
+    in_vault: missing.filter(clientId =>
+      Object.prototype.hasOwnProperty.call(vaultWallets, clientId),
+    ).length,
+    vault_wallets: Object.keys(vaultWallets).length,
+    state_wallets: (allWallets || []).length,
+    pk_imports: (allWallets || []).filter(
+      w => missingIds.has(w?.clientId) && w?.isImportWalletWithPrivateKey,
+    ).length,
+  };
+};
+
 const ensureBiometricEnrolled = async getState => {
   if (!isFingerprint(getState()) || !(await vault.isBiometricAvailable())) {
     return;
@@ -132,11 +151,16 @@ const rollbackUnlock = dispatch => {
 const completeUnlock = async (dispatch, getState, payload, via) => {
   try {
     dispatch(hydrateWalletSecrets(payload));
-    const missing = findWalletsWithoutKeys(getState().wallets?.allWallets);
+    const allWallets = getState().wallets?.allWallets;
+    const missing = findWalletsWithoutKeys(allWallets);
     if (missing.length) {
       captureError(new Error('Wallets without secrets after unlock'), {
         tags: {area: 'vault', op: 'missing_secrets'},
-        extra: {count: missing.length, via},
+        extra: {
+          count: missing.length,
+          via,
+          ...describeMissingSecrets(missing, payload, allWallets),
+        },
       });
       throw new MissingSecretsError(missing);
     }
