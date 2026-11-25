@@ -19,7 +19,7 @@ import {shallowEqual, useDispatch, useSelector} from 'react-redux';
 import Clipboard from '@react-native-clipboard/clipboard';
 import IoniconIcon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import {getWalletConnect} from 'dok-wallet-blockchain-networks/service/walletconnect';
+import {rejectSessionRequest} from 'dok-wallet-blockchain-networks/service/walletconnect';
 
 import {ThemeContext} from 'theme/ThemeContext';
 import {selectWalletConnectTransactionData} from 'dok-wallet-blockchain-networks/redux/walletConnect/walletConnectSelectors';
@@ -562,18 +562,9 @@ const WalletConnectTransactionModal = props => {
 
   const onPressReject = useCallback(() => {
     navigation.pop();
-    const connector = getWalletConnect();
-    if (connector) {
-      const response = {
-        id,
-        jsonrpc: '2.0',
-        error: {
-          code: 5000,
-          message: 'User rejected.',
-        },
-      };
-      connector.respondSessionRequest({topic, response});
-    }
+    // Fire and forget: it settles even when the request has already expired
+    // (the web app's unawaited reply here was DOKWALLET-WALLET-WEB-1T).
+    rejectSessionRequest({id, topic});
     dispatch(clearWalletConnectTransactionData({id}));
   }, [dispatch, id, navigation, topic]);
 
