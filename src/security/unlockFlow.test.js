@@ -32,6 +32,8 @@ jest.mock('dok-wallet-blockchain-networks/security/vault', () => ({
   lock: jest.fn(),
   isBiometricAvailable: jest.fn(async () => false),
   hasBiometric: jest.fn(async () => false),
+  unlockWithPassword: jest.fn(async () => ({v: 1, wallets: {}})),
+  needsKdfUpgrade: jest.fn(async () => false),
 }));
 jest.mock('dok-wallet-blockchain-networks/redux/wallets/walletsSlice', () => ({
   clearWalletSecrets: () => ({type: 'wallets/clearWalletSecrets'}),
@@ -58,13 +60,18 @@ jest.mock(
 );
 
 import * as vault from 'dok-wallet-blockchain-networks/security/vault';
+import {captureError} from 'services/logger';
 import {vaultSync} from 'redux/store';
 import {
   commitOrphanLegacyMigration,
   consumeOrphanVaultPayload,
   peekOrphanVaultPayload,
 } from 'redux/storage/migrateLegacyRoot2';
-import {UNLOCK_ERROR_CODES, createAccount} from 'security/unlockFlow';
+import {
+  UNLOCK_ERROR_CODES,
+  createAccount,
+  unlockWithPassword,
+} from 'security/unlockFlow';
 
 const ORPHAN = {v: 1, wallets: {w1: {phrase: 'm'}}};
 
@@ -189,5 +196,54 @@ describe('createAccount (vault from earlier)', () => {
     await result;
     expect(vault.destroy).toHaveBeenCalledTimes(1);
     expect(vault.createVault).toHaveBeenCalledWith('pw');
+  });
+});
+
+describe('unlockWithPassword (keyless wallets)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('reports where keyless wallets went missing, as counts only', async () => {
+    // Same report as web DOKWALLET-WALLET-WEB-1F: tells a wallet the vault
+    // never got from one it holds but hydrate did not restore.
+    vault.unlockWithPassword.mockResolvedValue({
+      v: 1,
+      wallets: {w1: {phrase: 'm'}},
+    });
+    const getState = () => ({
+      auth: {hasAccount: true},
+      wallets: {
+        allWallets: [
+          {clientId: 'w1', phrase: 'm'},
+          {clientId: 'w2', coins: []},
+          {clientId: 'w3', isImportWalletWithPrivateKey: true, coins: []},
+        ],
+      },
+      settings: {},
+    });
+
+    await expect(
+      unlockWithPassword('pw')(action => action, getState),
+    ).rejects.toMatchObject({
+      code: UNLOCK_ERROR_CODES.MISSING_SECRETS,
+      clientIds: ['w2', 'w3'],
+    });
+    expect(captureError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Wallets without secrets after unlock',
+      }),
+      {
+        tags: {area: 'vault', op: 'missing_secrets'},
+        extra: {
+          count: 2,
+          via: 'password',
+          in_vault: 0,
+          vault_wallets: 1,
+          state_wallets: 3,
+          pk_imports: 1,
+        },
+      },
+    );
   });
 });
