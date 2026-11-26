@@ -18,7 +18,8 @@ import {DokSafeAreaView} from 'components/DokSafeAreaView';
 import {useDispatch, useSelector} from 'react-redux';
 import {
   selectCurrentCoin,
-  selectCurrentCoinRecentTransaction,
+  selectCurrentWallet,
+  selectUserCoins,
 } from 'dok-wallet-blockchain-networks/redux/wallets/walletsSelector';
 import {getLocalCurrency} from 'dok-wallet-blockchain-networks/redux/settings/settingsSelectors';
 import {fetchTransactionByHash} from 'dok-wallet-blockchain-networks/redux/wallets/walletsSlice';
@@ -33,13 +34,23 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import FastImage from '@d11/react-native-fast-image';
 import DefaultDokWalletImage from 'components/DefaultDokWalletImage';
 import myStyles from './TransactionDetailsStyles';
-import {getCustomizePublicAddress} from 'dok-wallet-blockchain-networks/helper';
+import {
+  getBatchTransferItems,
+  getCustomizePublicAddress,
+} from 'dok-wallet-blockchain-networks/helper';
+import {decodeEvmCalldata} from 'dok-wallet-blockchain-networks/helper/evmCalldata';
 
 const STATUS_CONFIG = {
   SUCCESS: {label: 'Success', color: '#71C441'},
   PENDING: {label: 'Pending', color: '#ffcc00'},
   FAILED: {label: 'Failed', color: '#FF4444'},
 };
+
+const selectCoinRecentTransaction = (state, coinId) =>
+  coinId
+    ? selectCurrentWallet(state)?.coins?.find(item => item?._id === coinId)
+        ?.recentTransaction
+    : null;
 
 const CopyRow = ({value, displayValue, styles, theme}) => {
   const stringValue = typeof value === 'string' ? value : undefined;
@@ -74,11 +85,22 @@ const TransactionDetails = ({route, navigation}) => {
   const reduxCurrentCoin = useSelector(selectCurrentCoin);
   const currentCoin = initialTransaction?.currentCoin || reduxCurrentCoin;
   const localCurrency = useSelector(getLocalCurrency);
-  const reduxRecentTransaction = useSelector(
-    selectCurrentCoinRecentTransaction,
+  // fetchTransactionByHash and the post-send refreshCurrentCoin both store
+  // the result on the coin they were given (`currentCoin._id`). For a batch
+  // that is the first batch item's coin, not necessarily the selected coin,
+  // so read it from that same coin.
+  const currentCoinId = currentCoin?._id;
+  // eslint-disable-next-line react-redux/useSelector-prefer-selectors
+  const reduxRecentTransaction = useSelector(state =>
+    selectCoinRecentTransaction(state, currentCoinId),
   );
+  const userCoins = useSelector(selectUserCoins);
   const [refreshing, setRefreshing] = useState(false);
   const [nftImageError, setNftImageError] = useState(false);
+  // What this screen's own fetch returned; used only when the store has no
+  // copy (e.g. the coin is not in the current wallet), so the post-send
+  // refresh above still updates the screen immediately.
+  const [fetchedTx, setFetchedTx] = useState(null);
   const statusRef = useRef(initialTransaction?.status);
 
   useLayoutEffect(() => {
@@ -88,10 +110,11 @@ const TransactionDetails = ({route, navigation}) => {
     navigation.setOptions({title});
   }, [navigation, currentCoin?.name, initialTransaction?.isNFT]);
 
-  const recentTx =
+  const reduxTx =
     reduxRecentTransaction?.data?.link === txHash
       ? reduxRecentTransaction?.data
       : null;
+  const recentTx = reduxTx || fetchedTx;
   const transaction = recentTx
     ? {
         ...initialTransaction,
@@ -109,6 +132,7 @@ const TransactionDetails = ({route, navigation}) => {
         confirmations: recentTx.confirmations,
         contractAddress:
           recentTx.contractAddress ?? initialTransaction.contractAddress,
+        input: recentTx.input,
         ...(recentTx.transactionType != null &&
           initialTransaction.transactionType != null && {
             transactionType: recentTx.transactionType,
@@ -130,12 +154,16 @@ const TransactionDetails = ({route, navigation}) => {
   const fetchTransaction = useCallback(async () => {
     setRefreshing(true);
     try {
-      await dispatch(
+      const result = await dispatch(
         fetchTransactionByHash({
           txHash,
           currentCoin: currentCoinRef.current,
         }),
       ).unwrap();
+      const data = result?.recentTransaction?.data;
+      if (data?.link === txHash) {
+        setFetchedTx(data);
+      }
     } catch (e) {
       console.error('Error refreshing transaction', e);
     } finally {
@@ -525,9 +553,12 @@ const TransactionDetails = ({route, navigation}) => {
   // ── Batch Transaction ────────────────────────────────────────────────────────
 
   if (isBatchTx) {
-    const batchItems = Array.isArray(transaction.transactionsData)
+    const batchItems = transaction.transactionsData?.length
       ? transaction.transactionsData
-      : [];
+      : getBatchTransferItems(transaction.input, {
+          coins: userCoins,
+          nativeSymbol: currentCoin?.chain_symbol || currentCoin?.symbol,
+        });
 
     return (
       <DokSafeAreaView style={styles.container}>
@@ -825,6 +856,8 @@ const TransactionDetails = ({route, navigation}) => {
   // ── Smart Contract Call ──────────────────────────────────────────────────────
 
   if (isSmartContractTx) {
+    const contractCall = decodeEvmCalldata(transaction.input);
+    const hasValue = Number(transaction.amount) > 0;
     return (
       <DokSafeAreaView style={styles.container}>
         <ScrollView
@@ -847,6 +880,28 @@ const TransactionDetails = ({route, navigation}) => {
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Transaction Details</Text>
+            {contractCall.kind === 'decoded' && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Method</Text>
+                  <Text style={styles.rowValue}>
+                    {`${contractCall.method} (${contractCall.standard})`}
+                  </Text>
+                </View>
+              </>
+            )}
+            {hasValue && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.row}>
+                  <Text style={styles.rowLabel}>Value</Text>
+                  <Text style={styles.rowValue}>
+                    {`${transaction.amount} ${currentCoin?.symbol || ''}`}
+                  </Text>
+                </View>
+              </>
+            )}
             {!!transaction.contractAddress && (
               <>
                 <View style={styles.divider} />

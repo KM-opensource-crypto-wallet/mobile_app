@@ -92,7 +92,10 @@ const BatchTransactionItem = ({
             <View style={styles.addressContainer}>
               <View style={styles.subAddressContainer}>
                 <Text style={styles.addressLabel}>From</Text>
-                <Text style={styles.addressText}>
+                <Text
+                  style={styles.addressText}
+                  numberOfLines={1}
+                  ellipsizeMode="middle">
                   {getCustomizePublicAddress(item.transferData.fromAddress)}
                 </Text>
               </View>
@@ -113,7 +116,10 @@ const BatchTransactionItem = ({
             <View style={styles.addressContainer}>
               <View style={styles.subAddressContainer}>
                 <Text style={styles.addressLabel}>To</Text>
-                <Text style={styles.addressText}>
+                <Text
+                  style={styles.addressText}
+                  numberOfLines={1}
+                  ellipsizeMode="middle">
                   {getCustomizePublicAddress(item.transferData.toAddress)}
                 </Text>
               </View>
@@ -246,12 +252,14 @@ const myStyles = theme =>
       alignItems: 'center',
     },
     addressContainer: {
+      flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
       flexDirection: 'row',
-      gap: 12,
+      gap: 8,
     },
     subAddressContainer: {
+      flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
     },
