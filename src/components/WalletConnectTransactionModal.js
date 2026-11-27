@@ -733,15 +733,21 @@ const WalletConnectTransactionModal = props => {
             </Text>
           </View>
         )}
-        {requestReview?.rows?.map((row, index) => (
-          <MessageValueRow
-            key={`${row.label}-${index}`}
-            label={row.label}
-            value={row.value}
-            styles={styles}
-            theme={theme}
-          />
-        ))}
+        {/* Own scroll area: a PSBT or a batch of transactions can have
+            dozens of rows, which must not push the message off screen. */}
+        {!!requestReview?.rows?.length && (
+          <ScrollView style={styles.reviewRows} nestedScrollEnabled>
+            {requestReview.rows.map((row, index) => (
+              <MessageValueRow
+                key={`${row.label}-${index}`}
+                label={row.label}
+                value={row.value}
+                styles={styles}
+                theme={theme}
+              />
+            ))}
+          </ScrollView>
+        )}
         <View style={styles.msgHeaderRow}>
           <Text style={[styles.chainTitle, {marginLeft: 0, marginTop: 0}]}>
             {'Message'}
@@ -1115,6 +1121,10 @@ const myStyles = theme =>
       fontFamily: 'Roboto-Regular',
       fontWeight: '500',
       textAlign: 'center',
+    },
+    reviewRows: {
+      flexGrow: 0,
+      maxHeight: '40%',
     },
     scrollView: {
       flex: 1,
