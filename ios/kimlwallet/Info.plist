@@ -60,12 +60,8 @@
 	<string>$(PRODUCT_NAME) needs to access your camera for scan QR code</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>$(PRODUCT_NAME) requires FaceID access to allows you quick and secure access.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>$(PRODUCT_NAME) needs to access your camera for scan QR code</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app does not actively use location. This key is required by an included SDK.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>$(PRODUCT_NAME) needs to access you photos for QR code</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>$(PRODUCT_NAME) needs to access your photos to save QR code</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>
